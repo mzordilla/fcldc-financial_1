@@ -1,0 +1,86 @@
+{
+  "name": "BankLoan",
+  "type": "object",
+  "properties": {
+    "lender": {
+      "type": "string",
+      "description": "Bank or lending institution name"
+    },
+    "loan_name": {
+      "type": "string",
+      "description": "Loan reference or name"
+    },
+    "loan_number": {
+      "type": "string",
+      "description": "Loan account number"
+    },
+    "principal": {
+      "type": "number",
+      "description": "Original loan principal amount"
+    },
+    "outstanding_balance": {
+      "type": "number",
+      "description": "Remaining balance owed"
+    },
+    "interest_rate": {
+      "type": "number",
+      "description": "Annual interest rate (%)"
+    },
+    "monthly_payment": {
+      "type": "number",
+      "description": "Monthly installment amount"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Loan start date"
+    },
+    "maturity_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Loan maturity / payoff date"
+    },
+    "loan_type": {
+      "type": "string",
+      "enum": [
+        "term_loan",
+        "construction_loan",
+        "equipment_loan",
+        "line_of_credit",
+        "sba_loan",
+        "mortgage",
+        "bridge_loan",
+        "other"
+      ],
+      "description": "Type of loan"
+    },
+    "collateral": {
+      "type": "string",
+      "description": "Collateral securing the loan"
+    },
+    "purpose": {
+      "type": "string",
+      "description": "Purpose of the loan"
+    },
+    "next_payment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Next scheduled payment date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paid_off",
+        "in_default",
+        "deferred"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "lender",
+    "principal",
+    "loan_type"
+  ]
+}

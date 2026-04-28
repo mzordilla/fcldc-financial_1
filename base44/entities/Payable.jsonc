@@ -1,0 +1,65 @@
+{
+  "name": "Payable",
+  "type": "object",
+  "properties": {
+    "supplier_name": {
+      "type": "string",
+      "description": "Supplier or vendor name"
+    },
+    "description": {
+      "type": "string",
+      "description": "What is owed for"
+    },
+    "invoice_number": {
+      "type": "string",
+      "description": "Supplier invoice reference"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Total amount owed"
+    },
+    "amount_paid": {
+      "type": "number",
+      "default": 0,
+      "description": "Amount already paid"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Payment due date"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Associated project"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "materials",
+        "equipment",
+        "subcontractor",
+        "services",
+        "utilities",
+        "other"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "unpaid",
+        "partially_paid",
+        "paid",
+        "overdue"
+      ],
+      "default": "unpaid"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "supplier_name",
+    "amount",
+    "due_date"
+  ]
+}

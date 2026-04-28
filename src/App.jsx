@@ -10,6 +10,9 @@ import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Receivables from './pages/Receivables';
 import Debts from './pages/Debts';
+import Suppliers from './pages/Suppliers';
+import Payables from './pages/Payables';
+import BankLoans from './pages/BankLoans';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -41,6 +44,9 @@ const AuthenticatedApp = () => {
         <Route path="/" element={<Dashboard />} />
         <Route path="/transactions" element={<Transactions />} />
         <Route path="/receivables" element={<Receivables />} />
+        <Route path="/payables" element={<Payables />} />
+        <Route path="/suppliers" element={<Suppliers />} />
+        <Route path="/bank-loans" element={<BankLoans />} />
         <Route path="/debts" element={<Debts />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />

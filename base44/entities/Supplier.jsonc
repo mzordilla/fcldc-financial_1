@@ -1,0 +1,70 @@
+{
+  "name": "Supplier",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Supplier company name"
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "Primary contact person"
+    },
+    "email": {
+      "type": "string",
+      "description": "Contact email"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact phone"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "materials",
+        "equipment",
+        "subcontractor",
+        "services",
+        "utilities",
+        "other"
+      ],
+      "description": "Supplier category"
+    },
+    "payment_terms": {
+      "type": "string",
+      "enum": [
+        "net_7",
+        "net_15",
+        "net_30",
+        "net_60",
+        "cod",
+        "prepaid"
+      ],
+      "description": "Standard payment terms"
+    },
+    "credit_limit": {
+      "type": "number",
+      "description": "Credit limit extended by supplier"
+    },
+    "outstanding_balance": {
+      "type": "number",
+      "default": 0,
+      "description": "Current outstanding balance owed"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "on_hold"
+      ],
+      "default": "active"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

@@ -1,10 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, Building2, CreditCard, Banknote } from "lucide-react";
 
 const navItems = [
   { label: "Home", icon: LayoutDashboard, path: "/" },
-  { label: "Transactions", icon: ArrowLeftRight, path: "/transactions" },
-  { label: "Receivables", icon: FileText, path: "/receivables" },
+  { label: "Payables", icon: CreditCard, path: "/payables" },
+  { label: "Suppliers", icon: Building2, path: "/suppliers" },
+  { label: "Loans", icon: Banknote, path: "/bank-loans" },
   { label: "Debts", icon: Landmark, path: "/debts" },
 ];
 
