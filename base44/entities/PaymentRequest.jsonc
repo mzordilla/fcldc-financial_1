@@ -1,0 +1,88 @@
+{
+  "name": "PaymentRequest",
+  "type": "object",
+  "properties": {
+    "request_number": {
+      "type": "string",
+      "description": "Payment request reference number"
+    },
+    "payee": {
+      "type": "string",
+      "description": "Who is being paid"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Associated project"
+    },
+    "description": {
+      "type": "string",
+      "description": "Reason for payment"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Payment amount"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "supplier_invoice",
+        "subcontractor",
+        "labor",
+        "equipment",
+        "expense_reimbursement",
+        "utilities",
+        "other"
+      ]
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "bank_transfer",
+        "check",
+        "cash",
+        "credit_card",
+        "other"
+      ],
+      "default": "bank_transfer"
+    },
+    "invoice_number": {
+      "type": "string"
+    },
+    "invoice_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "requested_by": {
+      "type": "string"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "paid"
+      ],
+      "default": "pending"
+    },
+    "approval_notes": {
+      "type": "string"
+    },
+    "supporting_docs": {
+      "type": "string",
+      "description": "Reference to attached documents"
+    }
+  },
+  "required": [
+    "payee",
+    "amount",
+    "description"
+  ]
+}

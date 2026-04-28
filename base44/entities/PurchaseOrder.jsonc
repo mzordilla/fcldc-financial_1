@@ -1,0 +1,87 @@
+{
+  "name": "PurchaseOrder",
+  "type": "object",
+  "properties": {
+    "po_number": {
+      "type": "string",
+      "description": "Purchase order number"
+    },
+    "supplier_name": {
+      "type": "string",
+      "description": "Supplier name"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Associated project"
+    },
+    "description": {
+      "type": "string",
+      "description": "What is being purchased"
+    },
+    "items": {
+      "type": "string",
+      "description": "Line items (comma separated or details)"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Total PO amount"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "materials",
+        "equipment",
+        "subcontractor",
+        "services",
+        "utilities",
+        "other"
+      ]
+    },
+    "requested_by": {
+      "type": "string",
+      "description": "Person requesting the purchase"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Person who approved"
+    },
+    "requested_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "required_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date materials/services needed"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "approval_notes": {
+      "type": "string",
+      "description": "Notes from approver"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "normal",
+        "high",
+        "urgent"
+      ],
+      "default": "normal"
+    }
+  },
+  "required": [
+    "supplier_name",
+    "amount",
+    "description"
+  ]
+}
