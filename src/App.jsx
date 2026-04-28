@@ -13,6 +13,7 @@ import Debts from './pages/Debts';
 import Suppliers from './pages/Suppliers';
 import Payables from './pages/Payables';
 import BankLoans from './pages/BankLoans';
+import ProjectPnL from './pages/ProjectPnL';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -43,6 +44,7 @@ const AuthenticatedApp = () => {
       <Route element={<AppLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/transactions" element={<Transactions />} />
+        <Route path="/project-pnl" element={<ProjectPnL />} />
         <Route path="/receivables" element={<Receivables />} />
         <Route path="/payables" element={<Payables />} />
         <Route path="/suppliers" element={<Suppliers />} />

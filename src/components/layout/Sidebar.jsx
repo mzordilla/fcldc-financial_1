@@ -1,10 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, HardHat, LogOut, Building2, CreditCard, Banknote } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, HardHat, LogOut, Building2, CreditCard, Banknote, FolderKanban } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
   { label: "Transactions", icon: ArrowLeftRight, path: "/transactions" },
+  { label: "Project P&L", icon: FolderKanban, path: "/project-pnl" },
   { label: "Receivables", icon: FileText, path: "/receivables" },
   { label: "Payables", icon: CreditCard, path: "/payables" },
   { label: "Suppliers", icon: Building2, path: "/suppliers" },
