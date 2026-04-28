@@ -1,0 +1,61 @@
+{
+  "name": "Transaction",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string",
+      "description": "Description of the transaction"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Transaction amount"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "income",
+        "expense"
+      ],
+      "description": "Transaction type"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "project_payment",
+        "material_cost",
+        "labor",
+        "equipment",
+        "subcontractor",
+        "overhead",
+        "permits",
+        "insurance",
+        "other"
+      ],
+      "description": "Transaction category"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Associated project name"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Transaction date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "pending",
+        "cancelled"
+      ],
+      "default": "completed"
+    }
+  },
+  "required": [
+    "description",
+    "amount",
+    "type",
+    "date"
+  ]
+}

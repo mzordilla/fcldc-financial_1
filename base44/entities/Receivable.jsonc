@@ -1,0 +1,50 @@
+{
+  "name": "Receivable",
+  "type": "object",
+  "properties": {
+    "client_name": {
+      "type": "string",
+      "description": "Client or company name"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Project name"
+    },
+    "invoice_number": {
+      "type": "string",
+      "description": "Invoice reference number"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Total invoice amount"
+    },
+    "amount_paid": {
+      "type": "number",
+      "default": 0,
+      "description": "Amount already paid"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Payment due date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "outstanding",
+        "partially_paid",
+        "paid",
+        "overdue"
+      ],
+      "default": "outstanding"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_name",
+    "amount",
+    "due_date"
+  ]
+}

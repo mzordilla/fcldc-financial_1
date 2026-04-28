@@ -1,0 +1,62 @@
+{
+  "name": "Debt",
+  "type": "object",
+  "properties": {
+    "creditor": {
+      "type": "string",
+      "description": "Creditor or lender name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the debt"
+    },
+    "total_amount": {
+      "type": "number",
+      "description": "Total debt amount"
+    },
+    "amount_paid": {
+      "type": "number",
+      "default": 0,
+      "description": "Amount already paid off"
+    },
+    "interest_rate": {
+      "type": "number",
+      "description": "Annual interest rate percentage"
+    },
+    "monthly_payment": {
+      "type": "number",
+      "description": "Monthly payment amount"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Final payment due date"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "loan",
+        "credit_line",
+        "equipment_financing",
+        "vendor_credit",
+        "mortgage",
+        "other"
+      ],
+      "description": "Type of debt"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paid_off",
+        "defaulted"
+      ],
+      "default": "active"
+    }
+  },
+  "required": [
+    "creditor",
+    "total_amount",
+    "type"
+  ]
+}
