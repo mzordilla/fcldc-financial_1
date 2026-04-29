@@ -1,13 +1,62 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { Plus, Trash2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import AddFormDialog from "../components/shared/AddFormDialog";
+
+function getAgingBucket(dueDateStr, status) {
+  if (status === "paid") return null;
+  if (!dueDateStr) return null;
+  const days = differenceInDays(new Date(), new Date(dueDateStr));
+  if (days <= 0) return { label: "Current", style: "bg-primary/10 text-primary" };
+  if (days <= 30) return { label: "1–30 days", style: "bg-chart-3/10 text-chart-3" };
+  if (days <= 60) return { label: "31–60 days", style: "bg-chart-3/20 text-chart-3" };
+  if (days <= 90) return { label: "61–90 days", style: "bg-destructive/10 text-destructive" };
+  return { label: "90+ days", style: "bg-destructive/20 text-destructive font-semibold" };
+}
+
+function AgingSummary({ items }) {
+  const today = new Date();
+  const buckets = [
+    { label: "Current", range: "Not yet due", amount: 0 },
+    { label: "1–30 days", range: "Overdue", amount: 0 },
+    { label: "31–60 days", range: "Overdue", amount: 0 },
+    { label: "61–90 days", range: "Overdue", amount: 0 },
+    { label: "90+ days", range: "Critical", amount: 0 },
+  ];
+  items.filter(p => p.status !== "paid").forEach(p => {
+    if (!p.due_date) return;
+    const days = differenceInDays(today, new Date(p.due_date));
+    const rem = (p.amount || 0) - (p.amount_paid || 0);
+    if (days <= 0) buckets[0].amount += rem;
+    else if (days <= 30) buckets[1].amount += rem;
+    else if (days <= 60) buckets[2].amount += rem;
+    else if (days <= 90) buckets[3].amount += rem;
+    else buckets[4].amount += rem;
+  });
+  const colors = ["bg-primary", "bg-chart-3", "bg-orange-400", "bg-destructive/70", "bg-destructive"];
+  return (
+    <div className="bg-card rounded-2xl border border-border p-5">
+      <h3 className="text-sm font-semibold text-foreground mb-4">Aging Analysis</h3>
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        {buckets.map((b, i) => (
+          <div key={b.label} className="text-center">
+            <div className={`h-1.5 rounded-full ${colors[i]} mb-2 opacity-80`} />
+            <p className="text-xs text-muted-foreground">{b.label}</p>
+            <p className={`text-sm font-bold mt-0.5 ${i >= 2 && b.amount > 0 ? "text-destructive" : "text-foreground"}`}>
+              ${b.amount.toLocaleString()}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const statusStyles = {
   unpaid: "bg-chart-2/10 text-chart-2 border-chart-2/20",
@@ -98,12 +147,15 @@ export default function Payables() {
         </div>
       </div>
 
+      <AgingSummary items={payables} />
+
       <div className="grid gap-4">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
         {!isLoading && filtered.length === 0 && <p className="text-center py-12 text-muted-foreground">No payables yet</p>}
         {filtered.map((p) => {
           const remaining = (p.amount || 0) - (p.amount_paid || 0);
           const paidPct = p.amount ? Math.min(((p.amount_paid || 0) / p.amount) * 100, 100) : 0;
+          const aging = getAgingBucket(p.due_date, p.status);
           return (
             <div key={p.id} className="bg-card rounded-2xl border border-border p-5 hover:shadow-md transition-shadow">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -114,6 +166,7 @@ export default function Payables() {
                       {(p.status || "unpaid").replace(/_/g, " ")}
                     </Badge>
                     {p.category && <Badge variant="secondary" className="text-xs">{p.category}</Badge>}
+                    {aging && <Badge variant="outline" className={`text-xs ${aging.style}`}>{aging.label}</Badge>}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {p.description || ""}
