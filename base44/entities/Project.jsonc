@@ -33,6 +33,18 @@
       "type": "number",
       "description": "Approved contract value"
     },
+    "completed_percentage": {
+      "type": "number",
+      "description": "Percentage of work completed (0-100)",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "retention_rate": {
+      "type": "number",
+      "description": "Retention percentage held by client (e.g. 5 for 5%)",
+      "minimum": 0,
+      "maximum": 100
+    },
     "contract_status": {
       "type": "string",
       "enum": [

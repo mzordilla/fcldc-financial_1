@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, Briefcase, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, Briefcase, CheckCircle2, Pencil } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -40,6 +41,8 @@ const fields = [
     { value: "other", label: "Other" },
   ]},
   { name: "contract_amount", label: "Contract Amount ($)", type: "number", required: true, placeholder: "0.00" },
+  { name: "completed_percentage", label: "Completed (%)", type: "number", placeholder: "e.g. 45" },
+  { name: "retention_rate", label: "Retention Rate (%)", type: "number", placeholder: "e.g. 5" },
   { name: "contract_status", label: "Contract Status", type: "select", options: [
     { value: "pending", label: "Pending" },
     { value: "approved", label: "Approved" },
@@ -150,30 +153,49 @@ export default function Projects() {
                 <tr className="text-xs text-muted-foreground border-b border-border">
                   <th className="text-left py-2 pr-4">Project</th>
                   <th className="text-left py-2 pr-4">Client</th>
-                  <th className="text-left py-2 pr-4">Type</th>
                   <th className="text-left py-2 pr-4">Status</th>
-                  <th className="text-right py-2">Contract Amount</th>
+                  <th className="text-right py-2 pr-4">Contract Amt</th>
+                  <th className="text-right py-2 pr-4">Completed</th>
+                  <th className="text-right py-2 pr-4">Retention</th>
+                  <th className="text-right py-2">Balance</th>
                 </tr>
               </thead>
               <tbody>
-                {approvedProjects.map(p => (
-                  <tr key={p.id} className="border-b border-border/50 last:border-0">
-                    <td className="py-2.5 pr-4 font-medium text-foreground">{p.project_name}</td>
-                    <td className="py-2.5 pr-4 text-muted-foreground">{p.client_name}</td>
-                    <td className="py-2.5 pr-4 text-muted-foreground">{projectTypeLabels[p.project_type] || "—"}</td>
-                    <td className="py-2.5 pr-4">
-                      <Badge variant="outline" className={`text-xs ${contractStatusStyles[p.contract_status]}`}>
-                        {p.contract_status}
-                      </Badge>
-                    </td>
-                    <td className="py-2.5 text-right font-bold text-foreground">${(p.contract_amount || 0).toLocaleString()}</td>
-                  </tr>
-                ))}
+                {approvedProjects.map(p => {
+                  const completedAmt = (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100);
+                  const remainingAmt = (p.contract_amount || 0) - completedAmt;
+                  const retentionAmt = completedAmt * ((p.retention_rate || 0) / 100);
+                  const netReceivable = completedAmt - retentionAmt;
+                  return (
+                    <tr key={p.id} className="border-b border-border/50 last:border-0">
+                      <td className="py-2.5 pr-4 font-medium text-foreground">{p.project_name}</td>
+                      <td className="py-2.5 pr-4 text-muted-foreground">{p.client_name}</td>
+                      <td className="py-2.5 pr-4">
+                        <Badge variant="outline" className={`text-xs ${contractStatusStyles[p.contract_status]}`}>
+                          {p.contract_status}
+                        </Badge>
+                      </td>
+                      <td className="py-2.5 pr-4 text-right font-bold text-foreground">${(p.contract_amount || 0).toLocaleString()}</td>
+                      <td className="py-2.5 pr-4 text-right text-primary">${completedAmt.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+                      <td className="py-2.5 pr-4 text-right text-chart-3">${retentionAmt.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+                      <td className="py-2.5 text-right text-muted-foreground">${remainingAmt.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
               <tfoot>
-                <tr>
-                  <td colSpan={4} className="pt-3 text-sm font-semibold text-foreground">Total</td>
-                  <td className="pt-3 text-right text-base font-bold text-primary">${totalApprovedValue.toLocaleString()}</td>
+                <tr className="border-t border-border">
+                  <td colSpan={3} className="pt-3 text-sm font-semibold text-foreground">Total</td>
+                  <td className="pt-3 text-right font-bold text-primary">${totalApprovedValue.toLocaleString()}</td>
+                  <td className="pt-3 text-right font-bold text-primary">
+                    ${approvedProjects.reduce((s,p) => s + (p.contract_amount||0)*((p.completed_percentage||0)/100), 0).toLocaleString(undefined,{maximumFractionDigits:0})}
+                  </td>
+                  <td className="pt-3 text-right font-bold text-chart-3">
+                    ${approvedProjects.reduce((s,p) => { const c=(p.contract_amount||0)*((p.completed_percentage||0)/100); return s+c*((p.retention_rate||0)/100); }, 0).toLocaleString(undefined,{maximumFractionDigits:0})}
+                  </td>
+                  <td className="pt-3 text-right font-bold text-muted-foreground">
+                    ${approvedProjects.reduce((s,p) => s + (p.contract_amount||0)*(1-(p.completed_percentage||0)/100), 0).toLocaleString(undefined,{maximumFractionDigits:0})}
+                  </td>
                 </tr>
               </tfoot>
             </table>
@@ -190,49 +212,86 @@ export default function Projects() {
             <p className="text-muted-foreground">No projects found</p>
           </div>
         )}
-        {filtered.map((p) => (
-          <div key={p.id} className="bg-card rounded-2xl border border-border p-5 hover:shadow-md transition-shadow">
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 flex-wrap mb-1">
-                  <h3 className="font-semibold text-foreground">{p.project_name}</h3>
-                  {p.project_number && <span className="text-xs text-muted-foreground font-mono">{p.project_number}</span>}
-                  <Badge variant="outline" className={`text-xs ${contractStatusStyles[p.contract_status] || ""}`}>
-                    {(p.contract_status || "pending").replace(/_/g, " ")}
-                  </Badge>
-                  {p.project_type && <Badge variant="secondary" className="text-xs">{projectTypeLabels[p.project_type]}</Badge>}
+        {filtered.map((p) => {
+          const completedPct = p.completed_percentage || 0;
+          const retentionRate = p.retention_rate || 0;
+          const completedAmt = (p.contract_amount || 0) * (completedPct / 100);
+          const remainingAmt = (p.contract_amount || 0) - completedAmt;
+          const retentionAmt = completedAmt * (retentionRate / 100);
+          const netReceivable = completedAmt - retentionAmt;
+          return (
+            <div key={p.id} className="bg-card rounded-2xl border border-border p-5 hover:shadow-md transition-shadow">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 flex-wrap mb-1">
+                    <h3 className="font-semibold text-foreground">{p.project_name}</h3>
+                    {p.project_number && <span className="text-xs text-muted-foreground font-mono">{p.project_number}</span>}
+                    <Badge variant="outline" className={`text-xs ${contractStatusStyles[p.contract_status] || ""}`}>
+                      {(p.contract_status || "pending").replace(/_/g, " ")}
+                    </Badge>
+                    {p.project_type && <Badge variant="secondary" className="text-xs">{projectTypeLabels[p.project_type]}</Badge>}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{p.client_name}</p>
+                  <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
+                    {p.location && <span>📍 {p.location}</span>}
+                    {p.project_manager && <span>👤 {p.project_manager}</span>}
+                    {p.start_date && <span>Start: {format(new Date(p.start_date), "MMM d, yyyy")}</span>}
+                    {p.end_date && <span>End: {format(new Date(p.end_date), "MMM d, yyyy")}</span>}
+                  </div>
+
+                  {/* Completion progress bar */}
+                  <div className="mt-3 space-y-1">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Completion</span>
+                      <span className="font-medium text-foreground">{completedPct}%</span>
+                    </div>
+                    <div className="relative h-2.5 rounded-full bg-muted overflow-hidden">
+                      <div className="absolute left-0 top-0 h-full bg-primary rounded-full transition-all" style={{ width: `${completedPct}%` }} />
+                    </div>
+                  </div>
+
+                  {/* Financial breakdown */}
+                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="bg-muted/40 rounded-lg p-2">
+                      <p className="text-xs text-muted-foreground">Contract</p>
+                      <p className="text-sm font-semibold text-foreground">${(p.contract_amount || 0).toLocaleString()}</p>
+                    </div>
+                    <div className="bg-primary/5 rounded-lg p-2">
+                      <p className="text-xs text-muted-foreground">Completed</p>
+                      <p className="text-sm font-semibold text-primary">${completedAmt.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                    </div>
+                    <div className="bg-chart-3/5 rounded-lg p-2">
+                      <p className="text-xs text-muted-foreground">Retention ({retentionRate}%)</p>
+                      <p className="text-sm font-semibold text-chart-3">${retentionAmt.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                    </div>
+                    <div className="bg-muted/40 rounded-lg p-2">
+                      <p className="text-xs text-muted-foreground">Balance</p>
+                      <p className="text-sm font-semibold text-foreground">${remainingAmt.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground">{p.client_name}</p>
-                <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
-                  {p.location && <span>📍 {p.location}</span>}
-                  {p.project_manager && <span>👤 {p.project_manager}</span>}
-                  {p.contract_date && <span>Signed: {format(new Date(p.contract_date), "MMM d, yyyy")}</span>}
-                  {p.start_date && <span>Start: {format(new Date(p.start_date), "MMM d, yyyy")}</span>}
-                  {p.end_date && <span>End: {format(new Date(p.end_date), "MMM d, yyyy")}</span>}
-                </div>
-                {p.description && <p className="text-xs text-muted-foreground mt-2 italic">{p.description}</p>}
-              </div>
-              <div className="flex sm:flex-col items-center sm:items-end gap-3">
-                <p className="text-xl font-bold text-foreground">${(p.contract_amount || 0).toLocaleString()}</p>
-                <div className="flex gap-1">
-                  {p.contract_status === "approved" && (
-                    <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: p.id, data: { contract_status: "active" } })}>
-                      Set Active
+
+                <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:min-w-[120px]">
+                  <div className="flex gap-1">
+                    {p.contract_status === "approved" && (
+                      <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: p.id, data: { contract_status: "active" } })}>
+                        Set Active
+                      </Button>
+                    )}
+                    {p.contract_status === "pending" && (
+                      <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: p.id, data: { contract_status: "approved" } })}>
+                        Approve
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(p.id)} className="text-muted-foreground hover:text-destructive">
+                      <Trash2 className="w-4 h-4" />
                     </Button>
-                  )}
-                  {p.contract_status === "pending" && (
-                    <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: p.id, data: { contract_status: "approved" } })}>
-                      Approve
-                    </Button>
-                  )}
-                  <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(p.id)} className="text-muted-foreground hover:text-destructive">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <AddFormDialog
