@@ -14,6 +14,7 @@ import Suppliers from './pages/Suppliers';
 import Payables from './pages/Payables';
 import BankLoans from './pages/BankLoans';
 import ProjectPnL from './pages/ProjectPnL';
+import Projects from './pages/Projects';
 import PurchaseOrders from './pages/PurchaseOrders';
 import PaymentApprovals from './pages/PaymentApprovals';
 
@@ -46,6 +47,7 @@ const AuthenticatedApp = () => {
       <Route element={<AppLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/transactions" element={<Transactions />} />
+        <Route path="/projects" element={<Projects />} />
         <Route path="/project-pnl" element={<ProjectPnL />} />
         <Route path="/purchase-orders" element={<PurchaseOrders />} />
         <Route path="/payment-approvals" element={<PaymentApprovals />} />

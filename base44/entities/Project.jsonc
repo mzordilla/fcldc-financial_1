@@ -1,0 +1,77 @@
+{
+  "name": "Project",
+  "type": "object",
+  "properties": {
+    "project_name": {
+      "type": "string",
+      "description": "Project name"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client / owner name"
+    },
+    "project_number": {
+      "type": "string",
+      "description": "Internal project reference number"
+    },
+    "location": {
+      "type": "string",
+      "description": "Project site location"
+    },
+    "project_type": {
+      "type": "string",
+      "enum": [
+        "residential",
+        "commercial",
+        "industrial",
+        "infrastructure",
+        "renovation",
+        "other"
+      ]
+    },
+    "contract_amount": {
+      "type": "number",
+      "description": "Approved contract value"
+    },
+    "contract_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "active",
+        "completed",
+        "on_hold",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "contract_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Contract signing date"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expected completion date"
+    },
+    "project_manager": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name",
+    "contract_amount"
+  ]
+}
