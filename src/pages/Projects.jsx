@@ -15,7 +15,7 @@ const contractStatusStyles = {
   active: "bg-chart-2/10 text-chart-2 border-chart-2/20",
   completed: "bg-muted text-muted-foreground border-border",
   on_hold: "bg-chart-3/10 text-chart-3 border-chart-3/20",
-  cancelled: "bg-destructive/10 text-destructive border-destructive/20",
+  cancelled: "bg-destructive/10 text-destructive border-destructive/20"
 };
 
 const projectTypeLabels = {
@@ -24,39 +24,39 @@ const projectTypeLabels = {
   industrial: "Industrial",
   infrastructure: "Infrastructure",
   renovation: "Renovation",
-  other: "Other",
+  other: "Other"
 };
 
 const fields = [
-  { name: "project_name", label: "Project Name", required: true, placeholder: "e.g. Main Street Tower" },
-  { name: "client_name", label: "Client Name", required: true, placeholder: "e.g. ABC Developers" },
-  { name: "project_number", label: "Project #", placeholder: "PRJ-2026-001" },
-  { name: "location", label: "Location", placeholder: "e.g. 123 Main St, City" },
-  { name: "project_type", label: "Project Type", type: "select", options: [
-    { value: "residential", label: "Residential" },
-    { value: "commercial", label: "Commercial" },
-    { value: "industrial", label: "Industrial" },
-    { value: "infrastructure", label: "Infrastructure" },
-    { value: "renovation", label: "Renovation" },
-    { value: "other", label: "Other" },
-  ]},
-  { name: "contract_amount", label: "Contract Amount ($)", type: "number", required: true, placeholder: "0.00" },
-  { name: "completed_percentage", label: "Completed (%)", type: "number", placeholder: "e.g. 45" },
-  { name: "retention_rate", label: "Retention Rate (%)", type: "number", placeholder: "e.g. 5" },
-  { name: "contract_status", label: "Contract Status", type: "select", options: [
-    { value: "pending", label: "Pending" },
-    { value: "approved", label: "Approved" },
-    { value: "active", label: "Active" },
-    { value: "completed", label: "Completed" },
-    { value: "on_hold", label: "On Hold" },
-    { value: "cancelled", label: "Cancelled" },
-  ]},
-  { name: "contract_date", label: "Contract Date", type: "date" },
-  { name: "start_date", label: "Start Date", type: "date" },
-  { name: "end_date", label: "Expected Completion", type: "date" },
-  { name: "project_manager", label: "Project Manager", placeholder: "e.g. John Smith" },
-  { name: "description", label: "Description", placeholder: "Brief project description" },
-];
+{ name: "project_name", label: "Project Name", required: true, placeholder: "e.g. Main Street Tower" },
+{ name: "client_name", label: "Client Name", required: true, placeholder: "e.g. ABC Developers" },
+{ name: "project_number", label: "Project #", placeholder: "PRJ-2026-001" },
+{ name: "location", label: "Location", placeholder: "e.g. 123 Main St, City" },
+{ name: "project_type", label: "Project Type", type: "select", options: [
+  { value: "residential", label: "Residential" },
+  { value: "commercial", label: "Commercial" },
+  { value: "industrial", label: "Industrial" },
+  { value: "infrastructure", label: "Infrastructure" },
+  { value: "renovation", label: "Renovation" },
+  { value: "other", label: "Other" }]
+},
+{ name: "contract_amount", label: "Contract Amount ($)", type: "number", required: true, placeholder: "0.00" },
+{ name: "completed_percentage", label: "Completed (%)", type: "number", placeholder: "e.g. 45" },
+{ name: "retention_rate", label: "Retention Rate (%)", type: "number", placeholder: "e.g. 5" },
+{ name: "contract_status", label: "Contract Status", type: "select", options: [
+  { value: "pending", label: "Pending" },
+  { value: "approved", label: "Approved" },
+  { value: "active", label: "Active" },
+  { value: "completed", label: "Completed" },
+  { value: "on_hold", label: "On Hold" },
+  { value: "cancelled", label: "Cancelled" }]
+},
+{ name: "contract_date", label: "Contract Date", type: "date" },
+{ name: "start_date", label: "Start Date", type: "date" },
+{ name: "end_date", label: "Expected Completion", type: "date" },
+{ name: "project_manager", label: "Project Manager", placeholder: "e.g. John Smith" },
+{ name: "description", label: "Description", placeholder: "Brief project description" }];
+
 
 export default function Projects() {
   const [showAdd, setShowAdd] = useState(false);
@@ -66,30 +66,30 @@ export default function Projects() {
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
-    queryFn: () => base44.entities.Project.list("-created_date", 200),
+    queryFn: () => base44.entities.Project.list("-created_date", 200)
   });
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Project.create(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects"] })
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Project.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects"] })
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Project.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects"] })
   });
 
-  const filtered = statusFilter === "all" ? projects : projects.filter(p => p.contract_status === statusFilter);
+  const filtered = statusFilter === "all" ? projects : projects.filter((p) => p.contract_status === statusFilter);
 
-  const approvedProjects = projects.filter(p => ["approved", "active"].includes(p.contract_status));
+  const approvedProjects = projects.filter((p) => ["approved", "active"].includes(p.contract_status));
   const totalApprovedValue = approvedProjects.reduce((s, p) => s + (p.contract_amount || 0), 0);
-  const activeCount = projects.filter(p => p.contract_status === "active").length;
-  const pendingCount = projects.filter(p => p.contract_status === "pending").length;
+  const activeCount = projects.filter((p) => p.contract_status === "active").length;
+  const pendingCount = projects.filter((p) => p.contract_status === "pending").length;
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
@@ -142,8 +142,8 @@ export default function Projects() {
       </div>
 
       {/* Approved Contracts Summary */}
-      {approvedProjects.length > 0 && (
-        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5">
+      {approvedProjects.length > 0 &&
+      <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-[#000000]">
           <div className="flex items-center gap-2 mb-3">
             <CheckCircle2 className="w-4 h-4 text-primary" />
             <h3 className="text-sm font-semibold text-primary">Approved Contracts</h3>
@@ -162,13 +162,13 @@ export default function Projects() {
                 </tr>
               </thead>
               <tbody>
-                {approvedProjects.map(p => {
-                  const completedAmt = (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100);
-                  const remainingAmt = (p.contract_amount || 0) - completedAmt;
-                  const retentionAmt = completedAmt * ((p.retention_rate || 0) / 100);
-                  const netReceivable = completedAmt - retentionAmt;
-                  return (
-                    <tr key={p.id} className="border-b border-border/50 last:border-0">
+                {approvedProjects.map((p) => {
+                const completedAmt = (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100);
+                const remainingAmt = (p.contract_amount || 0) - completedAmt;
+                const retentionAmt = completedAmt * ((p.retention_rate || 0) / 100);
+                const netReceivable = completedAmt - retentionAmt;
+                return (
+                  <tr key={p.id} className="border-b border-border/50 last:border-0">
                       <td className="py-2.5 pr-4 font-medium text-foreground">{p.project_name}</td>
                       <td className="py-2.5 pr-4 text-muted-foreground">{p.client_name}</td>
                       <td className="py-2.5 pr-4">
@@ -177,42 +177,42 @@ export default function Projects() {
                         </Badge>
                       </td>
                       <td className="py-2.5 pr-4 text-right font-bold text-foreground">${(p.contract_amount || 0).toLocaleString()}</td>
-                      <td className="py-2.5 pr-4 text-right text-primary">${completedAmt.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-                      <td className="py-2.5 pr-4 text-right text-chart-3">${retentionAmt.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-                      <td className="py-2.5 text-right text-muted-foreground">${remainingAmt.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-                    </tr>
-                  );
-                })}
+                      <td className="py-2.5 pr-4 text-right text-primary">${completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                      <td className="py-2.5 pr-4 text-right text-chart-3">${retentionAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                      <td className="py-2.5 text-right text-muted-foreground">${remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                    </tr>);
+
+              })}
               </tbody>
               <tfoot>
                 <tr className="border-t border-border">
                   <td colSpan={3} className="pt-3 text-sm font-semibold text-foreground">Total</td>
                   <td className="pt-3 text-right font-bold text-primary">${totalApprovedValue.toLocaleString()}</td>
                   <td className="pt-3 text-right font-bold text-primary">
-                    ${approvedProjects.reduce((s,p) => s + (p.contract_amount||0)*((p.completed_percentage||0)/100), 0).toLocaleString(undefined,{maximumFractionDigits:0})}
+                    ${approvedProjects.reduce((s, p) => s + (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </td>
                   <td className="pt-3 text-right font-bold text-chart-3">
-                    ${approvedProjects.reduce((s,p) => { const c=(p.contract_amount||0)*((p.completed_percentage||0)/100); return s+c*((p.retention_rate||0)/100); }, 0).toLocaleString(undefined,{maximumFractionDigits:0})}
+                    ${approvedProjects.reduce((s, p) => {const c = (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100);return s + c * ((p.retention_rate || 0) / 100);}, 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </td>
                   <td className="pt-3 text-right font-bold text-muted-foreground">
-                    ${approvedProjects.reduce((s,p) => s + (p.contract_amount||0)*(1-(p.completed_percentage||0)/100), 0).toLocaleString(undefined,{maximumFractionDigits:0})}
+                    ${approvedProjects.reduce((s, p) => s + (p.contract_amount || 0) * (1 - (p.completed_percentage || 0) / 100), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </td>
                 </tr>
               </tfoot>
             </table>
           </div>
         </div>
-      )}
+      }
 
       {/* All Projects List */}
       <div className="grid gap-4">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
-        {!isLoading && filtered.length === 0 && (
-          <div className="text-center py-16">
+        {!isLoading && filtered.length === 0 &&
+        <div className="text-center py-16">
             <Briefcase className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-muted-foreground">No projects found</p>
           </div>
-        )}
+        }
         {filtered.map((p) => {
           const completedPct = p.completed_percentage || 0;
           const retentionRate = p.retention_rate || 0;
@@ -259,31 +259,31 @@ export default function Projects() {
                     </div>
                     <div className="bg-primary/5 rounded-lg p-2">
                       <p className="text-xs text-muted-foreground">Completed</p>
-                      <p className="text-sm font-semibold text-primary">${completedAmt.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                      <p className="text-sm font-semibold text-primary">${completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                     </div>
                     <div className="bg-chart-3/5 rounded-lg p-2">
                       <p className="text-xs text-muted-foreground">Retention ({retentionRate}%)</p>
-                      <p className="text-sm font-semibold text-chart-3">${retentionAmt.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                      <p className="text-sm font-semibold text-chart-3">${retentionAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                     </div>
                     <div className="bg-muted/40 rounded-lg p-2">
                       <p className="text-xs text-muted-foreground">Balance</p>
-                      <p className="text-sm font-semibold text-foreground">${remainingAmt.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                      <p className="text-sm font-semibold text-foreground">${remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:min-w-[120px]">
                   <div className="flex gap-1">
-                    {p.contract_status === "approved" && (
-                      <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: p.id, data: { contract_status: "active" } })}>
+                    {p.contract_status === "approved" &&
+                    <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: p.id, data: { contract_status: "active" } })}>
                         Set Active
                       </Button>
-                    )}
-                    {p.contract_status === "pending" && (
-                      <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: p.id, data: { contract_status: "approved" } })}>
+                    }
+                    {p.contract_status === "pending" &&
+                    <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: p.id, data: { contract_status: "approved" } })}>
                         Approve
                       </Button>
-                    )}
+                    }
                     <Button variant="ghost" size="icon" onClick={() => setEditingProject(p)} className="text-muted-foreground hover:text-foreground">
                       <Pencil className="w-4 h-4" />
                     </Button>
@@ -293,8 +293,8 @@ export default function Projects() {
                   </div>
                 </div>
               </div>
-            </div>
-          );
+            </div>);
+
         })}
       </div>
 
@@ -303,17 +303,17 @@ export default function Projects() {
         onOpenChange={setShowAdd}
         title="New Project"
         fields={fields}
-        onSubmit={(data) => createMutation.mutateAsync(data)}
-      />
+        onSubmit={(data) => createMutation.mutateAsync(data)} />
+      
 
       <AddFormDialog
         open={!!editingProject}
-        onOpenChange={(open) => { if (!open) setEditingProject(null); }}
+        onOpenChange={(open) => {if (!open) setEditingProject(null);}}
         title="Edit Project"
         fields={fields}
         initialData={editingProject || {}}
-        onSubmit={(data) => updateMutation.mutateAsync({ id: editingProject.id, data })}
-      />
-    </div>
-  );
+        onSubmit={(data) => updateMutation.mutateAsync({ id: editingProject.id, data })} />
+      
+    </div>);
+
 }
