@@ -1,13 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export default function AddFormDialog({ open, onOpenChange, title, fields, onSubmit }) {
-  const [formData, setFormData] = useState({});
+export default function AddFormDialog({ open, onOpenChange, title, fields, onSubmit, initialData }) {
+  const [formData, setFormData] = useState(initialData || {});
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) setFormData(initialData || {});
+  }, [open]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,7 +49,7 @@ export default function AddFormDialog({ open, onOpenChange, title, fields, onSub
                   type={field.type || "text"}
                   step={field.type === "number" ? "0.01" : undefined}
                   placeholder={field.placeholder}
-                  value={formData[field.name] || ""}
+                  value={formData[field.name] ?? ""}
                   onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: field.type === "number" ? parseFloat(e.target.value) || "" : e.target.value }))}
                   required={field.required}
                 />

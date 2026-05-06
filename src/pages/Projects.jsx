@@ -60,6 +60,7 @@ const fields = [
 
 export default function Projects() {
   const [showAdd, setShowAdd] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
 
@@ -283,6 +284,9 @@ export default function Projects() {
                         Approve
                       </Button>
                     )}
+                    <Button variant="ghost" size="icon" onClick={() => setEditingProject(p)} className="text-muted-foreground hover:text-foreground">
+                      <Pencil className="w-4 h-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(p.id)} className="text-muted-foreground hover:text-destructive">
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -300,6 +304,15 @@ export default function Projects() {
         title="New Project"
         fields={fields}
         onSubmit={(data) => createMutation.mutateAsync(data)}
+      />
+
+      <AddFormDialog
+        open={!!editingProject}
+        onOpenChange={(open) => { if (!open) setEditingProject(null); }}
+        title="Edit Project"
+        fields={fields}
+        initialData={editingProject || {}}
+        onSubmit={(data) => updateMutation.mutateAsync({ id: editingProject.id, data })}
       />
     </div>
   );
