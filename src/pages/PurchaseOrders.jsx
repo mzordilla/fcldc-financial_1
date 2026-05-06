@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -115,6 +115,7 @@ function ApprovalDialog({ po, open, onOpenChange, onDecision }) {
 
 export default function PurchaseOrders() {
   const [showAdd, setShowAdd] = useState(false);
+  const [editingPO, setEditingPO] = useState(null);
   const [reviewPO, setReviewPO] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
@@ -227,6 +228,9 @@ export default function PurchaseOrders() {
                         Review
                       </Button>
                     )}
+                    <Button variant="ghost" size="icon" onClick={() => setEditingPO(po)} className="text-muted-foreground hover:text-foreground">
+                      <Pencil className="w-4 h-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(po.id)} className="text-muted-foreground hover:text-destructive">
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -239,6 +243,7 @@ export default function PurchaseOrders() {
       </div>
 
       <AddFormDialog open={showAdd} onOpenChange={setShowAdd} title="New Purchase Order" fields={fields} onSubmit={(data) => createMutation.mutateAsync(data)} />
+      <AddFormDialog open={!!editingPO} onOpenChange={(v) => { if (!v) setEditingPO(null); }} title="Edit Purchase Order" fields={fields} initialData={editingPO || {}} onSubmit={(data) => updateMutation.mutateAsync({ id: editingPO.id, data })} />
       {reviewPO && <ApprovalDialog po={reviewPO} open={!!reviewPO} onOpenChange={(v) => !v && setReviewPO(null)} onDecision={handleDecision} />}
     </div>
   );

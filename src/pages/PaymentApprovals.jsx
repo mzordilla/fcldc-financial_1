@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -126,6 +126,7 @@ function ApprovalDialog({ pr, open, onOpenChange, onDecision }) {
 
 export default function PaymentApprovals() {
   const [showAdd, setShowAdd] = useState(false);
+  const [editingPR, setEditingPR] = useState(null);
   const [reviewPR, setReviewPR] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
@@ -259,6 +260,9 @@ export default function PaymentApprovals() {
                         <Banknote className="w-3.5 h-3.5 mr-1" /> Mark Paid
                       </Button>
                     )}
+                    <Button variant="ghost" size="icon" onClick={() => setEditingPR(pr)} className="text-muted-foreground hover:text-foreground">
+                      <Pencil className="w-4 h-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(pr.id)} className="text-muted-foreground hover:text-destructive">
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -271,6 +275,7 @@ export default function PaymentApprovals() {
       </div>
 
       <AddFormDialog open={showAdd} onOpenChange={setShowAdd} title="New Payment Request" fields={fields} onSubmit={(data) => createMutation.mutateAsync(data)} />
+      <AddFormDialog open={!!editingPR} onOpenChange={(v) => { if (!v) setEditingPR(null); }} title="Edit Payment Request" fields={fields} initialData={editingPR || {}} onSubmit={(data) => updateMutation.mutateAsync({ id: editingPR.id, data })} />
       {reviewPR && <ApprovalDialog pr={reviewPR} open={!!reviewPR} onOpenChange={(v) => !v && setReviewPR(null)} onDecision={handleDecision} />}
     </div>
   );
