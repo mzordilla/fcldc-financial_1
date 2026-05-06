@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays } from "date-fns";
-import { Plus, Trash2, CheckCircle } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -78,10 +78,12 @@ const fields = [
     { value: "paid", label: "Paid" },
     { value: "overdue", label: "Overdue" },
   ]},
+  { name: "notes", label: "Notes", placeholder: "Optional notes" },
 ];
 
 export default function Receivables() {
   const [showAdd, setShowAdd] = useState(false);
+  const [editingR, setEditingR] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
 
@@ -177,6 +179,9 @@ export default function Receivables() {
                         <CheckCircle className="w-4 h-4" />
                       </Button>
                     )}
+                    <Button variant="ghost" size="icon" onClick={() => setEditingR(r)} className="text-muted-foreground hover:text-foreground">
+                      <Pencil className="w-4 h-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(r.id)} className="text-muted-foreground hover:text-destructive">
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -194,6 +199,14 @@ export default function Receivables() {
         title="Add Receivable"
         fields={fields}
         onSubmit={(data) => createMutation.mutateAsync(data)}
+      />
+      <AddFormDialog
+        open={!!editingR}
+        onOpenChange={(v) => { if (!v) setEditingR(null); }}
+        title="Edit Receivable"
+        fields={fields}
+        initialData={editingR || {}}
+        onSubmit={(data) => updateMutation.mutateAsync({ id: editingR.id, data })}
       />
     </div>
   );
