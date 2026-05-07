@@ -13,6 +13,7 @@ import MonthlyLoanMonitoring from "../components/working-capital/MonthlyLoanMoni
 import OutstandingVsGranted from "../components/working-capital/OutstandingVsGranted";
 import ProjectedCashOutflows from "../components/working-capital/ProjectedCashOutflows";
 import DebtServiceCoverageRatio from "../components/working-capital/DebtServiceCoverageRatio";
+import UpcomingMaturities from "../components/working-capital/UpcomingMaturities";
 
 const typeLabels = {
   loan: "Loan",
@@ -135,6 +136,8 @@ export default function WorkingCapitalLoans() {
       </div>
 
       <DebtServiceCoverageRatio items={items} />
+
+      <UpcomingMaturities items={items} />
 
       <div className="bg-card rounded-lg border border-border overflow-hidden">
         <Table>
