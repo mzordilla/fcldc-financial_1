@@ -164,10 +164,10 @@ export default function WorkingCapitalLoans() {
                   <tr className="border-b border-border">
                     <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Creditor</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Type</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Total Amount</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Outstanding</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Interest Rate</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Monthly Payment</th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Total Amount</th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Outstanding</th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Interest Rate</th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Monthly Payment</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Status</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-foreground">Actions</th>
                   </tr>
@@ -177,11 +177,11 @@ export default function WorkingCapitalLoans() {
                     <tr key={loan.id} className="border-b border-border hover:bg-muted/50">
                       <td className="px-6 py-4 text-sm text-foreground">{loan.creditor}</td>
                       <td className="px-6 py-4 text-sm text-foreground">{typeLabels[loan.type] || loan.type}</td>
-                      <td className="px-6 py-4 text-sm text-foreground">₱{(loan.total_amount || 0).toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-foreground">₱{Math.max(0, (loan.total_amount || 0) - (loan.amount_paid || 0)).toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-foreground">{loan.interest_rate || "-"}%</td>
-                      <td className="px-6 py-4 text-sm text-foreground">₱{(loan.monthly_payment || 0).toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm">
+                      <td className="px-6 py-4 text-sm text-right text-foreground">₱{(loan.total_amount || 0).toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-right text-foreground">₱{Math.max(0, (loan.total_amount || 0) - (loan.amount_paid || 0)).toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-right text-foreground">{loan.interest_rate || "-"}%</td>
+                      <td className="px-6 py-4 text-sm text-right text-foreground">₱{(loan.monthly_payment || 0).toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-left">
                         <Badge variant="outline" className={statusStyles[loan.status] || ""}>
                           {(loan.status || "active").replace(/_/g, " ")}
                         </Badge>
