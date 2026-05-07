@@ -12,7 +12,7 @@ export default function AddFormDialog({ open, onOpenChange, title, fields, onSub
 
   useEffect(() => {
     if (open) setFormData(initialData || {});
-  }, [open]);
+  }, [open, initialData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
