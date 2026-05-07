@@ -156,10 +156,27 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
                  </div>
                ))}
              </div>
-            <div className="flex justify-end pt-1">
-              <span className="text-sm font-semibold text-foreground">
-                Total: ₱{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
+            <div className="space-y-2 pt-2 border-t border-border">
+              <div className="flex justify-between text-sm">
+                <span>Subtotal:</span>
+                <span className="font-medium">₱{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+              {withholdingTaxAmount > 0 && (
+                <div className="flex justify-between text-sm text-destructive">
+                  <span>Withholding Tax ({form.withholding_tax_percentage}%):</span>
+                  <span className="font-medium">-₱{withholdingTaxAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+              )}
+              {vatAmount > 0 && (
+                <div className="flex justify-between text-sm text-chart-2">
+                  <span>VAT ({form.vat_percentage}%):</span>
+                  <span className="font-medium">+₱{vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-base font-bold border-t border-border pt-2">
+                <span>Net Amount:</span>
+                <span>₱{(totalAmount - withholdingTaxAmount + vatAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
             </div>
           </div>
 
