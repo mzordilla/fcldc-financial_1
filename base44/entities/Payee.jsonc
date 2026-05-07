@@ -22,6 +22,10 @@
       "type": "string",
       "description": "Contact number or email"
     },
+    "credit_limit": {
+      "type": "number",
+      "description": "Credit limit or cash available per supplier"
+    },
     "bank_account_name": {
       "type": "string",
       "description": "Bank account holder name"

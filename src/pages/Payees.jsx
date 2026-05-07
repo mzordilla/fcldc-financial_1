@@ -28,7 +28,7 @@ const categoryStyles = {
   other: "bg-muted text-muted-foreground border-border",
 };
 
-const defaultForm = { name: "", category: "", contact: "", bank_account_name: "", bank_account_number: "", notes: "" };
+const defaultForm = { name: "", category: "", contact: "", credit_limit: "", bank_account_name: "", bank_account_number: "", notes: "" };
 
 function PayeeFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
   const [form, setForm] = useState(defaultForm);
@@ -82,6 +82,10 @@ function PayeeFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
           <div className="space-y-1.5">
             <Label>Contact (phone / email)</Label>
             <Input placeholder="e.g. 09XX-XXX-XXXX" value={form.contact} onChange={e => set("contact", e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Credit Limit (₱)</Label>
+            <Input type="number" placeholder="0.00" value={form.credit_limit} onChange={e => set("credit_limit", e.target.value ? parseFloat(e.target.value) : "")} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -209,7 +213,8 @@ export default function Payees() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Category</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Contact</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Bank Account</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Credit Limit</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Bank Account</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Notes</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -228,7 +233,8 @@ export default function Payees() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{p.contact || "—"}</td>
-                  <td className="px-4 py-3 hidden md:table-cell">
+                  <td className="px-4 py-3 font-medium hidden md:table-cell">{p.credit_limit ? `₱${p.credit_limit.toLocaleString()}` : "—"}</td>
+                  <td className="px-4 py-3 hidden lg:table-cell">
                     {p.bank_account_name || p.bank_account_number ? (
                       <div className="text-xs">
                         {p.bank_account_name && <p className="font-medium text-foreground">{p.bank_account_name}</p>}
