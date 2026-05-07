@@ -29,20 +29,15 @@ export default function BankBalanceSection({ transactions = [], payables = [], l
     .filter((p) => p.status !== "paid")
     .reduce((s, p) => s + ((p.amount || 0) - (p.amount_paid || 0)), 0);
 
-  const activeLoanPayments = loans
-    .filter((l) => l.status === "active")
-    .reduce((s, l) => s + (l.outstanding_balance ?? l.principal ?? 0), 0);
-
   const activeDebtBalance = debts
     .filter((d) => d.status === "active")
     .reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
 
-  const totalDeductions = unpaidPayables + activeLoanPayments + activeDebtBalance;
+  const totalDeductions = unpaidPayables + activeDebtBalance;
   const netBankBalance = grossBalance - totalDeductions;
 
   const deductions = [
     { label: "Unpaid Payables", amount: unpaidPayables, color: "text-chart-3" },
-    { label: "Outstanding Bank Loans", amount: activeLoanPayments, color: "text-chart-5" },
     { label: "Working Capital Loans", amount: activeDebtBalance, color: "text-destructive" },
   ];
 
