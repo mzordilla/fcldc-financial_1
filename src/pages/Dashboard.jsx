@@ -9,6 +9,7 @@ import ReceivablesSnapshot from "../components/dashboard/ReceivablesSnapshot";
 import DebtBalanceChart from "../components/dashboard/DebtBalanceChart";
 import AgingChart from "../components/dashboard/AgingChart";
 import BankBalanceSection from "../components/dashboard/BankBalanceSection";
+import DebtSummary from "../components/dashboard/DebtSummary";
 
 export default function Dashboard() {
   const { data: transactions = [] } = useQuery({
@@ -97,6 +98,8 @@ export default function Dashboard() {
         <IncomeByCategory transactions={transactions} />
         <RecentActivity transactions={transactions} />
       </div>
+
+      <DebtSummary debts={debts} loans={loans} />
 
       <ReceivablesSnapshot receivables={receivables} />
 
