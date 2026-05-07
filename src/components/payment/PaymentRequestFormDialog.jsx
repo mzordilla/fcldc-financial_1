@@ -57,9 +57,15 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    const validAllocations = allocations.filter(a => a.project_name || a.amount);
+    const validAllocations = allocations.filter(a => a.project_name && a.amount && parseFloat(a.amount) > 0);
+    const cleanedForm = {};
+    Object.keys(form).forEach(key => {
+      if (form[key] !== "" && form[key] !== null && form[key] !== undefined) {
+        cleanedForm[key] = form[key];
+      }
+    });
     await onSubmit({
-      ...form,
+      ...cleanedForm,
       project_allocations: validAllocations.map(a => ({ project_name: a.project_name, amount: parseFloat(a.amount) || 0 })),
       amount: totalAmount,
     });

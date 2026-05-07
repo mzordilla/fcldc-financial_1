@@ -25,7 +25,18 @@ export default function ReceivableFormDialog({ open, onOpenChange, title, fields
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await onSubmit(formData);
+    const cleanedData = {};
+    fields.forEach(field => {
+      let value = formData[field.name];
+      if (field.type === "number" && value !== "" && value !== null && value !== undefined) {
+        value = parseFloat(value) || 0;
+      }
+      if (value !== "" && value !== null && value !== undefined) {
+        cleanedData[field.name] = value;
+      }
+    });
+    cleanedData.project_name = formData.project_name;
+    await onSubmit(cleanedData);
     setSaving(false);
     setFormData({});
     onOpenChange(false);
