@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Trash2, Plus } from "lucide-react";
+import LineItemAdd from "./LineItemAdd";
 
 const defaultForm = {
   po_number: "",
@@ -14,6 +16,7 @@ const defaultForm = {
   project_name: "",
   description: "",
   items: "",
+  line_items: [],
   amount: "",
   category: "",
   priority: "normal",
@@ -67,7 +70,10 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await onSubmit({ ...form, amount: parseFloat(form.amount) || 0 });
+    const amount = form.line_items?.length > 0 
+      ? form.line_items.reduce((sum, item) => sum + (item.total || 0), 0)
+      : parseFloat(form.amount) || 0;
+    await onSubmit({ ...form, amount });
     setSaving(false);
     onOpenChange(false);
   };
@@ -136,8 +142,43 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
           </div>
 
           <div className="space-y-1.5">
-            <Label>Line Items</Label>
-            <Textarea rows={2} placeholder="e.g. 500 steel rods, 20 bags cement..." value={form.items} onChange={e => set("items", e.target.value)} />
+            <Label>Itemized Line Items</Label>
+            {form.line_items && form.line_items.length > 0 && (
+              <div className="border border-border rounded-lg overflow-hidden mb-2">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-muted/50 border-b border-border">
+                      <th className="px-2 py-1 text-left font-semibold">Description</th>
+                      <th className="px-2 py-1 text-right font-semibold w-16">Qty</th>
+                      <th className="px-2 py-1 text-right font-semibold w-20">Cost/Item</th>
+                      <th className="px-2 py-1 text-right font-semibold w-20">Total</th>
+                      <th className="w-6"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {form.line_items.map((item, idx) => (
+                      <tr key={idx} className="border-b border-border/50 last:border-0">
+                        <td className="px-2 py-1">{item.description}</td>
+                        <td className="px-2 py-1 text-right text-xs">{item.quantity}</td>
+                        <td className="px-2 py-1 text-right text-xs">${(item.cost_per_item || 0).toLocaleString()}</td>
+                        <td className="px-2 py-1 text-right text-xs font-semibold">${(item.total || 0).toLocaleString()}</td>
+                        <td className="px-2 py-1">
+                          <button type="button" onClick={() => setForm(prev => ({ ...prev, line_items: prev.line_items.filter((_, i) => i !== idx) }))} className="text-destructive hover:text-destructive/80">
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <LineItemAdd onAdd={(item) => setForm(prev => ({ ...prev, line_items: [...(prev.line_items || []), item] }))} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Additional Notes (optional)</Label>
+            <Textarea rows={2} placeholder="e.g. Additional line items, specs..." value={form.items} onChange={e => set("items", e.target.value)} />
           </div>
 
           <div className="space-y-1.5">

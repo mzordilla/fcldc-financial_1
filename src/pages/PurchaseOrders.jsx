@@ -182,7 +182,32 @@ export default function PurchaseOrders() {
                     {po.category && <Badge variant="secondary" className="text-xs">{po.category}</Badge>}
                   </div>
                   <p className="text-sm text-foreground">{po.description}</p>
-                  {po.items && <p className="text-xs text-muted-foreground mt-1">Items: {po.items}</p>}
+
+                  {po.line_items && po.line_items.length > 0 && (
+                    <div className="mt-3 border border-border rounded-lg overflow-hidden">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="bg-muted/50 border-b border-border">
+                            <th className="px-3 py-2 text-left font-semibold">Item</th>
+                            <th className="px-3 py-2 text-right font-semibold">Qty</th>
+                            <th className="px-3 py-2 text-right font-semibold">Cost/Item</th>
+                            <th className="px-3 py-2 text-right font-semibold">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {po.line_items.map((item, idx) => (
+                            <tr key={idx} className="border-b border-border/50 last:border-0">
+                              <td className="px-3 py-2 text-left">{item.description}</td>
+                              <td className="px-3 py-2 text-right">{item.quantity}</td>
+                              <td className="px-3 py-2 text-right">${(item.cost_per_item || 0).toLocaleString()}</td>
+                              <td className="px-3 py-2 text-right font-semibold">${(item.total || 0).toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  {po.items && !po.line_items?.length && <p className="text-xs text-muted-foreground mt-1">Items: {po.items}</p>}
                   <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
                     {po.project_name && <span>Project: {po.project_name}</span>}
                     {po.requested_by && <span>Requested by: {po.requested_by}</span>}
