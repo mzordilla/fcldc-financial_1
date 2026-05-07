@@ -27,6 +27,8 @@ const statusStyles = {
 const fields = [
   { name: "creditor", label: "Creditor", required: true, placeholder: "e.g. First National Bank" },
   { name: "description", label: "Description", placeholder: "e.g. Working capital for operations" },
+  { name: "amount_granted", label: "Amount Granted (₱)", type: "number", placeholder: "0.00" },
+  { name: "amount_availed", label: "Amount Availed (₱)", type: "number", placeholder: "0.00" },
   { name: "total_amount", label: "Total Amount (₱)", type: "number", required: true, placeholder: "0.00" },
   { name: "amount_paid", label: "Amount Paid (₱)", type: "number", placeholder: "0.00" },
   { name: "interest_rate", label: "Interest Rate (%)", type: "number", placeholder: "5.5" },
@@ -132,6 +134,11 @@ export default function WorkingCapitalLoans() {
                     {d.monthly_payment ? ` · ₱${d.monthly_payment.toLocaleString()}/mo` : ""}
                     {d.due_date && ` · Due ${format(new Date(d.due_date), "MMM yyyy")}`}
                   </p>
+                  {d.amount_granted && (
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Utilization: ₱{(d.amount_availed || 0).toLocaleString()} / ₱{d.amount_granted.toLocaleString()} ({d.amount_granted ? Math.round(((d.amount_availed || 0) / d.amount_granted) * 100) : 0}%)
+                    </div>
+                  )}
                   <div className="mt-3 flex items-center gap-3">
                     <Progress value={paidPct} className="h-2 flex-1" />
                     <span className="text-xs text-muted-foreground whitespace-nowrap">

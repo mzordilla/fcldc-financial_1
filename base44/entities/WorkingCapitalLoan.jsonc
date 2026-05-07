@@ -10,6 +10,15 @@
       "type": "string",
       "description": "Description of the working capital loan"
     },
+    "amount_granted": {
+      "type": "number",
+      "description": "Total amount granted by lender"
+    },
+    "amount_availed": {
+      "type": "number",
+      "default": 0,
+      "description": "Amount that has been drawn/utilized"
+    },
     "total_amount": {
       "type": "number",
       "description": "Total loan amount"
