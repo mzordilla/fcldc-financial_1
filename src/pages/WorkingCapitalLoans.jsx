@@ -6,7 +6,7 @@ import { Plus, Trash2, CheckCircle, Pencil, ChevronDown, ChevronUp } from "lucid
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import MonthlyLoanMonitoring from "../components/working-capital/MonthlyLoanMonitoring";
@@ -268,14 +268,14 @@ export default function WorkingCapitalLoans() {
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialog.Footer>
+          <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             {user?.role === "admin" && (
               <AlertDialogAction onClick={() => { deleteMutation.mutate(deleteItem.id); setDeleteItem(null); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 Delete
               </AlertDialogAction>
             )}
-          </AlertDialog.Footer>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
