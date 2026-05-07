@@ -31,7 +31,9 @@ const fields = [
   { name: "amount_availed", label: "Amount Availed (₱)", type: "number", placeholder: "0.00" },
   { name: "total_amount", label: "Total Amount (₱)", type: "number", required: true, placeholder: "0.00" },
   { name: "amount_paid", label: "Amount Paid (₱)", type: "number", placeholder: "0.00" },
+  { name: "principal_balance", label: "Principal Balance (₱)", type: "number", placeholder: "0.00" },
   { name: "interest_rate", label: "Interest Rate (%)", type: "number", placeholder: "5.5" },
+  { name: "interest_accrued_1yr", label: "1-Year Interest Accrual (₱)", type: "number", placeholder: "0.00" },
   { name: "monthly_payment", label: "Monthly Payment (₱)", type: "number", placeholder: "0.00" },
   { name: "loan_granted", label: "Loan Granted Date", type: "date" },
   { name: "loan_availed", label: "Loan Availed Date", type: "date" },
@@ -131,9 +133,15 @@ export default function WorkingCapitalLoans() {
                   <p className="text-sm text-muted-foreground">
                     {d.description || ""}
                     {d.interest_rate ? ` · ${d.interest_rate}% APR` : ""}
+                    {d.interest_accrued_1yr ? ` · ₱${d.interest_accrued_1yr.toLocaleString()} 1yr interest` : ""}
                     {d.monthly_payment ? ` · ₱${d.monthly_payment.toLocaleString()}/mo` : ""}
                     {d.due_date && ` · Due ${format(new Date(d.due_date), "MMM yyyy")}`}
                   </p>
+                  {d.principal_balance !== undefined && (
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Principal Balance: ₱{(d.principal_balance || 0).toLocaleString()}
+                    </div>
+                  )}
                   {d.amount_granted && (
                     <div className="mt-2 text-xs text-muted-foreground">
                       Utilization: ₱{(d.amount_availed || 0).toLocaleString()} / ₱{d.amount_granted.toLocaleString()} ({d.amount_granted ? Math.round(((d.amount_availed || 0) / d.amount_granted) * 100) : 0}%)

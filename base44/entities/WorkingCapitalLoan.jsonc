@@ -28,9 +28,19 @@
       "default": 0,
       "description": "Amount already paid off"
     },
+    "principal_balance": {
+      "type": "number",
+      "default": 0,
+      "description": "Remaining principal balance"
+    },
     "interest_rate": {
       "type": "number",
       "description": "Annual interest rate percentage"
+    },
+    "interest_accrued_1yr": {
+      "type": "number",
+      "default": 0,
+      "description": "Interest accrued over 1 year"
     },
     "monthly_payment": {
       "type": "number",
