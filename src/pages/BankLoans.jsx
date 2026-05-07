@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, Landmark, CalendarClock, Percent } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Landmark, CalendarClock, Percent, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -60,6 +60,7 @@ const fields = [
 
 export default function BankLoans() {
   const [showAdd, setShowAdd] = useState(false);
+  const [editingLoan, setEditingLoan] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
 
@@ -196,6 +197,9 @@ export default function BankLoans() {
                       <CheckCircle className="w-4 h-4" />
                     </Button>
                   )}
+                  <Button variant="ghost" size="icon" onClick={() => setEditingLoan(loan)} className="text-muted-foreground hover:text-foreground">
+                    <Pencil className="w-4 h-4" />
+                  </Button>
                   <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(loan.id)} className="text-muted-foreground hover:text-destructive">
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -212,6 +216,14 @@ export default function BankLoans() {
         title="Add Bank Loan"
         fields={fields}
         onSubmit={(data) => createMutation.mutateAsync(data)}
+      />
+      <AddFormDialog
+        open={!!editingLoan}
+        onOpenChange={(v) => { if (!v) setEditingLoan(null); }}
+        title="Edit Bank Loan"
+        fields={fields}
+        initialData={editingLoan || {}}
+        onSubmit={(data) => updateMutation.mutateAsync({ id: editingLoan.id, data })}
       />
     </div>
   );
