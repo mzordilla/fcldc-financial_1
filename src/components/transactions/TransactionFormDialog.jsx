@@ -19,6 +19,12 @@ export default function TransactionFormDialog({ open, onOpenChange, title, bankA
     enabled: open,
   });
 
+  const { data: projects = [] } = useQuery({
+    queryKey: ["projects"],
+    queryFn: () => base44.entities.Project.list("project_name", 100),
+    enabled: open,
+  });
+
   useEffect(() => {
     if (open) {
       setFormData(initialData || {});
@@ -169,11 +175,20 @@ export default function TransactionFormDialog({ open, onOpenChange, title, bankA
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Project Name</Label>
-              <Input
-                placeholder="e.g. Oak Street Renovation"
+              <Select
                 value={formData.project_name || ""}
-                onChange={(e) => set("project_name", e.target.value)}
-              />
+                onValueChange={(v) => set("project_name", v === "none" ? "" : v)}
+              >
+                <SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— None —</SelectItem>
+                  {projects.map(p => (
+                    <SelectItem key={p.id} value={p.project_name}>
+                      {p.project_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Date *</Label>
