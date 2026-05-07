@@ -16,11 +16,29 @@ export default function ProjectedCashOutflows({ items }) {
   });
 
   const chartData = months.map((m) => {
+    let remainingPrincipal = {};
+    
+    // Initialize remaining principal for each loan
+    activeLoans.forEach(loan => {
+      if (!remainingPrincipal[loan.id]) {
+        remainingPrincipal[loan.id] = (loan.principal_balance || 0) || ((loan.total_amount || 0) - (loan.amount_paid || 0));
+      }
+    });
+
     const totalOutflow = activeLoans.reduce((sum, loan) => {
       if (loan.due_date && new Date(loan.due_date) < new Date(m.year, m.monthNum + 1, 1)) {
         return sum;
       }
-      return sum + (loan.monthly_payment || 0);
+
+      const principal = remainingPrincipal[loan.id] || 0;
+      const monthlyInterest = principal > 0 ? (principal * (loan.interest_rate || 0) / 12 / 100) : 0;
+      const monthlyPayment = loan.monthly_payment || 0;
+      
+      // Update remaining principal for next month
+      const principalPortion = Math.max(0, monthlyPayment - monthlyInterest);
+      remainingPrincipal[loan.id] = Math.max(0, principal - principalPortion);
+
+      return sum + monthlyPayment + monthlyInterest;
     }, 0);
 
     return {
