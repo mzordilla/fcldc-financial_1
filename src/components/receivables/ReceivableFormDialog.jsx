@@ -89,7 +89,14 @@ export default function ReceivableFormDialog({ open, onOpenChange, title, fields
             <Label className="text-sm">Project <span className="text-destructive">*</span></Label>
             <Select
               value={formData.project_name || ""}
-              onValueChange={(val) => setFormData(prev => ({ ...prev, project_name: val }))}
+              onValueChange={(val) => {
+                const project = projects.find(p => p.project_name === val);
+                setFormData(prev => ({
+                  ...prev,
+                  project_name: val,
+                  client_name: project?.client_name || prev.client_name
+                }));
+              }}
             >
               <SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger>
               <SelectContent>
