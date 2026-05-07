@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, Briefcase, CheckCircle2, Pencil, Landmark, CreditCard } from "lucide-react";
+import { Plus, Trash2, Briefcase, CheckCircle2, Pencil } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -69,15 +69,7 @@ export default function Projects() {
     queryFn: () => base44.entities.Project.list("-created_date", 200)
   });
 
-  const { data: loans = [] } = useQuery({
-    queryKey: ["bankloans"],
-    queryFn: () => base44.entities.BankLoan.list("-created_date", 50),
-  });
 
-  const { data: debts = [] } = useQuery({
-    queryKey: ["debts"],
-    queryFn: () => base44.entities.Debt.list("-created_date", 50),
-  });
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Project.create(data),
@@ -96,18 +88,7 @@ export default function Projects() {
 
   const filtered = statusFilter === "all" ? projects : projects.filter((p) => p.contract_status === statusFilter);
 
-  // Bank section calculations
-  const activeLoans = loans.filter((l) => l.status === "active");
-  const totalLoanOutstanding = activeLoans.reduce((s, l) => s + (l.outstanding_balance ?? l.principal ?? 0), 0);
-  const totalMonthlyLoan = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
 
-  const activeDebts = debts.filter((d) => d.status === "active");
-  const totalDebtOutstanding = activeDebts.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
-  const totalMonthlyDebt = activeDebts.reduce((s, d) => s + (d.monthly_payment || 0), 0);
-
-  const totalObligations = totalLoanOutstanding + totalDebtOutstanding;
-  const totalMonthly = totalMonthlyLoan + totalMonthlyDebt;
-  const fmt = (v) => `$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
   const approvedProjects = projects.filter((p) => ["approved", "active"].includes(p.contract_status));
   const totalApprovedValue = approvedProjects.reduce((s, p) => s + (p.contract_amount || 0), 0);
@@ -226,116 +207,6 @@ export default function Projects() {
           </div>
         </div>
       }
-
-      {/* Bank Section */}
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
-        <div className="flex items-center gap-2 mb-1">
-          <Landmark className="w-5 h-5 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Bank & Debt Obligations</h3>
-        </div>
-
-        {/* Summary pills */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-3">
-            <p className="text-xs text-muted-foreground">Total Outstanding</p>
-            <p className="text-xl font-bold text-primary">{fmt(totalObligations)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{activeLoans.length} loans · {activeDebts.length} debts</p>
-          </div>
-          <div className="bg-chart-5/5 border border-chart-5/20 rounded-xl p-3">
-            <p className="text-xs text-muted-foreground">Monthly Obligations</p>
-            <p className="text-xl font-bold text-chart-5">{fmt(totalMonthly)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">per month total</p>
-          </div>
-          <div className="bg-muted/40 rounded-xl p-3">
-            <p className="text-xs text-muted-foreground">Bank Loans</p>
-            <p className="text-xl font-bold text-foreground">{fmt(totalLoanOutstanding)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{fmt(totalMonthlyLoan)}/mo</p>
-          </div>
-          <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-3">
-            <p className="text-xs text-muted-foreground">Other Debts</p>
-            <p className="text-xl font-bold text-destructive">{fmt(totalDebtOutstanding)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{fmt(totalMonthlyDebt)}/mo</p>
-          </div>
-        </div>
-
-        {/* Loans table */}
-        {activeLoans.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Landmark className="w-3.5 h-3.5 text-muted-foreground" />
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Bank Loans</p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-xs text-muted-foreground border-b border-border">
-                    <th className="text-left py-2 pr-4">Lender</th>
-                    <th className="text-left py-2 pr-4">Loan Name</th>
-                    <th className="text-left py-2 pr-4">Type</th>
-                    <th className="text-right py-2 pr-4">Principal</th>
-                    <th className="text-right py-2 pr-4">Outstanding</th>
-                    <th className="text-right py-2 pr-4">Monthly</th>
-                    <th className="text-right py-2">Rate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeLoans.map((l) => (
-                    <tr key={l.id} className="border-b border-border/50 last:border-0">
-                      <td className="py-2 pr-4 font-medium text-foreground">{l.lender}</td>
-                      <td className="py-2 pr-4 text-muted-foreground">{l.loan_name || "—"}</td>
-                      <td className="py-2 pr-4 text-muted-foreground capitalize">{(l.loan_type || "").replace(/_/g, " ")}</td>
-                      <td className="py-2 pr-4 text-right text-foreground">{fmt(l.principal || 0)}</td>
-                      <td className="py-2 pr-4 text-right font-semibold text-primary">{fmt(l.outstanding_balance ?? l.principal ?? 0)}</td>
-                      <td className="py-2 pr-4 text-right text-chart-5">{l.monthly_payment ? fmt(l.monthly_payment) : "—"}</td>
-                      <td className="py-2 text-right text-muted-foreground">{l.interest_rate ? `${l.interest_rate}%` : "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Debts table */}
-        {activeDebts.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <CreditCard className="w-3.5 h-3.5 text-muted-foreground" />
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Other Debts</p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-xs text-muted-foreground border-b border-border">
-                    <th className="text-left py-2 pr-4">Creditor</th>
-                    <th className="text-left py-2 pr-4">Description</th>
-                    <th className="text-left py-2 pr-4">Type</th>
-                    <th className="text-right py-2 pr-4">Total</th>
-                    <th className="text-right py-2 pr-4">Outstanding</th>
-                    <th className="text-right py-2">Monthly</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeDebts.map((d) => (
-                    <tr key={d.id} className="border-b border-border/50 last:border-0">
-                      <td className="py-2 pr-4 font-medium text-foreground">{d.creditor}</td>
-                      <td className="py-2 pr-4 text-muted-foreground">{d.description || "—"}</td>
-                      <td className="py-2 pr-4 text-muted-foreground capitalize">{(d.type || "").replace(/_/g, " ")}</td>
-                      <td className="py-2 pr-4 text-right text-foreground">{fmt(d.total_amount || 0)}</td>
-                      <td className="py-2 pr-4 text-right font-semibold text-destructive">{fmt((d.total_amount || 0) - (d.amount_paid || 0))}</td>
-                      <td className="py-2 text-right text-chart-5">{d.monthly_payment ? fmt(d.monthly_payment) : "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {activeLoans.length === 0 && activeDebts.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">No active loans or debts recorded</p>
-        )}
-      </div>
 
       {/* All Projects List */}
       <div className="grid gap-4">
