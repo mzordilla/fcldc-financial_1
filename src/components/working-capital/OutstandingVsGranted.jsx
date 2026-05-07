@@ -2,7 +2,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recha
 import { Card } from "@/components/ui/card";
 
 export default function OutstandingVsGranted({ items }) {
-  const items_filtered = items.filter(d => d.status === "active" && d.amount_granted);
+  const items_filtered = items.filter(d => d.status === "active" && d.amount_granted && d.type === "credit_line");
   
   const totalGranted = items_filtered.reduce((s, d) => s + (d.amount_granted || 0), 0);
   const totalOutstanding = items_filtered.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
