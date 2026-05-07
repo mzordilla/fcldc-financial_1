@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Plus, Trash2, Pencil, Users } from "lucide-react";
@@ -34,13 +34,19 @@ function PayeeFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
   const [form, setForm] = useState(defaultForm);
   const [saving, setSaving] = useState(false);
 
-  useState(() => {
-    if (open) setForm(initialData || defaultForm);
+  // Properly sync form when dialog opens with initialData
+  useEffect(() => {
+    if (open && initialData) {
+      setForm(initialData);
+    } else if (open) {
+      setForm(defaultForm);
+    }
   }, [open, initialData]);
 
-  // sync when initialData changes
   const handleOpen = (isOpen) => {
-    if (isOpen) setForm(initialData || defaultForm);
+    if (!isOpen) {
+      setForm(defaultForm);
+    }
     onOpenChange(isOpen);
   };
 
