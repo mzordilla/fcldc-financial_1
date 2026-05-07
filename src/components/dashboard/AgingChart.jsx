@@ -33,7 +33,7 @@ const CustomTooltip = ({ active, payload, label }) => {
     <div className="bg-card border border-border rounded-xl px-4 py-3 shadow-lg text-sm">
       <p className="font-semibold text-foreground mb-1">{label}</p>
       <p style={{ color: payload[0]?.fill }} className="font-medium">
-        ${Number(payload[0]?.value).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+        ₱{Number(payload[0]?.value).toLocaleString(undefined, { maximumFractionDigits: 0 })}
       </p>
     </div>
   );
@@ -47,7 +47,7 @@ function AgingPanel({ title, data, linkPath }) {
         <div>
           <h3 className="text-sm font-semibold text-foreground">{title} Aging</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Total outstanding: <span className="font-semibold text-foreground">${total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+            Total outstanding: <span className="font-semibold text-foreground">₱{total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
           </p>
         </div>
         <a href={linkPath} className="text-xs text-primary hover:underline">View all →</a>
@@ -60,7 +60,7 @@ function AgingPanel({ title, data, linkPath }) {
             <div className="h-1 rounded-full mb-1.5" style={{ backgroundColor: b.color }} />
             <p className="text-[10px] text-muted-foreground leading-tight">{b.label}</p>
             <p className={`text-xs font-bold mt-0.5 ${b.amount > 0 && b.label !== "Current" ? "text-destructive" : "text-foreground"}`}>
-              ${b.amount >= 1000 ? `${(b.amount / 1000).toFixed(1)}k` : b.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              ₱{b.amount >= 1000 ? `${(b.amount / 1000).toFixed(1)}k` : b.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </p>
           </div>
         ))}
@@ -71,7 +71,7 @@ function AgingPanel({ title, data, linkPath }) {
         <BarChart data={data} margin={{ top: 4, right: 0, left: -20, bottom: 0 }} barCategoryGap="35%">
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
           <XAxis dataKey="label" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-          <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+          <YAxis tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))" }} />
           <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
             {data.map((b) => <Cell key={b.label} fill={b.color} />)}

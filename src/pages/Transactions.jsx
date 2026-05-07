@@ -125,7 +125,7 @@ export default function Transactions() {
                   <td className={`px-4 py-3 text-right text-sm font-semibold ${
                     t.type === "income" ? "text-primary" : "text-destructive"
                   }`}>
-                    {t.type === "income" ? "+" : "-"}${(t.amount || 0).toLocaleString()}
+                    {t.type === "income" ? "+" : "-"}₱{(t.amount || 0).toLocaleString()}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">

@@ -2,7 +2,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from "recharts";
 
-const fmt = (v) => `$${Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+const fmt = (v) => `₱${Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -64,7 +64,7 @@ export default function DebtBalanceChart({ loans = [], debts = [] }) {
             tickLine={false}
           />
           <YAxis
-            tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+            tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}k`}
             tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
             axisLine={false}
             tickLine={false}

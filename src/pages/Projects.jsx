@@ -135,7 +135,7 @@ export default function Projects() {
         </div>
         <div className="bg-card border border-primary/20 rounded-2xl p-4">
           <p className="text-xs text-muted-foreground mb-1">Approved Contract Value</p>
-          <p className="text-2xl font-bold text-primary">${totalApprovedValue.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-primary">₱{totalApprovedValue.toLocaleString()}</p>
           <p className="text-xs text-muted-foreground mt-0.5">{approvedProjects.length} contracts</p>
         </div>
         <div className="bg-card border border-chart-2/20 rounded-2xl p-4">
@@ -183,10 +183,10 @@ export default function Projects() {
                           {p.contract_status}
                         </Badge>
                       </td>
-                      <td className="py-2.5 pr-4 text-right font-bold text-foreground">${(p.contract_amount || 0).toLocaleString()}</td>
-                      <td className="py-2.5 pr-4 text-right text-primary">${completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                      <td className="py-2.5 pr-4 text-right text-chart-3">${retentionAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                      <td className="py-2.5 text-right text-muted-foreground">${remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                      <td className="py-2.5 pr-4 text-right font-bold text-foreground">₱{(p.contract_amount || 0).toLocaleString()}</td>
+                      <td className="py-2.5 pr-4 text-right text-primary">₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                      <td className="py-2.5 pr-4 text-right text-chart-3">₱{retentionAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                      <td className="py-2.5 text-right text-muted-foreground">₱{remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                     </tr>);
 
               })}
@@ -194,15 +194,15 @@ export default function Projects() {
               <tfoot>
                 <tr className="border-t border-border">
                   <td colSpan={3} className="pt-3 text-sm font-semibold text-foreground">Total</td>
-                  <td className="pt-3 text-right font-bold text-primary">${totalApprovedValue.toLocaleString()}</td>
+                  <td className="pt-3 text-right font-bold text-primary">₱{totalApprovedValue.toLocaleString()}</td>
                   <td className="pt-3 text-right font-bold text-primary">
-                    ${approvedProjects.reduce((s, p) => s + (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    ₱{approvedProjects.reduce((s, p) => s + (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </td>
                   <td className="pt-3 text-right font-bold text-chart-3">
-                    ${approvedProjects.reduce((s, p) => {const c = (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100);return s + c * ((p.retention_rate || 0) / 100);}, 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    ₱{approvedProjects.reduce((s, p) => {const c = (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100);return s + c * ((p.retention_rate || 0) / 100);}, 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </td>
                   <td className="pt-3 text-right font-bold text-muted-foreground">
-                    ${approvedProjects.reduce((s, p) => s + (p.contract_amount || 0) * (1 - (p.completed_percentage || 0) / 100), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    ₱{approvedProjects.reduce((s, p) => s + (p.contract_amount || 0) * (1 - (p.completed_percentage || 0) / 100), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </td>
                 </tr>
               </tfoot>
@@ -262,19 +262,19 @@ export default function Projects() {
                   <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <div className="bg-muted/40 rounded-lg p-2">
                       <p className="text-xs text-muted-foreground">Contract</p>
-                      <p className="text-sm font-semibold text-foreground">${(p.contract_amount || 0).toLocaleString()}</p>
-                    </div>
-                    <div className="bg-primary/5 rounded-lg p-2">
+                      <p className="text-sm font-semibold text-foreground">₱{(p.contract_amount || 0).toLocaleString()}</p>
+                      </div>
+                      <div className="bg-primary/5 rounded-lg p-2">
                       <p className="text-xs text-muted-foreground">Completed</p>
-                      <p className="text-sm font-semibold text-primary">${completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                    </div>
-                    <div className="bg-chart-3/5 rounded-lg p-2">
+                      <p className="text-sm font-semibold text-primary">₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                      </div>
+                      <div className="bg-chart-3/5 rounded-lg p-2">
                       <p className="text-xs text-muted-foreground">Retention ({retentionRate}%)</p>
-                      <p className="text-sm font-semibold text-chart-3">${retentionAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                    </div>
-                    <div className="bg-muted/40 rounded-lg p-2">
+                      <p className="text-sm font-semibold text-chart-3">₱{retentionAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                      </div>
+                      <div className="bg-muted/40 rounded-lg p-2">
                       <p className="text-xs text-muted-foreground">Balance</p>
-                      <p className="text-sm font-semibold text-foreground">${remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                      <p className="text-sm font-semibold text-foreground">₱{remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                     </div>
                   </div>
                 </div>

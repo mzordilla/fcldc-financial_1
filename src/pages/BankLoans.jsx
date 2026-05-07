@@ -97,7 +97,7 @@ export default function BankLoans() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Bank Loans</h1>
           <p className="text-muted-foreground mt-1">
-            ${totalOutstanding.toLocaleString()} outstanding · ${totalMonthly.toLocaleString()}/mo repayments
+            ₱{totalOutstanding.toLocaleString()} outstanding · ₱{totalMonthly.toLocaleString()}/mo repayments
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -147,11 +147,11 @@ export default function BankLoans() {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
                     <div className="bg-muted/50 rounded-xl p-3">
                       <p className="text-xs text-muted-foreground mb-0.5">Principal</p>
-                      <p className="font-semibold text-sm">${(loan.principal || 0).toLocaleString()}</p>
+                      <p className="font-semibold text-sm">₱{(loan.principal || 0).toLocaleString()}</p>
                     </div>
                     <div className="bg-muted/50 rounded-xl p-3">
                       <p className="text-xs text-muted-foreground mb-0.5">Balance</p>
-                      <p className="font-semibold text-sm text-destructive">${balance.toLocaleString()}</p>
+                      <p className="font-semibold text-sm text-destructive">₱{balance.toLocaleString()}</p>
                     </div>
                     {loan.interest_rate != null && (
                       <div className="bg-muted/50 rounded-xl p-3">
@@ -164,7 +164,7 @@ export default function BankLoans() {
                     {loan.monthly_payment != null && (
                       <div className="bg-muted/50 rounded-xl p-3">
                         <p className="text-xs text-muted-foreground mb-0.5">Monthly</p>
-                        <p className="font-semibold text-sm">${(loan.monthly_payment || 0).toLocaleString()}</p>
+                        <p className="font-semibold text-sm">₱{(loan.monthly_payment || 0).toLocaleString()}</p>
                       </div>
                     )}
                   </div>

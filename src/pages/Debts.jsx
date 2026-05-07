@@ -86,7 +86,7 @@ export default function Debts() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Debts & Liabilities</h1>
           <p className="text-muted-foreground mt-1">
-            ${totalActive.toLocaleString()} outstanding · ${monthlyPayments.toLocaleString()}/mo payments
+            ₱{totalActive.toLocaleString()} outstanding · ₱{monthlyPayments.toLocaleString()}/mo payments
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -127,18 +127,18 @@ export default function Debts() {
                   <p className="text-sm text-muted-foreground">
                     {d.description || ""}
                     {d.interest_rate ? ` · ${d.interest_rate}% APR` : ""}
-                    {d.monthly_payment ? ` · $${d.monthly_payment.toLocaleString()}/mo` : ""}
+                    {d.monthly_payment ? ` · ₱${d.monthly_payment.toLocaleString()}/mo` : ""}
                     {d.due_date && ` · Due ${format(new Date(d.due_date), "MMM yyyy")}`}
                   </p>
                   <div className="mt-3 flex items-center gap-3">
                     <Progress value={paidPct} className="h-2 flex-1" />
                     <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      ${(d.amount_paid || 0).toLocaleString()} / ${(d.total_amount || 0).toLocaleString()}
+                      ₱{(d.amount_paid || 0).toLocaleString()} / ₱{(d.total_amount || 0).toLocaleString()}
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-                  <p className="text-lg font-bold text-foreground">${remaining.toLocaleString()}</p>
+                  <p className="text-lg font-bold text-foreground">₱{remaining.toLocaleString()}</p>
                   <div className="flex gap-1">
                     {d.status === "active" && (
                       <Button variant="ghost" size="icon" onClick={() => markPaidOff(d)} className="text-primary hover:text-primary">

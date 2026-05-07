@@ -49,7 +49,7 @@ function AgingSummary({ items }) {
             <div className={`h-1.5 rounded-full ${colors[i]} mb-2 opacity-80`} />
             <p className="text-xs text-muted-foreground">{b.label}</p>
             <p className={`text-sm font-bold mt-0.5 ${i >= 2 && b.amount > 0 ? "text-destructive" : "text-foreground"}`}>
-              ${b.amount.toLocaleString()}
+              ₱{b.amount.toLocaleString()}
             </p>
           </div>
         ))}
@@ -120,7 +120,7 @@ export default function Receivables() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Receivables</h1>
           <p className="text-muted-foreground mt-1">
-            ${totalOutstanding.toLocaleString()} outstanding · {overdueCount} overdue
+            ₱{totalOutstanding.toLocaleString()} outstanding · {overdueCount} overdue
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -167,12 +167,12 @@ export default function Receivables() {
                   <div className="mt-3 flex items-center gap-3">
                     <Progress value={paidPct} className="h-2 flex-1" />
                     <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      ${(r.amount_paid || 0).toLocaleString()} / ${(r.amount || 0).toLocaleString()}
+                      ₱{(r.amount_paid || 0).toLocaleString()} / ₱{(r.amount || 0).toLocaleString()}
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-                  <p className="text-lg font-bold text-foreground">${remaining.toLocaleString()}</p>
+                  <p className="text-lg font-bold text-foreground">₱{remaining.toLocaleString()}</p>
                   <div className="flex gap-1">
                     {r.status !== "paid" && (
                       <Button variant="ghost" size="icon" onClick={() => markPaid(r)} className="text-primary hover:text-primary">

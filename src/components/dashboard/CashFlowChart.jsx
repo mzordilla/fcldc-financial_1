@@ -30,7 +30,7 @@ function buildChartData(transactions) {
   return months;
 }
 
-const formatCurrency = (val) => `$${(val / 1000).toFixed(0)}k`;
+const formatCurrency = (val) => `₱${(val / 1000).toFixed(0)}k`;
 
 export default function CashFlowChart({ transactions }) {
   const data = buildChartData(transactions);
@@ -71,7 +71,7 @@ export default function CashFlowChart({ transactions }) {
             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(220, 9%, 46%)' }} tickFormatter={formatCurrency} />
             <Tooltip
               contentStyle={{ borderRadius: 12, border: '1px solid hsl(220, 13%, 91%)', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
-              formatter={(value) => [`$${value.toLocaleString()}`, undefined]}
+              formatter={(value) => [`₱${value.toLocaleString()}`, undefined]}
             />
             <Area type="monotone" dataKey="income" stroke="hsl(160, 84%, 39%)" fill="url(#incomeGrad)" strokeWidth={2.5} />
             <Area type="monotone" dataKey="expenses" stroke="hsl(0, 84%, 60%)" fill="url(#expenseGrad)" strokeWidth={2.5} />

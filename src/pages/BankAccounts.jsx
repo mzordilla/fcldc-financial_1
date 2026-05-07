@@ -40,7 +40,7 @@ const typeColors = {
 };
 
 const fmt = (v) =>
-  `$${Math.abs(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  `₱${Math.abs(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function BankAccounts() {
   const [showAdd, setShowAdd] = useState(false);

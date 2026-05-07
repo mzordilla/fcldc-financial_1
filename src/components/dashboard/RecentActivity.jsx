@@ -36,7 +36,7 @@ export default function RecentActivity({ transactions }) {
             <span className={`text-sm font-semibold ${
               t.type === "income" ? "text-primary" : "text-destructive"
             }`}>
-              {t.type === "income" ? "+" : "-"}${(t.amount || 0).toLocaleString()}
+              {t.type === "income" ? "+" : "-"}₱{(t.amount || 0).toLocaleString()}
             </span>
           </div>
         ))}

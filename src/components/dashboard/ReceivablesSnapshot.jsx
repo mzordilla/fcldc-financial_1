@@ -44,7 +44,7 @@ export default function ReceivablesSnapshot({ receivables }) {
               <Badge variant="outline" className={`text-xs ${statusStyles[r.status] || ""}`}>
                 {(r.status || "outstanding").replace(/_/g, " ")}
               </Badge>
-              <span className="text-sm font-semibold">${((r.amount || 0) - (r.amount_paid || 0)).toLocaleString()}</span>
+              <span className="text-sm font-semibold">₱{((r.amount || 0) - (r.amount_paid || 0)).toLocaleString()}</span>
             </div>
           </div>
         ))}

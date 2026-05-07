@@ -1,7 +1,7 @@
 import { Building2, TrendingDown, TrendingUp, Minus } from "lucide-react";
 
 const fmt = (v) =>
-  `$${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  `₱${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 function DeductionRow({ label, amount, color }) {
   return (

@@ -42,7 +42,7 @@ export default function Dashboard() {
   const totalReceivables = receivables.filter(r => r.status !== "paid").reduce((s, r) => s + ((r.amount || 0) - (r.amount_paid || 0)), 0);
   const totalDebt = debts.filter(d => d.status === "active").reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
 
-  const fmt = (v) => `$${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  const fmt = (v) => `₱${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">

@@ -45,10 +45,10 @@ export default function IncomeByCategory({ transactions }) {
           <BarChart data={data} margin={{ top: 5, right: 5, left: -15, bottom: 0 }} barSize={32}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(220, 9%, 46%)' }} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(220, 9%, 46%)' }} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
+            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(220, 9%, 46%)' }} tickFormatter={(v) => `₱${(v/1000).toFixed(0)}k`} />
             <Tooltip
               contentStyle={{ borderRadius: 12, border: '1px solid hsl(220, 13%, 91%)', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
-              formatter={(value) => [`$${value.toLocaleString()}`, "Amount"]}
+              formatter={(value) => [`₱${value.toLocaleString()}`, "Amount"]}
             />
             <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
               {data.map((_, index) => (
