@@ -221,9 +221,30 @@ export default function WorkingCapitalLoans() {
               byCreditor[loan.creditor].push(loan);
             });
 
+            // Calculate totals for this type
+            const typeTotalAmount = typeLoans.reduce((s, d) => s + (d.total_amount || 0), 0);
+            const typeOutstanding = typeLoans.reduce((s, d) => s + Math.max(0, (d.total_amount || 0) - (d.amount_paid || 0)), 0);
+            const typeMonthlyPayment = typeLoans.reduce((s, d) => s + (d.monthly_payment || 0), 0);
+
             return (
               <div key={type} className="space-y-4">
-                <h2 className="text-xl font-bold text-foreground">{typeLabels[type]}</h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-foreground">{typeLabels[type]}</h2>
+                  <div className="flex gap-6 text-sm">
+                    <div className="text-right">
+                      <p className="text-muted-foreground text-xs">Total Amount</p>
+                      <p className="font-semibold">₱{typeTotalAmount.toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-muted-foreground text-xs">Outstanding</p>
+                      <p className="font-semibold text-destructive">₱{typeOutstanding.toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-muted-foreground text-xs">Monthly Payment</p>
+                      <p className="font-semibold">₱{typeMonthlyPayment.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
                 <div className="space-y-4">
                   {Object.keys(byCreditor).map(creditor => (
                     <CreditorLoansTable
