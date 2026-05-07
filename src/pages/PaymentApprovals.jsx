@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -106,6 +106,7 @@ function ApprovalDialog({ pr, open, onOpenChange, onDecision }) {
 
 export default function PaymentApprovals() {
   const [showAdd, setShowAdd] = useState(false);
+  const [prefillData, setPrefillData] = useState(null);
   const [editingPR, setEditingPR] = useState(null);
   const [reviewPR, setReviewPR] = useState(null);
   const [markingPaidPR, setMarkingPaidPR] = useState(null);
@@ -115,6 +116,11 @@ export default function PaymentApprovals() {
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["payment_requests"],
     queryFn: () => base44.entities.PaymentRequest.list("-created_date", 100),
+  });
+
+  const { data: approvedPOs = [] } = useQuery({
+    queryKey: ["approved_pos"],
+    queryFn: () => base44.entities.PurchaseOrder.filter({ approval_status: "approved" }, "-created_date", 100),
   });
 
   const createMutation = useMutation({
@@ -134,6 +140,25 @@ export default function PaymentApprovals() {
 
   const markPaid = async (id, data) => {
     await updateMutation.mutateAsync({ id, data });
+  };
+
+  const convertPOtoPaymentRequest = (po) => {
+    const prData = {
+      request_number: `PR-PO-${po.po_number || po.id.slice(-6).toUpperCase()}`,
+      payee: po.supplier_name,
+      description: po.description,
+      category: "supplier_invoice",
+      payment_method: "bank_transfer",
+      invoice_number: po.po_number || "",
+      invoice_date: po.requested_date || "",
+      due_date: po.required_date || "",
+      requested_by: po.requested_by || "",
+      supporting_docs: `PO: ${po.po_number || ""}`,
+      project_allocations: po.project_name ? [{ project_name: po.project_name, amount: po.amount }] : [],
+      amount: po.amount,
+    };
+    setShowAdd(true);
+    setPrefillData(prData);
   };
 
   const handleDecision = (id, status, notes, approvedBy) => {
@@ -166,7 +191,7 @@ export default function PaymentApprovals() {
               <SelectItem value="rejected">Rejected</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={() => setShowAdd(true)}>
+          <Button onClick={() => { setPrefillData(null); setShowAdd(true); }}>
             <Plus className="w-4 h-4 mr-2" /> New Request
           </Button>
         </div>
@@ -193,6 +218,44 @@ export default function PaymentApprovals() {
           </div>
         )}
       </div>
+
+      {/* Approved Purchase Orders */}
+      {approvedPOs.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <ShoppingCart className="w-4 h-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Approved Purchase Orders — Ready to Pay</h2>
+          </div>
+          <div className="grid gap-3">
+            {approvedPOs.map(po => (
+              <div key={po.id} className="bg-card border border-border rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="font-semibold text-foreground">{po.supplier_name}</span>
+                    {po.po_number && <span className="text-xs font-mono text-muted-foreground">{po.po_number}</span>}
+                    {po.priority && po.priority !== "normal" && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${po.priority === "urgent" ? "bg-destructive/10 text-destructive border-destructive/20" : "bg-chart-3/10 text-chart-3 border-chart-3/20"}`}>
+                        {po.priority}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{po.description}</p>
+                  <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
+                    {po.project_name && <span>Project: {po.project_name}</span>}
+                    {po.required_date && <span>Needed by: {format(new Date(po.required_date), "MMM d, yyyy")}</span>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 sm:flex-col sm:items-end">
+                  <p className="text-lg font-bold text-foreground">₱{(po.amount || 0).toLocaleString()}</p>
+                  <Button size="sm" variant="outline" onClick={() => convertPOtoPaymentRequest(po)}>
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Create Payment Request
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-4">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
@@ -277,7 +340,7 @@ export default function PaymentApprovals() {
         })}
       </div>
 
-      <PaymentRequestFormDialog open={showAdd} onOpenChange={setShowAdd} title="New Payment Request" onSubmit={(data) => createMutation.mutateAsync(data)} />
+      <PaymentRequestFormDialog open={showAdd} onOpenChange={(v) => { setShowAdd(v); if (!v) setPrefillData(null); }} title="New Payment Request" initialData={prefillData} onSubmit={(data) => createMutation.mutateAsync(data)} />
       <PaymentRequestFormDialog open={!!editingPR} onOpenChange={(v) => { if (!v) setEditingPR(null); }} title="Edit Payment Request" initialData={editingPR || {}} onSubmit={(data) => updateMutation.mutateAsync({ id: editingPR.id, data })} />
       {reviewPR && <ApprovalDialog pr={reviewPR} open={!!reviewPR} onOpenChange={(v) => !v && setReviewPR(null)} onDecision={handleDecision} />}
       {markingPaidPR && (
