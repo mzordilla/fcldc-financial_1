@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, Briefcase, CheckCircle2, Pencil } from "lucide-react";
+import { Plus, Trash2, Briefcase, CheckCircle2, Pencil, ExternalLink } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +62,7 @@ const fields = [
 
 
 export default function Projects() {
+  const navigate = useNavigate();
   const [showAdd, setShowAdd] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -177,7 +179,7 @@ export default function Projects() {
                 const netReceivable = completedAmt - retentionAmt;
                 return (
                   <tr key={p.id} className="border-b border-border/50 last:border-0">
-                      <td className="py-2.5 pr-4 font-medium text-foreground">{p.project_name}</td>
+                      <td className="py-2.5 pr-4 font-medium"><button onClick={() => navigate(`/projects/${p.id}`)} className="text-primary hover:underline flex items-center gap-1">{p.project_name} <ExternalLink className="w-3 h-3" /></button></td>
                       <td className="py-2.5 pr-4 text-muted-foreground">{p.client_name}</td>
                       <td className="py-2.5 pr-4">
                         <Badge variant="outline" className={`text-xs ${contractStatusStyles[p.contract_status]}`}>
@@ -233,7 +235,7 @@ export default function Projects() {
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 flex-wrap mb-1">
-                    <h3 className="font-semibold text-foreground">{p.project_name}</h3>
+                    <button onClick={() => navigate(`/projects/${p.id}`)} className="text-primary hover:underline font-semibold text-foreground flex items-center gap-1">{p.project_name} <ExternalLink className="w-3 h-3" /></button>
                     {p.project_number && <span className="text-xs text-muted-foreground font-mono">{p.project_number}</span>}
                     <Badge variant="outline" className={`text-xs ${contractStatusStyles[p.contract_status] || ""}`}>
                       {(p.contract_status || "pending").replace(/_/g, " ")}
