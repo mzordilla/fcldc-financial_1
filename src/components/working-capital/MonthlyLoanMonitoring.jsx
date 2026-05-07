@@ -1,7 +1,4 @@
-import { useState } from "react";
-import { format, startOfMonth, endOfMonth, eachMonthOfInterval } from "date-fns";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { format, eachMonthOfInterval } from "date-fns";
 
 export default function MonthlyLoanMonitoring({ loan }) {
   if (!loan.loan_availed || !loan.due_date) return null;
@@ -15,52 +12,50 @@ export default function MonthlyLoanMonitoring({ loan }) {
   const principalPerMonth = months.length > 0 ? (loan.total_amount || 0) / months.length : 0;
   const interestPerMonth = loan.interest_accrued_1yr ? (loan.interest_accrued_1yr || 0) / 12 : 0;
 
+  const rows = [
+    { label: "Principal", values: [] },
+    { label: "Interest", values: [] },
+    { label: "Payment", values: [] },
+  ];
+
   let runningPrincipal = loan.principal_balance || loan.total_amount || 0;
-  let runningInterest = 0;
+
+  months.forEach(() => {
+    const principal = Math.min(principalPerMonth, runningPrincipal);
+    runningPrincipal = Math.max(0, runningPrincipal - principal);
+    const interest = interestPerMonth;
+
+    rows[0].values.push(principal);
+    rows[1].values.push(interest);
+    rows[2].values.push(monthlyPayment || principal + interest);
+  });
 
   return (
-    <div className="mt-4 space-y-3">
-      <h4 className="text-sm font-semibold text-foreground">Monthly Breakdown</h4>
-      <div className="max-h-64 overflow-y-auto">
-        <table className="w-full text-xs">
-          <thead className="sticky top-0 bg-secondary">
-            <tr>
-              <th className="text-left px-2 py-2 font-medium">Month</th>
-              <th className="text-right px-2 py-2 font-medium">Principal</th>
-              <th className="text-right px-2 py-2 font-medium">Interest</th>
-              <th className="text-right px-2 py-2 font-medium">Payment</th>
-              <th className="text-right px-2 py-2 font-medium">Balance</th>
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs border-collapse">
+        <thead>
+          <tr>
+            <th className="text-left px-3 py-2 bg-secondary font-semibold border border-border"></th>
+            {months.map((month, idx) => (
+              <th key={idx} className="text-right px-3 py-2 bg-secondary font-semibold border border-border whitespace-nowrap">
+                {format(month, "MMM")}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, rowIdx) => (
+            <tr key={rowIdx}>
+              <td className="text-left px-3 py-2 bg-muted/50 font-medium border border-border">{row.label}</td>
+              {row.values.map((value, colIdx) => (
+                <td key={colIdx} className="text-right px-3 py-2 border border-border">
+                  ₱{value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </td>
+              ))}
             </tr>
-          </thead>
-          <tbody>
-            {months.map((month, idx) => {
-              const principal = Math.min(principalPerMonth, runningPrincipal);
-              runningPrincipal = Math.max(0, runningPrincipal - principal);
-              const interest = interestPerMonth;
-              runningInterest += interest;
-              const balance = runningPrincipal;
-
-              return (
-                <tr key={idx} className="border-b border-border hover:bg-secondary/50">
-                  <td className="px-2 py-2">{format(month, "MMM yyyy")}</td>
-                  <td className="text-right px-2 py-2 text-muted-foreground">
-                    ₱{principal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </td>
-                  <td className="text-right px-2 py-2 text-muted-foreground">
-                    ₱{interest.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </td>
-                  <td className="text-right px-2 py-2 font-medium">
-                    ₱{(monthlyPayment || principal + interest).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </td>
-                  <td className="text-right px-2 py-2 font-semibold">
-                    ₱{balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
