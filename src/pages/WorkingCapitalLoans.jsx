@@ -6,8 +6,8 @@ import { Plus, Trash2, CheckCircle, Pencil, ChevronDown, ChevronUp } from "lucid
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import MonthlyLoanMonitoring from "../components/working-capital/MonthlyLoanMonitoring";
 import OutstandingVsGranted from "../components/working-capital/OutstandingVsGranted";
@@ -129,56 +129,71 @@ export default function WorkingCapitalLoans() {
 
       <OutstandingVsGranted items={items} />
 
-      <div className="grid gap-4">
-        {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
-        {!isLoading && filtered.length === 0 && <p className="text-center py-12 text-muted-foreground">No working capital loans recorded</p>}
-        {filtered.map((d) => {
-          const remaining = (d.total_amount || 0) - (d.amount_paid || 0);
-          const paidPct = d.total_amount ? Math.min(((d.amount_paid || 0) / d.total_amount) * 100, 100) : 0;
-          const isExpanded = expandedId === d.id;
-          return (
-            <div key={d.id} className="bg-card rounded-2xl border border-border hover:shadow-md transition-shadow">
-              <div className="p-5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1 flex-wrap">
-                      <h3 className="font-semibold text-foreground">{d.creditor}</h3>
-                      <Badge variant="outline" className={`text-xs ${statusStyles[d.status] || ""}`}>
-                        {(d.status || "active").replace(/_/g, " ")}
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs">
-                        {typeLabels[d.type] || d.type}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {d.description || ""}
-                      {d.interest_rate ? ` · ${d.interest_rate}% APR` : ""}
-                      {d.interest_accrued_1yr ? ` · ₱${d.interest_accrued_1yr.toLocaleString()} 1yr interest` : ""}
-                      {d.monthly_payment ? ` · ₱${d.monthly_payment.toLocaleString()}/mo` : ""}
-                      {d.due_date && ` · Due ${format(new Date(d.due_date), "MMM yyyy")}`}
-                    </p>
-                    {d.principal_balance !== undefined && (
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        Principal Balance: ₱{(d.principal_balance || 0).toLocaleString()}
-                      </div>
-                    )}
-                    {d.amount_granted && (
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        Utilization: ₱{(d.amount_availed || 0).toLocaleString()} / ₱{d.amount_granted.toLocaleString()} ({d.amount_granted ? Math.round(((d.amount_availed || 0) / d.amount_granted) * 100) : 0}%)
-                      </div>
-                    )}
-                    <div className="mt-3 flex items-center gap-3">
-                      <Progress value={paidPct} className="h-2 flex-1" />
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        ₱{(d.amount_paid || 0).toLocaleString()} / ₱{(d.total_amount || 0).toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-                    <p className="text-lg font-bold text-foreground">₱{remaining.toLocaleString()}</p>
-                    <div className="flex gap-1">
+      <div className="bg-card rounded-lg border border-border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-secondary/50 border-border hover:bg-secondary/50">
+              <TableHead className="font-semibold">Creditor</TableHead>
+              <TableHead className="font-semibold">Type</TableHead>
+              <TableHead className="text-right font-semibold">Total Amount</TableHead>
+              <TableHead className="text-right font-semibold">Paid</TableHead>
+              <TableHead className="text-right font-semibold">Outstanding</TableHead>
+              <TableHead className="text-right font-semibold">Rate</TableHead>
+              <TableHead className="text-right font-semibold">Monthly</TableHead>
+              <TableHead className="text-center font-semibold">Status</TableHead>
+              <TableHead className="text-center font-semibold w-24">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading && (
+              <TableRow>
+                <TableCell colSpan="9" className="text-center py-12 text-muted-foreground">
+                  Loading...
+                </TableCell>
+              </TableRow>
+            )}
+            {!isLoading && filtered.length === 0 && (
+              <TableRow>
+                <TableCell colSpan="9" className="text-center py-12 text-muted-foreground">
+                  No working capital loans recorded
+                </TableCell>
+              </TableRow>
+            )}
+            {filtered.map((d) => {
+              const remaining = (d.total_amount || 0) - (d.amount_paid || 0);
+              const isExpanded = expandedId === d.id;
+              return (
+                <TableRow key={d.id} className="border-border hover:bg-secondary/30 transition-colors">
+                  <TableCell className="font-medium text-foreground">{d.creditor}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="text-xs">
+                      {typeLabels[d.type] || d.type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right text-sm">
+                    ₱{(d.total_amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </TableCell>
+                  <TableCell className="text-right text-sm">
+                    ₱{(d.amount_paid || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </TableCell>
+                  <TableCell className="text-right text-sm font-semibold text-foreground">
+                    ₱{remaining.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </TableCell>
+                  <TableCell className="text-right text-sm">
+                    {d.interest_rate ? `${d.interest_rate}%` : "-"}
+                  </TableCell>
+                  <TableCell className="text-right text-sm">
+                    {d.monthly_payment ? `₱${d.monthly_payment.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "-"}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant="outline" className={`text-xs ${statusStyles[d.status] || ""}`}>
+                      {(d.status || "active").replace(/_/g, " ")}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-1">
                       {d.status === "active" && (
-                        <Button variant="ghost" size="icon" onClick={() => markPaidOff(d)} className="text-primary hover:text-primary">
+                        <Button variant="ghost" size="icon" onClick={() => markPaidOff(d)} className="h-8 w-8 text-primary hover:text-primary" title="Mark as Paid Off">
                           <CheckCircle className="w-4 h-4" />
                         </Button>
                       )}
@@ -186,28 +201,29 @@ export default function WorkingCapitalLoans() {
                         variant="ghost"
                         size="icon"
                         onClick={() => setExpandedId(isExpanded ? null : d.id)}
-                        className="text-muted-foreground hover:text-foreground"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        title={isExpanded ? "Collapse" : "Expand"}
                       >
                         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setEditingItem(d)} className="text-muted-foreground hover:text-foreground">
+                      <Button variant="ghost" size="icon" onClick={() => setEditingItem(d)} className="h-8 w-8 text-muted-foreground hover:text-foreground" title="Edit">
                         <Pencil className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeleteItem(d)} className="text-muted-foreground hover:text-destructive">
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteItem(d)} className="h-8 w-8 text-muted-foreground hover:text-destructive" title="Delete">
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
-                  </div>
-                </div>
-              </div>
-              {isExpanded && (
-                <div className="border-t border-border px-5 py-4 bg-secondary/30">
-                  <MonthlyLoanMonitoring loan={d} />
-                </div>
-              )}
-            </div>
-          );
-        })}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+        {!isLoading && filtered.length > 0 && expandedId && (
+          <div className="border-t border-border px-6 py-4 bg-secondary/30">
+            <MonthlyLoanMonitoring loan={filtered.find(d => d.id === expandedId)} />
+          </div>
+        )}
       </div>
 
       <AddFormDialog
