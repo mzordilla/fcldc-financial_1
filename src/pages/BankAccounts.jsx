@@ -8,56 +8,56 @@ import { Badge } from "@/components/ui/badge";
 import AddFormDialog from "../components/shared/AddFormDialog";
 
 const ACCOUNT_TYPES = [
-  { value: "checking", label: "Checking" },
-  { value: "savings", label: "Savings" },
-  { value: "money_market", label: "Money Market" },
-  { value: "line_of_credit", label: "Line of Credit" },
-  { value: "other", label: "Other" },
-];
+{ value: "checking", label: "Checking" },
+{ value: "savings", label: "Savings" },
+{ value: "money_market", label: "Money Market" },
+{ value: "line_of_credit", label: "Line of Credit" },
+{ value: "other", label: "Other" }];
+
 
 const STATUS_OPTIONS = [
-  { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
-  { value: "closed", label: "Closed" },
-];
+{ value: "active", label: "Active" },
+{ value: "inactive", label: "Inactive" },
+{ value: "closed", label: "Closed" }];
+
 
 const fields = [
-  { name: "bank_name", label: "Bank Name", required: true, placeholder: "e.g. Chase, Wells Fargo" },
-  { name: "account_name", label: "Account Name / Nickname", required: true, placeholder: "e.g. Main Operating Account" },
-  { name: "account_number", label: "Account # (last 4 digits)", placeholder: "e.g. 4521" },
-  { name: "account_type", label: "Account Type", type: "select", options: ACCOUNT_TYPES },
-  { name: "current_balance", label: "Current Balance (₱)", type: "number", required: true, placeholder: "0.00" },
-  { name: "currency", label: "Currency", placeholder: "PHP" },
-  { name: "status", label: "Status", type: "select", options: STATUS_OPTIONS },
-  { name: "notes", label: "Notes", placeholder: "Optional notes" },
-];
+{ name: "bank_name", label: "Bank Name", required: true, placeholder: "e.g. Chase, Wells Fargo" },
+{ name: "account_name", label: "Account Name / Nickname", required: true, placeholder: "e.g. Main Operating Account" },
+{ name: "account_number", label: "Account # (last 4 digits)", placeholder: "e.g. 4521" },
+{ name: "account_type", label: "Account Type", type: "select", options: ACCOUNT_TYPES },
+{ name: "current_balance", label: "Current Balance (₱)", type: "number", required: true, placeholder: "0.00" },
+{ name: "currency", label: "Currency", placeholder: "PHP" },
+{ name: "status", label: "Status", type: "select", options: STATUS_OPTIONS },
+{ name: "notes", label: "Notes", placeholder: "Optional notes" }];
+
 
 const typeColors = {
   checking: "bg-primary/10 text-primary",
   savings: "bg-chart-2/10 text-chart-2",
   money_market: "bg-chart-3/10 text-chart-3",
   line_of_credit: "bg-destructive/10 text-destructive",
-  other: "bg-muted text-muted-foreground",
+  other: "bg-muted text-muted-foreground"
 };
 
 const fmt = (v) =>
-  `₱${Math.abs(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+`₱${Math.abs(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 function AccountTransactions({ accountId, transactions }) {
   const [expanded, setExpanded] = useState(false);
-  const linked = transactions
-    .filter(t => t.bank_account_id === accountId)
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, expanded ? 50 : 5);
+  const linked = transactions.
+  filter((t) => t.bank_account_id === accountId).
+  sort((a, b) => new Date(b.date) - new Date(a.date)).
+  slice(0, expanded ? 50 : 5);
 
-  const allLinked = transactions.filter(t => t.bank_account_id === accountId);
-  const totalIncome = allLinked.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
-  const totalExpense = allLinked.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
+  const allLinked = transactions.filter((t) => t.bank_account_id === accountId);
+  const totalIncome = allLinked.filter((t) => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
+  const totalExpense = allLinked.filter((t) => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
 
   if (allLinked.length === 0) {
     return (
-      <p className="text-xs text-muted-foreground italic">No transactions linked to this account yet.</p>
-    );
+      <p className="text-xs text-muted-foreground italic">No transactions linked to this account yet.</p>);
+
   }
 
   return (
@@ -71,14 +71,14 @@ function AccountTransactions({ accountId, transactions }) {
 
       {/* Transaction rows */}
       <div className="space-y-1">
-        {linked.map((t) => (
-          <div key={t.id} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
+        {linked.map((t) =>
+        <div key={t.id} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
             <div className="flex items-center gap-2 min-w-0">
               <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${t.type === "income" ? "bg-primary/10" : "bg-destructive/10"}`}>
-                {t.type === "income"
-                  ? <ArrowUpRight className="w-3 h-3 text-primary" />
-                  : <ArrowDownRight className="w-3 h-3 text-destructive" />
-                }
+                {t.type === "income" ?
+              <ArrowUpRight className="w-3 h-3 text-primary" /> :
+              <ArrowDownRight className="w-3 h-3 text-destructive" />
+              }
               </div>
               <span className="text-xs text-foreground truncate">{t.description}</span>
             </div>
@@ -89,20 +89,20 @@ function AccountTransactions({ accountId, transactions }) {
               </span>
             </div>
           </div>
-        ))}
+        )}
       </div>
 
-      {allLinked.length > 5 && (
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-1 text-xs text-primary hover:underline"
-        >
+      {allLinked.length > 5 &&
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-1 text-xs text-primary hover:underline">
+        
           {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           {expanded ? "Show less" : `Show all ${allLinked.length} transactions`}
         </button>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
 
 export default function BankAccounts() {
@@ -112,27 +112,27 @@ export default function BankAccounts() {
 
   const { data: accounts = [], isLoading } = useQuery({
     queryKey: ["bankaccounts"],
-    queryFn: () => base44.entities.BankAccount.list("-created_date", 100),
+    queryFn: () => base44.entities.BankAccount.list("-created_date", 100)
   });
 
   const { data: transactions = [] } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 500),
+    queryFn: () => base44.entities.Transaction.list("-date", 500)
   });
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.BankAccount.create(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bankaccounts"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bankaccounts"] })
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.BankAccount.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bankaccounts"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bankaccounts"] })
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.BankAccount.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bankaccounts"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bankaccounts"] })
   });
 
   const activeAccounts = accounts.filter((a) => a.status !== "closed");
@@ -189,24 +189,24 @@ export default function BankAccounts() {
       </div>
 
       {/* Account Cards */}
-      {isLoading ? (
-        <div className="text-center py-16 text-muted-foreground">Loading...</div>
-      ) : accounts.length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground">
+      {isLoading ?
+      <div className="text-center py-16 text-muted-foreground">Loading...</div> :
+      accounts.length === 0 ?
+      <div className="text-center py-16 text-muted-foreground">
           <Building2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p className="font-medium">No bank accounts added yet</p>
           <p className="text-sm mt-1">Add your first account to start tracking balances</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        </div> :
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {accounts.map((account) => {
-            const bal = account.current_balance ?? 0;
-            const isNeg = bal < 0;
-            return (
-              <div
-                key={account.id}
-                className="bg-card rounded-2xl border border-border p-5 space-y-4 hover:shadow-md transition-shadow"
-              >
+          const bal = account.current_balance ?? 0;
+          const isNeg = bal < 0;
+          return (
+            <div
+              key={account.id}
+              className="bg-card rounded-2xl border border-border p-5 space-y-4 hover:shadow-md transition-shadow">
+              
                 {/* Top Row */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -215,20 +215,20 @@ export default function BankAccounts() {
                     </div>
                     <div>
                       <p className="font-semibold text-foreground leading-tight">{account.account_name}</p>
-                      <p className="text-xs text-muted-foreground">{account.bank_name}</p>
+                      <p className="text-muted-foreground text-2xl lowercase underline">{account.bank_name}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
-                      onClick={() => setEditing(account)}
-                      className="text-muted-foreground hover:text-foreground transition-colors p-1"
-                    >
+                    onClick={() => setEditing(account)}
+                    className="text-muted-foreground hover:text-foreground transition-colors p-1">
+                    
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => deleteMutation.mutate(account.id)}
-                      className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                    >
+                    onClick={() => deleteMutation.mutate(account.id)}
+                    className="text-muted-foreground hover:text-destructive transition-colors p-1">
+                    
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -246,19 +246,19 @@ export default function BankAccounts() {
                 {/* Meta */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    {account.account_type && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[account.account_type] || typeColors.other}`}>
+                    {account.account_type &&
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[account.account_type] || typeColors.other}`}>
                         {account.account_type.replace(/_/g, " ")}
                       </span>
-                    )}
-                    {account.account_number && (
-                      <span className="text-xs text-muted-foreground">•••• {account.account_number}</span>
-                    )}
+                  }
+                    {account.account_number &&
+                  <span className="text-xs text-muted-foreground">•••• {account.account_number}</span>
+                  }
                   </div>
                   <Badge
-                    variant={account.status === "active" ? "default" : "secondary"}
-                    className="text-xs capitalize"
-                  >
+                  variant={account.status === "active" ? "default" : "secondary"}
+                  className="text-xs capitalize">
+                  
                     {account.status || "active"}
                   </Badge>
                 </div>
@@ -269,30 +269,30 @@ export default function BankAccounts() {
                   <AccountTransactions accountId={account.id} transactions={transactions} />
                 </div>
 
-                {account.notes && (
-                  <p className="text-xs text-muted-foreground border-t border-border pt-3">{account.notes}</p>
-                )}
-              </div>
-            );
-          })}
+                {account.notes &&
+              <p className="text-xs text-muted-foreground border-t border-border pt-3">{account.notes}</p>
+              }
+              </div>);
+
+        })}
         </div>
-      )}
+      }
 
       <AddFormDialog
         open={showAdd}
         onOpenChange={setShowAdd}
         title="Add Bank Account"
         fields={fields}
-        onSubmit={(data) => createMutation.mutateAsync(data)}
-      />
+        onSubmit={(data) => createMutation.mutateAsync(data)} />
+      
       <AddFormDialog
         open={!!editing}
-        onOpenChange={(v) => { if (!v) setEditing(null); }}
+        onOpenChange={(v) => {if (!v) setEditing(null);}}
         title="Edit Bank Account"
         fields={fields}
         initialData={editing || {}}
-        onSubmit={(data) => updateMutation.mutateAsync({ id: editing.id, data })}
-      />
-    </div>
-  );
+        onSubmit={(data) => updateMutation.mutateAsync({ id: editing.id, data })} />
+      
+    </div>);
+
 }
