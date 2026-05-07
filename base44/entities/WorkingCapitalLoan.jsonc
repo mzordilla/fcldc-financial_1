@@ -27,6 +27,16 @@
       "type": "number",
       "description": "Monthly payment amount"
     },
+    "loan_granted": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when loan was granted"
+    },
+    "loan_availed": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when loan was actually drawn/used"
+    },
     "due_date": {
       "type": "string",
       "format": "date",

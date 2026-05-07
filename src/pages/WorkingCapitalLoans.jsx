@@ -31,6 +31,8 @@ const fields = [
   { name: "amount_paid", label: "Amount Paid (₱)", type: "number", placeholder: "0.00" },
   { name: "interest_rate", label: "Interest Rate (%)", type: "number", placeholder: "5.5" },
   { name: "monthly_payment", label: "Monthly Payment (₱)", type: "number", placeholder: "0.00" },
+  { name: "loan_granted", label: "Loan Granted Date", type: "date" },
+  { name: "loan_availed", label: "Loan Availed Date", type: "date" },
   { name: "due_date", label: "Payoff Date", type: "date" },
   { name: "type", label: "Type", type: "select", options: [
     { value: "loan", label: "Loan" },
