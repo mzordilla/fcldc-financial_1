@@ -161,7 +161,7 @@ export default function BankAccounts() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Total Balance</p>
-            <p className={`text-xl font-bold ${totalBalance >= 0 ? "text-primary" : "text-destructive"}`}>
+            <p className={`text-3xl font-bold ${totalBalance >= 0 ? "text-primary" : "text-destructive"}`}>
               {totalBalance < 0 ? "-" : ""}{fmt(totalBalance)}
             </p>
           </div>
@@ -173,7 +173,7 @@ export default function BankAccounts() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Positive Accounts</p>
-            <p className="text-xl font-bold text-foreground">{positiveCount}</p>
+            <p className="text-3xl font-bold text-foreground">{positiveCount}</p>
           </div>
         </div>
 
@@ -183,7 +183,7 @@ export default function BankAccounts() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Overdrawn / Negative</p>
-            <p className="text-xl font-bold text-foreground">{negativeCount}</p>
+            <p className="text-3xl font-bold text-foreground">{negativeCount}</p>
           </div>
         </div>
       </div>
