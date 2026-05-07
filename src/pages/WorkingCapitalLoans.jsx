@@ -106,8 +106,8 @@ export default function WorkingCapitalLoans() {
   const totalActive = activeItems.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
   const monthlyPayments = activeItems.reduce((s, d) => s + (d.monthly_payment || 0), 0);
   const totalGranted = activeItems.filter(d => d.amount_granted).reduce((s, d) => s + (d.amount_granted || 0), 0);
-  const totalAvailed = activeItems.filter(d => d.amount_granted).reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
-  const availableBalance = totalGranted - totalAvailed;
+  const totalDrawn = activeItems.filter(d => d.amount_granted).reduce((s, d) => s + (d.amount_availed || 0), 0);
+  const availableBalance = Math.max(0, totalGranted - totalDrawn);
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
