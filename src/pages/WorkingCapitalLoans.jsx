@@ -154,10 +154,43 @@ export default function WorkingCapitalLoans() {
       <UpcomingMaturities items={items} />
 
       {viewMode === "table" ? (
-        <div>
-          {!isLoading && filtered.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">No working capital loans recorded</div>
-          ) : (
+        <>
+          {/* Loan Types Summary Table */}
+          <div className="bg-card rounded-2xl border border-border overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Loan Type</th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Count</th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Total Amount</th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Outstanding</th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Monthly Payment</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.keys(typeLabels).map(type => {
+                  const typeLoans = filtered.filter(d => d.type === type);
+                  if (typeLoans.length === 0) return null;
+                  const typeTotalAmount = typeLoans.reduce((s, d) => s + (d.total_amount || 0), 0);
+                  const typeOutstanding = typeLoans.reduce((s, d) => s + Math.max(0, (d.total_amount || 0) - (d.amount_paid || 0)), 0);
+                  const typeMonthlyPayment = typeLoans.reduce((s, d) => s + (d.monthly_payment || 0), 0);
+                  return (
+                    <tr key={type} className="border-b border-border hover:bg-muted/50">
+                      <td className="px-6 py-4 text-sm font-medium text-foreground">{typeLabels[type]}</td>
+                      <td className="px-6 py-4 text-sm text-right text-foreground">{typeLoans.length}</td>
+                      <td className="px-6 py-4 text-sm text-right text-foreground">₱{typeTotalAmount.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-right text-destructive">₱{typeOutstanding.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-right text-foreground">₱{typeMonthlyPayment.toLocaleString()}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Individual Loans Table */}
+          <div className="mt-6">
+            <h2 className="text-lg font-bold text-foreground mb-4">Individual Loans</h2>
             <div className="bg-card rounded-2xl border border-border overflow-hidden">
               <table className="w-full">
                 <thead>
@@ -173,41 +206,47 @@ export default function WorkingCapitalLoans() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(loan => (
-                    <tr key={loan.id} className="border-b border-border hover:bg-muted/50">
-                      <td className="px-6 py-4 text-sm text-foreground">{loan.creditor}</td>
-                      <td className="px-6 py-4 text-sm text-foreground">{typeLabels[loan.type] || loan.type}</td>
-                      <td className="px-6 py-4 text-sm text-right text-foreground">₱{(loan.total_amount || 0).toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-right text-foreground">₱{Math.max(0, (loan.total_amount || 0) - (loan.amount_paid || 0)).toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-right text-foreground">{loan.interest_rate || "-"}%</td>
-                      <td className="px-6 py-4 text-sm text-right text-foreground">₱{(loan.monthly_payment || 0).toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-left">
-                        <Badge variant="outline" className={statusStyles[loan.status] || ""}>
-                          {(loan.status || "active").replace(/_/g, " ")}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          {loan.status === "active" && (
-                            <Button variant="ghost" size="icon" onClick={() => markPaidOff(loan)} className="text-primary hover:text-primary" title="Mark as Paid Off">
-                              <CheckCircle className="w-4 h-4" />
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="icon" onClick={() => setEditingItem(loan)} className="text-muted-foreground hover:text-foreground">
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => setDeleteItem(loan)} className="text-muted-foreground hover:text-destructive">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </td>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" className="px-6 py-8 text-center text-muted-foreground">No working capital loans recorded</td>
                     </tr>
-                  ))}
+                  ) : (
+                    filtered.map(loan => (
+                      <tr key={loan.id} className="border-b border-border hover:bg-muted/50">
+                        <td className="px-6 py-4 text-sm text-foreground">{loan.creditor}</td>
+                        <td className="px-6 py-4 text-sm text-foreground">{typeLabels[loan.type] || loan.type}</td>
+                        <td className="px-6 py-4 text-sm text-right text-foreground">₱{(loan.total_amount || 0).toLocaleString()}</td>
+                        <td className="px-6 py-4 text-sm text-right text-foreground">₱{Math.max(0, (loan.total_amount || 0) - (loan.amount_paid || 0)).toLocaleString()}</td>
+                        <td className="px-6 py-4 text-sm text-right text-foreground">{loan.interest_rate || "-"}%</td>
+                        <td className="px-6 py-4 text-sm text-right text-foreground">₱{(loan.monthly_payment || 0).toLocaleString()}</td>
+                        <td className="px-6 py-4 text-sm text-left">
+                          <Badge variant="outline" className={statusStyles[loan.status] || ""}>
+                            {(loan.status || "active").replace(/_/g, " ")}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            {loan.status === "active" && (
+                              <Button variant="ghost" size="icon" onClick={() => markPaidOff(loan)} className="text-primary hover:text-primary" title="Mark as Paid Off">
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="icon" onClick={() => setEditingItem(loan)} className="text-muted-foreground hover:text-foreground">
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => setDeleteItem(loan)} className="text-muted-foreground hover:text-destructive">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
+          </div>
+        </>
       ) : (
         <div className="space-y-8">
           {Object.keys(typeLabels).map(type => {
