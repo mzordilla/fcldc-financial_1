@@ -2,26 +2,26 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recha
 import { Card } from "@/components/ui/card";
 
 export default function OutstandingVsGranted({ items }) {
-  const creditLines = items.filter(d => d.status === "active" && d.type === "credit_line" && d.amount_granted);
-  const mortgages = items.filter(d => d.status === "active" && d.type === "mortgage" && d.amount_granted);
+  const creditLines = items.filter((d) => d.status === "active" && d.type === "credit_line" && d.amount_granted);
+  const mortgages = items.filter((d) => d.status === "active" && d.type === "mortgage" && d.amount_granted);
   const allItems = [...creditLines, ...mortgages];
-  
+
   const creditLineGranted = creditLines.reduce((s, d) => s + (d.amount_granted || 0), 0);
   const creditLineOutstanding = creditLines.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
   const creditLineAvailable = creditLineGranted - creditLineOutstanding;
-  
+
   const totalOutstanding = allItems.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
   const totalGranted = allItems.reduce((s, d) => s + (d.amount_granted || 0), 0);
 
   const pieData = [
-    { name: "Outstanding", value: totalOutstanding },
-    { name: "Available", value: Math.max(0, creditLineAvailable) },
-  ];
+  { name: "Outstanding", value: totalOutstanding },
+  { name: "Available", value: Math.max(0, creditLineAvailable) }];
+
 
   const COLORS = ["hsl(var(--destructive))", "hsl(var(--chart-2))"];
 
   return (
-    <Card className="p-6">
+    <Card className="pt-6 pr-4 pb-6 pl-4">
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-foreground mb-1">Outstanding vs Amount Granted</h3>
         <p className="text-sm text-muted-foreground">Debt utilization overview</p>
@@ -40,32 +40,32 @@ export default function OutstandingVsGranted({ items }) {
           </div>
         </div>
       </div>
-      {allItems.length === 0 ? (
-        <p className="text-center py-8 text-muted-foreground text-sm">No active loans with amounts granted</p>
-      ) : (
-        <ResponsiveContainer width="100%" height={280}>
+      {allItems.length === 0 ?
+      <p className="text-center py-8 text-muted-foreground text-sm">No active loans with amounts granted</p> :
+
+      <ResponsiveContainer width="100%" height={280}>
           <PieChart>
             <Pie
-              data={pieData}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={100}
-              paddingAngle={2}
-              dataKey="value"
-            >
-              {pieData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index]} />
-              ))}
+            data={pieData}
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={100}
+            paddingAngle={2}
+            dataKey="value">
+            
+              {pieData.map((entry, index) =>
+            <Cell key={`cell-${index}`} fill={COLORS[index]} />
+            )}
             </Pie>
             <Tooltip
-              contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
-              formatter={(v) => `₱${v.toLocaleString()}`}
-            />
+            contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+            formatter={(v) => `₱${v.toLocaleString()}`} />
+          
             <Legend />
           </PieChart>
         </ResponsiveContainer>
-      )}
-    </Card>
-  );
+      }
+    </Card>);
+
 }
