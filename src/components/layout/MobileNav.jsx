@@ -6,7 +6,7 @@ const navItems = [
   { label: "Payables", icon: CreditCard, path: "/payables" },
   { label: "Suppliers", icon: Building2, path: "/suppliers" },
   { label: "Loans", icon: Banknote, path: "/bank-loans" },
-  { label: "Debts", icon: Landmark, path: "/debts" },
+  { label: "WC Loans", icon: Landmark, path: "/working-capital-loans" },
 ];
 
 export default function MobileNav() {

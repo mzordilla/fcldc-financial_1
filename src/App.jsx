@@ -9,7 +9,7 @@ import AppLayout from './components/layout/AppLayout';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Receivables from './pages/Receivables';
-import Debts from './pages/Debts';
+import WorkingCapitalLoans from './pages/WorkingCapitalLoans';
 import Suppliers from './pages/Suppliers';
 import Payables from './pages/Payables';
 import BankLoans from './pages/BankLoans';
@@ -56,7 +56,7 @@ const AuthenticatedApp = () => {
         <Route path="/payables" element={<Payables />} />
         <Route path="/suppliers" element={<Suppliers />} />
         <Route path="/bank-loans" element={<BankLoans />} />
-        <Route path="/debts" element={<Debts />} />
+        <Route path="/working-capital-loans" element={<WorkingCapitalLoans />} />
         <Route path="/bank-accounts" element={<BankAccounts />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />

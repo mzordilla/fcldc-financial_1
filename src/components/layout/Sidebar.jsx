@@ -14,7 +14,7 @@ const navItems = [
   { label: "Suppliers", icon: Building2, path: "/suppliers" },
   { label: "Bank Accounts", icon: Building2, path: "/bank-accounts" },
   { label: "Bank Loans", icon: Banknote, path: "/bank-loans" },
-  { label: "Debts", icon: Landmark, path: "/debts" },
+  { label: "Working Capital Loans", icon: Landmark, path: "/working-capital-loans" },
 ];
 
 export default function Sidebar() {

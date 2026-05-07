@@ -22,8 +22,8 @@ export default function Dashboard() {
   });
 
   const { data: debts = [] } = useQuery({
-    queryKey: ["debts"],
-    queryFn: () => base44.entities.Debt.list("-created_date", 50),
+    queryKey: ["workingcapitalloans"],
+    queryFn: () => base44.entities.WorkingCapitalLoan.list("-created_date", 50),
   });
 
   const { data: loans = [] } = useQuery({
@@ -41,6 +41,7 @@ export default function Dashboard() {
   const netCashFlow = totalIncome - totalExpenses;
   const totalReceivables = receivables.filter(r => r.status !== "paid").reduce((s, r) => s + ((r.amount || 0) - (r.amount_paid || 0)), 0);
   const totalDebt = debts.filter(d => d.status === "active").reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
+
 
   const fmt = (v) => `₱${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
@@ -74,11 +75,12 @@ export default function Dashboard() {
           trendLabel={`${receivables.filter(r => r.status === "overdue").length} overdue`}
         />
         <KpiCard
-          title="Outstanding Debt"
+          title="Working Capital Loans"
           value={fmt(totalDebt)}
           icon={Landmark}
           color="bg-chart-5/10 text-chart-5"
           trendLabel={`${debts.filter(d => d.status === "active").length} active`}
+
         />
       </div>
 

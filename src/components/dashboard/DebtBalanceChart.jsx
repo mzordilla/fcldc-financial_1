@@ -42,17 +42,17 @@ export default function DebtBalanceChart({ loans = [], debts = [] }) {
   if (data.length === 0) {
     return (
       <div className="bg-card rounded-2xl border border-border p-6">
-        <h3 className="text-sm font-semibold text-foreground mb-1">Debt by Creditor</h3>
-        <p className="text-sm text-muted-foreground">No loan or debt data available.</p>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Working Capital Loans by Creditor</h3>
+        <p className="text-sm text-muted-foreground">No loan or working capital loan data available.</p>
       </div>
     );
   }
 
   return (
     <div className="bg-card rounded-2xl border border-border p-6">
-      <h3 className="text-sm font-semibold text-foreground mb-0.5">Debt by Creditor</h3>
+      <h3 className="text-sm font-semibold text-foreground mb-0.5">Working Capital Loans by Creditor</h3>
       <p className="text-xs text-muted-foreground mb-5">
-        Principal vs. outstanding balance across all bank loans and debts
+        Principal vs. outstanding balance across all bank loans and working capital loans
       </p>
       <ResponsiveContainer width="100%" height={260}>
         <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} barCategoryGap="30%">

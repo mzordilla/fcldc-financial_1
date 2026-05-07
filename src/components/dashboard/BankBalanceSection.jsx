@@ -43,7 +43,7 @@ export default function BankBalanceSection({ transactions = [], payables = [], l
   const deductions = [
     { label: "Unpaid Payables", amount: unpaidPayables, color: "text-chart-3" },
     { label: "Outstanding Bank Loans", amount: activeLoanPayments, color: "text-chart-5" },
-    { label: "Active Debts", amount: activeDebtBalance, color: "text-destructive" },
+    { label: "Working Capital Loans", amount: activeDebtBalance, color: "text-destructive" },
   ];
 
   return (
