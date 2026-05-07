@@ -56,6 +56,7 @@ const fields = [
 { name: "start_date", label: "Start Date", type: "date" },
 { name: "end_date", label: "Expected Completion", type: "date" },
 { name: "project_manager", label: "Project Manager", placeholder: "e.g. John Smith" },
+{ name: "scope_of_works", label: "Scope of Works", type: "textarea", rows: 5, placeholder: "Describe the full scope of works for this project..." },
 { name: "description", label: "Description", placeholder: "Brief project description" }];
 
 
@@ -246,6 +247,12 @@ export default function Projects() {
                     {p.start_date && <span>Start: {format(new Date(p.start_date), "MMM d, yyyy")}</span>}
                     {p.end_date && <span>End: {format(new Date(p.end_date), "MMM d, yyyy")}</span>}
                   </div>
+                  {p.scope_of_works && (
+                    <div className="mt-2 p-2.5 bg-muted/40 rounded-lg">
+                      <p className="text-xs font-medium text-muted-foreground mb-0.5">Scope of Works</p>
+                      <p className="text-xs text-foreground whitespace-pre-wrap">{p.scope_of_works}</p>
+                    </div>
+                  )}
 
                   {/* Completion progress bar */}
                   <div className="mt-3 space-y-1">

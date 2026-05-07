@@ -74,6 +74,10 @@
     "project_manager": {
       "type": "string"
     },
+    "scope_of_works": {
+      "type": "string",
+      "description": "Detailed scope of works for the project"
+    },
     "description": {
       "type": "string"
     },

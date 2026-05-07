@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -32,7 +33,15 @@ export default function AddFormDialog({ open, onOpenChange, title, fields, onSub
           {fields.map((field) => (
             <div key={field.name} className="space-y-1.5">
               <Label className="text-sm">{field.label}</Label>
-              {field.type === "select" ? (
+              {field.type === "textarea" ? (
+                <Textarea
+                  rows={field.rows || 4}
+                  placeholder={field.placeholder}
+                  value={formData[field.name] ?? ""}
+                  onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
+                  required={field.required}
+                />
+              ) : field.type === "select" ? (
                 <Select
                   value={formData[field.name] || ""}
                   onValueChange={(val) => setFormData(prev => ({ ...prev, [field.name]: val }))}
