@@ -1,13 +1,28 @@
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { differenceInDays, format, startOfYear, addMonths, startOfMonth, endOfMonth } from "date-fns";
+import { differenceInDays, format, addMonths, startOfMonth, endOfMonth } from "date-fns";
+
+const typeLabels = {
+  loan: "Loan",
+  credit_line: "Credit Line",
+  equipment_financing: "Equipment Financing",
+  vendor_credit: "Vendor Credit",
+  mortgage: "Mortgage",
+  other: "Other",
+};
 
 export default function UpcomingMaturities({ items }) {
   const today = new Date();
   const activeLoans = items.filter(d => d.status === "active" && d.due_date);
 
-  // Generate 12 months starting from today
+  // Group loans by type
+  const loansByType = {};
+  Object.keys(typeLabels).forEach(type => {
+    loansByType[type] = activeLoans.filter(loan => loan.type === type);
+  });
+
+  // Generate 12 months
   const months = Array.from({ length: 12 }, (_, i) => {
     const month = addMonths(today, i);
     return {
@@ -17,18 +32,6 @@ export default function UpcomingMaturities({ items }) {
     };
   });
 
-  // Group loans by month
-  const monthlyLoans = months.map(month => ({
-    ...month,
-    loans: activeLoans.filter(loan => {
-      const dueDate = new Date(loan.due_date);
-      return dueDate >= month.start && dueDate <= month.end;
-    }).sort((a, b) => new Date(a.due_date) - new Date(b.due_date)),
-  }));
-
-  // Filter to show only months with loans
-  const loansToDisplay = monthlyLoans.filter(m => m.loans.length > 0);
-
   const getUrgencyBadge = (daysUntilDue) => {
     if (daysUntilDue <= 30) return <Badge className="bg-destructive/10 text-destructive text-xs">Urgent</Badge>;
     if (daysUntilDue <= 60) return <Badge className="bg-chart-3/10 text-chart-3 text-xs">Soon</Badge>;
@@ -36,60 +39,95 @@ export default function UpcomingMaturities({ items }) {
     return <Badge className="bg-primary/10 text-primary text-xs">Planned</Badge>;
   };
 
+  const renderTypeTable = (type, loans) => {
+    const monthlyLoans = months.map(month => ({
+      ...month,
+      loans: loans.filter(loan => {
+        const dueDate = new Date(loan.due_date);
+        return dueDate >= month.start && dueDate <= month.end;
+      }).sort((a, b) => new Date(a.due_date) - new Date(b.due_date)),
+    }));
+
+    const loansToDisplay = monthlyLoans.filter(m => m.loans.length > 0);
+    const totalOutstanding = loans.reduce((sum, loan) => sum + ((loan.total_amount || 0) - (loan.amount_paid || 0)), 0);
+
+    return (
+      <div key={type} className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="font-semibold text-foreground">{typeLabels[type]}</h4>
+          <span className="text-sm text-muted-foreground">
+            Total Outstanding: ₱{totalOutstanding.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          </span>
+        </div>
+
+        <div className="overflow-x-auto border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-secondary/50 border-border hover:bg-secondary/50">
+                <TableHead className="font-semibold text-xs">Month</TableHead>
+                <TableHead className="font-semibold text-xs">Creditor</TableHead>
+                <TableHead className="text-right font-semibold text-xs">Outstanding</TableHead>
+                <TableHead className="font-semibold text-xs">Due Date</TableHead>
+                <TableHead className="text-center font-semibold text-xs">Days</TableHead>
+                <TableHead className="text-center font-semibold text-xs">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loansToDisplay.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan="6" className="text-center py-6 text-muted-foreground text-xs">
+                    No {typeLabels[type].toLowerCase()} due in next 12 months
+                  </TableCell>
+                </TableRow>
+              ) : (
+                loansToDisplay.map(month =>
+                  month.loans.map((loan, idx) => {
+                    const daysUntilDue = differenceInDays(new Date(loan.due_date), today);
+                    return (
+                      <TableRow key={loan.id} className="border-border hover:bg-secondary/30 transition-colors">
+                        {idx === 0 && (
+                          <TableCell rowSpan={month.loans.length} className="font-semibold text-foreground bg-secondary/20 text-xs">
+                            {month.label}
+                          </TableCell>
+                        )}
+                        <TableCell className="text-foreground text-xs">{loan.creditor}</TableCell>
+                        <TableCell className="text-right font-semibold text-xs">
+                          ₱{((loan.total_amount || 0) - (loan.amount_paid || 0)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </TableCell>
+                        <TableCell className="text-xs">{format(new Date(loan.due_date), "MMM d, yyyy")}</TableCell>
+                        <TableCell className="text-center text-xs">{daysUntilDue}</TableCell>
+                        <TableCell className="text-center">
+                          {getUrgencyBadge(daysUntilDue)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    );
+  };
+
+  // Only render tables for types with loans
+  const typesWithLoans = Object.keys(typeLabels).filter(type => loansByType[type].length > 0);
+
   return (
     <Card className="p-6">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-foreground mb-1">Monthly Loan Maturities</h3>
-        <p className="text-sm text-muted-foreground">12-month repayment schedule</p>
+        <h3 className="text-lg font-semibold text-foreground mb-1">Monthly Loan Maturities by Type</h3>
+        <p className="text-sm text-muted-foreground">12-month repayment schedule organized by loan type</p>
       </div>
 
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-secondary/50 border-border hover:bg-secondary/50">
-              <TableHead className="font-semibold">Month</TableHead>
-              <TableHead className="font-semibold">Creditor</TableHead>
-              <TableHead className="text-right font-semibold">Outstanding</TableHead>
-              <TableHead className="font-semibold">Due Date</TableHead>
-              <TableHead className="text-center font-semibold">Days</TableHead>
-              <TableHead className="text-center font-semibold">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loansToDisplay.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan="6" className="text-center py-8 text-muted-foreground">
-                  No loans due in the next 12 months
-                </TableCell>
-              </TableRow>
-            ) : (
-              loansToDisplay.map(month =>
-                month.loans.map((loan, idx) => {
-                  const daysUntilDue = differenceInDays(new Date(loan.due_date), today);
-                  return (
-                    <TableRow key={loan.id} className="border-border hover:bg-secondary/30 transition-colors">
-                      {idx === 0 && (
-                        <TableCell rowSpan={month.loans.length} className="font-semibold text-foreground bg-secondary/20">
-                          {month.label}
-                        </TableCell>
-                      )}
-                      <TableCell className="text-foreground">{loan.creditor}</TableCell>
-                      <TableCell className="text-right font-semibold">
-                        ₱{((loan.total_amount || 0) - (loan.amount_paid || 0)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                      </TableCell>
-                      <TableCell>{format(new Date(loan.due_date), "MMM d, yyyy")}</TableCell>
-                      <TableCell className="text-center text-sm">{daysUntilDue}</TableCell>
-                      <TableCell className="text-center">
-                        {getUrgencyBadge(daysUntilDue)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {typesWithLoans.length === 0 ? (
+        <p className="text-center py-8 text-muted-foreground">No loans due in the next 12 months</p>
+      ) : (
+        <div className="space-y-6">
+          {typesWithLoans.map(type => renderTypeTable(type, loansByType[type]))}
+        </div>
+      )}
     </Card>
   );
 }
