@@ -29,6 +29,7 @@
         "overhead",
         "permits",
         "insurance",
+        "bank_reconciliation",
         "other"
       ],
       "description": "Transaction category"

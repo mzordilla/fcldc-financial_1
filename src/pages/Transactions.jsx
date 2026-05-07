@@ -17,6 +17,7 @@ const CATEGORIES = [
   { value: "overhead", label: "Overhead" },
   { value: "permits", label: "Permits" },
   { value: "insurance", label: "Insurance" },
+  { value: "bank_reconciliation", label: "Bank Reconciliation" },
   { value: "other", label: "Other" },
 ];
 

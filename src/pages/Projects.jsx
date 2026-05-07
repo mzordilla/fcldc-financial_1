@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AddFormDialog from "../components/shared/AddFormDialog";
-import BankBalanceSection from "../components/dashboard/BankBalanceSection";
+
 
 const contractStatusStyles = {
   pending: "bg-muted text-muted-foreground border-border",
@@ -70,25 +70,7 @@ export default function Projects() {
     queryFn: () => base44.entities.Project.list("-created_date", 200)
   });
 
-  const { data: transactions = [] } = useQuery({
-    queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 200),
-  });
 
-  const { data: payables = [] } = useQuery({
-    queryKey: ["payables"],
-    queryFn: () => base44.entities.Payable.list("-created_date", 100),
-  });
-
-  const { data: loans = [] } = useQuery({
-    queryKey: ["bankloans"],
-    queryFn: () => base44.entities.BankLoan.list("-created_date", 50),
-  });
-
-  const { data: debts = [] } = useQuery({
-    queryKey: ["debts"],
-    queryFn: () => base44.entities.Debt.list("-created_date", 50),
-  });
 
 
 
@@ -144,13 +126,6 @@ export default function Projects() {
           </Button>
         </div>
       </div>
-
-      <BankBalanceSection
-        transactions={transactions}
-        payables={payables}
-        loans={loans}
-        debts={debts}
-      />
 
       {/* KPI Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
