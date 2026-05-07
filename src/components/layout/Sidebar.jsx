@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, HardHat, LogOut, Building2, CreditCard, Banknote, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, BookOpen, ScanLine } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, HardHat, LogOut, Building2, CreditCard, Banknote, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, BookOpen, ScanLine, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const navItems = [
@@ -9,6 +9,7 @@ const navItems = [
   { label: "Project P&L", icon: FolderKanban, path: "/project-pnl" },
   { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
   { label: "Payment Approvals", icon: CircleDollarSign, path: "/payment-approvals" },
+  { label: "Payee Masterlist", icon: Users, path: "/payees" },
   { label: "Receivables", icon: FileText, path: "/receivables" },
   { label: "Payables", icon: CreditCard, path: "/payables" },
   { label: "Suppliers", icon: Building2, path: "/suppliers" },

@@ -21,6 +21,7 @@ import BankAccounts from './pages/BankAccounts';
 import Reports from './pages/Reports';
 import ChartOfAccounts from './pages/ChartOfAccounts';
 import ReceiptScanner from './pages/ReceiptScanner';
+import Payees from './pages/Payees';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -64,6 +65,7 @@ const AuthenticatedApp = () => {
         <Route path="/reports" element={<Reports />} />
         <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
         <Route path="/receipt-scanner" element={<ReceiptScanner />} />
+        <Route path="/payees" element={<Payees />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
