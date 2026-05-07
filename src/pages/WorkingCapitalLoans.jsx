@@ -135,7 +135,7 @@ export default function WorkingCapitalLoans() {
             <TableRow className="bg-secondary/50 border-border hover:bg-secondary/50">
               <TableHead className="font-semibold">Creditor</TableHead>
               <TableHead className="font-semibold">Type</TableHead>
-              <TableHead className="text-right font-semibold">Total Amount</TableHead>
+              <TableHead className="text-right font-semibold">Granted Amount</TableHead>
               <TableHead className="text-right font-semibold">Paid</TableHead>
               <TableHead className="text-right font-semibold">Outstanding</TableHead>
               <TableHead className="text-right font-semibold">Rate</TableHead>
@@ -171,7 +171,7 @@ export default function WorkingCapitalLoans() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right text-sm">
-                    ₱{(d.total_amount || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    ₱{(d.amount_granted || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </TableCell>
                   <TableCell className="text-right text-sm">
                     ₱{(d.amount_paid || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
