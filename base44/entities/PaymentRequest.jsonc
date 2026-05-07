@@ -89,6 +89,19 @@
     "supporting_docs": {
       "type": "string",
       "description": "Reference to attached documents"
+    },
+    "check_number": {
+      "type": "string",
+      "description": "Check or voucher number"
+    },
+    "check_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date on the check"
+    },
+    "check_attachment": {
+      "type": "string",
+      "description": "URL of uploaded check image/attachment"
     }
   },
   "required": [

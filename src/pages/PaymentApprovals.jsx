@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import PaymentRequestFormDialog from "../components/payment/PaymentRequestFormDialog";
+import MarkPaidDialog from "../components/payment/MarkPaidDialog";
 
 const statusStyles = {
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
@@ -107,6 +108,7 @@ export default function PaymentApprovals() {
   const [showAdd, setShowAdd] = useState(false);
   const [editingPR, setEditingPR] = useState(null);
   const [reviewPR, setReviewPR] = useState(null);
+  const [markingPaidPR, setMarkingPaidPR] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
 
@@ -130,7 +132,9 @@ export default function PaymentApprovals() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["payment_requests"] }),
   });
 
-  const markPaid = (pr) => updateMutation.mutate({ id: pr.id, data: { approval_status: "paid" } });
+  const markPaid = async (id, data) => {
+    await updateMutation.mutateAsync({ id, data });
+  };
 
   const handleDecision = (id, status, notes, approvedBy) => {
     updateMutation.mutate({ id, data: { approval_status: status, approval_notes: notes, approved_by: approvedBy } });
@@ -235,15 +239,27 @@ export default function PaymentApprovals() {
                   {pr.approval_notes && (
                     <p className="text-xs text-muted-foreground mt-2 italic border-l-2 border-border pl-2">{pr.approval_notes}</p>
                   )}
+                  {pr.approval_status === "paid" && (pr.check_number || pr.check_date || pr.check_attachment) && (
+                    <div className="mt-2 flex flex-wrap items-center gap-3 bg-chart-2/5 border border-chart-2/20 rounded-lg px-3 py-2">
+                      <Banknote className="w-3.5 h-3.5 text-chart-2 flex-shrink-0" />
+                      {pr.check_number && <span className="text-xs font-medium text-chart-2">Check #{pr.check_number}</span>}
+                      {pr.check_date && <span className="text-xs text-muted-foreground">{format(new Date(pr.check_date), "MMM d, yyyy")}</span>}
+                      {pr.check_attachment && (
+                        <a href={pr.check_attachment} target="_blank" rel="noopener noreferrer" className="text-xs flex items-center gap-1 text-primary hover:underline">
+                          <Paperclip className="w-3 h-3" /> View Attachment
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="flex sm:flex-col items-center sm:items-end gap-3">
-                  <p className="text-xl font-bold text-foreground">${(pr.amount || 0).toLocaleString()}</p>
+                  <p className="text-xl font-bold text-foreground">₱{(pr.amount || 0).toLocaleString()}</p>
                   <div className="flex gap-1">
                     {pr.approval_status === "pending" && (
                       <Button size="sm" variant="outline" onClick={() => setReviewPR(pr)}>Review</Button>
                     )}
                     {pr.approval_status === "approved" && (
-                      <Button size="sm" onClick={() => markPaid(pr)}>
+                      <Button size="sm" onClick={() => setMarkingPaidPR(pr)}>
                         <Banknote className="w-3.5 h-3.5 mr-1" /> Mark Paid
                       </Button>
                     )}
@@ -264,6 +280,14 @@ export default function PaymentApprovals() {
       <PaymentRequestFormDialog open={showAdd} onOpenChange={setShowAdd} title="New Payment Request" onSubmit={(data) => createMutation.mutateAsync(data)} />
       <PaymentRequestFormDialog open={!!editingPR} onOpenChange={(v) => { if (!v) setEditingPR(null); }} title="Edit Payment Request" initialData={editingPR || {}} onSubmit={(data) => updateMutation.mutateAsync({ id: editingPR.id, data })} />
       {reviewPR && <ApprovalDialog pr={reviewPR} open={!!reviewPR} onOpenChange={(v) => !v && setReviewPR(null)} onDecision={handleDecision} />}
+      {markingPaidPR && (
+        <MarkPaidDialog
+          pr={markingPaidPR}
+          open={!!markingPaidPR}
+          onOpenChange={(v) => !v && setMarkingPaidPR(null)}
+          onConfirm={(data) => markPaid(markingPaidPR.id, data)}
+        />
+      )}
     </div>
   );
 }
