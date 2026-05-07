@@ -12,7 +12,7 @@ import Receivables from './pages/Receivables';
 import WorkingCapitalLoans from './pages/WorkingCapitalLoans';
 
 import Payables from './pages/Payables';
-import BankLoans from './pages/BankLoans';
+
 import ProjectPnL from './pages/ProjectPnL';
 import Projects from './pages/Projects';
 import PurchaseOrders from './pages/PurchaseOrders';
@@ -59,7 +59,7 @@ const AuthenticatedApp = () => {
         <Route path="/receivables" element={<Receivables />} />
         <Route path="/payables" element={<Payables />} />
 
-        <Route path="/bank-loans" element={<BankLoans />} />
+
         <Route path="/working-capital-loans" element={<WorkingCapitalLoans />} />
         <Route path="/bank-accounts" element={<BankAccounts />} />
         <Route path="/reports" element={<Reports />} />

@@ -13,7 +13,6 @@ const navItems = [
   { label: "Receivables", icon: FileText, path: "/receivables" },
   { label: "Payables", icon: CreditCard, path: "/payables" },
   { label: "Bank Accounts", icon: Building2, path: "/bank-accounts" },
-  { label: "Bank Loans", icon: Banknote, path: "/bank-loans" },
   { label: "Working Capital Loans", icon: Landmark, path: "/working-capital-loans" },
   { label: "Reports", icon: BarChart2, path: "/reports" },
   { label: "Chart of Accounts", icon: BookOpen, path: "/chart-of-accounts" },
