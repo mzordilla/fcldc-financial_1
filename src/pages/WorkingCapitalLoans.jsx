@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, Pencil } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Pencil, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import AddFormDialog from "../components/shared/AddFormDialog";
+import MonthlyLoanMonitoring from "../components/working-capital/MonthlyLoanMonitoring";
 
 const typeLabels = {
   loan: "Loan",
@@ -57,6 +58,7 @@ export default function WorkingCapitalLoans() {
   const [showAdd, setShowAdd] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [expandedId, setExpandedId] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: items = [], isLoading } = useQuery({
@@ -117,60 +119,76 @@ export default function WorkingCapitalLoans() {
         {filtered.map((d) => {
           const remaining = (d.total_amount || 0) - (d.amount_paid || 0);
           const paidPct = d.total_amount ? Math.min(((d.amount_paid || 0) / d.total_amount) * 100, 100) : 0;
+          const isExpanded = expandedId === d.id;
           return (
-            <div key={d.id} className="bg-card rounded-2xl border border-border p-5 hover:shadow-md transition-shadow">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-1 flex-wrap">
-                    <h3 className="font-semibold text-foreground">{d.creditor}</h3>
-                    <Badge variant="outline" className={`text-xs ${statusStyles[d.status] || ""}`}>
-                      {(d.status || "active").replace(/_/g, " ")}
-                    </Badge>
-                    <Badge variant="secondary" className="text-xs">
-                      {typeLabels[d.type] || d.type}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {d.description || ""}
-                    {d.interest_rate ? ` · ${d.interest_rate}% APR` : ""}
-                    {d.interest_accrued_1yr ? ` · ₱${d.interest_accrued_1yr.toLocaleString()} 1yr interest` : ""}
-                    {d.monthly_payment ? ` · ₱${d.monthly_payment.toLocaleString()}/mo` : ""}
-                    {d.due_date && ` · Due ${format(new Date(d.due_date), "MMM yyyy")}`}
-                  </p>
-                  {d.principal_balance !== undefined && (
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      Principal Balance: ₱{(d.principal_balance || 0).toLocaleString()}
+            <div key={d.id} className="bg-card rounded-2xl border border-border hover:shadow-md transition-shadow">
+              <div className="p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-1 flex-wrap">
+                      <h3 className="font-semibold text-foreground">{d.creditor}</h3>
+                      <Badge variant="outline" className={`text-xs ${statusStyles[d.status] || ""}`}>
+                        {(d.status || "active").replace(/_/g, " ")}
+                      </Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        {typeLabels[d.type] || d.type}
+                      </Badge>
                     </div>
-                  )}
-                  {d.amount_granted && (
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      Utilization: ₱{(d.amount_availed || 0).toLocaleString()} / ₱{d.amount_granted.toLocaleString()} ({d.amount_granted ? Math.round(((d.amount_availed || 0) / d.amount_granted) * 100) : 0}%)
-                    </div>
-                  )}
-                  <div className="mt-3 flex items-center gap-3">
-                    <Progress value={paidPct} className="h-2 flex-1" />
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      ₱{(d.amount_paid || 0).toLocaleString()} / ₱{(d.total_amount || 0).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-                  <p className="text-lg font-bold text-foreground">₱{remaining.toLocaleString()}</p>
-                  <div className="flex gap-1">
-                    {d.status === "active" && (
-                      <Button variant="ghost" size="icon" onClick={() => markPaidOff(d)} className="text-primary hover:text-primary">
-                        <CheckCircle className="w-4 h-4" />
-                      </Button>
+                    <p className="text-sm text-muted-foreground">
+                      {d.description || ""}
+                      {d.interest_rate ? ` · ${d.interest_rate}% APR` : ""}
+                      {d.interest_accrued_1yr ? ` · ₱${d.interest_accrued_1yr.toLocaleString()} 1yr interest` : ""}
+                      {d.monthly_payment ? ` · ₱${d.monthly_payment.toLocaleString()}/mo` : ""}
+                      {d.due_date && ` · Due ${format(new Date(d.due_date), "MMM yyyy")}`}
+                    </p>
+                    {d.principal_balance !== undefined && (
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Principal Balance: ₱{(d.principal_balance || 0).toLocaleString()}
+                      </div>
                     )}
-                    <Button variant="ghost" size="icon" onClick={() => setEditingItem(d)} className="text-muted-foreground hover:text-foreground">
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(d.id)} className="text-muted-foreground hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    {d.amount_granted && (
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Utilization: ₱{(d.amount_availed || 0).toLocaleString()} / ₱{d.amount_granted.toLocaleString()} ({d.amount_granted ? Math.round(((d.amount_availed || 0) / d.amount_granted) * 100) : 0}%)
+                      </div>
+                    )}
+                    <div className="mt-3 flex items-center gap-3">
+                      <Progress value={paidPct} className="h-2 flex-1" />
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        ₱{(d.amount_paid || 0).toLocaleString()} / ₱{(d.total_amount || 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 sm:flex-col sm:items-end">
+                    <p className="text-lg font-bold text-foreground">₱{remaining.toLocaleString()}</p>
+                    <div className="flex gap-1">
+                      {d.status === "active" && (
+                        <Button variant="ghost" size="icon" onClick={() => markPaidOff(d)} className="text-primary hover:text-primary">
+                          <CheckCircle className="w-4 h-4" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setExpandedId(isExpanded ? null : d.id)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => setEditingItem(d)} className="text-muted-foreground hover:text-foreground">
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(d.id)} className="text-muted-foreground hover:text-destructive">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
+              {isExpanded && (
+                <div className="border-t border-border px-5 py-4 bg-secondary/30">
+                  <MonthlyLoanMonitoring loan={d} />
+                </div>
+              )}
             </div>
           );
         })}
