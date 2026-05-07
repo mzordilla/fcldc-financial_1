@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Building2, Pencil, Trash2, TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { format } from "date-fns";
+import { Plus, Building2, Pencil, Trash2, TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import AddFormDialog from "../components/shared/AddFormDialog";
@@ -25,8 +26,8 @@ const fields = [
   { name: "account_name", label: "Account Name / Nickname", required: true, placeholder: "e.g. Main Operating Account" },
   { name: "account_number", label: "Account # (last 4 digits)", placeholder: "e.g. 4521" },
   { name: "account_type", label: "Account Type", type: "select", options: ACCOUNT_TYPES },
-  { name: "current_balance", label: "Current Balance ($)", type: "number", required: true, placeholder: "0.00" },
-  { name: "currency", label: "Currency", placeholder: "USD" },
+  { name: "current_balance", label: "Current Balance (₱)", type: "number", required: true, placeholder: "0.00" },
+  { name: "currency", label: "Currency", placeholder: "PHP" },
   { name: "status", label: "Status", type: "select", options: STATUS_OPTIONS },
   { name: "notes", label: "Notes", placeholder: "Optional notes" },
 ];
@@ -42,6 +43,68 @@ const typeColors = {
 const fmt = (v) =>
   `₱${Math.abs(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+function AccountTransactions({ accountId, transactions }) {
+  const [expanded, setExpanded] = useState(false);
+  const linked = transactions
+    .filter(t => t.bank_account_id === accountId)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, expanded ? 50 : 5);
+
+  const allLinked = transactions.filter(t => t.bank_account_id === accountId);
+  const totalIncome = allLinked.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
+  const totalExpense = allLinked.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
+
+  if (allLinked.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground italic">No transactions linked to this account yet.</p>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {/* Mini summary */}
+      <div className="flex gap-3 text-xs">
+        <span className="text-primary font-medium">+{fmt(totalIncome)} in</span>
+        <span className="text-destructive font-medium">-{fmt(totalExpense)} out</span>
+        <span className="text-muted-foreground">({allLinked.length} txn{allLinked.length !== 1 ? "s" : ""})</span>
+      </div>
+
+      {/* Transaction rows */}
+      <div className="space-y-1">
+        {linked.map((t) => (
+          <div key={t.id} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${t.type === "income" ? "bg-primary/10" : "bg-destructive/10"}`}>
+                {t.type === "income"
+                  ? <ArrowUpRight className="w-3 h-3 text-primary" />
+                  : <ArrowDownRight className="w-3 h-3 text-destructive" />
+                }
+              </div>
+              <span className="text-xs text-foreground truncate">{t.description}</span>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+              <span className="text-[10px] text-muted-foreground">{t.date ? format(new Date(t.date), "MMM d") : ""}</span>
+              <span className={`text-xs font-semibold ${t.type === "income" ? "text-primary" : "text-destructive"}`}>
+                {t.type === "income" ? "+" : "-"}₱{(t.amount || 0).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {allLinked.length > 5 && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-1 text-xs text-primary hover:underline"
+        >
+          {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          {expanded ? "Show less" : `Show all ${allLinked.length} transactions`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function BankAccounts() {
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -50,6 +113,11 @@ export default function BankAccounts() {
   const { data: accounts = [], isLoading } = useQuery({
     queryKey: ["bankaccounts"],
     queryFn: () => base44.entities.BankAccount.list("-created_date", 100),
+  });
+
+  const { data: transactions = [] } = useQuery({
+    queryKey: ["transactions"],
+    queryFn: () => base44.entities.Transaction.list("-date", 500),
   });
 
   const createMutation = useMutation({
@@ -172,7 +240,7 @@ export default function BankAccounts() {
                   <p className={`text-2xl font-bold ${isNeg ? "text-destructive" : "text-primary"}`}>
                     {isNeg ? "-" : ""}{fmt(bal)}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">{account.currency || "USD"}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{account.currency || "PHP"}</p>
                 </div>
 
                 {/* Meta */}
@@ -193,6 +261,12 @@ export default function BankAccounts() {
                   >
                     {account.status || "active"}
                   </Badge>
+                </div>
+
+                {/* Linked Transactions */}
+                <div className="border-t border-border pt-3">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">Linked Transactions</p>
+                  <AccountTransactions accountId={account.id} transactions={transactions} />
                 </div>
 
                 {account.notes && (

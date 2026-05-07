@@ -38,6 +38,10 @@
       "type": "string",
       "description": "Associated project name"
     },
+    "bank_account_id": {
+      "type": "string",
+      "description": "Linked bank account ID"
+    },
     "date": {
       "type": "string",
       "format": "date",
