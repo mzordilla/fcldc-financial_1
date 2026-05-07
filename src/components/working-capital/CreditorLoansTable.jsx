@@ -9,7 +9,7 @@ import MonthlyLoanMonitoring from "./MonthlyLoanMonitoring";
 const statusStyles = {
   active: "bg-chart-2/10 text-chart-2 border-chart-2/20",
   paid_off: "bg-primary/10 text-primary border-primary/20",
-  defaulted: "bg-destructive/10 text-destructive border-destructive/20",
+  defaulted: "bg-destructive/10 text-destructive border-destructive/20"
 };
 
 export default function CreditorLoansTable({
@@ -20,7 +20,7 @@ export default function CreditorLoansTable({
   onEdit,
   onDelete,
   onMarkPaidOff,
-  isLoading,
+  isLoading
 }) {
   const totalOutstanding = loans.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
   const totalMonthlyPayment = loans.reduce((s, d) => s + (d.monthly_payment || 0), 0);
@@ -37,7 +37,7 @@ export default function CreditorLoansTable({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-12"></TableHead>
+              <TableHead className="w-12 hidden"></TableHead>
               <TableHead>Description</TableHead>
               <TableHead className="text-right">Amount</TableHead>
               <TableHead className="text-right">Outstanding</TableHead>
@@ -48,24 +48,24 @@ export default function CreditorLoansTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-              <TableRow>
+            {isLoading ?
+            <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">Loading...</TableCell>
-              </TableRow>
-            ) : (
-              loans.map((loan) => (
-                <div key={loan.id}>
+              </TableRow> :
+
+            loans.map((loan) =>
+            <div key={loan.id}>
                   <TableRow className="hover:bg-muted/50">
                     <TableCell>
                       <button
-                        onClick={() => setExpandedId(expandedId === loan.id ? null : loan.id)}
-                        className="p-1 hover:bg-accent rounded transition-colors"
-                      >
-                        {expandedId === loan.id ? (
-                          <ChevronUp className="w-4 h-4" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4" />
-                        )}
+                    onClick={() => setExpandedId(expandedId === loan.id ? null : loan.id)}
+                    className="p-1 hover:bg-accent rounded transition-colors">
+                    
+                        {expandedId === loan.id ?
+                    <ChevronUp className="w-4 h-4" /> :
+
+                    <ChevronDown className="w-4 h-4" />
+                    }
                       </button>
                     </TableCell>
                     <TableCell className="font-medium">{loan.description || "—"}</TableCell>
@@ -80,11 +80,11 @@ export default function CreditorLoansTable({
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex gap-1 justify-center">
-                        {loan.status === "active" && (
-                          <Button size="icon" variant="ghost" onClick={() => onMarkPaidOff(loan)} title="Mark Paid Off">
+                        {loan.status === "active" &&
+                    <Button size="icon" variant="ghost" onClick={() => onMarkPaidOff(loan)} title="Mark Paid Off">
                             <CheckCircle className="w-4 h-4 text-primary" />
                           </Button>
-                        )}
+                    }
                         <Button size="icon" variant="ghost" onClick={() => onEdit(loan)}>
                           <Pencil className="w-4 h-4" />
                         </Button>
@@ -94,19 +94,19 @@ export default function CreditorLoansTable({
                       </div>
                     </TableCell>
                   </TableRow>
-                  {expandedId === loan.id && (
-                    <TableRow>
+                  {expandedId === loan.id &&
+              <TableRow>
                       <TableCell colSpan={8} className="bg-muted/50 p-4">
                         <MonthlyLoanMonitoring loan={loan} />
                       </TableCell>
                     </TableRow>
-                  )}
+              }
                 </div>
-              ))
-            )}
+            )
+            }
           </TableBody>
         </Table>
       </CardContent>
-    </Card>
-  );
+    </Card>);
+
 }
