@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import MonthlyLoanMonitoring from "../components/working-capital/MonthlyLoanMonitoring";
+import OutstandingVsGranted from "../components/working-capital/OutstandingVsGranted";
 
 const typeLabels = {
   loan: "Loan",
@@ -125,6 +126,8 @@ export default function WorkingCapitalLoans() {
           </Button>
         </div>
       </div>
+
+      <OutstandingVsGranted items={items} />
 
       <div className="grid gap-4">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
