@@ -1,9 +1,12 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, parseISO } from "date-fns";
-import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp } from "lucide-react";
+import { format, startOfMonth, eachMonthOfInterval, subMonths, parseISO } from "date-fns";
+import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, Download, FileSpreadsheet } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { jsPDF } from "jspdf";
+import * as XLSX from "xlsx";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 const fmtSigned = (v) => (v < 0 ? `-₱${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : `₱${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`);
@@ -188,6 +191,87 @@ export default function Reports() {
   const currentMonthKey = format(new Date(), "yyyy-MM");
   const currentTx = txByMonth[currentMonthKey] || [];
 
+  // Build flat summary rows for all months in range
+  const buildSummaryRows = () => {
+    return [...months].reverse().map(m => {
+      const key = format(m, "yyyy-MM");
+      const mTx = txByMonth[key] || [];
+      const income = mTx.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
+      const expenses = mTx.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
+      const loanPayments = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
+      const netIncome = income - expenses;
+      const netCF = netIncome - loanPayments;
+      return { Month: format(m, "MMMM yyyy"), Revenue: income, Expenses: expenses, "Net Income": netIncome, "Loan Payments": loanPayments, "Net Cash Flow": netCF };
+    });
+  };
+
+  const exportExcel = () => {
+    const rows = buildSummaryRows();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "P&L Summary");
+
+    // Add category breakdown sheet
+    const catRows = [];
+    [...months].reverse().forEach(m => {
+      const key = format(m, "yyyy-MM");
+      const mTx = txByMonth[key] || [];
+      const byCategory = {};
+      mTx.forEach(t => {
+        const cat = CATEGORY_LABELS[t.category] || t.category || "Other";
+        if (!byCategory[cat]) byCategory[cat] = { income: 0, expense: 0 };
+        byCategory[cat][t.type] += (t.amount || 0);
+      });
+      Object.entries(byCategory).forEach(([cat, vals]) => {
+        catRows.push({ Month: format(m, "MMMM yyyy"), Category: cat, Income: vals.income, Expenses: vals.expense });
+      });
+    });
+    const ws2 = XLSX.utils.json_to_sheet(catRows);
+    XLSX.utils.book_append_sheet(wb, ws2, "Category Breakdown");
+    XLSX.writeFile(wb, `Financial_Report_${rangeMonths}mo_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+  };
+
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    const rows = buildSummaryRows();
+    const pageW = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("Financial Report", 14, 18);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100);
+    doc.text(`Generated: ${format(new Date(), "MMMM d, yyyy")}  |  Range: Last ${rangeMonths} months`, 14, 26);
+    doc.text(`Total Revenue: ${fmt(rangeIncome)}   Total Expenses: ${fmt(rangeExpenses)}   Net Income: ${fmtSigned(rangeNet)}`, 14, 33);
+
+    doc.setTextColor(0);
+    doc.setFontSize(13);
+    doc.setFont("helvetica", "bold");
+    doc.text("P&L Summary", 14, 45);
+
+    // Table header
+    const cols = ["Month", "Revenue", "Expenses", "Net Income", "Loan Payments", "Net Cash Flow"];
+    const colX = [14, 55, 90, 125, 155, 182];
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.setFillColor(240, 240, 240);
+    doc.rect(14, 48, pageW - 28, 7, "F");
+    cols.forEach((c, i) => doc.text(c, colX[i], 53));
+
+    doc.setFont("helvetica", "normal");
+    let y = 60;
+    rows.forEach((row, idx) => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      if (idx % 2 === 0) { doc.setFillColor(250, 250, 250); doc.rect(14, y - 4, pageW - 28, 7, "F"); }
+      const vals = [row.Month, fmt(row.Revenue), fmt(row.Expenses), fmtSigned(row["Net Income"]), fmt(row["Loan Payments"]), fmtSigned(row["Net Cash Flow"])];
+      vals.forEach((v, i) => doc.text(String(v), colX[i], y));
+      y += 8;
+    });
+
+    doc.save(`Financial_Report_${rangeMonths}mo_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+  };
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -195,14 +279,22 @@ export default function Reports() {
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Reports</h1>
           <p className="text-muted-foreground mt-1">Monthly P&L summaries and cash flow statements</p>
         </div>
-        <Select value={rangeMonths} onValueChange={setRangeMonths}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="3">Last 3 months</SelectItem>
-            <SelectItem value="6">Last 6 months</SelectItem>
-            <SelectItem value="12">Last 12 months</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Select value={rangeMonths} onValueChange={setRangeMonths}>
+            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3">Last 3 months</SelectItem>
+              <SelectItem value="6">Last 6 months</SelectItem>
+              <SelectItem value="12">Last 12 months</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={exportExcel} className="gap-2">
+            <FileSpreadsheet className="w-4 h-4" /> Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportPDF} className="gap-2">
+            <Download className="w-4 h-4" /> PDF
+          </Button>
+        </div>
       </div>
 
       {/* Range Summary KPIs */}
