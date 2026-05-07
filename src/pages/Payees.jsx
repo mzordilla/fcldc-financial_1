@@ -145,6 +145,17 @@ export default function Payees() {
     queryFn: () => base44.entities.Payee.list("name", 500),
   });
 
+  const { data: payables = [] } = useQuery({
+    queryKey: ["payables"],
+    queryFn: () => base44.entities.Payable.list("-created_date", 500),
+  });
+
+  const getOutstandingBalance = (payeeName) => {
+    return payables
+      .filter(p => p.supplier_name === payeeName && (p.status === "unpaid" || p.status === "partially_paid"))
+      .reduce((sum, p) => sum + Math.max(0, (p.amount || 0) - (p.amount_paid || 0)), 0);
+  };
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Payee.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["payees"] }),
@@ -237,6 +248,7 @@ export default function Payees() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Contact</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Terms</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">VAT</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Outstanding</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Credit Limit</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -262,6 +274,13 @@ export default function Payees() {
                         {p.vat_status === "vat" ? "VAT" : "Non-VAT"}
                       </Badge>
                     ) : <span className="text-muted-foreground text-xs">—</span>}
+                  </td>
+                  <td className="px-4 py-3 text-right font-medium">
+                    {getOutstandingBalance(p.name) > 0 ? (
+                      <span className="text-destructive">₱{getOutstandingBalance(p.name).toLocaleString()}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 font-medium hidden lg:table-cell">{p.credit_limit ? `₱${p.credit_limit.toLocaleString()}` : "—"}</td>
                   <td className="px-4 py-3">
