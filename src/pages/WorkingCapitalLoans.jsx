@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import AddFormDialog from "../components/shared/AddFormDialog";
 import MonthlyLoanMonitoring from "../components/working-capital/MonthlyLoanMonitoring";
 import OutstandingVsGranted from "../components/working-capital/OutstandingVsGranted";
+import ProjectedCashOutflows from "../components/working-capital/ProjectedCashOutflows";
 
 const typeLabels = {
   loan: "Loan",
@@ -127,7 +128,10 @@ export default function WorkingCapitalLoans() {
         </div>
       </div>
 
-      <OutstandingVsGranted items={items} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <OutstandingVsGranted items={items} />
+        <ProjectedCashOutflows items={items} />
+      </div>
 
       <div className="bg-card rounded-lg border border-border overflow-hidden">
         <Table>
