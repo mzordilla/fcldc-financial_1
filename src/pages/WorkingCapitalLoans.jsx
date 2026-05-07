@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import MonthlyLoanMonitoring from "../components/working-capital/MonthlyLoanMonitoring";
 
@@ -59,7 +60,13 @@ export default function WorkingCapitalLoans() {
   const [editingItem, setEditingItem] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [expandedId, setExpandedId] = useState(null);
+  const [deleteItem, setDeleteItem] = useState(null);
+  const [user, setUser] = useState(null);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["workingcapitalloans"],
@@ -177,7 +184,7 @@ export default function WorkingCapitalLoans() {
                       <Button variant="ghost" size="icon" onClick={() => setEditingItem(d)} className="text-muted-foreground hover:text-foreground">
                         <Pencil className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(d.id)} className="text-muted-foreground hover:text-destructive">
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteItem(d)} className="text-muted-foreground hover:text-destructive">
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -209,6 +216,29 @@ export default function WorkingCapitalLoans() {
         initialData={editingItem || {}}
         onSubmit={(data) => updateMutation.mutateAsync({ id: editingItem.id, data })}
       />
+
+      <AlertDialog open={!!deleteItem} onOpenChange={(v) => { if (!v) setDeleteItem(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Loan</AlertDialogTitle>
+            <AlertDialogDescription>
+              {user?.role === "admin" ? (
+                <>This action cannot be undone. Are you sure you want to delete this loan?</>
+              ) : (
+                <>Only admins can delete loans. Please contact an administrator to delete this loan.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialog.Footer>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            {user?.role === "admin" && (
+              <AlertDialogAction onClick={() => { deleteMutation.mutate(deleteItem.id); setDeleteItem(null); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            )}
+          </AlertDialog.Footer>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
