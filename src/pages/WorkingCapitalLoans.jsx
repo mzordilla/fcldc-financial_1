@@ -136,6 +136,7 @@ export default function WorkingCapitalLoans() {
               <TableHead className="font-semibold">Creditor</TableHead>
               <TableHead className="font-semibold">Type</TableHead>
               <TableHead className="text-right font-semibold">Granted Amount</TableHead>
+              <TableHead className="text-right font-semibold">Utilization</TableHead>
               <TableHead className="text-right font-semibold">Paid</TableHead>
               <TableHead className="text-right font-semibold">Outstanding</TableHead>
               <TableHead className="text-right font-semibold">Rate</TableHead>
@@ -172,6 +173,9 @@ export default function WorkingCapitalLoans() {
                   </TableCell>
                   <TableCell className="text-right text-sm">
                     ₱{(d.amount_granted || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </TableCell>
+                  <TableCell className="text-right text-sm">
+                    {d.amount_granted ? `${Math.round(((d.amount_availed || 0) / d.amount_granted) * 100)}%` : "-"}
                   </TableCell>
                   <TableCell className="text-right text-sm">
                     ₱{(d.amount_paid || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
