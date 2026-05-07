@@ -2,15 +2,20 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recha
 import { Card } from "@/components/ui/card";
 
 export default function OutstandingVsGranted({ items }) {
-  const items_filtered = items.filter(d => d.status === "active" && d.amount_granted && (d.type === "credit_line" || d.type === "mortgage"));
+  const creditLines = items.filter(d => d.status === "active" && d.type === "credit_line" && d.amount_granted);
+  const mortgages = items.filter(d => d.status === "active" && d.type === "mortgage" && d.amount_granted);
+  const allItems = [...creditLines, ...mortgages];
   
-  const totalGranted = items_filtered.reduce((s, d) => s + (d.amount_granted || 0), 0);
-  const totalOutstanding = items_filtered.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
-  const available = totalGranted - totalOutstanding;
+  const creditLineGranted = creditLines.reduce((s, d) => s + (d.amount_granted || 0), 0);
+  const creditLineOutstanding = creditLines.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
+  const creditLineAvailable = creditLineGranted - creditLineOutstanding;
+  
+  const totalOutstanding = allItems.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
+  const totalGranted = allItems.reduce((s, d) => s + (d.amount_granted || 0), 0);
 
   const pieData = [
     { name: "Outstanding", value: totalOutstanding },
-    { name: "Available", value: Math.max(0, available) },
+    { name: "Available", value: Math.max(0, creditLineAvailable) },
   ];
 
   const COLORS = ["hsl(var(--destructive))", "hsl(var(--chart-2))"];
@@ -30,12 +35,12 @@ export default function OutstandingVsGranted({ items }) {
             <p className="text-lg font-bold text-destructive">₱{totalOutstanding.toLocaleString()}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Available</p>
-            <p className="text-lg font-bold text-primary">₱{available.toLocaleString()}</p>
+           <p className="text-xs text-muted-foreground">Available (Credit Line)</p>
+           <p className="text-lg font-bold text-primary">₱{Math.max(0, creditLineAvailable).toLocaleString()}</p>
           </div>
         </div>
       </div>
-      {items_filtered.length === 0 ? (
+      {allItems.length === 0 ? (
         <p className="text-center py-8 text-muted-foreground text-sm">No active loans with amounts granted</p>
       ) : (
         <ResponsiveContainer width="100%" height={280}>
