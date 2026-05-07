@@ -9,7 +9,7 @@ const navItems = [
   { label: "Project P&L", icon: FolderKanban, path: "/project-pnl" },
   { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
   { label: "Payment Approvals", icon: CircleDollarSign, path: "/payment-approvals" },
-  { label: "Payee Masterlist", icon: Users, path: "/payees" },
+  { label: "Supplier Masterlist", icon: Users, path: "/payees" },
   { label: "Receivables", icon: FileText, path: "/receivables" },
   { label: "Payables", icon: CreditCard, path: "/payables" },
   { label: "Bank Accounts", icon: Building2, path: "/bank-accounts" },
