@@ -42,9 +42,9 @@ export default function CreditorLoansTable({
               <TableHead className="text-right">Amount</TableHead>
               <TableHead className="text-right">Outstanding</TableHead>
               <TableHead className="text-right">Rate</TableHead>
-              <TableHead>Due</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">Due</TableHead>
+              <TableHead className="text-right">Status</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -72,14 +72,14 @@ export default function CreditorLoansTable({
                     <TableCell className="text-right font-mono">₱{(loan.total_amount || 0).toLocaleString()}</TableCell>
                     <TableCell className="text-right font-mono">₱{((loan.total_amount || 0) - (loan.amount_paid || 0)).toLocaleString()}</TableCell>
                     <TableCell className="text-right">{loan.interest_rate || 0}%</TableCell>
-                    <TableCell>{loan.due_date ? format(new Date(loan.due_date), "MMM d, yyyy") : "—"}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-right">{loan.due_date ? format(new Date(loan.due_date), "MMM d, yyyy") : "—"}</TableCell>
+                    <TableCell className="text-right">
                       <Badge className={`border ${statusStyles[loan.status]}`}>
                         {loan.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex gap-1 justify-end">
+                    <TableCell className="text-center">
+                      <div className="flex gap-1 justify-center">
                         {loan.status === "active" && (
                           <Button size="icon" variant="ghost" onClick={() => onMarkPaidOff(loan)} title="Mark Paid Off">
                             <CheckCircle className="w-4 h-4 text-primary" />
