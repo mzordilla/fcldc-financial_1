@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, Pencil, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Pencil, ChevronDown, ChevronUp, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -115,19 +115,22 @@ export default function WorkingCapitalLoans() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="paid_off">Paid Off</SelectItem>
-              <SelectItem value="defaulted">Defaulted</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={() => setShowAdd(true)}>
-            <Plus className="w-4 h-4 mr-2" /> Add
-          </Button>
-        </div>
+           <Select value={statusFilter} onValueChange={setStatusFilter}>
+             <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+             <SelectContent>
+               <SelectItem value="all">All Status</SelectItem>
+               <SelectItem value="active">Active</SelectItem>
+               <SelectItem value="paid_off">Paid Off</SelectItem>
+               <SelectItem value="defaulted">Defaulted</SelectItem>
+             </SelectContent>
+           </Select>
+           <Button variant="outline" size="icon" onClick={() => queryClient.invalidateQueries({ queryKey: ["workingcapitalloans"] })} title="Refresh">
+             <RotateCcw className="w-4 h-4" />
+           </Button>
+           <Button onClick={() => setShowAdd(true)}>
+             <Plus className="w-4 h-4 mr-2" /> Add
+           </Button>
+         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
