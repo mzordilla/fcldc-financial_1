@@ -1,0 +1,33 @@
+{
+  "name": "Payee",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Payee name"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "supplier",
+        "subcontractor",
+        "employee",
+        "government",
+        "utility",
+        "other"
+      ],
+      "description": "Type of payee"
+    },
+    "contact": {
+      "type": "string",
+      "description": "Contact number or email"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

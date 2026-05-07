@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
+import PayeeSelector from "./PayeeSelector";
 
 const defaultForm = {
   request_number: "",
@@ -83,7 +84,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
             </div>
             <div className="space-y-1.5">
               <Label>Payee *</Label>
-              <Input required placeholder="Who is being paid?" value={form.payee} onChange={e => setField("payee", e.target.value)} />
+              <PayeeSelector value={form.payee} onChange={(v) => setField("payee", v)} />
             </div>
           </div>
 
