@@ -1,0 +1,54 @@
+{
+  "name": "ChartOfAccount",
+  "type": "object",
+  "properties": {
+    "account_code": {
+      "type": "string",
+      "description": "Account code (e.g. 4001)"
+    },
+    "account_name": {
+      "type": "string",
+      "description": "Account name / description"
+    },
+    "account_type": {
+      "type": "string",
+      "enum": [
+        "income",
+        "expense",
+        "asset",
+        "liability",
+        "equity"
+      ],
+      "description": "Account classification"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "project_payment",
+        "material_cost",
+        "labor",
+        "equipment",
+        "subcontractor",
+        "overhead",
+        "permits",
+        "insurance",
+        "bank_reconciliation",
+        "other"
+      ],
+      "description": "Maps to transaction category"
+    },
+    "description": {
+      "type": "string",
+      "description": "Additional notes about this account"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this account is active"
+    }
+  },
+  "required": [
+    "account_name",
+    "account_type"
+  ]
+}

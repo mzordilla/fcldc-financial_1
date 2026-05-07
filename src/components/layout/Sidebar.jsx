@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, HardHat, LogOut, Building2, CreditCard, Banknote, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2 } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, HardHat, LogOut, Building2, CreditCard, Banknote, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, BookOpen } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const navItems = [
@@ -16,6 +16,7 @@ const navItems = [
   { label: "Bank Loans", icon: Banknote, path: "/bank-loans" },
   { label: "Working Capital Loans", icon: Landmark, path: "/working-capital-loans" },
   { label: "Reports", icon: BarChart2, path: "/reports" },
+  { label: "Chart of Accounts", icon: BookOpen, path: "/chart-of-accounts" },
 ];
 
 export default function Sidebar() {

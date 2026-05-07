@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +10,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function TransactionFormDialog({ open, onOpenChange, title, bankAccounts = [], categories = [], onSubmit, initialData }) {
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
+  const [descSearch, setDescSearch] = useState("");
+  const [showCoaSuggestions, setShowCoaSuggestions] = useState(false);
+
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ["chartofaccounts"],
+    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 200),
+    enabled: open,
+  });
 
   useEffect(() => {
-    if (open) setFormData(initialData || {});
+    if (open) {
+      setFormData(initialData || {});
+      setDescSearch(initialData?.description || "");
+    }
   }, [open]);
 
   const set = (key, val) => setFormData(prev => ({ ...prev, [key]: val }));
@@ -21,7 +34,28 @@ export default function TransactionFormDialog({ open, onOpenChange, title, bankA
     await onSubmit(formData);
     setSaving(false);
     setFormData({});
+    setDescSearch("");
     onOpenChange(false);
+  };
+
+  // Filter COA suggestions
+  const activeAccounts = chartOfAccounts.filter(a => a.is_active !== false);
+  const coaSuggestions = descSearch.length > 0
+    ? activeAccounts.filter(a =>
+        a.account_name.toLowerCase().includes(descSearch.toLowerCase()) ||
+        (a.account_code && a.account_code.toLowerCase().includes(descSearch.toLowerCase()))
+      ).slice(0, 8)
+    : [];
+
+  const selectCoaAccount = (account) => {
+    setDescSearch(account.account_name);
+    set("description", account.account_name);
+    // Auto-fill category if mapped
+    if (account.category) set("category", account.category);
+    // Auto-fill type based on account_type
+    if (account.account_type === "income") set("type", "income");
+    else if (account.account_type === "expense") set("type", "expense");
+    setShowCoaSuggestions(false);
   };
 
   return (
@@ -31,15 +65,49 @@ export default function TransactionFormDialog({ open, onOpenChange, title, bankA
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Description */}
-          <div className="space-y-1.5">
-            <Label>Description *</Label>
+
+          {/* Description with COA lookup */}
+          <div className="space-y-1.5 relative">
+            <Label>Description * <span className="text-xs text-muted-foreground font-normal">(type to search Chart of Accounts)</span></Label>
             <Input
               required
-              placeholder="e.g. Payment for Oak Street project"
-              value={formData.description || ""}
-              onChange={(e) => set("description", e.target.value)}
+              placeholder="e.g. Project Revenue or type to search accounts..."
+              value={descSearch}
+              onChange={(e) => {
+                setDescSearch(e.target.value);
+                set("description", e.target.value);
+                setShowCoaSuggestions(true);
+              }}
+              onFocus={() => setShowCoaSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowCoaSuggestions(false), 150)}
+              autoComplete="off"
             />
+            {showCoaSuggestions && coaSuggestions.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-52 overflow-y-auto">
+                {coaSuggestions.map((account) => (
+                  <button
+                    key={account.id}
+                    type="button"
+                    onMouseDown={() => selectCoaAccount(account)}
+                    className="w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-center justify-between gap-2"
+                  >
+                    <div>
+                      {account.account_code && (
+                        <span className="text-xs font-mono text-muted-foreground mr-2">{account.account_code}</span>
+                      )}
+                      <span className="text-sm text-foreground">{account.account_name}</span>
+                    </div>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full border ${
+                      account.account_type === "income" ? "text-primary bg-primary/10 border-primary/20" :
+                      account.account_type === "expense" ? "text-destructive bg-destructive/10 border-destructive/20" :
+                      "text-muted-foreground bg-muted border-border"
+                    }`}>
+                      {account.account_type}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Amount & Type */}

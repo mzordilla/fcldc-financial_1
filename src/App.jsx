@@ -19,6 +19,7 @@ import PurchaseOrders from './pages/PurchaseOrders';
 import PaymentApprovals from './pages/PaymentApprovals';
 import BankAccounts from './pages/BankAccounts';
 import Reports from './pages/Reports';
+import ChartOfAccounts from './pages/ChartOfAccounts';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -60,6 +61,7 @@ const AuthenticatedApp = () => {
         <Route path="/working-capital-loans" element={<WorkingCapitalLoans />} />
         <Route path="/bank-accounts" element={<BankAccounts />} />
         <Route path="/reports" element={<Reports />} />
+        <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
