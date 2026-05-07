@@ -34,6 +34,11 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
     queryFn: () => base44.entities.Payee.list("name", 200),
   });
 
+  const { data: projects = [] } = useQuery({
+    queryKey: ["projects"],
+    queryFn: () => base44.entities.Project.list("project_name", 200),
+  });
+
   useEffect(() => {
     if (open) {
       const data = { ...defaultForm, ...initialData };
@@ -113,7 +118,16 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
 
           <div className="space-y-1.5">
             <Label>Project Name</Label>
-            <Input placeholder="e.g. Main Street Tower" value={form.project_name} onChange={e => set("project_name", e.target.value)} />
+            <Select value={form.project_name} onValueChange={v => set("project_name", v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a project..." />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map(p => (
+                  <SelectItem key={p.id} value={p.project_name}>{p.project_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5">
