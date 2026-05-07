@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, Pencil, ChevronDown, ChevronUp, RotateCcw } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Pencil, ChevronDown, ChevronUp, RotateCcw, List, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -68,6 +68,7 @@ export default function WorkingCapitalLoans() {
   const [expandedId, setExpandedId] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
   const [user, setUser] = useState(null);
+  const [viewMode, setViewMode] = useState("grouped"); // "grouped" or "table"
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -130,6 +131,9 @@ export default function WorkingCapitalLoans() {
                <SelectItem value="defaulted">Defaulted</SelectItem>
              </SelectContent>
            </Select>
+           <Button variant="outline" size="icon" onClick={() => setViewMode(viewMode === "grouped" ? "table" : "grouped")} title={viewMode === "grouped" ? "Table View" : "Grouped View"}>
+             {viewMode === "grouped" ? <List className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
+           </Button>
            <Button variant="outline" size="icon" onClick={() => queryClient.invalidateQueries({ queryKey: ["workingcapitalloans"] })} title="Refresh">
              <RotateCcw className="w-4 h-4" />
            </Button>
@@ -150,45 +154,102 @@ export default function WorkingCapitalLoans() {
 
       <UpcomingMaturities items={items} />
 
-      <div className="space-y-8">
-        {Object.keys(typeLabels).map(type => {
-          const typeLoans = filtered.filter(d => d.type === type);
-          if (typeLoans.length === 0) return null;
-
-          // Group by creditor
-          const byCreditor = {};
-          typeLoans.forEach(loan => {
-            if (!byCreditor[loan.creditor]) byCreditor[loan.creditor] = [];
-            byCreditor[loan.creditor].push(loan);
-          });
-
-          return (
-            <div key={type} className="space-y-4">
-              <h2 className="text-xl font-bold text-foreground">{typeLabels[type]}</h2>
-              <div className="space-y-4">
-                {Object.keys(byCreditor).map(creditor => (
-                  <CreditorLoansTable
-                    key={creditor}
-                    creditor={creditor}
-                    loans={byCreditor[creditor]}
-                    expandedId={expandedId}
-                    setExpandedId={setExpandedId}
-                    onEdit={setEditingItem}
-                    onDelete={setDeleteItem}
-                    onMarkPaidOff={markPaidOff}
-                    isLoading={isLoading}
-                  />
-                ))}
-              </div>
+      {viewMode === "table" ? (
+        <div>
+          {!isLoading && filtered.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">No working capital loans recorded</div>
+          ) : (
+            <div className="bg-card rounded-2xl border border-border overflow-hidden">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Creditor</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Type</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Total Amount</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Outstanding</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Interest Rate</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Monthly Payment</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Status</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(loan => (
+                    <tr key={loan.id} className="border-b border-border hover:bg-muted/50">
+                      <td className="px-6 py-4 text-sm text-foreground">{loan.creditor}</td>
+                      <td className="px-6 py-4 text-sm text-foreground">{typeLabels[loan.type] || loan.type}</td>
+                      <td className="px-6 py-4 text-sm text-foreground">₱{(loan.total_amount || 0).toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-foreground">₱{Math.max(0, (loan.total_amount || 0) - (loan.amount_paid || 0)).toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-foreground">{loan.interest_rate || "-"}%</td>
+                      <td className="px-6 py-4 text-sm text-foreground">₱{(loan.monthly_payment || 0).toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm">
+                        <Badge variant="outline" className={statusStyles[loan.status] || ""}>
+                          {(loan.status || "active").replace(/_/g, " ")}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          {loan.status === "active" && (
+                            <Button variant="ghost" size="icon" onClick={() => markPaidOff(loan)} className="text-primary hover:text-primary" title="Mark as Paid Off">
+                              <CheckCircle className="w-4 h-4" />
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="icon" onClick={() => setEditingItem(loan)} className="text-muted-foreground hover:text-foreground">
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => setDeleteItem(loan)} className="text-muted-foreground hover:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          );
-        })}
-        {!isLoading && filtered.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            No working capital loans recorded
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {Object.keys(typeLabels).map(type => {
+            const typeLoans = filtered.filter(d => d.type === type);
+            if (typeLoans.length === 0) return null;
+
+            // Group by creditor
+            const byCreditor = {};
+            typeLoans.forEach(loan => {
+              if (!byCreditor[loan.creditor]) byCreditor[loan.creditor] = [];
+              byCreditor[loan.creditor].push(loan);
+            });
+
+            return (
+              <div key={type} className="space-y-4">
+                <h2 className="text-xl font-bold text-foreground">{typeLabels[type]}</h2>
+                <div className="space-y-4">
+                  {Object.keys(byCreditor).map(creditor => (
+                    <CreditorLoansTable
+                      key={creditor}
+                      creditor={creditor}
+                      loans={byCreditor[creditor]}
+                      expandedId={expandedId}
+                      setExpandedId={setExpandedId}
+                      onEdit={setEditingItem}
+                      onDelete={setDeleteItem}
+                      onMarkPaidOff={markPaidOff}
+                      isLoading={isLoading}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+          {!isLoading && filtered.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              No working capital loans recorded
+            </div>
+          )}
+        </div>
+      )}
 
       <AddFormDialog
         open={showAdd}
