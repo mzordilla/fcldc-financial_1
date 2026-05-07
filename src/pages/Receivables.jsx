@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import AddFormDialog from "../components/shared/AddFormDialog";
+import ReceivableFormDialog from "../components/receivables/ReceivableFormDialog";
 
 function getAgingBucket(dueDateStr, status) {
   if (status === "paid") return null;
@@ -67,10 +68,9 @@ const statusStyles = {
 
 const fields = [
   { name: "client_name", label: "Client Name", required: true, placeholder: "e.g. ABC Developers" },
-  { name: "project_name", label: "Project Name", placeholder: "e.g. Main Street Tower" },
   { name: "invoice_number", label: "Invoice #", placeholder: "INV-001" },
-  { name: "amount", label: "Total Amount ($)", type: "number", required: true, placeholder: "0.00" },
-  { name: "amount_paid", label: "Amount Paid ($)", type: "number", placeholder: "0.00" },
+  { name: "amount", label: "Total Amount (₱)", type: "number", required: true, placeholder: "0.00" },
+  { name: "amount_paid", label: "Amount Paid (₱)", type: "number", placeholder: "0.00" },
   { name: "due_date", label: "Due Date", type: "date", required: true },
   { name: "status", label: "Status", type: "select", options: [
     { value: "outstanding", label: "Outstanding" },
@@ -193,14 +193,14 @@ export default function Receivables() {
         })}
       </div>
 
-      <AddFormDialog
+      <ReceivableFormDialog
         open={showAdd}
         onOpenChange={setShowAdd}
         title="Add Receivable"
         fields={fields}
         onSubmit={(data) => createMutation.mutateAsync(data)}
       />
-      <AddFormDialog
+      <ReceivableFormDialog
         open={!!editingR}
         onOpenChange={(v) => { if (!v) setEditingR(null); }}
         title="Edit Receivable"
