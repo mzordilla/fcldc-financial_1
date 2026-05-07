@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import AddFormDialog from "../components/shared/AddFormDialog";
+import POFormDialog from "../components/purchase-orders/POFormDialog";
 
 const statusStyles = {
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
@@ -30,32 +30,6 @@ const statusIcons = {
   rejected: XCircle,
   cancelled: XCircle,
 };
-
-const fields = [
-  { name: "po_number", label: "PO Number", placeholder: "PO-2026-001" },
-  { name: "supplier_name", label: "Supplier Name", required: true, placeholder: "e.g. SteelCo Supplies" },
-  { name: "project_name", label: "Project Name", placeholder: "e.g. Main Street Tower" },
-  { name: "description", label: "Description", required: true, placeholder: "What is being purchased?" },
-  { name: "items", label: "Line Items", placeholder: "e.g. 500 steel rods, 20 bags cement..." },
-  { name: "amount", label: "Total Amount ($)", type: "number", required: true, placeholder: "0.00" },
-  { name: "category", label: "Category", type: "select", options: [
-    { value: "materials", label: "Materials" },
-    { value: "equipment", label: "Equipment" },
-    { value: "subcontractor", label: "Subcontractor" },
-    { value: "services", label: "Services" },
-    { value: "utilities", label: "Utilities" },
-    { value: "other", label: "Other" },
-  ]},
-  { name: "priority", label: "Priority", type: "select", options: [
-    { value: "low", label: "Low" },
-    { value: "normal", label: "Normal" },
-    { value: "high", label: "High" },
-    { value: "urgent", label: "Urgent" },
-  ]},
-  { name: "requested_by", label: "Requested By", placeholder: "Your name" },
-  { name: "requested_date", label: "Request Date", type: "date" },
-  { name: "required_date", label: "Required By Date", type: "date" },
-];
 
 function ApprovalDialog({ po, open, onOpenChange, onDecision }) {
   const [notes, setNotes] = useState("");
@@ -242,8 +216,8 @@ export default function PurchaseOrders() {
         })}
       </div>
 
-      <AddFormDialog open={showAdd} onOpenChange={setShowAdd} title="New Purchase Order" fields={fields} onSubmit={(data) => createMutation.mutateAsync(data)} />
-      <AddFormDialog open={!!editingPO} onOpenChange={(v) => { if (!v) setEditingPO(null); }} title="Edit Purchase Order" fields={fields} initialData={editingPO || {}} onSubmit={(data) => updateMutation.mutateAsync({ id: editingPO.id, data })} />
+      <POFormDialog open={showAdd} onOpenChange={setShowAdd} title="New Purchase Order" onSubmit={(data) => createMutation.mutateAsync(data)} />
+      <POFormDialog open={!!editingPO} onOpenChange={(v) => { if (!v) setEditingPO(null); }} title="Edit Purchase Order" initialData={editingPO || {}} onSubmit={(data) => updateMutation.mutateAsync({ id: editingPO.id, data })} />
       {reviewPO && <ApprovalDialog po={reviewPO} open={!!reviewPO} onOpenChange={(v) => !v && setReviewPO(null)} onDecision={handleDecision} />}
     </div>
   );
