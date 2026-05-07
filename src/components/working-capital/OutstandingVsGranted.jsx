@@ -21,7 +21,7 @@ export default function OutstandingVsGranted({ items }) {
   const COLORS = ["hsl(var(--destructive))", "hsl(var(--chart-2))"];
 
   return (
-    <Card className="pt-6 pr-4 pb-6 pl-4">
+    <Card className="pt-6 pr-4 pl-4 pb-10">
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-foreground mb-1">Outstanding vs Amount Granted</h3>
         <p className="text-sm text-muted-foreground">Debt utilization overview</p>

@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 
 export default function ProjectedCashOutflows({ items }) {
   const [rateAdjustment, setRateAdjustment] = useState(0);
-  const activeLoans = items.filter(d => d.status === "active" && d.monthly_payment);
+  const activeLoans = items.filter((d) => d.status === "active" && d.monthly_payment);
 
   // Create 12-month projection
   const months = Array.from({ length: 12 }, (_, i) => {
@@ -15,17 +15,17 @@ export default function ProjectedCashOutflows({ items }) {
     return {
       month: date.toLocaleString("default", { month: "short" }),
       monthNum: date.getMonth(),
-      year: date.getFullYear(),
+      year: date.getFullYear()
     };
   });
 
   const chartData = months.map((m) => {
     let remainingPrincipal = {};
-    
+
     // Initialize remaining principal for each loan
-    activeLoans.forEach(loan => {
+    activeLoans.forEach((loan) => {
       if (!remainingPrincipal[loan.id]) {
-        remainingPrincipal[loan.id] = (loan.principal_balance || 0) || ((loan.total_amount || 0) - (loan.amount_paid || 0));
+        remainingPrincipal[loan.id] = loan.principal_balance || 0 || (loan.total_amount || 0) - (loan.amount_paid || 0);
       }
     });
 
@@ -36,9 +36,9 @@ export default function ProjectedCashOutflows({ items }) {
 
       const principal = remainingPrincipal[loan.id] || 0;
       const adjustedRate = Math.max(0, (loan.interest_rate || 0) + rateAdjustment);
-      const monthlyInterest = principal > 0 ? (principal * adjustedRate / 12 / 100) : 0;
+      const monthlyInterest = principal > 0 ? principal * adjustedRate / 12 / 100 : 0;
       const monthlyPayment = loan.monthly_payment || 0;
-      
+
       // Update remaining principal for next month
       const principalPortion = Math.max(0, monthlyPayment - monthlyInterest);
       remainingPrincipal[loan.id] = Math.max(0, principal - principalPortion);
@@ -48,15 +48,15 @@ export default function ProjectedCashOutflows({ items }) {
 
     return {
       name: `${m.month}`,
-      outflow: totalOutflow,
+      outflow: totalOutflow
     };
   });
 
   const totalMonthlyAverage =
-    activeLoans.reduce((sum, d) => sum + (d.monthly_payment || 0), 0);
+  activeLoans.reduce((sum, d) => sum + (d.monthly_payment || 0), 0);
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 hidden">
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-foreground mb-1">Projected Monthly Debt Servicing</h3>
         <p className="text-sm text-muted-foreground">12-month cash outflow projection</p>
@@ -74,29 +74,29 @@ export default function ProjectedCashOutflows({ items }) {
           min={-5}
           max={5}
           step={0.1}
-          className="w-full"
-        />
+          className="w-full" />
+        
         <p className="text-xs text-muted-foreground mt-2">
           Current: {rateAdjustment > 0 ? "+" : ""}{rateAdjustment.toFixed(1)}%
         </p>
       </div>
-      {activeLoans.length === 0 ? (
-        <p className="text-center py-8 text-muted-foreground text-sm">No active loans with monthly payments</p>
-      ) : (
-        <ResponsiveContainer width="100%" height={300}>
+      {activeLoans.length === 0 ?
+      <p className="text-center py-8 text-muted-foreground text-sm">No active loans with monthly payments</p> :
+
+      <ResponsiveContainer width="100%" height={300}>
           <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
             <YAxis stroke="hsl(var(--muted-foreground))" />
             <Tooltip
-              contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
-              formatter={(v) => `₱${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-            />
+            contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+            formatter={(v) => `₱${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
+          
             <Legend />
             <Bar dataKey="outflow" name="Monthly Outflow" fill="hsl(var(--destructive))" radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-      )}
-    </Card>
-  );
+      }
+    </Card>);
+
 }
