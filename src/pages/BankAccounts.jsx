@@ -215,7 +215,7 @@ export default function BankAccounts() {
                     </div>
                     <div>
                       <p className="font-semibold text-foreground leading-tight">{account.account_name}</p>
-                      <p className="text-muted-foreground text-2xl lowercase underline">{account.bank_name}</p>
+                      <p className="text-2xl underline uppercase text-[#277c2e]">{account.bank_name}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
