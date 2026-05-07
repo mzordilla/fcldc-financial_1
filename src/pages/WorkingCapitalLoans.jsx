@@ -15,7 +15,7 @@ import DebtServiceCoverageRatio from "../components/working-capital/DebtServiceC
 import UpcomingMaturities from "../components/working-capital/UpcomingMaturities";
 import LoanTypeTable from "../components/working-capital/LoanTypeTable";
 import CreditorLoansTable from "../components/working-capital/CreditorLoansTable";
-import OutstandingByCreditor from "../components/working-capital/OutstandingByCreditor";
+
 
 const typeLabels = {
   loan: "Loan",
@@ -145,7 +145,6 @@ export default function WorkingCapitalLoans() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
          <OutstandingVsGranted items={items} />
-         <OutstandingByCreditor items={items} />
        </div>
 
        <ProjectedCashOutflows items={items} />
