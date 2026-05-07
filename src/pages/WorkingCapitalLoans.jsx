@@ -14,6 +14,7 @@ import ProjectedCashOutflows from "../components/working-capital/ProjectedCashOu
 import DebtServiceCoverageRatio from "../components/working-capital/DebtServiceCoverageRatio";
 import UpcomingMaturities from "../components/working-capital/UpcomingMaturities";
 import LoanTypeTable from "../components/working-capital/LoanTypeTable";
+import CreditorLoansTable from "../components/working-capital/CreditorLoansTable";
 
 const typeLabels = {
   loan: "Loan",
@@ -150,18 +151,33 @@ export default function WorkingCapitalLoans() {
         {Object.keys(typeLabels).map(type => {
           const typeLoans = filtered.filter(d => d.type === type);
           if (typeLoans.length === 0) return null;
+
+          // Group by creditor
+          const byCreditor = {};
+          typeLoans.forEach(loan => {
+            if (!byCreditor[loan.creditor]) byCreditor[loan.creditor] = [];
+            byCreditor[loan.creditor].push(loan);
+          });
+
           return (
-            <LoanTypeTable
-              key={type}
-              type={type}
-              loans={typeLoans}
-              expandedId={expandedId}
-              setExpandedId={setExpandedId}
-              onEdit={setEditingItem}
-              onDelete={setDeleteItem}
-              onMarkPaidOff={markPaidOff}
-              isLoading={isLoading}
-            />
+            <div key={type} className="space-y-4">
+              <h2 className="text-xl font-bold text-foreground">{typeLabels[type]}</h2>
+              <div className="space-y-4">
+                {Object.keys(byCreditor).map(creditor => (
+                  <CreditorLoansTable
+                    key={creditor}
+                    creditor={creditor}
+                    loans={byCreditor[creditor]}
+                    expandedId={expandedId}
+                    setExpandedId={setExpandedId}
+                    onEdit={setEditingItem}
+                    onDelete={setDeleteItem}
+                    onMarkPaidOff={markPaidOff}
+                    isLoading={isLoading}
+                  />
+                ))}
+              </div>
+            </div>
           );
         })}
         {!isLoading && filtered.length === 0 && (
