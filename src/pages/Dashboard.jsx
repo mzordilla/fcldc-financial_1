@@ -8,6 +8,7 @@ import RecentActivity from "../components/dashboard/RecentActivity";
 import ReceivablesSnapshot from "../components/dashboard/ReceivablesSnapshot";
 import DebtBalanceChart from "../components/dashboard/DebtBalanceChart";
 import AgingChart from "../components/dashboard/AgingChart";
+import BankBalanceSection from "../components/dashboard/BankBalanceSection";
 
 export default function Dashboard() {
   const { data: transactions = [] } = useQuery({
@@ -80,6 +81,13 @@ export default function Dashboard() {
           trendLabel={`${debts.filter(d => d.status === "active").length} active`}
         />
       </div>
+
+      <BankBalanceSection
+        transactions={transactions}
+        payables={payables}
+        loans={loans}
+        debts={debts}
+      />
 
       <CashFlowChart transactions={transactions} />
 
