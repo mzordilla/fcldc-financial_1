@@ -81,11 +81,17 @@ export default function WorkingCapitalLoans() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.WorkingCapitalLoan.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["workingcapitalloans"] }),
+    onError: (error) => {
+      queryClient.invalidateQueries({ queryKey: ["workingcapitalloans"] });
+    }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.WorkingCapitalLoan.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["workingcapitalloans"] }),
+    onError: (error) => {
+      queryClient.invalidateQueries({ queryKey: ["workingcapitalloans"] });
+    }
   });
 
   const markPaidOff = (d) => updateMutation.mutate({ id: d.id, data: { status: "paid_off", amount_paid: d.total_amount } });
