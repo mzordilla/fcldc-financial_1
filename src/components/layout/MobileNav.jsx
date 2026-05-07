@@ -1,12 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, Building2, CreditCard, Banknote } from "lucide-react";
+import { LayoutDashboard, FileText, Landmark, Banknote, BarChart2 } from "lucide-react";
 
 const navItems = [
   { label: "Home", icon: LayoutDashboard, path: "/" },
-  { label: "Payables", icon: CreditCard, path: "/payables" },
-  { label: "Suppliers", icon: Building2, path: "/suppliers" },
+  { label: "Receivables", icon: FileText, path: "/receivables" },
   { label: "Loans", icon: Banknote, path: "/bank-loans" },
   { label: "WC Loans", icon: Landmark, path: "/working-capital-loans" },
+  { label: "Reports", icon: BarChart2, path: "/reports" },
 ];
 
 export default function MobileNav() {
