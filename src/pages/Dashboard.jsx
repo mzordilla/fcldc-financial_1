@@ -7,6 +7,7 @@ import IncomeByCategory from "../components/dashboard/IncomeByCategory";
 import RecentActivity from "../components/dashboard/RecentActivity";
 import ReceivablesSnapshot from "../components/dashboard/ReceivablesSnapshot";
 import DebtBalanceChart from "../components/dashboard/DebtBalanceChart";
+import AgingChart from "../components/dashboard/AgingChart";
 
 export default function Dashboard() {
   const { data: transactions = [] } = useQuery({
@@ -27,6 +28,11 @@ export default function Dashboard() {
   const { data: loans = [] } = useQuery({
     queryKey: ["bankloans"],
     queryFn: () => base44.entities.BankLoan.list("-created_date", 50),
+  });
+
+  const { data: payables = [] } = useQuery({
+    queryKey: ["payables"],
+    queryFn: () => base44.entities.Payable.list("-created_date", 100),
   });
 
   const totalIncome = transactions.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
@@ -83,6 +89,8 @@ export default function Dashboard() {
       </div>
 
       <ReceivablesSnapshot receivables={receivables} />
+
+      <AgingChart receivables={receivables} payables={payables} />
 
       <DebtBalanceChart loans={loans} debts={debts} />
     </div>
