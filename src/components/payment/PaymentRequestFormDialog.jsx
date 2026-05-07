@@ -18,6 +18,10 @@ const defaultForm = {
   due_date: "",
   requested_by: "",
   supporting_docs: "",
+  withholding_tax_percentage: 0,
+  withholding_tax_amount: 0,
+  vat_percentage: 0,
+  vat_amount: 0,
 };
 
 export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
@@ -43,6 +47,8 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
   }, [open, initialData]);
 
   const totalAmount = allocations.reduce((s, a) => s + (parseFloat(a.amount) || 0), 0);
+  const withholdingTaxAmount = (totalAmount * (parseFloat(form.withholding_tax_percentage) || 0)) / 100;
+  const vatAmount = (totalAmount * (parseFloat(form.vat_percentage) || 0)) / 100;
 
   const updateAllocation = (index, field, value) => {
     setAllocations(prev => prev.map((a, i) => i === index ? { ...a, [field]: value } : a));
@@ -68,6 +74,10 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
       ...cleanedForm,
       project_allocations: validAllocations.map(a => ({ project_name: a.project_name, amount: parseFloat(a.amount) || 0 })),
       amount: totalAmount,
+      withholding_tax_percentage: parseFloat(form.withholding_tax_percentage) || 0,
+      withholding_tax_amount: withholdingTaxAmount,
+      vat_percentage: parseFloat(form.vat_percentage) || 0,
+      vat_amount: vatAmount,
     });
     setSaving(false);
     onOpenChange(false);
@@ -141,6 +151,20 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
               <span className="text-sm font-semibold text-foreground">
                 Total: ₱{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
+            </div>
+          </div>
+
+          {/* Tax & VAT */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Withholding Tax %</Label>
+              <Input type="number" step="0.01" placeholder="0.00" value={form.withholding_tax_percentage} onChange={e => setField("withholding_tax_percentage", e.target.value)} />
+              <p className="text-xs text-muted-foreground">Amount: ₱{withholdingTaxAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>VAT %</Label>
+              <Input type="number" step="0.01" placeholder="0.00" value={form.vat_percentage} onChange={e => setField("vat_percentage", e.target.value)} />
+              <p className="text-xs text-muted-foreground">Amount: ₱{vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
           </div>
 

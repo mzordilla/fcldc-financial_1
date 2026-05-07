@@ -102,6 +102,26 @@
     "check_attachment": {
       "type": "string",
       "description": "URL of uploaded check image/attachment"
+    },
+    "withholding_tax_percentage": {
+      "type": "number",
+      "description": "Withholding tax percentage (e.g., 2 for 2%)",
+      "default": 0
+    },
+    "withholding_tax_amount": {
+      "type": "number",
+      "description": "Calculated withholding tax amount",
+      "default": 0
+    },
+    "vat_percentage": {
+      "type": "number",
+      "description": "VAT percentage (e.g., 12 for 12%)",
+      "default": 0
+    },
+    "vat_amount": {
+      "type": "number",
+      "description": "Calculated VAT amount",
+      "default": 0
     }
   },
   "required": [

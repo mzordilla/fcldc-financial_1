@@ -67,6 +67,16 @@ function ApprovalDialog({ pr, open, onOpenChange, onDecision }) {
               </div>
             )}
             <p className="text-2xl font-bold text-foreground mt-2">₱{(pr?.amount || 0).toLocaleString()}</p>
+            {(pr?.withholding_tax_amount || pr?.vat_amount) && (
+              <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                {pr?.withholding_tax_percentage > 0 && (
+                  <div>Withholding Tax ({pr?.withholding_tax_percentage}%): ₱{(pr?.withholding_tax_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                )}
+                {pr?.vat_percentage > 0 && (
+                  <div>VAT ({pr?.vat_percentage}%): ₱{(pr?.vat_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                )}
+              </div>
+            )}
             {pr?.due_date && (
               <p className="text-xs text-destructive">Due: {format(new Date(pr.due_date), "MMM d, yyyy")}</p>
             )}
@@ -296,6 +306,16 @@ export default function PaymentApprovals() {
                     {pr.due_date && <span className={isOverdue ? "text-destructive font-medium" : ""}>Due: {format(new Date(pr.due_date), "MMM d, yyyy")}</span>}
                     {pr.approved_by && <span>Approved by: {pr.approved_by}</span>}
                   </div>
+                  {(pr.withholding_tax_percentage || pr.vat_percentage) && (
+                    <div className="mt-2 text-xs text-foreground bg-muted/50 rounded-lg px-2 py-1.5 space-y-0.5">
+                      {pr.withholding_tax_percentage > 0 && (
+                        <div className="flex justify-between"><span>Withholding Tax ({pr.withholding_tax_percentage}%):</span><span className="font-medium">-₱{(pr.withholding_tax_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+                      )}
+                      {pr.vat_percentage > 0 && (
+                        <div className="flex justify-between"><span>VAT ({pr.vat_percentage}%):</span><span className="font-medium">+₱{(pr.vat_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+                      )}
+                    </div>
+                  )}
                   {pr.supporting_docs && (
                     <p className="text-xs text-muted-foreground mt-1">Docs: {pr.supporting_docs}</p>
                   )}
