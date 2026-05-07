@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +30,11 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
   const [form, setForm] = useState(defaultForm);
   const [allocations, setAllocations] = useState([{ project_name: "", amount: "" }]);
   const [saving, setSaving] = useState(false);
+
+  const { data: projects = [] } = useQuery({
+    queryKey: ["projects"],
+    queryFn: () => base44.entities.Project.list("-created_date", 200),
+  });
 
   useEffect(() => {
     if (open) {
@@ -118,35 +125,37 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
               </Button>
             </div>
             <div className="space-y-2">
-              {allocations.map((alloc, i) => (
-                <div key={i} className="flex gap-2 items-center">
-                  <Input
-                    placeholder="Project name"
-                    value={alloc.project_name}
-                    onChange={e => updateAllocation(i, "project_name", e.target.value)}
-                    className="flex-1"
-                  />
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="Amount"
-                    value={alloc.amount}
-                    onChange={e => updateAllocation(i, "amount", e.target.value)}
-                    className="w-36"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeAllocation(i)}
-                    disabled={allocations.length === 1}
-                    className="text-muted-foreground hover:text-destructive flex-shrink-0"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
+               {allocations.map((alloc, i) => (
+                 <div key={i} className="flex gap-2 items-center">
+                   <Select value={alloc.project_name} onValueChange={v => updateAllocation(i, "project_name", v)}>
+                     <SelectTrigger className="flex-1"><SelectValue placeholder="Select project" /></SelectTrigger>
+                     <SelectContent>
+                       {projects.map(p => (
+                         <SelectItem key={p.id} value={p.project_name || p.id}>{p.project_name}</SelectItem>
+                       ))}
+                     </SelectContent>
+                   </Select>
+                   <Input
+                     type="number"
+                     step="0.01"
+                     placeholder="Amount"
+                     value={alloc.amount}
+                     onChange={e => updateAllocation(i, "amount", e.target.value)}
+                     className="w-36"
+                   />
+                   <Button
+                     type="button"
+                     variant="ghost"
+                     size="icon"
+                     onClick={() => removeAllocation(i)}
+                     disabled={allocations.length === 1}
+                     className="text-muted-foreground hover:text-destructive flex-shrink-0"
+                   >
+                     <Trash2 className="w-4 h-4" />
+                   </Button>
+                 </div>
+               ))}
+             </div>
             <div className="flex justify-end pt-1">
               <span className="text-sm font-semibold text-foreground">
                 Total: ₱{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
