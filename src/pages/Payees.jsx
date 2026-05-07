@@ -28,7 +28,7 @@ const categoryStyles = {
   other: "bg-muted text-muted-foreground border-border",
 };
 
-const defaultForm = { name: "", category: "", contact: "", notes: "" };
+const defaultForm = { name: "", category: "", contact: "", bank_account_name: "", bank_account_number: "", notes: "" };
 
 function PayeeFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
   const [form, setForm] = useState(defaultForm);
@@ -82,6 +82,16 @@ function PayeeFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
           <div className="space-y-1.5">
             <Label>Contact (phone / email)</Label>
             <Input placeholder="e.g. 09XX-XXX-XXXX" value={form.contact} onChange={e => set("contact", e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Bank Account Name</Label>
+              <Input placeholder="Account holder name" value={form.bank_account_name} onChange={e => set("bank_account_name", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Bank Account Number</Label>
+              <Input placeholder="Account number" value={form.bank_account_number} onChange={e => set("bank_account_number", e.target.value)} />
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label>Notes</Label>
@@ -199,7 +209,8 @@ export default function Payees() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Category</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Contact</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Notes</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Bank Account</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Notes</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -217,7 +228,15 @@ export default function Payees() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{p.contact || "—"}</td>
-                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell max-w-xs truncate">{p.notes || "—"}</td>
+                  <td className="px-4 py-3 hidden md:table-cell">
+                    {p.bank_account_name || p.bank_account_number ? (
+                      <div className="text-xs">
+                        {p.bank_account_name && <p className="font-medium text-foreground">{p.bank_account_name}</p>}
+                        {p.bank_account_number && <p className="text-muted-foreground font-mono">{p.bank_account_number}</p>}
+                      </div>
+                    ) : <span className="text-muted-foreground">—</span>}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell max-w-xs truncate">{p.notes || "—"}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
                       <Button variant="ghost" size="icon" onClick={() => setEditingPayee(p)} className="text-muted-foreground hover:text-foreground h-8 w-8">
