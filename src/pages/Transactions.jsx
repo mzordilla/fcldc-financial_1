@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, ArrowUpRight, ArrowDownRight, Trash2 } from "lucide-react";
+import { Plus, ArrowUpRight, ArrowDownRight, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,6 +31,7 @@ const fields = [
 
 export default function Transactions() {
   const [showAdd, setShowAdd] = useState(false);
+  const [editingT, setEditingT] = useState(null);
   const [typeFilter, setTypeFilter] = useState("all");
   const queryClient = useQueryClient();
 
@@ -41,6 +42,11 @@ export default function Transactions() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Transaction.create(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Transaction.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["transactions"] }),
   });
 
@@ -83,7 +89,7 @@ export default function Transactions() {
                 <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">Category</th>
                 <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Date</th>
                 <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">Amount</th>
-                <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3 w-12"></th>
+                <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3 w-20"></th>
               </tr>
             </thead>
             <tbody>
@@ -121,12 +127,20 @@ export default function Transactions() {
                     {t.type === "income" ? "+" : "-"}${(t.amount || 0).toLocaleString()}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => deleteMutation.mutate(t.id)}
-                      className="text-muted-foreground hover:text-destructive transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => setEditingT(t)}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteMutation.mutate(t.id)}
+                        className="text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -141,6 +155,14 @@ export default function Transactions() {
         title="Add Transaction"
         fields={fields}
         onSubmit={(data) => createMutation.mutateAsync(data)}
+      />
+      <AddFormDialog
+        open={!!editingT}
+        onOpenChange={(v) => { if (!v) setEditingT(null); }}
+        title="Edit Transaction"
+        fields={fields}
+        initialData={editingT || {}}
+        onSubmit={(data) => updateMutation.mutateAsync({ id: editingT.id, data })}
       />
     </div>
   );
