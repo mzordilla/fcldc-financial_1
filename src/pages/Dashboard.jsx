@@ -13,6 +13,7 @@ import DebtSummary from "../components/dashboard/DebtSummary";
 import WorkingCapitalByType from "../components/dashboard/WorkingCapitalByType";
 import WorkingCapitalComparison from "../components/dashboard/WorkingCapitalComparison";
 import DebtSummarySectionTop from "../components/dashboard/DebtSummarySectionTop";
+import AvailableForRelease from "../components/dashboard/AvailableForRelease";
 
 export default function Dashboard() {
   const { data: transactions = [] } = useQuery({
@@ -57,6 +58,8 @@ export default function Dashboard() {
       </div>
 
       <DebtSummarySectionTop debts={debts} />
+
+      <AvailableForRelease debts={debts} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
