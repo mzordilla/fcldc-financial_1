@@ -11,7 +11,6 @@ import AgingChart from "../components/dashboard/AgingChart";
 import BankBalanceSection from "../components/dashboard/BankBalanceSection";
 import DebtSummary from "../components/dashboard/DebtSummary";
 import WorkingCapitalByType from "../components/dashboard/WorkingCapitalByType";
-import WorkingCapitalComparison from "../components/dashboard/WorkingCapitalComparison";
 import DebtSummarySectionTop from "../components/dashboard/DebtSummarySectionTop";
 import AvailableForRelease from "../components/dashboard/AvailableForRelease";
 
@@ -110,8 +109,6 @@ export default function Dashboard() {
       <DebtSummary debts={debts} loans={loans} />
 
       <WorkingCapitalByType debts={debts} />
-
-      <WorkingCapitalComparison debts={debts} />
 
       <ReceivablesSnapshot receivables={receivables} />
 
