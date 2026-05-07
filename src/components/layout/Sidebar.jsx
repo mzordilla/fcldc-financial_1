@@ -12,7 +12,6 @@ const navItems = [
   { label: "Payee Masterlist", icon: Users, path: "/payees" },
   { label: "Receivables", icon: FileText, path: "/receivables" },
   { label: "Payables", icon: CreditCard, path: "/payables" },
-  { label: "Suppliers", icon: Building2, path: "/suppliers" },
   { label: "Bank Accounts", icon: Building2, path: "/bank-accounts" },
   { label: "Bank Loans", icon: Banknote, path: "/bank-loans" },
   { label: "Working Capital Loans", icon: Landmark, path: "/working-capital-loans" },
