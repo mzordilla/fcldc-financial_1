@@ -102,8 +102,12 @@ export default function WorkingCapitalLoans() {
 
   const filtered = statusFilter === "all" ? items : items.filter(d => d.status === statusFilter);
 
-  const totalActive = items.filter(d => d.status === "active").reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
-  const monthlyPayments = items.filter(d => d.status === "active").reduce((s, d) => s + (d.monthly_payment || 0), 0);
+  const activeItems = items.filter(d => d.status === "active");
+  const totalActive = activeItems.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
+  const monthlyPayments = activeItems.reduce((s, d) => s + (d.monthly_payment || 0), 0);
+  const totalGranted = activeItems.filter(d => d.amount_granted).reduce((s, d) => s + (d.amount_granted || 0), 0);
+  const totalAvailed = activeItems.filter(d => d.amount_granted).reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
+  const availableBalance = totalGranted - totalAvailed;
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
@@ -111,7 +115,7 @@ export default function WorkingCapitalLoans() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Working Capital Loans</h1>
           <p className="text-muted-foreground mt-1">
-            ₱{totalActive.toLocaleString()} outstanding · ₱{monthlyPayments.toLocaleString()}/mo payments
+            ₱{totalActive.toLocaleString()} outstanding · ₱{availableBalance.toLocaleString()} available · ₱{monthlyPayments.toLocaleString()}/mo payments
           </p>
         </div>
         <div className="flex items-center gap-3">
