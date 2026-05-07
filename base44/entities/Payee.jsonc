@@ -34,6 +34,18 @@
       "type": "string",
       "description": "Bank account number"
     },
+    "terms_of_payment": {
+      "type": "string",
+      "description": "Payment terms (e.g., Net 30, COD, Net 60)"
+    },
+    "vat_status": {
+      "type": "string",
+      "enum": [
+        "vat",
+        "non_vat"
+      ],
+      "description": "VAT or Non-VAT registered"
+    },
     "notes": {
       "type": "string",
       "description": "Additional notes"

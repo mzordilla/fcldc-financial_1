@@ -28,7 +28,7 @@ const categoryStyles = {
   other: "bg-muted text-muted-foreground border-border",
 };
 
-const defaultForm = { name: "", category: "", contact: "", credit_limit: "", bank_account_name: "", bank_account_number: "", notes: "" };
+const defaultForm = { name: "", category: "", contact: "", credit_limit: "", bank_account_name: "", bank_account_number: "", terms_of_payment: "", vat_status: "", notes: "" };
 
 function PayeeFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
   const [form, setForm] = useState(defaultForm);
@@ -95,6 +95,22 @@ function PayeeFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
             <div className="space-y-1.5">
               <Label>Bank Account Number</Label>
               <Input placeholder="Account number" value={form.bank_account_number} onChange={e => set("bank_account_number", e.target.value)} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Terms of Payment</Label>
+              <Input placeholder="e.g. Net 30, COD, Net 60" value={form.terms_of_payment} onChange={e => set("terms_of_payment", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>VAT Status</Label>
+              <Select value={form.vat_status} onValueChange={v => set("vat_status", v)}>
+                <SelectTrigger><SelectValue placeholder="Select VAT status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="vat">VAT Registered</SelectItem>
+                  <SelectItem value="non_vat">Non-VAT</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="space-y-1.5">
@@ -213,9 +229,9 @@ export default function Payees() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Category</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Contact</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Credit Limit</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Bank Account</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Notes</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Terms</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">VAT</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Credit Limit</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -233,16 +249,15 @@ export default function Payees() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{p.contact || "—"}</td>
-                  <td className="px-4 py-3 font-medium hidden md:table-cell">{p.credit_limit ? `₱${p.credit_limit.toLocaleString()}` : "—"}</td>
-                  <td className="px-4 py-3 hidden lg:table-cell">
-                    {p.bank_account_name || p.bank_account_number ? (
-                      <div className="text-xs">
-                        {p.bank_account_name && <p className="font-medium text-foreground">{p.bank_account_name}</p>}
-                        {p.bank_account_number && <p className="text-muted-foreground font-mono">{p.bank_account_number}</p>}
-                      </div>
-                    ) : <span className="text-muted-foreground">—</span>}
+                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{p.terms_of_payment || "—"}</td>
+                  <td className="px-4 py-3 hidden md:table-cell">
+                    {p.vat_status ? (
+                      <Badge variant="outline" className={p.vat_status === "vat" ? "bg-primary/10 text-primary border-primary/20" : "bg-muted text-muted-foreground border-border"}>
+                        {p.vat_status === "vat" ? "VAT" : "Non-VAT"}
+                      </Badge>
+                    ) : <span className="text-muted-foreground text-xs">—</span>}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell max-w-xs truncate">{p.notes || "—"}</td>
+                  <td className="px-4 py-3 font-medium hidden lg:table-cell">{p.credit_limit ? `₱${p.credit_limit.toLocaleString()}` : "—"}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
                       <Button variant="ghost" size="icon" onClick={() => setEditingPayee(p)} className="text-muted-foreground hover:text-foreground h-8 w-8">
