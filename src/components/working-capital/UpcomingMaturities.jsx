@@ -4,12 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { differenceInDays, format, addMonths, startOfMonth, endOfMonth } from "date-fns";
 
 const typeLabels = {
-  loan: "Loan",
-  credit_line: "Credit Line",
   equipment_financing: "Equipment Financing",
-  vendor_credit: "Vendor Credit",
+  credit_line: "Credit Line",
   mortgage: "Mortgage",
-  other: "Other",
 };
 
 export default function UpcomingMaturities({ items }) {
