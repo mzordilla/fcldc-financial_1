@@ -10,9 +10,20 @@
       "type": "string",
       "description": "Who is being paid"
     },
-    "project_name": {
-      "type": "string",
-      "description": "Associated project"
+    "project_allocations": {
+      "type": "array",
+      "description": "List of project allocations with amounts",
+      "items": {
+        "type": "object",
+        "properties": {
+          "project_name": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        }
+      }
     },
     "description": {
       "type": "string",
@@ -20,7 +31,7 @@
     },
     "amount": {
       "type": "number",
-      "description": "Payment amount"
+      "description": "Total payment amount (sum of all project allocations)"
     },
     "category": {
       "type": "string",

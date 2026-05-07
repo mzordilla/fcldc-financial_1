@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import AddFormDialog from "../components/shared/AddFormDialog";
+import PaymentRequestFormDialog from "../components/payment/PaymentRequestFormDialog";
 
 const statusStyles = {
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
@@ -34,34 +34,7 @@ const categoryLabels = {
   other: "Other",
 };
 
-const fields = [
-  { name: "request_number", label: "Request #", placeholder: "PR-2026-001" },
-  { name: "payee", label: "Payee", required: true, placeholder: "Who is being paid?" },
-  { name: "project_name", label: "Project Name", placeholder: "e.g. Oak Street Renovation" },
-  { name: "description", label: "Description / Reason", required: true, placeholder: "What is this payment for?" },
-  { name: "amount", label: "Amount ($)", type: "number", required: true, placeholder: "0.00" },
-  { name: "category", label: "Category", type: "select", options: [
-    { value: "supplier_invoice", label: "Supplier Invoice" },
-    { value: "subcontractor", label: "Subcontractor" },
-    { value: "labor", label: "Labor" },
-    { value: "equipment", label: "Equipment" },
-    { value: "expense_reimbursement", label: "Expense Reimbursement" },
-    { value: "utilities", label: "Utilities" },
-    { value: "other", label: "Other" },
-  ]},
-  { name: "payment_method", label: "Payment Method", type: "select", options: [
-    { value: "bank_transfer", label: "Bank Transfer" },
-    { value: "check", label: "Check" },
-    { value: "cash", label: "Cash" },
-    { value: "credit_card", label: "Credit Card" },
-    { value: "other", label: "Other" },
-  ]},
-  { name: "invoice_number", label: "Invoice / Ref #", placeholder: "INV-001" },
-  { name: "invoice_date", label: "Invoice Date", type: "date" },
-  { name: "due_date", label: "Payment Due Date", type: "date" },
-  { name: "requested_by", label: "Requested By", placeholder: "Your name" },
-  { name: "supporting_docs", label: "Supporting Documents", placeholder: "e.g. Invoice attached, PO-2026-010" },
-];
+
 
 function ApprovalDialog({ pr, open, onOpenChange, onDecision }) {
   const [notes, setNotes] = useState("");
@@ -85,8 +58,14 @@ function ApprovalDialog({ pr, open, onOpenChange, onDecision }) {
             <p className="text-xs text-muted-foreground">{pr?.request_number}</p>
             <p className="font-semibold">{pr?.payee}</p>
             <p className="text-sm text-muted-foreground">{pr?.description}</p>
-            {pr?.project_name && <p className="text-xs text-muted-foreground">Project: {pr.project_name}</p>}
-            <p className="text-2xl font-bold text-foreground mt-2">${(pr?.amount || 0).toLocaleString()}</p>
+            {pr?.project_allocations && pr.project_allocations.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-1">
+                {pr.project_allocations.map((a, i) => (
+                  <span key={i} className="text-xs bg-muted px-2 py-0.5 rounded-full">{a.project_name}: ₱{(a.amount || 0).toLocaleString()}</span>
+                ))}
+              </div>
+            )}
+            <p className="text-2xl font-bold text-foreground mt-2">₱{(pr?.amount || 0).toLocaleString()}</p>
             {pr?.due_date && (
               <p className="text-xs text-destructive">Due: {format(new Date(pr.due_date), "MMM d, yyyy")}</p>
             )}
@@ -234,8 +213,16 @@ export default function PaymentApprovals() {
                     {isOverdue && <Badge className="text-xs bg-destructive/10 text-destructive">Overdue</Badge>}
                   </div>
                   <p className="text-sm text-foreground">{pr.description}</p>
+                  {pr.project_allocations && pr.project_allocations.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {pr.project_allocations.map((alloc, i) => (
+                        <span key={i} className="text-xs bg-muted px-2 py-0.5 rounded-full text-foreground">
+                          {alloc.project_name}: ₱{(alloc.amount || 0).toLocaleString()}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
-                    {pr.project_name && <span>Project: {pr.project_name}</span>}
                     {pr.invoice_number && <span>Invoice: {pr.invoice_number}</span>}
                     {pr.payment_method && <span>Via: {pr.payment_method.replace(/_/g, " ")}</span>}
                     {pr.requested_by && <span>By: {pr.requested_by}</span>}
@@ -274,8 +261,8 @@ export default function PaymentApprovals() {
         })}
       </div>
 
-      <AddFormDialog open={showAdd} onOpenChange={setShowAdd} title="New Payment Request" fields={fields} onSubmit={(data) => createMutation.mutateAsync(data)} />
-      <AddFormDialog open={!!editingPR} onOpenChange={(v) => { if (!v) setEditingPR(null); }} title="Edit Payment Request" fields={fields} initialData={editingPR || {}} onSubmit={(data) => updateMutation.mutateAsync({ id: editingPR.id, data })} />
+      <PaymentRequestFormDialog open={showAdd} onOpenChange={setShowAdd} title="New Payment Request" onSubmit={(data) => createMutation.mutateAsync(data)} />
+      <PaymentRequestFormDialog open={!!editingPR} onOpenChange={(v) => { if (!v) setEditingPR(null); }} title="Edit Payment Request" initialData={editingPR || {}} onSubmit={(data) => updateMutation.mutateAsync({ id: editingPR.id, data })} />
       {reviewPR && <ApprovalDialog pr={reviewPR} open={!!reviewPR} onOpenChange={(v) => !v && setReviewPR(null)} onDecision={handleDecision} />}
     </div>
   );

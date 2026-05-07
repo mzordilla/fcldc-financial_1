@@ -1,0 +1,208 @@
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Trash2 } from "lucide-react";
+
+const defaultForm = {
+  request_number: "",
+  payee: "",
+  description: "",
+  category: "",
+  payment_method: "bank_transfer",
+  invoice_number: "",
+  invoice_date: "",
+  due_date: "",
+  requested_by: "",
+  supporting_docs: "",
+};
+
+export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
+  const [form, setForm] = useState(defaultForm);
+  const [allocations, setAllocations] = useState([{ project_name: "", amount: "" }]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        const { project_allocations, ...rest } = initialData;
+        setForm({ ...defaultForm, ...rest });
+        setAllocations(
+          project_allocations && project_allocations.length > 0
+            ? project_allocations.map(a => ({ project_name: a.project_name || "", amount: a.amount || "" }))
+            : [{ project_name: "", amount: "" }]
+        );
+      } else {
+        setForm(defaultForm);
+        setAllocations([{ project_name: "", amount: "" }]);
+      }
+    }
+  }, [open, initialData]);
+
+  const totalAmount = allocations.reduce((s, a) => s + (parseFloat(a.amount) || 0), 0);
+
+  const updateAllocation = (index, field, value) => {
+    setAllocations(prev => prev.map((a, i) => i === index ? { ...a, [field]: value } : a));
+  };
+
+  const addAllocation = () => setAllocations(prev => [...prev, { project_name: "", amount: "" }]);
+  const removeAllocation = (index) => {
+    if (allocations.length === 1) return;
+    setAllocations(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    const validAllocations = allocations.filter(a => a.project_name || a.amount);
+    await onSubmit({
+      ...form,
+      project_allocations: validAllocations.map(a => ({ project_name: a.project_name, amount: parseFloat(a.amount) || 0 })),
+      amount: totalAmount,
+    });
+    setSaving(false);
+    onOpenChange(false);
+  };
+
+  const setField = (name, value) => setForm(prev => ({ ...prev, [name]: value }));
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{title || "Payment Request"}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Basic Info */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Request #</Label>
+              <Input placeholder="PR-2026-001" value={form.request_number} onChange={e => setField("request_number", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Payee *</Label>
+              <Input required placeholder="Who is being paid?" value={form.payee} onChange={e => setField("payee", e.target.value)} />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Description / Reason *</Label>
+            <Input required placeholder="What is this payment for?" value={form.description} onChange={e => setField("description", e.target.value)} />
+          </div>
+
+          {/* Project Allocations */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Project Allocations</Label>
+              <Button type="button" variant="outline" size="sm" onClick={addAllocation}>
+                <Plus className="w-3.5 h-3.5 mr-1" /> Add Project
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {allocations.map((alloc, i) => (
+                <div key={i} className="flex gap-2 items-center">
+                  <Input
+                    placeholder="Project name"
+                    value={alloc.project_name}
+                    onChange={e => updateAllocation(i, "project_name", e.target.value)}
+                    className="flex-1"
+                  />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="Amount"
+                    value={alloc.amount}
+                    onChange={e => updateAllocation(i, "amount", e.target.value)}
+                    className="w-36"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeAllocation(i)}
+                    disabled={allocations.length === 1}
+                    className="text-muted-foreground hover:text-destructive flex-shrink-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end pt-1">
+              <span className="text-sm font-semibold text-foreground">
+                Total: ₱{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
+          </div>
+
+          {/* Category & Payment Method */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Category</Label>
+              <Select value={form.category} onValueChange={v => setField("category", v)}>
+                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="supplier_invoice">Supplier Invoice</SelectItem>
+                  <SelectItem value="subcontractor">Subcontractor</SelectItem>
+                  <SelectItem value="labor">Labor</SelectItem>
+                  <SelectItem value="equipment">Equipment</SelectItem>
+                  <SelectItem value="expense_reimbursement">Expense Reimbursement</SelectItem>
+                  <SelectItem value="utilities">Utilities</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Payment Method</Label>
+              <Select value={form.payment_method} onValueChange={v => setField("payment_method", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="check">Check</SelectItem>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="credit_card">Credit Card</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Invoice details */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Invoice / Ref #</Label>
+              <Input placeholder="INV-001" value={form.invoice_number} onChange={e => setField("invoice_number", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Invoice Date</Label>
+              <Input type="date" value={form.invoice_date} onChange={e => setField("invoice_date", e.target.value)} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Payment Due Date</Label>
+              <Input type="date" value={form.due_date} onChange={e => setField("due_date", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Requested By</Label>
+              <Input placeholder="Your name" value={form.requested_by} onChange={e => setField("requested_by", e.target.value)} />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Supporting Documents</Label>
+            <Input placeholder="e.g. Invoice attached, PO-2026-010" value={form.supporting_docs} onChange={e => setField("supporting_docs", e.target.value)} />
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
