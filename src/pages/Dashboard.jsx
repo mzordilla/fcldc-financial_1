@@ -12,6 +12,7 @@ import BankBalanceSection from "../components/dashboard/BankBalanceSection";
 import DebtSummary from "../components/dashboard/DebtSummary";
 import WorkingCapitalByType from "../components/dashboard/WorkingCapitalByType";
 import WorkingCapitalComparison from "../components/dashboard/WorkingCapitalComparison";
+import DebtSummarySectionTop from "../components/dashboard/DebtSummarySectionTop";
 
 export default function Dashboard() {
   const { data: transactions = [] } = useQuery({
@@ -54,6 +55,8 @@ export default function Dashboard() {
         <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Financial Overview</h1>
         <p className="text-muted-foreground mt-1">Track your construction company finances</p>
       </div>
+
+      <DebtSummarySectionTop debts={debts} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
