@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, X } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, X, Download } from "lucide-react";
 
 const CATEGORY_VALUES = [
   "project_payment","material_cost","labor","equipment",
@@ -92,6 +92,27 @@ function parseRows(sheetData) {
     });
 }
 
+function downloadSampleFile() {
+  const wb = XLSX.utils.book_new();
+  const rows = [
+    ["Description", "Amount", "Type", "Category", "Date", "Project"],
+    ["Client payment - Building A", 500000, "income", "project_payment", "2026-05-01", "Building A"],
+    ["Cement and steel materials", 85000, "expense", "material_cost", "2026-05-02", "Building A"],
+    ["Labor wages - Week 1", 45000, "expense", "labor", "2026-05-05", "Building A"],
+    ["Subcontractor invoice - Electrical", 120000, "expense", "subcontractor", "2026-05-07", "Office Renovation"],
+    ["Client payment - Office Renovation", 300000, "income", "project_payment", "2026-05-10", "Office Renovation"],
+    ["Equipment rental - crane", 30000, "expense", "equipment", "2026-05-12", "Building A"],
+    ["Building permits and fees", 15000, "expense", "permits", "2026-05-13", "Building A"],
+    ["Insurance premium", 12000, "expense", "insurance", "2026-05-14", ""],
+    ["Office overhead - utilities", 8000, "expense", "overhead", "2026-05-15", ""],
+    ["Progress billing - Phase 2", 250000, "income", "project_payment", "2026-05-20", "Building A"],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"] = [{ wch: 40 }, { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 14 }, { wch: 22 }];
+  XLSX.utils.book_append_sheet(wb, ws, "Transactions");
+  XLSX.writeFile(wb, "sample_transactions.xlsx");
+}
+
 export default function ExcelImportDialog({ open, onOpenChange, onImport }) {
   const [rows, setRows] = useState([]);
   const [fileName, setFileName] = useState("");
@@ -138,8 +159,19 @@ export default function ExcelImportDialog({ open, onOpenChange, onImport }) {
 
         {/* Template hint */}
         <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground space-y-1">
-          <p className="font-medium text-foreground">Expected columns (row 1 = headers):</p>
-          <p><span className="font-mono bg-muted px-1 rounded">Description</span> · <span className="font-mono bg-muted px-1 rounded">Amount</span> · <span className="font-mono bg-muted px-1 rounded">Type</span> (income/expense) · <span className="font-mono bg-muted px-1 rounded">Category</span> · <span className="font-mono bg-muted px-1 rounded">Date</span> (YYYY-MM-DD) · <span className="font-mono bg-muted px-1 rounded">Project</span> (optional)</p>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div>
+              <p className="font-medium text-foreground mb-1">Expected columns (row 1 = headers):</p>
+              <p><span className="font-mono bg-muted px-1 rounded">Description</span> · <span className="font-mono bg-muted px-1 rounded">Amount</span> · <span className="font-mono bg-muted px-1 rounded">Type</span> (income/expense) · <span className="font-mono bg-muted px-1 rounded">Category</span> · <span className="font-mono bg-muted px-1 rounded">Date</span> (YYYY-MM-DD) · <span className="font-mono bg-muted px-1 rounded">Project</span> (optional)</p>
+            </div>
+            <button
+              type="button"
+              onClick={downloadSampleFile}
+              className="flex items-center gap-1.5 text-xs text-primary hover:underline whitespace-nowrap font-medium"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" /> Download Sample
+            </button>
+          </div>
         </div>
 
         {/* File picker */}
