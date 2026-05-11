@@ -133,6 +133,19 @@
         "urgent"
       ],
       "default": "normal"
+    },
+    "receipt_url": {
+      "type": "string",
+      "description": "Uploaded receipt/delivery document URL"
+    },
+    "delivery_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date goods/services were delivered"
+    },
+    "delivery_notes": {
+      "type": "string",
+      "description": "Notes about delivery condition or inspection"
     }
   },
   "required": [

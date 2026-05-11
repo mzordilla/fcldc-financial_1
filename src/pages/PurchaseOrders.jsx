@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import POFormDialog from "../components/purchase-orders/POFormDialog";
 import POExcelImportDialog from "../components/purchase-orders/POExcelImportDialog";
 import POToPayableDialog from "../components/purchase-orders/POToPayableDialog";
+import ReceiptUploadDialog from "../components/purchase-orders/ReceiptUploadDialog";
 import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
 import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
 
@@ -41,6 +42,7 @@ export default function PurchaseOrders() {
   const [editingPO, setEditingPO] = useState(null);
   const [reviewPO, setReviewPO] = useState(null);
   const [convertingPO, setConvertingPO] = useState(null);
+  const [uploadingReceipt, setUploadingReceipt] = useState(null);
   const [expandedHistory, setExpandedHistory] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
@@ -189,6 +191,16 @@ export default function PurchaseOrders() {
                   {po.approval_notes && (
                     <p className="text-xs text-muted-foreground mt-2 italic border-l-2 border-border pl-2">{po.approval_notes}</p>
                   )}
+                  {po.receipt_url && (
+                    <div className="mt-2 flex items-center gap-2 text-xs text-primary">
+                      <Package className="w-3.5 h-3.5" />
+                      <span>Delivered {po.delivery_date ? format(new Date(po.delivery_date), "MMM d, yyyy") : ""}</span>
+                      {po.receipt_url && <a href={po.receipt_url} target="_blank" rel="noopener noreferrer" className="underline">View receipt</a>}
+                    </div>
+                  )}
+                  {po.delivery_notes && (
+                    <p className="text-xs text-muted-foreground mt-1 italic">{po.delivery_notes}</p>
+                  )}
                   {/* History toggle */}
                   {po.approval_history?.length > 0 && (
                     <button
@@ -212,6 +224,11 @@ export default function PurchaseOrders() {
                     {po.approval_status === "pending" && (
                       <Button size="sm" variant="outline" onClick={() => setReviewPO(po)}>
                         Review
+                      </Button>
+                    )}
+                    {po.approval_status === "approved" && !po.receipt_url && (
+                      <Button size="sm" variant="outline" onClick={() => setUploadingReceipt(po)} className="text-primary hover:text-primary">
+                        <Package className="w-3.5 h-3.5 mr-1.5" /> Receipt
                       </Button>
                     )}
                     {po.approval_status === "approved" && (
@@ -275,6 +292,15 @@ export default function PurchaseOrders() {
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["purchase_orders"] });
           setConvertingPO(null);
+        }}
+      />
+      <ReceiptUploadDialog
+        open={!!uploadingReceipt}
+        onOpenChange={(v) => { if (!v) setUploadingReceipt(null); }}
+        po={uploadingReceipt}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["purchase_orders"] });
+          setUploadingReceipt(null);
         }}
       />
     </div>
