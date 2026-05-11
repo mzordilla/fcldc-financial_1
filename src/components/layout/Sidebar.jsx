@@ -5,22 +5,22 @@ import { useAuth } from "@/lib/AuthContext";
 import { navItemsByRole } from "@/lib/access-control";
 
 const allNavItems = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/" },
-  { label: "Projects", icon: Briefcase, path: "/projects" },
-  { label: "Transactions", icon: ArrowLeftRight, path: "/transactions" },
-  { label: "Project P&L", icon: FolderKanban, path: "/project-pnl" },
-  { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
-  { label: "Payment Approvals", icon: CircleDollarSign, path: "/payment-approvals" },
-  { label: "Supplier Masterlist", icon: Users, path: "/payees" },
-  { label: "Receivables", icon: FileText, path: "/receivables" },
-  { label: "Payables", icon: CreditCard, path: "/payables" },
-  { label: "Bank Accounts", icon: Building2, path: "/bank-accounts" },
-  { label: "Bank Reconciliation", icon: RefreshCw, path: "/bank-reconciliation" },
-  { label: "Working Capital Loans", icon: Landmark, path: "/working-capital-loans" },
-  { label: "Reports", icon: BarChart2, path: "/reports" },
-  { label: "Chart of Accounts", icon: BookOpen, path: "/chart-of-accounts" },
-  { label: "Receipt Scanner", icon: ScanLine, path: "/receipt-scanner" },
-];
+{ label: "Dashboard", icon: LayoutDashboard, path: "/" },
+{ label: "Projects", icon: Briefcase, path: "/projects" },
+{ label: "Transactions", icon: ArrowLeftRight, path: "/transactions" },
+{ label: "Project P&L", icon: FolderKanban, path: "/project-pnl" },
+{ label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
+{ label: "Payment Approvals", icon: CircleDollarSign, path: "/payment-approvals" },
+{ label: "Supplier Masterlist", icon: Users, path: "/payees" },
+{ label: "Receivables", icon: FileText, path: "/receivables" },
+{ label: "Payables", icon: CreditCard, path: "/payables" },
+{ label: "Bank Accounts", icon: Building2, path: "/bank-accounts" },
+{ label: "Bank Reconciliation", icon: RefreshCw, path: "/bank-reconciliation" },
+{ label: "Working Capital Loans", icon: Landmark, path: "/working-capital-loans" },
+{ label: "Reports", icon: BarChart2, path: "/reports" },
+{ label: "Chart of Accounts", icon: BookOpen, path: "/chart-of-accounts" },
+{ label: "Receipt Scanner", icon: ScanLine, path: "/receipt-scanner" }];
+
 
 export default function Sidebar() {
   const location = useLocation();
@@ -28,7 +28,7 @@ export default function Sidebar() {
 
   const role = user?.role;
   const allowed = navItemsByRole[role];
-  const navItems = allowed === "all" ? allNavItems : allNavItems.filter(item => allowed.includes(item.path));
+  const navItems = allowed === "all" ? allNavItems : allNavItems.filter((item) => allowed.includes(item.path));
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-sidebar text-sidebar-foreground flex flex-col z-50">
@@ -38,7 +38,7 @@ export default function Sidebar() {
             <HardHat className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="font-bold text-lg leading-tight">BuildFin</h1>
+            <h1 className="font-bold text-lg leading-tight">FCLDC</h1>
             <p className="text-xs text-sidebar-foreground/50">Construction Finance</p>
           </div>
         </div>
@@ -52,15 +52,15 @@ export default function Sidebar() {
               key={item.path}
               to={item.path}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-              }`}
-            >
+              isActive ?
+              "bg-primary text-primary-foreground shadow-lg shadow-primary/25" :
+              "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"}`
+              }>
+              
               <item.icon className="w-4 h-4" />
               {item.label}
-            </Link>
-          );
+            </Link>);
+
         })}
       </nav>
 
@@ -71,12 +71,12 @@ export default function Sidebar() {
         </div>
         <button
           onClick={() => base44.auth.logout()}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all w-full"
-        >
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all w-full">
+          
           <LogOut className="w-4 h-4" />
           Sign Out
         </button>
       </div>
-    </aside>
-  );
+    </aside>);
+
 }
