@@ -1,0 +1,88 @@
+{
+  "name": "BankReconciliation",
+  "type": "object",
+  "properties": {
+    "bank_account_id": {
+      "type": "string",
+      "description": "Linked BankAccount ID"
+    },
+    "account_name": {
+      "type": "string",
+      "description": "Bank account name (denormalized)"
+    },
+    "period_label": {
+      "type": "string",
+      "description": "e.g. May 2025"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "opening_balance": {
+      "type": "number",
+      "default": 0,
+      "description": "Balance at start of period"
+    },
+    "closing_balance_bank": {
+      "type": "number",
+      "default": 0,
+      "description": "Balance per bank statement"
+    },
+    "closing_balance_book": {
+      "type": "number",
+      "default": 0,
+      "description": "Balance per system / books"
+    },
+    "deposits_in_transit": {
+      "type": "number",
+      "default": 0,
+      "description": "Recorded in books but not yet cleared by bank"
+    },
+    "outstanding_checks": {
+      "type": "number",
+      "default": 0,
+      "description": "Issued but not yet cleared"
+    },
+    "bank_errors": {
+      "type": "number",
+      "default": 0,
+      "description": "Bank errors (positive = bank owes more)"
+    },
+    "bank_charges": {
+      "type": "number",
+      "default": 0,
+      "description": "Fees not yet in books"
+    },
+    "interest_earned": {
+      "type": "number",
+      "default": 0,
+      "description": "Interest not yet recorded in books"
+    },
+    "book_errors": {
+      "type": "number",
+      "default": 0,
+      "description": "Book errors (positive = books need to increase)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "in_progress",
+        "reconciled",
+        "discrepancy"
+      ],
+      "default": "in_progress"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "bank_account_id",
+    "period_start",
+    "period_end"
+  ]
+}

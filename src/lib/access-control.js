@@ -1,15 +1,15 @@
 // Define which routes each role can access
 export const roleAccess = {
   admin: "*", // full access
-  disbursement: ["/bank-accounts", "/transactions"],
-  accounting: ["/projects", "/project-pnl", "/receivables", "/payables"],
+  disbursement: ["/bank-accounts", "/bank-reconciliation", "/transactions"],
+  accounting: ["/projects", "/project-pnl", "/receivables", "/payables", "/bank-reconciliation"],
   procurement: ["/purchase-orders", "/payment-approvals", "/payees"],
 };
 
 export const navItemsByRole = {
   admin: "all",
-  disbursement: ["/bank-accounts", "/transactions"],
-  accounting: ["/projects", "/project-pnl", "/receivables", "/payables"],
+  disbursement: ["/bank-accounts", "/bank-reconciliation", "/transactions"],
+  accounting: ["/projects", "/project-pnl", "/receivables", "/payables", "/bank-reconciliation"],
   procurement: ["/purchase-orders", "/payment-approvals", "/payees"],
 };
 
