@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import POFormDialog from "../components/purchase-orders/POFormDialog";
+import POExcelImportDialog from "../components/purchase-orders/POExcelImportDialog";
 import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
 import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
 
@@ -35,6 +36,7 @@ const statusIcons = {
 
 export default function PurchaseOrders() {
   const [showAdd, setShowAdd] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editingPO, setEditingPO] = useState(null);
   const [reviewPO, setReviewPO] = useState(null);
   const [expandedHistory, setExpandedHistory] = useState(null);
@@ -106,6 +108,9 @@ export default function PurchaseOrders() {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" onClick={() => setShowImport(true)}>
+            <FileUp className="w-4 h-4 mr-2" /> Import Excel
+          </Button>
           <Button onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4 mr-2" /> New PO
           </Button>
@@ -224,6 +229,13 @@ export default function PurchaseOrders() {
         })}
       </div>
 
+      <POExcelImportDialog
+        open={showImport}
+        onOpenChange={setShowImport}
+        onImport={async (rows) => {
+          await Promise.all(rows.map(r => createMutation.mutateAsync(r)));
+        }}
+      />
       <POFormDialog open={showAdd} onOpenChange={setShowAdd} title="New Purchase Order" onSubmit={(data) => createMutation.mutateAsync(data)} />
       <POFormDialog open={!!editingPO} onOpenChange={(v) => { if (!v) setEditingPO(null); }} title="Edit Purchase Order" initialData={editingPO || {}} onSubmit={(data) => updateMutation.mutateAsync({ id: editingPO.id, data })} />
       {reviewPO && (
