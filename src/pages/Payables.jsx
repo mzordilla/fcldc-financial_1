@@ -164,6 +164,7 @@ export default function Payables() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1 flex-wrap">
                     <h3 className="font-semibold text-foreground">{p.supplier_name}</h3>
+                    {p.po_number && <Badge variant="secondary" className="text-xs">PO: {p.po_number}</Badge>}
                     <Badge variant="outline" className={`text-xs ${statusStyles[p.status] || ""}`}>
                       {(p.status || "unpaid").replace(/_/g, " ")}
                     </Badge>

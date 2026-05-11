@@ -14,6 +14,14 @@
       "type": "string",
       "description": "Supplier invoice reference"
     },
+    "po_id": {
+      "type": "string",
+      "description": "Linked Purchase Order ID"
+    },
+    "po_number": {
+      "type": "string",
+      "description": "Purchase Order number (denormalized)"
+    },
     "amount": {
       "type": "number",
       "description": "Total amount owed"

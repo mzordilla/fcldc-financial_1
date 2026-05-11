@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import POFormDialog from "../components/purchase-orders/POFormDialog";
 import POExcelImportDialog from "../components/purchase-orders/POExcelImportDialog";
+import POToPayableDialog from "../components/purchase-orders/POToPayableDialog";
 import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
 import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
 
@@ -39,6 +40,7 @@ export default function PurchaseOrders() {
   const [showImport, setShowImport] = useState(false);
   const [editingPO, setEditingPO] = useState(null);
   const [reviewPO, setReviewPO] = useState(null);
+  const [convertingPO, setConvertingPO] = useState(null);
   const [expandedHistory, setExpandedHistory] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
@@ -212,6 +214,11 @@ export default function PurchaseOrders() {
                         Review
                       </Button>
                     )}
+                    {po.approval_status === "approved" && (
+                      <Button size="sm" variant="outline" onClick={() => setConvertingPO(po)} className="text-primary hover:text-primary">
+                        <CreditCard className="w-3.5 h-3.5 mr-1.5" /> Payable
+                      </Button>
+                    )}
                     <Button variant="ghost" size="icon" onClick={() => setReviewPO(po)} title="View History" className="text-muted-foreground hover:text-foreground">
                       <History className="w-4 h-4" />
                     </Button>
@@ -261,6 +268,15 @@ export default function PurchaseOrders() {
           onDecision={(decision) => handleDecision(reviewPO, decision)}
         />
       )}
+      <POToPayableDialog
+        open={!!convertingPO}
+        onOpenChange={(v) => { if (!v) setConvertingPO(null); }}
+        po={convertingPO}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["purchase_orders"] });
+          setConvertingPO(null);
+        }}
+      />
     </div>
   );
 }
