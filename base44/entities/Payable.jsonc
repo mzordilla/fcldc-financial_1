@@ -53,6 +53,30 @@
       ],
       "default": "unpaid"
     },
+    "payment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date payment was made"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "bank_transfer",
+        "check",
+        "cash",
+        "credit_card",
+        "other"
+      ],
+      "description": "How payment was made"
+    },
+    "payment_reference": {
+      "type": "string",
+      "description": "Check number, transfer reference, receipt number, etc."
+    },
+    "payment_notes": {
+      "type": "string",
+      "description": "Additional notes about the payment"
+    },
     "notes": {
       "type": "string"
     }
@@ -61,48 +85,5 @@
     "supplier_name",
     "amount",
     "due_date"
-  ],
-  "rls": {
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "read": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "update": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    }
-  }
+  ]
 }

@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays } from "date-fns";
-import { Plus, Trash2, CheckCircle } from "lucide-react";
+import { Plus, Trash2, CheckCircle, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import AddFormDialog from "../components/shared/AddFormDialog";
+import MarkPayableAsPaidDialog from "../components/payables/MarkPayableAsPaidDialog";
 
 function getAgingBucket(dueDateStr, status) {
   if (status === "paid") return null;
@@ -91,6 +92,7 @@ const fields = [
 
 export default function Payables() {
   const [showAdd, setShowAdd] = useState(false);
+  const [markingPaid, setMarkingPaid] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
 
@@ -114,7 +116,7 @@ export default function Payables() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["payables"] }),
   });
 
-  const markPaid = (p) => updateMutation.mutate({ id: p.id, data: { status: "paid", amount_paid: p.amount } });
+  const markPaid = (p, paymentData) => updateMutation.mutate({ id: p.id, data: paymentData });
 
   const filtered = statusFilter === "all" ? payables : payables.filter(p => p.status === statusFilter);
 
@@ -180,12 +182,31 @@ export default function Payables() {
                       ₱{(p.amount_paid || 0).toLocaleString()} / ₱{(p.amount || 0).toLocaleString()}
                     </span>
                   </div>
+                  {p.status === "paid" && (p.payment_date || p.payment_method || p.payment_reference) && (
+                    <div className="mt-2 flex flex-wrap gap-2 items-center">
+                      <CreditCard className="w-3.5 h-3.5 text-primary" />
+                      {p.payment_date && (
+                        <span className="text-xs text-muted-foreground">Paid {format(new Date(p.payment_date), "MMM d, yyyy")}</span>
+                      )}
+                      {p.payment_method && (
+                        <Badge variant="secondary" className="text-xs capitalize">{p.payment_method.replace(/_/g, " ")}</Badge>
+                      )}
+                      {p.payment_reference && (
+                        <span className="text-xs text-muted-foreground">Ref: <span className="font-medium text-foreground">{p.payment_reference}</span></span>
+                      )}
+                      {p.payment_notes && (
+                        <span className="text-xs text-muted-foreground italic">— {p.payment_notes}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-                  <p className="text-lg font-bold text-destructive">₱{remaining.toLocaleString()}</p>
+                  <p className={`text-lg font-bold ${p.status === "paid" ? "text-primary" : "text-destructive"}`}>
+                    {p.status === "paid" ? "PAID" : `₱${remaining.toLocaleString()}`}
+                  </p>
                   <div className="flex gap-1">
                     {p.status !== "paid" && (
-                      <Button variant="ghost" size="icon" onClick={() => markPaid(p)} className="text-primary hover:text-primary">
+                      <Button variant="ghost" size="icon" onClick={() => setMarkingPaid(p)} className="text-primary hover:text-primary" title="Mark as Paid">
                         <CheckCircle className="w-4 h-4" />
                       </Button>
                     )}
@@ -206,6 +227,12 @@ export default function Payables() {
         title="Add Payable"
         fields={fields}
         onSubmit={(data) => createMutation.mutateAsync(data)}
+      />
+      <MarkPayableAsPaidDialog
+        open={!!markingPaid}
+        onOpenChange={(v) => { if (!v) setMarkingPaid(null); }}
+        payable={markingPaid}
+        onConfirm={(paymentData) => markPaid(markingPaid, paymentData)}
       />
     </div>
   );
