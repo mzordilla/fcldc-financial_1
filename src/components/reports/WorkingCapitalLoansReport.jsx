@@ -2,8 +2,9 @@ import { useMemo } from "react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileSpreadsheet, AlertTriangle } from "lucide-react";
+import { FileSpreadsheet, FileText, AlertTriangle } from "lucide-react";
 import * as XLSX from "xlsx";
+import { jsPDF } from "jspdf";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
@@ -117,14 +118,128 @@ export default function WorkingCapitalLoansReport({ loans = [] }) {
     XLSX.writeFile(wb, `WC_Loans_Report_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
   }
 
+  function exportToPDF() {
+    const doc = new jsPDF({ orientation: "landscape" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const fmtNum = (v) => `P${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+
+    // Title
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Working Capital Loans Report", pageW / 2, 16, { align: "center" });
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Generated: ${format(new Date(), "MMMM d, yyyy")}`, pageW / 2, 23, { align: "center" });
+
+    // Summary KPIs
+    let y = 32;
+    doc.setFillColor(240, 253, 244);
+    doc.roundedRect(14, y, pageW - 28, 22, 3, 3, "F");
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text("SUMMARY", 20, y + 6);
+    doc.setFont("helvetica", "normal");
+    const kpis = [
+      `Active: ${active.length}`,
+      `Outstanding: ${fmtNum(totalOutstanding)}`,
+      `Granted: ${fmtNum(totalGranted)}`,
+      `Available: ${fmtNum(availableCredit)}`,
+      `Monthly Pmts: ${fmtNum(totalMonthly)}`,
+      `1-Yr Interest: ${fmtNum(totalInterest1yr)}`,
+    ];
+    kpis.forEach((k, i) => doc.text(k, 20 + i * 45, y + 15));
+
+    y += 32;
+
+    // Breakdown by type
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("Breakdown by Loan Type", 14, y);
+    y += 5;
+
+    doc.setFillColor(30, 41, 59);
+    doc.rect(14, y, pageW - 28, 8, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    ["Type", "Count", "Total Amount", "Outstanding", "Monthly Payment"].forEach((h, i) => {
+      const xs = [18, 90, 120, 165, 210];
+      doc.text(h, xs[i], y + 5.5);
+    });
+    doc.setTextColor(0, 0, 0);
+    y += 8;
+
+    Object.entries(byType).forEach(([type, items], i) => {
+      const outstanding = items.reduce((s, l) => s + Math.max(0, (l.total_amount || 0) - (l.amount_paid || 0)), 0);
+      const totalAmt = items.reduce((s, l) => s + (l.total_amount || 0), 0);
+      const monthly = items.reduce((s, l) => s + (l.monthly_payment || 0), 0);
+      if (i % 2 === 0) { doc.setFillColor(248, 250, 252); doc.rect(14, y, pageW - 28, 7, "F"); }
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(TYPE_LABELS[type] || type, 18, y + 5);
+      doc.text(String(items.length), 90, y + 5);
+      doc.text(fmtNum(totalAmt), 120, y + 5);
+      doc.setTextColor(220, 38, 38);
+      doc.text(fmtNum(outstanding), 165, y + 5);
+      doc.setTextColor(0, 0, 0);
+      doc.text(fmtNum(monthly), 210, y + 5);
+      y += 7;
+    });
+
+    // All loans table
+    y += 10;
+    if (y > 170) { doc.addPage(); y = 20; }
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("All Loans Detail", 14, y);
+    y += 5;
+
+    doc.setFillColor(30, 41, 59);
+    doc.rect(14, y, pageW - 28, 8, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(7.5);
+    const cols = ["Creditor", "Type", "Total Amt", "Paid", "Outstanding", "Rate", "Monthly", "Due Date", "Status"];
+    const xs =   [18, 65, 100, 130, 158, 190, 210, 232, 258];
+    cols.forEach((h, i) => doc.text(h, xs[i], y + 5.5));
+    doc.setTextColor(0, 0, 0);
+    y += 8;
+
+    loans.forEach((l, i) => {
+      if (y > 190) { doc.addPage(); y = 20; }
+      if (i % 2 === 0) { doc.setFillColor(248, 250, 252); doc.rect(14, y, pageW - 28, 7, "F"); }
+      const outstanding = Math.max(0, (l.total_amount || 0) - (l.amount_paid || 0));
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "normal");
+      doc.text((l.creditor || "").substring(0, 16), xs[0], y + 5);
+      doc.text(TYPE_LABELS[l.type] || l.type || "", xs[1], y + 5);
+      doc.text(fmtNum(l.total_amount), xs[2], y + 5);
+      doc.setTextColor(22, 163, 74);
+      doc.text(fmtNum(l.amount_paid), xs[3], y + 5);
+      doc.setTextColor(220, 38, 38);
+      doc.text(fmtNum(outstanding), xs[4], y + 5);
+      doc.setTextColor(0, 0, 0);
+      doc.text(l.interest_rate ? `${l.interest_rate}%` : "—", xs[5], y + 5);
+      doc.text(fmtNum(l.monthly_payment), xs[6], y + 5);
+      doc.text(l.due_date ? format(parseISO(l.due_date), "MM/dd/yy") : "—", xs[7], y + 5);
+      doc.text((l.status || "active").replace(/_/g, " "), xs[8], y + 5);
+      y += 7;
+    });
+
+    doc.save(`WC_Loans_Report_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">Working Capital Loans</h2>
-        <Button variant="outline" size="sm" onClick={exportToExcel}>
-          <FileSpreadsheet className="w-4 h-4 mr-2" /> Export Excel
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={exportToExcel}>
+            <FileSpreadsheet className="w-4 h-4 mr-2" /> Export Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportToPDF}>
+            <FileText className="w-4 h-4 mr-2" /> Export PDF
+          </Button>
+        </div>
       </div>
 
       {/* KPI Summary */}
