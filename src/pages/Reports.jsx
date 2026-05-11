@@ -1,9 +1,8 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { format, startOfMonth, eachMonthOfInterval, subMonths, parseISO } from "date-fns";
+import { format, startOfMonth, eachMonthOfInterval, subMonths, parseISO, startOfDay, endOfDay } from "date-fns";
 import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, FileSpreadsheet, FileText } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
@@ -307,6 +306,12 @@ export default function Reports() {
   const [rangeMonths, setRangeMonths] = useState("6");
   const [expandedMonth, setExpandedMonth] = useState(null);
 
+  // Date range filter (shared across tabs)
+  const defaultEnd = format(new Date(), "yyyy-MM-dd");
+  const defaultStart = format(subMonths(new Date(), 6), "yyyy-MM-dd");
+  const [dateFrom, setDateFrom] = useState(defaultStart);
+  const [dateTo, setDateTo] = useState(defaultEnd);
+
   const { data: transactions = [] } = useQuery({
     queryKey: ["transactions"],
     queryFn: () => base44.entities.Transaction.list("-date", 500),
@@ -326,31 +331,42 @@ export default function Reports() {
   const activeLoans = allLoans.filter(l => l.status === "active");
 
   const months = useMemo(() => {
-    const n = parseInt(rangeMonths);
-    const end = startOfMonth(new Date());
-    const start = subMonths(end, n - 1);
+    const start = startOfMonth(parseISO(dateFrom));
+    const end = startOfMonth(parseISO(dateTo));
     return eachMonthOfInterval({ start, end });
-  }, [rangeMonths]);
+  }, [dateFrom, dateTo]);
+
+  const filteredTransactions = useMemo(() => {
+    if (!dateFrom && !dateTo) return transactions;
+    return transactions.filter(t => {
+      if (!t.date) return false;
+      const d = t.date;
+      if (dateFrom && d < dateFrom) return false;
+      if (dateTo && d > dateTo) return false;
+      return true;
+    });
+  }, [transactions, dateFrom, dateTo]);
 
   const txByMonth = useMemo(() => {
     const map = {};
-    transactions.forEach(t => {
+    filteredTransactions.forEach(t => {
       if (!t.date) return;
       const key = format(parseISO(t.date), "yyyy-MM");
       if (!map[key]) map[key] = [];
       map[key].push(t);
     });
     return map;
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   // Totals for the selected range
-  const rangeTx = months.flatMap(m => txByMonth[format(m, "yyyy-MM")] || []);
+  const rangeTx = filteredTransactions;
   const rangeIncome = rangeTx.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
   const rangeExpenses = rangeTx.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
   const rangeNet = rangeIncome - rangeExpenses;
 
   const currentMonthKey = format(new Date(), "yyyy-MM");
   const currentTx = txByMonth[currentMonthKey] || [];
+  const rangeLabel = `${format(parseISO(dateFrom), "MMM d, yyyy")} – ${format(parseISO(dateTo), "MMM d, yyyy")}`;
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
@@ -359,32 +375,36 @@ export default function Reports() {
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Reports</h1>
           <p className="text-muted-foreground mt-1">Financial reports and summaries</p>
         </div>
-        {activeTab === "pnl" && (
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2">
-            <Select value={rangeMonths} onValueChange={setRangeMonths}>
-              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="3">Last 3 months</SelectItem>
-                <SelectItem value="6">Last 6 months</SelectItem>
-                <SelectItem value="12">Last 12 months</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              onClick={() => exportToExcel({ months, txByMonth, activeLoans, rangeMonths })}
-            >
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
-              Export Excel
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => exportToPDF({ months, txByMonth, activeLoans, rangeMonths })}
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Export PDF
-            </Button>
+            <label className="text-xs text-muted-foreground whitespace-nowrap">From</label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={e => setDateFrom(e.target.value)}
+              className="h-9 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            />
           </div>
-        )}
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-muted-foreground whitespace-nowrap">To</label>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={e => setDateTo(e.target.value)}
+              className="h-9 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          {activeTab === "pnl" && (
+            <>
+              <Button variant="outline" onClick={() => exportToExcel({ months, txByMonth, activeLoans, rangeMonths })}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" /> Export Excel
+              </Button>
+              <Button variant="outline" onClick={() => exportToPDF({ months, txByMonth, activeLoans, rangeMonths })}>
+                <FileText className="w-4 h-4 mr-2" /> Export PDF
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -413,22 +433,22 @@ export default function Reports() {
       )}
 
       {activeTab === "bank_transactions" && (
-        <BankTransactionsReport />
+        <BankTransactionsReport dateFrom={dateFrom} dateTo={dateTo} />
       )}
 
       {activeTab === "pnl" && <>
       {/* Range Summary KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-card border border-primary/20 rounded-2xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Total Revenue ({rangeMonths}mo)</p>
+          <p className="text-xs text-muted-foreground mb-1">Total Revenue</p>
           <p className="text-2xl font-bold text-primary">{fmt(rangeIncome)}</p>
         </div>
         <div className="bg-card border border-destructive/20 rounded-2xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Total Expenses ({rangeMonths}mo)</p>
+          <p className="text-xs text-muted-foreground mb-1">Total Expenses</p>
           <p className="text-2xl font-bold text-destructive">{fmt(rangeExpenses)}</p>
         </div>
         <div className={`bg-card border rounded-2xl p-4 ${rangeNet >= 0 ? "border-primary/20" : "border-destructive/20"}`}>
-          <p className="text-xs text-muted-foreground mb-1">Net Income ({rangeMonths}mo)</p>
+          <p className="text-xs text-muted-foreground mb-1">Net Income</p>
           <div className="flex items-center gap-2">
             <p className={`text-2xl font-bold ${rangeNet >= 0 ? "text-primary" : "text-destructive"}`}>{fmtSigned(rangeNet)}</p>
             {rangeNet >= 0 ? <TrendingUp className="w-5 h-5 text-primary" /> : <TrendingDown className="w-5 h-5 text-destructive" />}

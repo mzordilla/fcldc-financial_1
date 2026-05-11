@@ -24,13 +24,22 @@ const CATEGORY_LABELS = {
   other: "Other",
 };
 
-export default function BankTransactionsReport() {
+export default function BankTransactionsReport({ dateFrom, dateTo }) {
   const [expandedBank, setExpandedBank] = useState(null);
 
-  const { data: transactions = [] } = useQuery({
+  const { data: allTransactions = [] } = useQuery({
     queryKey: ["transactions"],
     queryFn: () => base44.entities.Transaction.list("-date", 500),
   });
+
+  const transactions = useMemo(() => {
+    return allTransactions.filter(t => {
+      if (!t.date) return false;
+      if (dateFrom && t.date < dateFrom) return false;
+      if (dateTo && t.date > dateTo) return false;
+      return true;
+    });
+  }, [allTransactions, dateFrom, dateTo]);
 
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ["bankaccounts"],
@@ -101,7 +110,7 @@ export default function BankTransactionsReport() {
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), label);
     });
 
-    XLSX.writeFile(wb, `Bank_Transactions_Report_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+    XLSX.writeFile(wb, `Bank_Transactions_Report_${dateFrom || "start"}_to_${dateTo || "end"}.xlsx`);
   }
 
   function exportToPDF() {
@@ -192,7 +201,7 @@ export default function BankTransactionsReport() {
       });
     });
 
-    doc.save(`Bank_Transactions_Report_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+    doc.save(`Bank_Transactions_Report_${dateFrom || "start"}_to_${dateTo || "end"}.pdf`);
   }
 
   return (
