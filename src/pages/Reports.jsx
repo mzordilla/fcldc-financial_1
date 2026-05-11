@@ -6,6 +6,7 @@ import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, Download, FileSpreads
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
+import WorkingCapitalLoansReport from "../components/reports/WorkingCapitalLoansReport";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 const fmtSigned = (v) => (v < 0 ? `-₱${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : `₱${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`);
@@ -174,6 +175,7 @@ function exportToExcel({ months, txByMonth, activeLoans, rangeMonths }) {
 }
 
 export default function Reports() {
+  const [activeTab, setActiveTab] = useState("pnl");
   const [rangeMonths, setRangeMonths] = useState("6");
   const [expandedMonth, setExpandedMonth] = useState(null);
 
@@ -227,27 +229,54 @@ export default function Reports() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Reports</h1>
-          <p className="text-muted-foreground mt-1">Monthly P&L summaries and cash flow statements</p>
+          <p className="text-muted-foreground mt-1">Financial reports and summaries</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Select value={rangeMonths} onValueChange={setRangeMonths}>
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="3">Last 3 months</SelectItem>
-              <SelectItem value="6">Last 6 months</SelectItem>
-              <SelectItem value="12">Last 12 months</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            onClick={() => exportToExcel({ months, txByMonth, activeLoans, rangeMonths })}
-          >
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
-            Export Excel
-          </Button>
-        </div>
+        {activeTab === "pnl" && (
+          <div className="flex items-center gap-2">
+            <Select value={rangeMonths} onValueChange={setRangeMonths}>
+              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3">Last 3 months</SelectItem>
+                <SelectItem value="6">Last 6 months</SelectItem>
+                <SelectItem value="12">Last 12 months</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              onClick={() => exportToExcel({ months, txByMonth, activeLoans, rangeMonths })}
+            >
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Export Excel
+            </Button>
+          </div>
+        )}
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-border">
+        {[
+          { key: "pnl", label: "P&L / Cash Flow" },
+          { key: "wc_loans", label: "Working Capital Loans" },
+        ].map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
+              activeTab === tab.key
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "wc_loans" && (
+        <WorkingCapitalLoansReport loans={[...loans, ...wcLoans]} />
+      )}
+
+      {activeTab === "pnl" && <>
       {/* Range Summary KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-card border border-primary/20 rounded-2xl p-4">
@@ -317,6 +346,7 @@ export default function Reports() {
           })}
         </div>
       </div>
+      </>}
     </div>
   );
 }
