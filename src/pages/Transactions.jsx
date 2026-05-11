@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import TransactionFormDialog from "../components/transactions/TransactionFormDialog";
 import BatchTransactionDialog from "../components/transactions/BatchTransactionDialog";
+import SpendByCategoryChart from "../components/transactions/SpendByCategoryChart";
 
 const CATEGORIES = [
   { value: "project_payment", label: "Project Payment" },
@@ -91,6 +92,8 @@ export default function Transactions() {
           </Button>
         </div>
       </div>
+
+      <SpendByCategoryChart transactions={filtered} />
 
       <div className="bg-card rounded-2xl border border-border overflow-hidden">
         <div className="overflow-x-auto">

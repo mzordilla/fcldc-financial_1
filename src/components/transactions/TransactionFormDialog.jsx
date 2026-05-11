@@ -36,6 +36,7 @@ export default function TransactionFormDialog({ open, onOpenChange, title, bankA
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.category) return;
     setSaving(true);
     await onSubmit(formData);
     setSaving(false);
@@ -143,9 +144,9 @@ export default function TransactionFormDialog({ open, onOpenChange, title, bankA
 
           {/* Category */}
           <div className="space-y-1.5">
-            <Label>Category</Label>
-            <Select value={formData.category || ""} onValueChange={(v) => set("category", v)}>
-              <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+            <Label>Category *</Label>
+            <Select required value={formData.category || ""} onValueChange={(v) => set("category", v)}>
+              <SelectTrigger className={!formData.category ? "border-destructive/50" : ""}><SelectValue placeholder="Select category (required)" /></SelectTrigger>
               <SelectContent>
                 {categories.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
               </SelectContent>
