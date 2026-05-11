@@ -114,6 +114,7 @@ export default function PaymentApprovals() {
         approved_by: actor,
         approval_step: action,
         approval_history: history,
+        ...(action === "paid" ? { check_date: new Date().toISOString().split("T")[0] } : {}),
       },
     });
   };
@@ -297,17 +298,14 @@ export default function PaymentApprovals() {
                 <div className="flex sm:flex-col items-center sm:items-end gap-3">
                   <p className="text-xl font-bold text-foreground">₱{(pr.amount || 0).toLocaleString()}</p>
                   <div className="flex gap-1">
-                    {pr.approval_status === "pending" && (
-                      <Button size="sm" variant="outline" onClick={() => setReviewPR(pr)}>Review</Button>
+                    {(pr.approval_status === "pending" || pr.approval_status === "approved") && (
+                      <Button size="sm" variant={pr.approval_status === "approved" ? "default" : "outline"} onClick={() => setReviewPR(pr)}>
+                        {pr.approval_status === "approved" ? <><Banknote className="w-3.5 h-3.5 mr-1" /> Disburse</> : "Review"}
+                      </Button>
                     )}
                     <Button variant="ghost" size="icon" onClick={() => setReviewPR(pr)} title="View History" className="text-muted-foreground hover:text-foreground">
                       <History className="w-4 h-4" />
                     </Button>
-                    {pr.approval_status === "approved" && (
-                      <Button size="sm" onClick={() => setMarkingPaidPR(pr)}>
-                        <Banknote className="w-3.5 h-3.5 mr-1" /> Mark Paid
-                      </Button>
-                    )}
                     <Button variant="ghost" size="icon" onClick={() => setEditingPR(pr)} className="text-muted-foreground hover:text-foreground">
                       <Pencil className="w-4 h-4" />
                     </Button>
@@ -349,6 +347,7 @@ export default function PaymentApprovals() {
               </Badge>
             </div>
           }
+          currentStatus={reviewPR.approval_status}
           onDecision={(decision) => handleDecision(reviewPR, decision)}
         />
       )}

@@ -3,12 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, ChevronRight, User, FileText, History } from "lucide-react";
+import { CheckCircle, XCircle, ChevronRight, User, FileText, History, Banknote } from "lucide-react";
 import ApprovalHistoryLog from "./ApprovalHistoryLog";
 
 const STEPS = ["Details", "Decision", "History"];
 
-export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summary, history = [], onDecision }) {
+export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summary, history = [], onDecision, currentStatus }) {
   const [step, setStep] = useState(0);
   const [actor, setActor] = useState("");
   const [notes, setNotes] = useState("");
@@ -116,12 +116,20 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
           )}
           {step === 1 && (
             <>
-              <Button variant="destructive" onClick={() => handleDecide("rejected")} disabled={!actor.trim()}>
-                <XCircle className="w-4 h-4 mr-1" /> Reject
-              </Button>
-              <Button onClick={() => handleDecide("approved")} disabled={!actor.trim()}>
-                <CheckCircle className="w-4 h-4 mr-1" /> Approve
-              </Button>
+              {currentStatus !== "approved" && (
+                <Button variant="destructive" onClick={() => handleDecide("rejected")} disabled={!actor.trim()}>
+                  <XCircle className="w-4 h-4 mr-1" /> Reject
+                </Button>
+              )}
+              {currentStatus === "approved" ? (
+                <Button className="bg-chart-2 hover:bg-chart-2/90 text-white" onClick={() => handleDecide("paid")} disabled={!actor.trim()}>
+                  <Banknote className="w-4 h-4 mr-1" /> Confirm Disbursement
+                </Button>
+              ) : (
+                <Button onClick={() => handleDecide("approved")} disabled={!actor.trim()}>
+                  <CheckCircle className="w-4 h-4 mr-1" /> Approve
+                </Button>
+              )}
             </>
           )}
           {step !== 1 && (
