@@ -39,7 +39,7 @@ export default function Sidebar() {
           </div>
           <div>
             <h1 className="font-bold text-lg leading-tight">FCLDC</h1>
-            <p className="text-xs text-sidebar-foreground/50">Construction Finance</p>
+            <p className="text-xs text-sidebar-foreground/50">FINANCE</p>
           </div>
         </div>
       </div>
