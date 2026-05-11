@@ -1,0 +1,17 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "disbursement",
+        "accounting",
+        "procurement"
+      ],
+      "default": "procurement",
+      "description": "User role controlling access level"
+    }
+  }
+}

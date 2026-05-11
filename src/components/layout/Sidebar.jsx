@@ -1,8 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, HardHat, LogOut, Building2, CreditCard, Banknote, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, BookOpen, ScanLine, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
+import { navItemsByRole } from "@/lib/access-control";
 
-const navItems = [
+const allNavItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
   { label: "Projects", icon: Briefcase, path: "/projects" },
   { label: "Transactions", icon: ArrowLeftRight, path: "/transactions" },
@@ -21,6 +23,11 @@ const navItems = [
 
 export default function Sidebar() {
   const location = useLocation();
+  const { user } = useAuth();
+
+  const role = user?.role || "procurement";
+  const allowed = navItemsByRole[role];
+  const navItems = allowed === "all" ? allNavItems : allNavItems.filter(item => allowed.includes(item.path));
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-sidebar text-sidebar-foreground flex flex-col z-50">
@@ -36,7 +43,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -57,6 +64,10 @@ export default function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-sidebar-border">
+        <div className="px-3 py-1.5 mb-2 rounded-md bg-sidebar-accent/50">
+          <p className="text-xs text-sidebar-foreground/50">Logged in as</p>
+          <p className="text-xs font-semibold text-sidebar-foreground capitalize">{role}</p>
+        </div>
         <button
           onClick={() => base44.auth.logout()}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all w-full"

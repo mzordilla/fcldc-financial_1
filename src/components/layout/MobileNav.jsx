@@ -1,16 +1,23 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, FileText, Landmark, Banknote, BarChart2 } from "lucide-react";
+import { LayoutDashboard, FileText, Landmark, Banknote, BarChart2, ShoppingCart, Building2, Briefcase } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
+import { canAccess } from "@/lib/access-control";
 
-const navItems = [
+const allNavItems = [
   { label: "Home", icon: LayoutDashboard, path: "/" },
+  { label: "Projects", icon: Briefcase, path: "/projects" },
   { label: "Receivables", icon: FileText, path: "/receivables" },
-  { label: "Loans", icon: Banknote, path: "/bank-loans" },
+  { label: "Bank", icon: Building2, path: "/bank-accounts" },
+  { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
   { label: "WC Loans", icon: Landmark, path: "/working-capital-loans" },
   { label: "Reports", icon: BarChart2, path: "/reports" },
 ];
 
 export default function MobileNav() {
   const location = useLocation();
+  const { user } = useAuth();
+  const role = user?.role || "procurement";
+  const navItems = allNavItems.filter(item => canAccess(role, item.path)).slice(0, 5);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 md:hidden">
