@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, ArrowUpRight, ArrowDownRight, Trash2, Pencil, Building2 } from "lucide-react";
+import { Plus, ArrowUpRight, ArrowDownRight, Trash2, Pencil, Building2, TableProperties } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import TransactionFormDialog from "../components/transactions/TransactionFormDialog";
+import BatchTransactionDialog from "../components/transactions/BatchTransactionDialog";
 
 const CATEGORIES = [
   { value: "project_payment", label: "Project Payment" },
@@ -23,6 +24,7 @@ const CATEGORIES = [
 
 export default function Transactions() {
   const [showAdd, setShowAdd] = useState(false);
+  const [showBatch, setShowBatch] = useState(false);
   const [editingT, setEditingT] = useState(null);
   const [typeFilter, setTypeFilter] = useState("all");
   const queryClient = useQueryClient();
@@ -81,6 +83,9 @@ export default function Transactions() {
               <SelectItem value="expense">Expenses</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" onClick={() => setShowBatch(true)}>
+            <TableProperties className="w-4 h-4 mr-2" /> Batch Enter
+          </Button>
           <Button onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4 mr-2" /> Add
           </Button>
@@ -169,6 +174,14 @@ export default function Transactions() {
         </div>
       </div>
 
+      <BatchTransactionDialog
+        open={showBatch}
+        onOpenChange={setShowBatch}
+        bankAccounts={bankAccounts}
+        onSubmit={async (rows) => {
+          await Promise.all(rows.map(r => createMutation.mutateAsync(r)));
+        }}
+      />
       <TransactionFormDialog
         open={showAdd}
         onOpenChange={setShowAdd}
