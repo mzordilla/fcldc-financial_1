@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, HardHat, LogOut, Building2, CreditCard, Banknote, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, BookOpen, ScanLine, Users, RefreshCw } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, Banknote, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, BookOpen, ScanLine, Users, RefreshCw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { navItemsByRole } from "@/lib/access-control";
@@ -33,16 +33,14 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-sidebar text-sidebar-foreground flex flex-col z-50">
       <div className="p-6 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-            <HardHat className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="font-bold text-lg leading-tight">FCLDC</h1>
-            <p className="text-xs text-sidebar-foreground/50">FINANCE</p>
-          </div>
-        </div>
-      </div>
+         <div className="flex items-center gap-3">
+           <img src="https://media.base44.com/images/public/69f02f8501c3688565579a10/194dcac58_image.png" alt="FCLDC" className="w-10 h-10" />
+           <div>
+             <h1 className="font-bold text-lg leading-tight">FCLDC</h1>
+             <p className="text-xs text-sidebar-foreground/50">FINANCE</p>
+           </div>
+         </div>
+       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
