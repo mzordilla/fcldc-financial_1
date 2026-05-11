@@ -25,7 +25,7 @@ export default function Sidebar() {
   const location = useLocation();
   const { user } = useAuth();
 
-  const role = user?.role || "procurement";
+  const role = user?.role;
   const allowed = navItemsByRole[role];
   const navItems = allowed === "all" ? allNavItems : allNavItems.filter(item => allowed.includes(item.path));
 

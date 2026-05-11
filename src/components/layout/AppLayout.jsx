@@ -12,10 +12,10 @@ export default function AppLayout() {
   const role = user?.role;
   const allowed = canAccess(role, location.pathname);
 
-  // Redirect non-admin users away from "/" to their first allowed route
-  if (!allowed && role !== "admin") {
-    const allowedRoutes = roleAccess[role];
-    if (Array.isArray(allowedRoutes) && allowedRoutes.length > 0) {
+  // Redirect non-admin users away from disallowed routes to their first allowed route
+  if (!allowed) {
+    const allowedRoutes = Array.isArray(roleAccess[role]) ? roleAccess[role] : [];
+    if (allowedRoutes.length > 0) {
       return <Navigate to={allowedRoutes[0]} replace />;
     }
   }
