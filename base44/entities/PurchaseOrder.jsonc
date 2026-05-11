@@ -89,6 +89,41 @@
       "type": "string",
       "description": "Notes from approver"
     },
+    "approval_step": {
+      "type": "string",
+      "enum": [
+        "submitted",
+        "reviewed",
+        "approved",
+        "rejected"
+      ],
+      "default": "submitted",
+      "description": "Current step in the approval workflow"
+    },
+    "approval_history": {
+      "type": "array",
+      "description": "Audit log of all approval actions",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "priority": {
       "type": "string",
       "enum": [

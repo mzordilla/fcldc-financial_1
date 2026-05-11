@@ -2,14 +2,14 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart, History, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import PaymentRequestFormDialog from "../components/payment/PaymentRequestFormDialog";
 import MarkPaidDialog from "../components/payment/MarkPaidDialog";
+import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
+import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
 
 const statusStyles = {
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
@@ -37,82 +37,7 @@ const categoryLabels = {
 
 
 
-function ApprovalDialog({ pr, open, onOpenChange, onDecision }) {
-  const [notes, setNotes] = useState("");
-  const [approvedBy, setApprovedBy] = useState("");
 
-  const handle = (status) => {
-    onDecision(pr.id, status, notes, approvedBy);
-    setNotes("");
-    setApprovedBy("");
-    onOpenChange(false);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Review Payment Request</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="bg-muted/50 rounded-xl p-4 space-y-1">
-            <p className="text-xs text-muted-foreground">{pr?.request_number}</p>
-            <p className="font-semibold">{pr?.payee}</p>
-            <p className="text-sm text-muted-foreground">{pr?.description}</p>
-            {pr?.project_allocations && pr.project_allocations.length > 0 && (
-              <div className="mt-1 flex flex-wrap gap-1">
-                {pr.project_allocations.map((a, i) => (
-                  <span key={i} className="text-xs bg-muted px-2 py-0.5 rounded-full">{a.project_name}: ₱{(a.amount || 0).toLocaleString()}</span>
-                ))}
-              </div>
-            )}
-            <p className="text-2xl font-bold text-foreground mt-2">₱{(pr?.amount || 0).toLocaleString()}</p>
-            {(pr?.withholding_tax_amount || pr?.vat_amount) && (
-              <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                {pr?.withholding_tax_percentage > 0 && (
-                  <div>Withholding Tax ({pr?.withholding_tax_percentage}%): ₱{(pr?.withholding_tax_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                )}
-                {pr?.vat_percentage > 0 && (
-                  <div>VAT ({pr?.vat_percentage}%): ₱{(pr?.vat_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                )}
-              </div>
-            )}
-            {pr?.due_date && (
-              <p className="text-xs text-destructive">Due: {format(new Date(pr.due_date), "MMM d, yyyy")}</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Approver Name</label>
-            <input
-              className="w-full px-3 py-2 text-sm border border-input rounded-lg bg-background"
-              placeholder="Your name"
-              value={approvedBy}
-              onChange={(e) => setApprovedBy(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Notes (optional)</label>
-            <Textarea
-              placeholder="Add notes for approval or rejection..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="h-20"
-            />
-          </div>
-        </div>
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button variant="destructive" onClick={() => handle("rejected")}>
-            <XCircle className="w-4 h-4 mr-1" /> Reject
-          </Button>
-          <Button onClick={() => handle("approved")}>
-            <CheckCircle className="w-4 h-4 mr-1" /> Approve
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 export default function PaymentApprovals() {
   const [showAdd, setShowAdd] = useState(false);
@@ -120,6 +45,7 @@ export default function PaymentApprovals() {
   const [editingPR, setEditingPR] = useState(null);
   const [reviewPR, setReviewPR] = useState(null);
   const [markingPaidPR, setMarkingPaidPR] = useState(null);
+  const [expandedHistory, setExpandedHistory] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
 
@@ -171,8 +97,25 @@ export default function PaymentApprovals() {
     setPrefillData(prData);
   };
 
-  const handleDecision = (id, status, notes, approvedBy) => {
-    updateMutation.mutate({ id, data: { approval_status: status, approval_notes: notes, approved_by: approvedBy } });
+  const handleDecision = (pr, { action, actor, notes }) => {
+    const newEntry = {
+      step: action,
+      action,
+      actor,
+      notes,
+      timestamp: new Date().toISOString(),
+    };
+    const history = [...(pr.approval_history || []), newEntry];
+    updateMutation.mutate({
+      id: pr.id,
+      data: {
+        approval_status: action,
+        approval_notes: notes,
+        approved_by: actor,
+        approval_step: action,
+        approval_history: history,
+      },
+    });
   };
 
   const filtered = statusFilter === "all" ? requests : requests.filter(r => r.approval_status === statusFilter);
@@ -322,6 +265,22 @@ export default function PaymentApprovals() {
                   {pr.approval_notes && (
                     <p className="text-xs text-muted-foreground mt-2 italic border-l-2 border-border pl-2">{pr.approval_notes}</p>
                   )}
+                  {/* History toggle */}
+                  {pr.approval_history?.length > 0 && (
+                    <button
+                      onClick={() => setExpandedHistory(expandedHistory === pr.id ? null : pr.id)}
+                      className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <History className="w-3.5 h-3.5" />
+                      {pr.approval_history.length} history record{pr.approval_history.length !== 1 ? "s" : ""}
+                      {expandedHistory === pr.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </button>
+                  )}
+                  {expandedHistory === pr.id && (
+                    <div className="mt-3 p-3 bg-muted/30 rounded-xl border border-border">
+                      <ApprovalHistoryLog history={pr.approval_history} />
+                    </div>
+                  )}
                   {pr.approval_status === "paid" && (pr.check_number || pr.check_date || pr.check_attachment) && (
                     <div className="mt-2 flex flex-wrap items-center gap-3 bg-chart-2/5 border border-chart-2/20 rounded-lg px-3 py-2">
                       <Banknote className="w-3.5 h-3.5 text-chart-2 flex-shrink-0" />
@@ -341,6 +300,9 @@ export default function PaymentApprovals() {
                     {pr.approval_status === "pending" && (
                       <Button size="sm" variant="outline" onClick={() => setReviewPR(pr)}>Review</Button>
                     )}
+                    <Button variant="ghost" size="icon" onClick={() => setReviewPR(pr)} title="View History" className="text-muted-foreground hover:text-foreground">
+                      <History className="w-4 h-4" />
+                    </Button>
                     {pr.approval_status === "approved" && (
                       <Button size="sm" onClick={() => setMarkingPaidPR(pr)}>
                         <Banknote className="w-3.5 h-3.5 mr-1" /> Mark Paid
@@ -362,7 +324,34 @@ export default function PaymentApprovals() {
 
       <PaymentRequestFormDialog open={showAdd} onOpenChange={(v) => { setShowAdd(v); if (!v) setPrefillData(null); }} title="New Payment Request" initialData={prefillData} onSubmit={(data) => createMutation.mutateAsync(data)} />
       <PaymentRequestFormDialog open={!!editingPR} onOpenChange={(v) => { if (!v) setEditingPR(null); }} title="Edit Payment Request" initialData={editingPR || {}} onSubmit={(data) => updateMutation.mutateAsync({ id: editingPR.id, data })} />
-      {reviewPR && <ApprovalDialog pr={reviewPR} open={!!reviewPR} onOpenChange={(v) => !v && setReviewPR(null)} onDecision={handleDecision} />}
+      {reviewPR && (
+        <ApprovalWorkflowDialog
+          open={!!reviewPR}
+          onOpenChange={(v) => !v && setReviewPR(null)}
+          title={`Review Payment — ${reviewPR.payee}`}
+          history={reviewPR.approval_history || []}
+          summary={
+            <div className="space-y-1">
+              {reviewPR.request_number && <p className="text-xs text-muted-foreground font-mono">{reviewPR.request_number}</p>}
+              <p className="font-semibold">{reviewPR.payee}</p>
+              <p className="text-sm text-muted-foreground">{reviewPR.description}</p>
+              {reviewPR.project_allocations?.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {reviewPR.project_allocations.map((a, i) => (
+                    <span key={i} className="text-xs bg-muted px-2 py-0.5 rounded-full">{a.project_name}: ₱{(a.amount || 0).toLocaleString()}</span>
+                  ))}
+                </div>
+              )}
+              <p className="text-2xl font-bold text-foreground mt-1">₱{(reviewPR.amount || 0).toLocaleString()}</p>
+              {reviewPR.due_date && <p className="text-xs text-destructive">Due: {format(new Date(reviewPR.due_date), "MMM d, yyyy")}</p>}
+              <Badge variant="outline" className={`text-xs mt-1 ${statusStyles[reviewPR.approval_status] || ""}`}>
+                {(reviewPR.approval_status || "pending").replace(/_/g, " ")}
+              </Badge>
+            </div>
+          }
+          onDecision={(decision) => handleDecision(reviewPR, decision)}
+        />
+      )}
       {markingPaidPR && (
         <MarkPaidDialog
           pr={markingPaidPR}

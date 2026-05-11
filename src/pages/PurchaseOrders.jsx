@@ -2,13 +2,13 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import POFormDialog from "../components/purchase-orders/POFormDialog";
+import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
+import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
 
 const statusStyles = {
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
@@ -31,66 +31,13 @@ const statusIcons = {
   cancelled: XCircle,
 };
 
-function ApprovalDialog({ po, open, onOpenChange, onDecision }) {
-  const [notes, setNotes] = useState("");
-  const [approvedBy, setApprovedBy] = useState("");
 
-  const handle = (status) => {
-    onDecision(po.id, status, notes, approvedBy);
-    setNotes("");
-    setApprovedBy("");
-    onOpenChange(false);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Review Purchase Order</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="bg-muted/50 rounded-xl p-4 space-y-1">
-            <p className="font-semibold">{po?.supplier_name}</p>
-            <p className="text-sm text-muted-foreground">{po?.description}</p>
-            <p className="text-lg font-bold text-foreground mt-2">${(po?.amount || 0).toLocaleString()}</p>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Approver Name</label>
-            <input
-              className="w-full px-3 py-2 text-sm border border-input rounded-lg bg-background"
-              placeholder="Your name"
-              value={approvedBy}
-              onChange={(e) => setApprovedBy(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Notes (optional)</label>
-            <Textarea
-              placeholder="Add approval or rejection notes..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="h-20"
-            />
-          </div>
-        </div>
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button variant="destructive" onClick={() => handle("rejected")}>
-            <XCircle className="w-4 h-4 mr-1" /> Reject
-          </Button>
-          <Button onClick={() => handle("approved")}>
-            <CheckCircle className="w-4 h-4 mr-1" /> Approve
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 export default function PurchaseOrders() {
   const [showAdd, setShowAdd] = useState(false);
   const [editingPO, setEditingPO] = useState(null);
   const [reviewPO, setReviewPO] = useState(null);
+  const [expandedHistory, setExpandedHistory] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
 
@@ -114,8 +61,25 @@ export default function PurchaseOrders() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["purchase_orders"] }),
   });
 
-  const handleDecision = (id, status, notes, approvedBy) => {
-    updateMutation.mutate({ id, data: { approval_status: status, approval_notes: notes, approved_by: approvedBy } });
+  const handleDecision = (po, { action, actor, notes }) => {
+    const newEntry = {
+      step: action === "approved" ? "approved" : action === "rejected" ? "rejected" : "reviewed",
+      action,
+      actor,
+      notes,
+      timestamp: new Date().toISOString(),
+    };
+    const history = [...(po.approval_history || []), newEntry];
+    updateMutation.mutate({
+      id: po.id,
+      data: {
+        approval_status: action,
+        approval_notes: notes,
+        approved_by: actor,
+        approval_step: action,
+        approval_history: history,
+      },
+    });
   };
 
   const filtered = statusFilter === "all" ? orders : orders.filter(o => o.approval_status === statusFilter);
@@ -218,15 +182,34 @@ export default function PurchaseOrders() {
                   {po.approval_notes && (
                     <p className="text-xs text-muted-foreground mt-2 italic border-l-2 border-border pl-2">{po.approval_notes}</p>
                   )}
+                  {/* History toggle */}
+                  {po.approval_history?.length > 0 && (
+                    <button
+                      onClick={() => setExpandedHistory(expandedHistory === po.id ? null : po.id)}
+                      className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <History className="w-3.5 h-3.5" />
+                      {po.approval_history.length} history record{po.approval_history.length !== 1 ? "s" : ""}
+                      {expandedHistory === po.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </button>
+                  )}
+                  {expandedHistory === po.id && (
+                    <div className="mt-3 p-3 bg-muted/30 rounded-xl border border-border">
+                      <ApprovalHistoryLog history={po.approval_history} />
+                    </div>
+                  )}
                 </div>
                 <div className="flex sm:flex-col items-center sm:items-end gap-3">
-                  <p className="text-xl font-bold text-foreground">${(po.amount || 0).toLocaleString()}</p>
+                  <p className="text-xl font-bold text-foreground">₱{(po.amount || 0).toLocaleString()}</p>
                   <div className="flex gap-1">
                     {po.approval_status === "pending" && (
                       <Button size="sm" variant="outline" onClick={() => setReviewPO(po)}>
                         Review
                       </Button>
                     )}
+                    <Button variant="ghost" size="icon" onClick={() => setReviewPO(po)} title="View History" className="text-muted-foreground hover:text-foreground">
+                      <History className="w-4 h-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => setEditingPO(po)} className="text-muted-foreground hover:text-foreground">
                       <Pencil className="w-4 h-4" />
                     </Button>
@@ -243,7 +226,29 @@ export default function PurchaseOrders() {
 
       <POFormDialog open={showAdd} onOpenChange={setShowAdd} title="New Purchase Order" onSubmit={(data) => createMutation.mutateAsync(data)} />
       <POFormDialog open={!!editingPO} onOpenChange={(v) => { if (!v) setEditingPO(null); }} title="Edit Purchase Order" initialData={editingPO || {}} onSubmit={(data) => updateMutation.mutateAsync({ id: editingPO.id, data })} />
-      {reviewPO && <ApprovalDialog po={reviewPO} open={!!reviewPO} onOpenChange={(v) => !v && setReviewPO(null)} onDecision={handleDecision} />}
+      {reviewPO && (
+        <ApprovalWorkflowDialog
+          open={!!reviewPO}
+          onOpenChange={(v) => !v && setReviewPO(null)}
+          title={`Review PO — ${reviewPO.supplier_name}`}
+          history={reviewPO.approval_history || []}
+          summary={
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-semibold">{reviewPO.supplier_name}</p>
+                {reviewPO.po_number && <span className="text-xs font-mono text-muted-foreground">{reviewPO.po_number}</span>}
+              </div>
+              <p className="text-sm text-muted-foreground">{reviewPO.description}</p>
+              {reviewPO.project_name && <p className="text-xs text-muted-foreground">Project: {reviewPO.project_name}</p>}
+              <p className="text-2xl font-bold text-foreground mt-1">₱{(reviewPO.amount || 0).toLocaleString()}</p>
+              <Badge variant="outline" className={`text-xs mt-1 ${statusStyles[reviewPO.approval_status] || ""}`}>
+                {(reviewPO.approval_status || "pending").replace(/_/g, " ")}
+              </Badge>
+            </div>
+          }
+          onDecision={(decision) => handleDecision(reviewPO, decision)}
+        />
+      )}
     </div>
   );
 }

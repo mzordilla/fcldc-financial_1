@@ -31,7 +31,7 @@
     },
     "amount": {
       "type": "number",
-      "description": "Total payment amount (sum of all project allocations)"
+      "description": "Total payment amount"
     },
     "category": {
       "type": "string",
@@ -83,44 +83,74 @@
       ],
       "default": "pending"
     },
+    "approval_step": {
+      "type": "string",
+      "enum": [
+        "submitted",
+        "reviewed",
+        "approved",
+        "rejected",
+        "paid"
+      ],
+      "default": "submitted",
+      "description": "Current step in the approval workflow"
+    },
     "approval_notes": {
       "type": "string"
+    },
+    "approval_history": {
+      "type": "array",
+      "description": "Audit log of all approval actions",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        }
+      }
     },
     "supporting_docs": {
       "type": "string",
       "description": "Reference to attached documents"
     },
     "check_number": {
-      "type": "string",
-      "description": "Check or voucher number"
+      "type": "string"
     },
     "check_date": {
       "type": "string",
-      "format": "date",
-      "description": "Date on the check"
+      "format": "date"
     },
     "check_attachment": {
       "type": "string",
-      "description": "URL of uploaded check image/attachment"
+      "description": "URL of uploaded check image"
     },
     "withholding_tax_percentage": {
       "type": "number",
-      "description": "Withholding tax percentage (e.g., 2 for 2%)",
       "default": 0
     },
     "withholding_tax_amount": {
       "type": "number",
-      "description": "Calculated withholding tax amount",
       "default": 0
     },
     "vat_percentage": {
       "type": "number",
-      "description": "VAT percentage (e.g., 12 for 12%)",
       "default": 0
     },
     "vat_amount": {
       "type": "number",
-      "description": "Calculated VAT amount",
       "default": 0
     }
   },
