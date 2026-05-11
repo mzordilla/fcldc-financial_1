@@ -2,10 +2,11 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, startOfMonth, eachMonthOfInterval, subMonths, parseISO } from "date-fns";
-import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, Download, FileSpreadsheet } from "lucide-react";
+import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, FileSpreadsheet, FileText } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
+import { jsPDF } from "jspdf";
 import WorkingCapitalLoansReport from "../components/reports/WorkingCapitalLoansReport";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
@@ -174,6 +175,132 @@ function exportToExcel({ months, txByMonth, activeLoans, rangeMonths }) {
   XLSX.writeFile(wb, `Financial_Report_${rangeMonths}mo_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
 }
 
+function exportToPDF({ months, txByMonth, activeLoans, rangeMonths }) {
+  const doc = new jsPDF();
+  const pageW = doc.internal.pageSize.getWidth();
+  const loanPayments = activeLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
+  const fmtNum = (v) => `P${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+
+  // Title
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  doc.text("Financial Report", pageW / 2, 20, { align: "center" });
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Period: Last ${rangeMonths} months  |  Generated: ${format(new Date(), "MMMM d, yyyy")}`, pageW / 2, 28, { align: "center" });
+
+  // Range summary
+  const rangeTx = months.flatMap(m => txByMonth[format(m, "yyyy-MM")] || []);
+  const rangeIncome = rangeTx.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
+  const rangeExpenses = rangeTx.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
+  const rangeNet = rangeIncome - rangeExpenses;
+
+  let y = 40;
+  doc.setFillColor(240, 253, 244);
+  doc.roundedRect(14, y, pageW - 28, 22, 3, 3, "F");
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.text("SUMMARY", 20, y + 7);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Total Revenue: ${fmtNum(rangeIncome)}`, 20, y + 15);
+  doc.text(`Total Expenses: ${fmtNum(rangeExpenses)}`, 85, y + 15);
+  doc.text(`Net Income: ${fmtNum(rangeNet)}`, 155, y + 15);
+
+  y += 32;
+
+  // P&L Table Header
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text("P&L Summary", 14, y);
+  y += 6;
+
+  // Table header row
+  doc.setFillColor(30, 41, 59);
+  doc.rect(14, y, pageW - 28, 8, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(8);
+  doc.text("Month", 18, y + 5.5);
+  doc.text("Revenue", 80, y + 5.5);
+  doc.text("Expenses", 120, y + 5.5);
+  doc.text("Net Income", 158, y + 5.5);
+  doc.setTextColor(0, 0, 0);
+  y += 8;
+
+  [...months].reverse().forEach((m, i) => {
+    if (y > 270) { doc.addPage(); y = 20; }
+    const key = format(m, "yyyy-MM");
+    const label = format(m, "MMMM yyyy");
+    const mTx = txByMonth[key] || [];
+    const inc = mTx.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
+    const exp = mTx.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
+    const net = inc - exp;
+
+    if (i % 2 === 0) {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(14, y, pageW - 28, 7, "F");
+    }
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(label, 18, y + 5);
+    doc.setTextColor(22, 163, 74);
+    doc.text(fmtNum(inc), 80, y + 5);
+    doc.setTextColor(220, 38, 38);
+    doc.text(fmtNum(exp), 120, y + 5);
+    doc.setTextColor(net >= 0 ? 22 : 220, net >= 0 ? 163 : 38, net >= 0 ? 74 : 38);
+    doc.text(fmtNum(net), 158, y + 5);
+    doc.setTextColor(0, 0, 0);
+    y += 7;
+  });
+
+  // Cash flow section
+  y += 10;
+  if (y > 250) { doc.addPage(); y = 20; }
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text("Cash Flow Summary", 14, y);
+  y += 6;
+
+  doc.setFillColor(30, 41, 59);
+  doc.rect(14, y, pageW - 28, 8, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(8);
+  doc.text("Month", 18, y + 5.5);
+  doc.text("Operating CF", 80, y + 5.5);
+  doc.text("Loan Pmts", 128, y + 5.5);
+  doc.text("Net CF", 162, y + 5.5);
+  doc.setTextColor(0, 0, 0);
+  y += 8;
+
+  [...months].reverse().forEach((m, i) => {
+    if (y > 270) { doc.addPage(); y = 20; }
+    const key = format(m, "yyyy-MM");
+    const label = format(m, "MMMM yyyy");
+    const mTx = txByMonth[key] || [];
+    const inc = mTx.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
+    const exp = mTx.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
+    const opCF = inc - exp;
+    const netCF = opCF - loanPayments;
+
+    if (i % 2 === 0) {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(14, y, pageW - 28, 7, "F");
+    }
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(label, 18, y + 5);
+    doc.setTextColor(opCF >= 0 ? 22 : 220, opCF >= 0 ? 163 : 38, opCF >= 0 ? 74 : 38);
+    doc.text(fmtNum(opCF), 80, y + 5);
+    doc.setTextColor(220, 38, 38);
+    doc.text(fmtNum(loanPayments), 128, y + 5);
+    doc.setTextColor(netCF >= 0 ? 22 : 220, netCF >= 0 ? 163 : 38, netCF >= 0 ? 74 : 38);
+    doc.text(fmtNum(netCF), 162, y + 5);
+    doc.setTextColor(0, 0, 0);
+    y += 7;
+  });
+
+  doc.save(`Financial_Report_${rangeMonths}mo_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+}
+
 export default function Reports() {
   const [activeTab, setActiveTab] = useState("pnl");
   const [rangeMonths, setRangeMonths] = useState("6");
@@ -247,6 +374,13 @@ export default function Reports() {
             >
               <FileSpreadsheet className="w-4 h-4 mr-2" />
               Export Excel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => exportToPDF({ months, txByMonth, activeLoans, rangeMonths })}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Export PDF
             </Button>
           </div>
         )}
