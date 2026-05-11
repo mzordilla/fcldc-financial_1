@@ -8,6 +8,7 @@ import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import WorkingCapitalLoansReport from "../components/reports/WorkingCapitalLoansReport";
 import BankTransactionsReport from "../components/reports/BankTransactionsReport";
+import IncomeTrendChart from "../components/reports/IncomeTrendChart";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 const fmtSigned = (v) => (v < 0 ? `-₱${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : `₱${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`);
@@ -302,7 +303,7 @@ function exportToPDF({ months, txByMonth, activeLoans, rangeMonths }) {
 }
 
 export default function Reports() {
-  const [activeTab, setActiveTab] = useState("pnl");
+  const [activeTab, setActiveTab] = useState("trend");
   const [rangeMonths, setRangeMonths] = useState("6");
   const [expandedMonth, setExpandedMonth] = useState(null);
 
@@ -410,6 +411,7 @@ export default function Reports() {
       {/* Tabs */}
       <div className="flex gap-1 border-b border-border">
         {[
+          { key: "trend", label: "Trend Analysis" },
           { key: "pnl", label: "P&L / Cash Flow" },
           { key: "wc_loans", label: "Working Capital Loans" },
           { key: "bank_transactions", label: "Bank Transactions" },
@@ -427,6 +429,10 @@ export default function Reports() {
           </button>
         ))}
       </div>
+
+      {activeTab === "trend" && (
+        <IncomeTrendChart transactions={filteredTransactions} dateFrom={dateFrom} dateTo={dateTo} />
+      )}
 
       {activeTab === "wc_loans" && (
         <WorkingCapitalLoansReport loans={[...loans, ...wcLoans]} />
