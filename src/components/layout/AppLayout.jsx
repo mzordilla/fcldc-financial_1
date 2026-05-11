@@ -9,7 +9,7 @@ export default function AppLayout() {
   const { user } = useAuth();
   const location = useLocation();
 
-  const role = user?.role || "procurement";
+  const role = user?.role;
   const allowed = canAccess(role, location.pathname);
 
   return (

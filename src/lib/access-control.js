@@ -14,8 +14,10 @@ export const navItemsByRole = {
 };
 
 export function canAccess(role, path) {
-  if (!role || role === "admin") return true;
+  if (role === "admin") return true;
+  if (!role) return false; // no role = no access
   const allowed = roleAccess[role];
-  if (!allowed || allowed === "*") return true;
+  if (!allowed) return false;
+  if (allowed === "*") return true;
   return allowed.includes(path);
 }
