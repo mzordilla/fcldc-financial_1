@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import WorkingCapitalLoansReport from "../components/reports/WorkingCapitalLoansReport";
+import BankTransactionsReport from "../components/reports/BankTransactionsReport";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 const fmtSigned = (v) => (v < 0 ? `-₱${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : `₱${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`);
@@ -391,6 +392,7 @@ export default function Reports() {
         {[
           { key: "pnl", label: "P&L / Cash Flow" },
           { key: "wc_loans", label: "Working Capital Loans" },
+          { key: "bank_transactions", label: "Bank Transactions" },
         ].map(tab => (
           <button
             key={tab.key}
@@ -408,6 +410,10 @@ export default function Reports() {
 
       {activeTab === "wc_loans" && (
         <WorkingCapitalLoansReport loans={[...loans, ...wcLoans]} />
+      )}
+
+      {activeTab === "bank_transactions" && (
+        <BankTransactionsReport />
       )}
 
       {activeTab === "pnl" && <>
