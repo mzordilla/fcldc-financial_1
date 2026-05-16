@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Trash2, Pencil, Users } from "lucide-react";
+import { Plus, Trash2, Pencil, Users, List } from "lucide-react";
+import BatchPayeeDialog from "../components/payees/BatchPayeeDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -135,6 +136,7 @@ function PayeeFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
 
 export default function Payees() {
   const [showAdd, setShowAdd] = useState(false);
+  const [showBatch, setShowBatch] = useState(false);
   const [editingPayee, setEditingPayee] = useState(null);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -186,9 +188,14 @@ export default function Payees() {
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Payee Masterlist</h1>
           <p className="text-muted-foreground mt-1">{payees.length} payees registered</p>
         </div>
-        <Button onClick={() => setShowAdd(true)}>
-          <Plus className="w-4 h-4 mr-2" /> Add Payee
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowBatch(true)}>
+            <List className="w-4 h-4 mr-2" /> Batch Entry
+          </Button>
+          <Button onClick={() => setShowAdd(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Add Payee
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -300,6 +307,13 @@ export default function Payees() {
         )}
       </div>
 
+      <BatchPayeeDialog
+        open={showBatch}
+        onOpenChange={setShowBatch}
+        onImport={async (rows) => {
+          await Promise.all(rows.map(r => createMutation.mutateAsync(r)));
+        }}
+      />
       <PayeeFormDialog
         open={showAdd}
         onOpenChange={setShowAdd}
