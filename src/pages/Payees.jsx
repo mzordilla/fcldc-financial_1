@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Trash2, Pencil, Users, List } from "lucide-react";
+import { Plus, Trash2, Pencil, Users, List, FileUp, Download } from "lucide-react";
+import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
+import { useRef } from "react";
 import BatchPayeeDialog from "../components/payees/BatchPayeeDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -141,6 +143,35 @@ export default function Payees() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const queryClient = useQueryClient();
+  const importRef = useRef();
+
+  const handleExport = (data) => {
+    exportToExcel(data.map(p => ({
+      name: p.name, category: p.category, contact: p.contact,
+      terms_of_payment: p.terms_of_payment, vat_status: p.vat_status,
+      bank_account_name: p.bank_account_name, bank_account_number: p.bank_account_number,
+      credit_limit: p.credit_limit, notes: p.notes,
+    })), "payee_masterlist.xlsx", "Payees");
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const rows = await parseExcelFile(file);
+    const parsed = rows.map(r => ({
+      name: String(r.name || r.Name || "").trim(),
+      category: String(r.category || r.Category || "").toLowerCase().trim(),
+      contact: String(r.contact || r.Contact || "").trim(),
+      terms_of_payment: String(r.terms_of_payment || r["Terms of Payment"] || "").trim(),
+      vat_status: String(r.vat_status || r["VAT Status"] || "").toLowerCase().trim(),
+      bank_account_name: String(r.bank_account_name || r["Bank Account Name"] || "").trim(),
+      bank_account_number: String(r.bank_account_number || r["Bank Account Number"] || "").trim(),
+      credit_limit: r.credit_limit ? parseFloat(r.credit_limit) : undefined,
+      notes: String(r.notes || r.Notes || "").trim(),
+    })).filter(r => r.name);
+    await Promise.all(parsed.map(r => createMutation.mutateAsync(r)));
+    e.target.value = "";
+  };
 
   const { data: payees = [], isLoading } = useQuery({
     queryKey: ["payees"],
@@ -188,7 +219,14 @@ export default function Payees() {
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Payee Masterlist</h1>
           <p className="text-muted-foreground mt-1">{payees.length} payees registered</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => handleExport(payees)}>
+            <Download className="w-4 h-4 mr-2" /> Export
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => importRef.current.click()}>
+            <FileUp className="w-4 h-4 mr-2" /> Import
+          </Button>
+          <input ref={importRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportFile} />
           <Button variant="outline" onClick={() => setShowBatch(true)}>
             <List className="w-4 h-4 mr-2" /> Batch Entry
           </Button>

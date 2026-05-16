@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, Briefcase, CheckCircle2, Pencil, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Briefcase, CheckCircle2, Pencil, ExternalLink, FileUp, Download } from "lucide-react";
+import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
+import { useRef } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +69,42 @@ export default function Projects() {
   const [editingProject, setEditingProject] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
+  const importRef = useRef();
+
+  const handleExport = (data) => {
+    exportToExcel(data.map(p => ({
+      project_name: p.project_name, client_name: p.client_name, project_number: p.project_number,
+      location: p.location, project_type: p.project_type, contract_amount: p.contract_amount,
+      completed_percentage: p.completed_percentage, retention_rate: p.retention_rate,
+      contract_status: p.contract_status, contract_date: p.contract_date,
+      start_date: p.start_date, end_date: p.end_date, project_manager: p.project_manager,
+      description: p.description, scope_of_works: p.scope_of_works,
+    })), "projects.xlsx", "Projects");
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const rows = await parseExcelFile(file);
+    const parsed = rows.map(r => ({
+      project_name: String(r.project_name || r["Project Name"] || "").trim(),
+      client_name: String(r.client_name || r["Client Name"] || "").trim(),
+      project_number: String(r.project_number || r["Project #"] || "").trim(),
+      location: String(r.location || r.Location || "").trim(),
+      project_type: String(r.project_type || r["Project Type"] || "").toLowerCase().trim(),
+      contract_amount: r.contract_amount ? parseFloat(r.contract_amount) : 0,
+      completed_percentage: r.completed_percentage ? parseFloat(r.completed_percentage) : 0,
+      retention_rate: r.retention_rate ? parseFloat(r.retention_rate) : 0,
+      contract_status: String(r.contract_status || r["Contract Status"] || "pending").toLowerCase().trim(),
+      contract_date: String(r.contract_date || "").trim(),
+      start_date: String(r.start_date || "").trim(),
+      end_date: String(r.end_date || "").trim(),
+      project_manager: String(r.project_manager || r["Project Manager"] || "").trim(),
+      description: String(r.description || r.Description || "").trim(),
+    })).filter(r => r.project_name && r.client_name);
+    await Promise.all(parsed.map(r => createMutation.mutateAsync(r)));
+    e.target.value = "";
+  };
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
@@ -124,6 +162,13 @@ export default function Projects() {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" size="sm" onClick={() => handleExport(projects)}>
+            <Download className="w-4 h-4 mr-2" /> Export
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => importRef.current.click()}>
+            <FileUp className="w-4 h-4 mr-2" /> Import
+          </Button>
+          <input ref={importRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportFile} />
           <Button onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4 mr-2" /> New Project
           </Button>

@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, ArrowUpRight, ArrowDownRight, Trash2, Pencil, Building2, TableProperties, FileUp } from "lucide-react";
+import { Plus, ArrowUpRight, ArrowDownRight, Trash2, Pencil, Building2, TableProperties, FileUp, Download } from "lucide-react";
+import { exportToExcel } from "@/utils/excelUtils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -68,6 +69,13 @@ export default function Transactions() {
 
   const filtered = typeFilter === "all" ? transactions : transactions.filter(t => t.type === typeFilter);
 
+  const handleExport = () => {
+    exportToExcel(filtered.map(t => ({
+      description: t.description, type: t.type, amount: t.amount,
+      category: t.category, project_name: t.project_name, date: t.date, status: t.status,
+    })), "transactions.xlsx", "Transactions");
+  };
+
   const accountMap = Object.fromEntries(bankAccounts.map(a => [a.id, a]));
 
   return (
@@ -86,6 +94,9 @@ export default function Transactions() {
               <SelectItem value="expense">Expenses</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" onClick={handleExport}>
+            <Download className="w-4 h-4 mr-2" /> Export
+          </Button>
           <Button variant="outline" onClick={() => setShowImport(true)}>
             <FileUp className="w-4 h-4 mr-2" /> Import Excel
           </Button>

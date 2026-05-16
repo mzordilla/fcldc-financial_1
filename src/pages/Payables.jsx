@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays } from "date-fns";
-import { Plus, Trash2, CheckCircle, CreditCard } from "lucide-react";
+import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download } from "lucide-react";
+import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -95,6 +97,36 @@ export default function Payables() {
   const [markingPaid, setMarkingPaid] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
+  const importRef = useRef();
+
+  const handleExport = (data) => {
+    exportToExcel(data.map(p => ({
+      supplier_name: p.supplier_name, description: p.description, invoice_number: p.invoice_number,
+      amount: p.amount, amount_paid: p.amount_paid, due_date: p.due_date,
+      project_name: p.project_name, category: p.category, status: p.status,
+      payment_method: p.payment_method, payment_date: p.payment_date,
+      payment_reference: p.payment_reference, notes: p.notes,
+    })), "payables.xlsx", "Payables");
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const rows = await parseExcelFile(file);
+    const parsed = rows.map(r => ({
+      supplier_name: String(r.supplier_name || r["Supplier Name"] || "").trim(),
+      description: String(r.description || r.Description || "").trim(),
+      invoice_number: String(r.invoice_number || r["Invoice #"] || "").trim(),
+      amount: r.amount ? parseFloat(r.amount) : 0,
+      amount_paid: r.amount_paid ? parseFloat(r.amount_paid) : 0,
+      due_date: String(r.due_date || r["Due Date"] || "").trim(),
+      project_name: String(r.project_name || r["Project Name"] || "").trim(),
+      category: String(r.category || r.Category || "").toLowerCase().trim(),
+      status: String(r.status || r.Status || "unpaid").toLowerCase().trim(),
+    })).filter(r => r.supplier_name && r.amount);
+    await Promise.all(parsed.map(r => createMutation.mutateAsync(r)));
+    e.target.value = "";
+  };
 
   const { data: payables = [], isLoading } = useQuery({
     queryKey: ["payables"],
@@ -143,6 +175,13 @@ export default function Payables() {
               <SelectItem value="paid">Paid</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" size="sm" onClick={() => handleExport(payables)}>
+            <Download className="w-4 h-4 mr-2" /> Export
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => importRef.current.click()}>
+            <FileUp className="w-4 h-4 mr-2" /> Import
+          </Button>
+          <input ref={importRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportFile} />
           <Button onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4 mr-2" /> Add Payable
           </Button>
