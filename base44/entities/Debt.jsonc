@@ -61,9 +61,21 @@
   ],
   "rls": {
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "accounting"
+          }
+        }
+      ]
     },
     "read": {
       "$or": [
@@ -74,21 +86,15 @@
           "user_condition": {
             "role": "admin"
           }
-        }
-      ]
-    },
-    "update": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
         },
         {
           "user_condition": {
-            "role": "admin"
+            "role": "accounting"
           }
         }
       ]
     },
+    "update": null,
     "delete": {
       "$or": [
         {
