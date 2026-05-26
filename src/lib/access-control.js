@@ -2,14 +2,14 @@
 export const roleAccess = {
   admin: "*", // full access
   disbursement: ["/bank-accounts", "/bank-reconciliation", "/transactions"],
-  accounting: ["/projects", "/project-pnl", "/receivables", "/payables", "/bank-reconciliation"],
+  accounting: ["/projects", "/project-pnl", "/receivables", "/payables", "/bank-reconciliation", "/transactions"],
   procurement: ["/purchase-orders", "/payment-approvals", "/payees"],
 };
 
 export const navItemsByRole = {
   admin: "all",
   disbursement: ["/bank-accounts", "/bank-reconciliation", "/transactions"],
-  accounting: ["/projects", "/project-pnl", "/receivables", "/payables", "/bank-reconciliation"],
+  accounting: ["/projects", "/project-pnl", "/receivables", "/payables", "/bank-reconciliation", "/transactions"],
   procurement: ["/purchase-orders", "/payment-approvals", "/payees"],
 };
 
