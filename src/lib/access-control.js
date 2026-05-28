@@ -2,14 +2,14 @@
 export const roleAccess = {
   admin: "*", // full access
   disbursement: ["/", "/bank-accounts", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/payables", "/chart-of-accounts"],
-  accounting: ["/", "/projects", "/project-pnl", "/receivables", "/payables", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/chart-of-accounts"],
+  accounting: ["/", "/projects", "/project-pnl", "/billing-cycles", "/receivables", "/payables", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/chart-of-accounts"],
   procurement: ["/", "/purchase-orders", "/payment-approvals", "/payees"],
 };
 
 export const navItemsByRole = {
   admin: "all",
   disbursement: ["/", "/bank-accounts", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/payables", "/chart-of-accounts"],
-  accounting: ["/", "/projects", "/project-pnl", "/receivables", "/payables", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/chart-of-accounts"],
+  accounting: ["/", "/projects", "/project-pnl", "/billing-cycles", "/receivables", "/payables", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/chart-of-accounts"],
   procurement: ["/", "/purchase-orders", "/payment-approvals", "/payees"],
 };
 

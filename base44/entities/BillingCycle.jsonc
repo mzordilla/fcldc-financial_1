@@ -1,0 +1,126 @@
+{
+  "name": "BillingCycle",
+  "type": "object",
+  "properties": {
+    "billing_number": {
+      "type": "string",
+      "description": "Billing cycle reference number"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Associated project name"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client name"
+    },
+    "period_label": {
+      "type": "string",
+      "description": "Billing period label (e.g. May 2025)"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date",
+      "description": "Billing period start"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date",
+      "description": "Billing period end"
+    },
+    "accomplishment_percentage": {
+      "type": "number",
+      "description": "Percentage of work accomplished this period",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "cumulative_percentage": {
+      "type": "number",
+      "description": "Cumulative completion percentage to date",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "contract_amount": {
+      "type": "number",
+      "description": "Total contract amount"
+    },
+    "billing_amount": {
+      "type": "number",
+      "description": "Amount billed this cycle (accomplishment \u00d7 contract)"
+    },
+    "retention_rate": {
+      "type": "number",
+      "default": 0,
+      "description": "Retention percentage withheld"
+    },
+    "retention_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Retention amount withheld"
+    },
+    "net_billing_amount": {
+      "type": "number",
+      "description": "Net amount after retention"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Payment due date"
+    },
+    "description": {
+      "type": "string",
+      "description": "Scope of work accomplished"
+    },
+    "prepared_by": {
+      "type": "string",
+      "description": "Who prepared this billing"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Approver name"
+    },
+    "approval_notes": {
+      "type": "string"
+    },
+    "approval_history": {
+      "type": "array",
+      "description": "Audit log of approval actions",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "receivable_id": {
+      "type": "string",
+      "description": "Linked Receivable ID after approval"
+    }
+  },
+  "required": [
+    "project_name",
+    "client_name",
+    "billing_amount",
+    "accomplishment_percentage"
+  ]
+}

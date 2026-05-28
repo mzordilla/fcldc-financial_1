@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { Link } from "react-router-dom";
 import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -23,14 +24,18 @@ const CATEGORY_LABELS = {
   other: "Other",
 };
 
-function buildProjectData(transactions) {
+function buildProjectData(transactions, receivables = [], billingCycles = []) {
   const projects = {};
+
+  const ensure = (key) => {
+    if (!projects[key]) {
+      projects[key] = { name: key, income: 0, expenses: 0, billed: 0, collected: 0, categories: {} };
+    }
+  };
 
   transactions.forEach((t) => {
     const key = t.project_name || "Unassigned";
-    if (!projects[key]) {
-      projects[key] = { name: key, income: 0, expenses: 0, categories: {} };
-    }
+    ensure(key);
     if (t.type === "income") {
       projects[key].income += t.amount || 0;
     } else {
@@ -38,6 +43,20 @@ function buildProjectData(transactions) {
       const cat = t.category || "other";
       projects[key].categories[cat] = (projects[key].categories[cat] || 0) + (t.amount || 0);
     }
+  });
+
+  // Add approved billing cycles as billed revenue
+  billingCycles.forEach((bc) => {
+    const key = bc.project_name || "Unassigned";
+    ensure(key);
+    projects[key].billed += bc.net_billing_amount || bc.billing_amount || 0;
+  });
+
+  // Add collected receivables
+  receivables.forEach((r) => {
+    const key = r.project_name || "Unassigned";
+    ensure(key);
+    projects[key].collected += r.amount_paid || 0;
   });
 
   return Object.values(projects).sort((a, b) => (b.income - b.expenses) - (a.income - a.expenses));
@@ -78,19 +97,25 @@ function ProjectRow({ project }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-6 sm:gap-8">
+          <div className="flex items-center gap-4 sm:gap-6 flex-wrap justify-end">
+            {project.billed > 0 && (
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Billed</p>
+                <p className="font-semibold text-sm text-chart-2">₱{project.billed.toLocaleString()}</p>
+              </div>
+            )}
             <div className="text-right">
               <p className="text-xs text-muted-foreground">Revenue</p>
-              <p className="font-semibold text-sm text-primary">+${project.income.toLocaleString()}</p>
+              <p className="font-semibold text-sm text-primary">+₱{project.income.toLocaleString()}</p>
             </div>
             <div className="text-right">
               <p className="text-xs text-muted-foreground">Expenses</p>
-              <p className="font-semibold text-sm text-destructive">-${project.expenses.toLocaleString()}</p>
+              <p className="font-semibold text-sm text-destructive">-₱{project.expenses.toLocaleString()}</p>
             </div>
             <div className="text-right min-w-[80px]">
               <p className="text-xs text-muted-foreground">Net P&L</p>
               <p className={`font-bold text-base ${isProfit ? "text-primary" : "text-destructive"}`}>
-                {isProfit ? "+" : ""}{profit < 0 ? "-$" : "$"}{Math.abs(profit).toLocaleString()}
+                {isProfit ? "+" : ""}{profit < 0 ? "-₱" : "₱"}{Math.abs(profit).toLocaleString()}
               </p>
             </div>
             <div className="hidden sm:block text-right min-w-[60px]">
@@ -181,7 +206,17 @@ export default function ProjectPnL() {
     queryFn: () => base44.entities.Transaction.list("-date", 500),
   });
 
-  const projects = buildProjectData(transactions);
+  const { data: receivables = [] } = useQuery({
+    queryKey: ["receivables"],
+    queryFn: () => base44.entities.Receivable.list("-created_date", 200),
+  });
+
+  const { data: billingCycles = [] } = useQuery({
+    queryKey: ["billing_cycles"],
+    queryFn: () => base44.entities.BillingCycle.filter({ approval_status: "approved" }, "-created_date", 200),
+  });
+
+  const projects = buildProjectData(transactions, receivables, billingCycles);
 
   const totalIncome = projects.reduce((s, p) => s + p.income, 0);
   const totalExpenses = projects.reduce((s, p) => s + p.expenses, 0);
@@ -206,9 +241,9 @@ export default function ProjectPnL() {
       {/* Summary KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Revenue", value: `$${totalIncome.toLocaleString()}`, color: "bg-primary/10 text-primary" },
-          { label: "Total Expenses", value: `$${totalExpenses.toLocaleString()}`, color: "bg-destructive/10 text-destructive" },
-          { label: "Net Profit", value: `${totalProfit >= 0 ? "+" : "-"}$${Math.abs(totalProfit).toLocaleString()}`, color: totalProfit >= 0 ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive" },
+          { label: "Total Revenue", value: `₱${totalIncome.toLocaleString()}`, color: "bg-primary/10 text-primary" },
+          { label: "Total Expenses", value: `₱${totalExpenses.toLocaleString()}`, color: "bg-destructive/10 text-destructive" },
+          { label: "Net Profit", value: `${totalProfit >= 0 ? "+" : "-"}₱${Math.abs(totalProfit).toLocaleString()}`, color: totalProfit >= 0 ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive" },
           { label: "Profitable Projects", value: `${profitableCount} / ${projects.length}`, color: "bg-chart-2/10 text-chart-2" },
         ].map((kpi) => (
           <div key={kpi.label} className="bg-card rounded-2xl border border-border p-4">

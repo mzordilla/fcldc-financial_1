@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, Banknote, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, BookOpen, ScanLine, Users, RefreshCw } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, Banknote, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, BookOpen, ScanLine, Users, RefreshCw, Receipt } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { navItemsByRole } from "@/lib/access-control";
@@ -12,6 +12,7 @@ const allNavItems = [
 { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
 { label: "Payment Approvals", icon: CircleDollarSign, path: "/payment-approvals" },
 { label: "Supplier Masterlist", icon: Users, path: "/payees" },
+{ label: "Billing Cycles", icon: Receipt, path: "/billing-cycles" },
 { label: "Receivables", icon: FileText, path: "/receivables" },
 { label: "Payables", icon: CreditCard, path: "/payables" },
 { label: "Bank Accounts", icon: Building2, path: "/bank-accounts" },
