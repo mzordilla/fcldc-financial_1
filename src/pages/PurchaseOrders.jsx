@@ -98,7 +98,7 @@ export default function PurchaseOrders() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Purchase Orders</h1>
           <p className="text-muted-foreground mt-1">
-            {pending.length} pending approval · ${totalPendingValue.toLocaleString()} pending value
+            {pending.length} pending approval · ₱{totalPendingValue.toLocaleString()} pending value
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -126,7 +126,7 @@ export default function PurchaseOrders() {
         <div className="bg-chart-3/10 border border-chart-3/20 rounded-2xl p-4 flex items-center gap-3">
           <AlertTriangle className="w-5 h-5 text-chart-3 flex-shrink-0" />
           <p className="text-sm text-chart-3 font-medium">
-            {pending.length} purchase order{pending.length > 1 ? "s" : ""} awaiting approval totalling ${totalPendingValue.toLocaleString()}
+            {pending.length} purchase order{pending.length > 1 ? "s" : ""} awaiting approval totalling ₱{totalPendingValue.toLocaleString()}
           </p>
         </div>
       )}
@@ -172,8 +172,8 @@ export default function PurchaseOrders() {
                             <tr key={idx} className="border-b border-border/50 last:border-0">
                               <td className="px-3 py-2 text-left">{item.description}</td>
                               <td className="px-3 py-2 text-right">{item.quantity}</td>
-                              <td className="px-3 py-2 text-right">${(item.cost_per_item || 0).toLocaleString()}</td>
-                              <td className="px-3 py-2 text-right font-semibold">${(item.total || 0).toLocaleString()}</td>
+                              <td className="px-3 py-2 text-right">₱{(item.cost_per_item || 0).toLocaleString()}</td>
+                              <td className="px-3 py-2 text-right font-semibold">₱{(item.total || 0).toLocaleString()}</td>
                             </tr>
                           ))}
                         </tbody>

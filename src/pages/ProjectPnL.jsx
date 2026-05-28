@@ -162,7 +162,7 @@ function ProjectRow({ project }) {
                   <div key={cat.label}>
                     <div className="flex items-center justify-between text-xs mb-1">
                       <span className="text-muted-foreground">{cat.label}</span>
-                      <span className="font-medium">${cat.amount.toLocaleString()}</span>
+                      <span className="font-medium">₱{cat.amount.toLocaleString()}</span>
                     </div>
                     <Progress
                       value={project.expenses > 0 ? (cat.amount / project.expenses) * 100 : 0}
@@ -185,8 +185,8 @@ function ProjectRow({ project }) {
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
                     <XAxis dataKey="name" hide />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
-                    <Tooltip formatter={(v) => `$${v.toLocaleString()}`} contentStyle={{ borderRadius: 10, fontSize: 12 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} tickFormatter={(v) => `₱${(v/1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(v) => `₱${v.toLocaleString()}`} contentStyle={{ borderRadius: 10, fontSize: 12 }} />
                     <Bar dataKey="Revenue" fill="hsl(160, 84%, 39%)" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="Expenses" fill="hsl(0, 84%, 60%)" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -262,8 +262,8 @@ export default function ProjectPnL() {
               <BarChart data={chartData} margin={{ top: 0, right: 10, left: -10, bottom: 0 }} barSize={20}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
-                <Tooltip formatter={(v) => `$${v.toLocaleString()}`} contentStyle={{ borderRadius: 10, fontSize: 12 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }} tickFormatter={(v) => `₱${(v/1000).toFixed(0)}k`} />
+                <Tooltip formatter={(v) => `₱${v.toLocaleString()}`} contentStyle={{ borderRadius: 10, fontSize: 12 }} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Bar dataKey="Revenue" fill="hsl(160, 84%, 39%)" radius={[3, 3, 0, 0]} />
                 <Bar dataKey="Expenses" fill="hsl(0, 84%, 60%)" radius={[3, 3, 0, 0]} />

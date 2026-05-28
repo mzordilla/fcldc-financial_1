@@ -72,8 +72,8 @@ const fields = [
   { name: "supplier_name", label: "Supplier Name", required: true, placeholder: "e.g. SteelCo Supplies" },
   { name: "description", label: "Description", placeholder: "e.g. Rebar delivery for Tower project" },
   { name: "invoice_number", label: "Invoice #", placeholder: "SUP-INV-001" },
-  { name: "amount", label: "Total Amount ($)", type: "number", required: true, placeholder: "0.00" },
-  { name: "amount_paid", label: "Amount Paid ($)", type: "number", placeholder: "0.00" },
+  { name: "amount", label: "Total Amount (₱)", type: "number", required: true, placeholder: "0.00" },
+  { name: "amount_paid", label: "Amount Paid (₱)", type: "number", placeholder: "0.00" },
   { name: "due_date", label: "Due Date", type: "date", required: true },
   { name: "project_name", label: "Project Name", placeholder: "e.g. Main Street Tower" },
   { name: "category", label: "Category", type: "select", options: [
