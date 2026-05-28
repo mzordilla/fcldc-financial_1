@@ -60,23 +60,38 @@ export default function BillingCycles() {
       approval_history: history,
     };
 
-    // If approved, create a Receivable
+    // If approved, create a Receivable + an income Transaction
     if (action === "approved") {
+      const billingAmount = bc.net_billing_amount || bc.billing_amount || 0;
+      const today = new Date().toISOString().split("T")[0];
+
       const receivable = await base44.entities.Receivable.create({
         client_name: bc.client_name,
         project_name: bc.project_name,
         invoice_number: bc.billing_number || "",
-        amount: bc.net_billing_amount || bc.billing_amount,
+        amount: billingAmount,
         amount_paid: 0,
-        due_date: bc.due_date || "",
+        due_date: bc.due_date || today,
         status: "outstanding",
         notes: `Auto-created from Billing Cycle: ${bc.billing_number || ""} — ${bc.period_label || ""} (${bc.accomplishment_percentage}% accomplishment)`,
       });
       updateData.receivable_id = receivable.id;
+
+      // Create an income transaction so project P&L and dashboard update automatically
+      await base44.entities.Transaction.create({
+        description: `Billing: ${bc.billing_number || bc.period_label || "Billing Cycle"} — ${bc.project_name}`,
+        amount: billingAmount,
+        type: "income",
+        category: "project_payment",
+        project_name: bc.project_name,
+        date: today,
+        status: "completed",
+      });
     }
 
     updateMutation.mutate({ id: bc.id, data: updateData });
     queryClient.invalidateQueries({ queryKey: ["receivables"] });
+    queryClient.invalidateQueries({ queryKey: ["transactions"] });
   };
 
   const filtered = statusFilter === "all" ? billingCycles : billingCycles.filter(b => b.approval_status === statusFilter);
