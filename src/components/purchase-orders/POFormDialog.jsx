@@ -183,7 +183,14 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
 
           <div className="space-y-1.5">
             <Label>Total Amount <span className="text-destructive">*</span></Label>
-            <Input required type="number" step="0.01" placeholder="0.00" value={form.amount} onChange={e => set("amount", e.target.value)} />
+            {form.line_items?.length > 0 ? (
+              <div className="flex h-9 w-full items-center rounded-md border border-input bg-muted px-3 py-2 text-sm font-semibold text-foreground">
+                ₱{form.line_items.reduce((sum, item) => sum + (item.total || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <span className="ml-2 text-xs text-muted-foreground font-normal">(auto-calculated from line items)</span>
+              </div>
+            ) : (
+              <Input required type="number" step="0.01" placeholder="0.00" value={form.amount} onChange={e => set("amount", e.target.value)} />
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
