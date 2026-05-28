@@ -119,7 +119,7 @@ export default function Transactions() {
                 <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Description</th>
                 <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">Project</th>
                 <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">Category</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Bank Account</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Bank Name</th>
                 <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Date</th>
                 <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">Amount</th>
                 <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3 w-20"></th>
