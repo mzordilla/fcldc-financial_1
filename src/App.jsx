@@ -26,6 +26,7 @@ import Payees from './pages/Payees';
 import BankReconciliation from './pages/BankReconciliation';
 import BillingCycles from './pages/BillingCycles';
 import ReceivingItems from './pages/ReceivingItems';
+import AuditTrail from './pages/AuditTrail';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -74,6 +75,7 @@ const AuthenticatedApp = () => {
         <Route path="/bank-reconciliation" element={<BankReconciliation />} />
         <Route path="/billing-cycles" element={<BillingCycles />} />
         <Route path="/receiving-items" element={<ReceivingItems />} />
+        <Route path="/audit-trail" element={<AuditTrail />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

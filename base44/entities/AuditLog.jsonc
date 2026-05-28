@@ -1,0 +1,56 @@
+{
+  "name": "AuditLog",
+  "type": "object",
+  "properties": {
+    "entity_name": {
+      "type": "string",
+      "description": "Name of the entity that was changed (e.g. Transaction, PaymentRequest)"
+    },
+    "entity_id": {
+      "type": "string",
+      "description": "ID of the record that was changed"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "create",
+        "update",
+        "delete"
+      ],
+      "description": "Type of action performed"
+    },
+    "actor": {
+      "type": "string",
+      "description": "Email of the user who performed the action"
+    },
+    "timestamp": {
+      "type": "string",
+      "description": "ISO timestamp of when the action occurred"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Human-readable summary of what changed"
+    },
+    "before": {
+      "type": "string",
+      "description": "JSON snapshot of record before change"
+    },
+    "after": {
+      "type": "string",
+      "description": "JSON snapshot of record after change"
+    },
+    "changed_fields": {
+      "type": "array",
+      "description": "List of field names that changed",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "entity_name",
+    "action",
+    "actor",
+    "timestamp"
+  ]
+}
