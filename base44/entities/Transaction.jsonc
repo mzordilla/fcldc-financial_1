@@ -30,6 +30,7 @@
         "permits",
         "insurance",
         "bank_reconciliation",
+        "fund_transfer",
         "other"
       ],
       "description": "Transaction category"
@@ -62,85 +63,5 @@
     "amount",
     "type",
     "date"
-  ],
-  "rls": {
-    "create": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "accounting"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "disbursement"
-          }
-        }
-      ]
-    },
-    "read": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "accounting"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "disbursement"
-          }
-        }
-      ]
-    },
-    "update": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "accounting"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "disbursement"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    }
-  }
+  ]
 }

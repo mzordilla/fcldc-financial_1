@@ -34,6 +34,7 @@ function buildProjectData(transactions, receivables = [], billingCycles = []) {
   };
 
   transactions.forEach((t) => {
+    if (t.category === "fund_transfer") return; // exclude fund transfers from P&L
     const key = t.project_name || "Unassigned";
     ensure(key);
     if (t.type === "income") {

@@ -22,6 +22,7 @@ const CATEGORIES = [
   { value: "permits", label: "Permits" },
   { value: "insurance", label: "Insurance" },
   { value: "bank_reconciliation", label: "Bank Reconciliation" },
+  { value: "fund_transfer", label: "Fund Transfer" },
   { value: "other", label: "Other" },
 ];
 

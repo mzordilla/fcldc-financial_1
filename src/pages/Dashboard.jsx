@@ -40,8 +40,8 @@ export default function Dashboard() {
     queryFn: () => base44.entities.Payable.list("-created_date", 100),
   });
 
-  const totalIncome = transactions.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
-  const totalExpenses = transactions.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
+  const totalIncome = transactions.filter(t => t.type === "income" && t.category !== "fund_transfer").reduce((s, t) => s + (t.amount || 0), 0);
+  const totalExpenses = transactions.filter(t => t.type === "expense" && t.category !== "fund_transfer").reduce((s, t) => s + (t.amount || 0), 0);
   const netCashFlow = totalIncome - totalExpenses;
   const totalReceivables = receivables.filter(r => r.status !== "paid").reduce((s, r) => s + ((r.amount || 0) - (r.amount_paid || 0)), 0);
   const totalDebt = debts.filter(d => d.status === "active").reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
