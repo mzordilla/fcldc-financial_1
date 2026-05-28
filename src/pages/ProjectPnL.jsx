@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend,
 } from "recharts";
@@ -24,12 +25,30 @@ const CATEGORY_LABELS = {
   other: "Other",
 };
 
-function buildProjectData(transactions, receivables = [], billingCycles = []) {
+const CLASSIFICATION_STYLES = {
+  company_development: "bg-chart-2/10 text-chart-2 border-chart-2/20",
+  external_construction: "bg-chart-4/10 text-chart-4 border-chart-4/20",
+};
+
+const CLASSIFICATION_LABELS = {
+  company_development: "Company Development",
+  external_construction: "External Construction",
+};
+
+function buildProjectData(transactions, receivables = [], billingCycles = [], projectsData = []) {
   const projects = {};
+
+  // Build a lookup of project classification by name
+  const classificationMap = {};
+  projectsData.forEach(p => {
+    if (p.project_name && p.project_classification) {
+      classificationMap[p.project_name] = p.project_classification;
+    }
+  });
 
   const ensure = (key) => {
     if (!projects[key]) {
-      projects[key] = { name: key, income: 0, expenses: 0, billed: 0, collected: 0, categories: {} };
+      projects[key] = { name: key, income: 0, expenses: 0, billed: 0, collected: 0, categories: {}, classification: classificationMap[key] || null };
     }
   };
 
@@ -91,7 +110,14 @@ function ProjectRow({ project }) {
               }
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">{project.name}</h3>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold text-foreground">{project.name}</h3>
+                {project.classification && (
+                  <Badge variant="outline" className={`text-xs ${CLASSIFICATION_STYLES[project.classification] || ""}`}>
+                    {CLASSIFICATION_LABELS[project.classification]}
+                  </Badge>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {categoryBreakdown.length} expense categories
               </p>
@@ -217,7 +243,15 @@ export default function ProjectPnL() {
     queryFn: () => base44.entities.BillingCycle.filter({ approval_status: "approved" }, "-created_date", 200),
   });
 
-  const projects = buildProjectData(transactions, receivables, billingCycles);
+  const { data: projectsData = [] } = useQuery({
+    queryKey: ["projects"],
+    queryFn: () => base44.entities.Project.list("project_name", 200),
+  });
+
+  const [classFilter, setClassFilter] = useState("all");
+
+  const allProjects = buildProjectData(transactions, receivables, billingCycles, projectsData);
+  const projects = classFilter === "all" ? allProjects : allProjects.filter(p => p.classification === classFilter);
 
   const totalIncome = projects.reduce((s, p) => s + p.income, 0);
   const totalExpenses = projects.reduce((s, p) => s + p.expenses, 0);
@@ -276,7 +310,17 @@ export default function ProjectPnL() {
 
       {/* Project rows */}
       <div className="space-y-3">
-        <h2 className="text-base font-semibold text-foreground">By Project</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-semibold text-foreground">By Project</h2>
+          <Select value={classFilter} onValueChange={setClassFilter}>
+            <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Classifications</SelectItem>
+              <SelectItem value="company_development">Company Development</SelectItem>
+              <SelectItem value="external_construction">External Construction</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
         {!isLoading && projects.length === 0 && (
           <p className="text-center py-12 text-muted-foreground">No project transactions yet</p>

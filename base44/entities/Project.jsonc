@@ -29,6 +29,14 @@
         "other"
       ]
     },
+    "project_classification": {
+      "type": "string",
+      "enum": [
+        "company_development",
+        "external_construction"
+      ],
+      "description": "Whether this is an internal company development project or an external construction contract"
+    },
     "contract_amount": {
       "type": "number",
       "description": "Approved contract value"
@@ -89,54 +97,5 @@
     "project_name",
     "client_name",
     "contract_amount"
-  ],
-  "rls": {
-    "create": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "accounting"
-          }
-        }
-      ]
-    },
-    "read": {},
-    "update": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "accounting"
-          }
-        }
-      ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    }
-  }
+  ]
 }
