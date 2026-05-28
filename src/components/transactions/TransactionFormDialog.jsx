@@ -155,7 +155,7 @@ export default function TransactionFormDialog({ open, onOpenChange, title, bankA
 
           {/* Bank Account */}
           <div className="space-y-1.5">
-            <Label>Bank Account</Label>
+            <Label>Account Name</Label>
             <Select
               value={formData.bank_account_id || "none"}
               onValueChange={(v) => set("bank_account_id", v === "none" ? "" : v)}
