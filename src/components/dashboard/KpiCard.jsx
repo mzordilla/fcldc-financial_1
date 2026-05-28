@@ -4,7 +4,7 @@ export default function KpiCard({ title, value, icon: Icon, trend, trendLabel, c
   const isPositive = trend >= 0;
 
   return (
-    <div className="bg-card rounded-2xl border border-border hover:shadow-lg transition-shadow duration-300 opacity-100 px-5 py-2">
+    <div className="bg-card rounded-2xl border border-border hover:shadow-lg transition-shadow duration-300 opacity-100 px-5">
       <div className="flex items-start justify-between mb-4">
         <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${color}`}>
           <Icon className="w-5 h-5" />
