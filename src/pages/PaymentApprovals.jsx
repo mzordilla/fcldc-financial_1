@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart, History, ChevronDown, ChevronUp, Square, CheckSquare } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart, History, ChevronDown, ChevronUp, Square, CheckSquare, Upload } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PaymentRequestFormDialog from "../components/payment/PaymentRequestFormDialog";
+import BulkPaymentRequestDialog from "../components/payment/BulkPaymentRequestDialog";
 import MarkPaidDialog from "../components/payment/MarkPaidDialog";
 import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
 import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
@@ -42,6 +43,7 @@ const categoryLabels = {
 
 export default function PaymentApprovals() {
   const [showAdd, setShowAdd] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
   const [prefillData, setPrefillData] = useState(null);
   const [editingPR, setEditingPR] = useState(null);
   const [reviewPR, setReviewPR] = useState(null);
@@ -79,6 +81,10 @@ export default function PaymentApprovals() {
 
   const markPaid = async (id, data) => {
     await updateMutation.mutateAsync({ id, data });
+  };
+
+  const bulkCreateRequests = async (items) => {
+    await Promise.all(items.map(data => createMutation.mutateAsync(data)));
   };
 
   const convertPOtoPaymentRequest = (po) => {
@@ -194,6 +200,9 @@ export default function PaymentApprovals() {
               <SelectItem value="rejected">Rejected</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" onClick={() => setShowBulk(true)}>
+            <Upload className="w-4 h-4 mr-2" /> Bulk Create
+          </Button>
           <Button onClick={() => { setPrefillData(null); setShowAdd(true); }}>
             <Plus className="w-4 h-4 mr-2" /> New Request
           </Button>
@@ -470,6 +479,7 @@ export default function PaymentApprovals() {
         });
       })()}
 
+      <BulkPaymentRequestDialog open={showBulk} onOpenChange={setShowBulk} onSubmit={bulkCreateRequests} />
       <PaymentRequestFormDialog open={showAdd} onOpenChange={(v) => { setShowAdd(v); if (!v) setPrefillData(null); }} title="New Payment Request" initialData={prefillData} onSubmit={(data) => createMutation.mutateAsync(data)} />
       <PaymentRequestFormDialog open={!!editingPR} onOpenChange={(v) => { if (!v) setEditingPR(null); }} title="Edit Payment Request" initialData={editingPR || {}} onSubmit={(data) => updateMutation.mutateAsync({ id: editingPR.id, data })} />
       {reviewPR && (
