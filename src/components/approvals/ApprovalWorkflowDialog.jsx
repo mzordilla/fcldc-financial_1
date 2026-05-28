@@ -11,7 +11,13 @@ import ApprovalHistoryLog from "./ApprovalHistoryLog";
 
 const STEPS = ["Details", "Decision", "History"];
 
+// Statuses where no further approval action is allowed
+const FINAL_STATUSES = ["rejected", "paid"];
+
 export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summary, history = [], onDecision, currentStatus }) {
+  const isFinal = FINAL_STATUSES.includes(currentStatus);
+  // For final statuses, only show Details and History tabs
+  const visibleSteps = isFinal ? ["Details", "History"] : STEPS;
   const [step, setStep] = useState(0);
   const [actor, setActor] = useState("");
   const [notes, setNotes] = useState("");
@@ -41,7 +47,7 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
           <DialogTitle>{title}</DialogTitle>
           {/* Step indicator */}
           <div className="flex items-center gap-1 pt-2">
-            {STEPS.map((s, i) => (
+            {visibleSteps.map((s, i) => (
               <div key={s} className="flex items-center gap-1">
                 <button
                   onClick={() => setStep(i)}
@@ -56,7 +62,7 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
                   <span>{i + 1}</span>
                   <span>{s}</span>
                 </button>
-                {i < STEPS.length - 1 && <ChevronRight className="w-3 h-3 text-muted-foreground" />}
+                {i < visibleSteps.length - 1 && <ChevronRight className="w-3 h-3 text-muted-foreground" />}
               </div>
             ))}
           </div>
@@ -75,8 +81,8 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
           </div>
         )}
 
-        {/* Step 1: Decision */}
-        {step === 1 && (
+        {/* Step 1: Decision (only for non-final statuses) */}
+        {step === 1 && !isFinal && (
           <div className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-sm font-medium flex items-center gap-1.5">
@@ -110,8 +116,8 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
           </div>
         )}
 
-        {/* Step 2: History */}
-        {step === 2 && (
+        {/* Step 2: History (step 1 for final statuses) */}
+        {(step === 2 || (isFinal && step === 1)) && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Approval History</h3>
             <ApprovalHistoryLog history={history} />
@@ -122,12 +128,12 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
           {step > 0 && (
             <Button variant="outline" onClick={() => setStep(s => s - 1)}>Back</Button>
           )}
-          {step < STEPS.length - 1 && (
+          {step < visibleSteps.length - 1 && (
             <Button variant="outline" onClick={() => setStep(s => s + 1)}>
               Next <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           )}
-          {step === 1 && (
+          {step === 1 && !isFinal && (
             <>
               {currentStatus !== "approved" && (
                 <Button variant="destructive" onClick={() => handleDecide("rejected")} disabled={!actor.trim()}>
@@ -145,7 +151,7 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
               )}
             </>
           )}
-          {step !== 1 && (
+          {(step !== 1 || isFinal) && (
             <Button variant="ghost" onClick={() => handleClose(false)}>Close</Button>
           )}
         </DialogFooter>
