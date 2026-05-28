@@ -26,7 +26,7 @@ export default function Sidebar() {
   const location = useLocation();
   const { user } = useAuth();
 
-  const role = user?.role;
+  const role = user?.role?.toLowerCase();
   const allowed = navItemsByRole[role];
   const navItems = allowed === "all" ? allNavItems : allNavItems.filter((item) => allowed.includes(item.path));
 
@@ -65,7 +65,7 @@ export default function Sidebar() {
       <div className="p-4 border-t border-sidebar-border">
         <div className="px-3 py-1.5 mb-2 rounded-md bg-sidebar-accent/50">
           <p className="text-xs text-sidebar-foreground/50">Logged in as</p>
-          <p className="text-xs font-semibold text-sidebar-foreground capitalize">{role}</p>
+          <p className="text-xs font-semibold text-sidebar-foreground capitalize">{user?.role}</p>
         </div>
         <button
           onClick={() => base44.auth.logout()}

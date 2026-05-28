@@ -14,9 +14,10 @@ export const navItemsByRole = {
 };
 
 export function canAccess(role, path) {
-  if (role === "admin") return true;
-  if (!role) return false; // no role = no access
-  const allowed = roleAccess[role];
+  const normalizedRole = role?.toLowerCase();
+  if (normalizedRole === "admin") return true;
+  if (!normalizedRole) return false;
+  const allowed = roleAccess[normalizedRole];
   if (!allowed) return false;
   if (allowed === "*") return true;
   // Check exact match or prefix match (for nested routes like /projects/:id)

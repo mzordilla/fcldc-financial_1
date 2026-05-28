@@ -9,7 +9,7 @@ export default function AppLayout() {
   const { user } = useAuth();
   const location = useLocation();
 
-  const role = user?.role;
+  const role = user?.role?.toLowerCase();
   const allowed = canAccess(role, location.pathname);
 
   // Redirect non-admin users away from disallowed routes to their first allowed route
