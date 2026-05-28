@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart, History, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart, History, ChevronDown, ChevronUp, Square, CheckSquare } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -47,6 +48,8 @@ export default function PaymentApprovals() {
   const [markingPaidPR, setMarkingPaidPR] = useState(null);
   const [expandedHistory, setExpandedHistory] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkApproving, setBulkApproving] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: requests = [], isLoading } = useQuery({
@@ -125,6 +128,52 @@ export default function PaymentApprovals() {
   const totalPending = pending.reduce((s, r) => s + (r.amount || 0), 0);
   const totalApproved = approved.reduce((s, r) => s + (r.amount || 0), 0);
 
+  const pendingInView = filtered.filter(r => r.approval_status === "pending");
+  const allPendingSelected = pendingInView.length > 0 && pendingInView.every(r => selectedIds.has(r.id));
+
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allPendingSelected) {
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        pendingInView.forEach(r => next.delete(r.id));
+        return next;
+      });
+    } else {
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        pendingInView.forEach(r => next.add(r.id));
+        return next;
+      });
+    }
+  };
+
+  const bulkApprove = async () => {
+    setBulkApproving(true);
+    const toApprove = requests.filter(r => selectedIds.has(r.id) && r.approval_status === "pending");
+    await Promise.all(toApprove.map(pr => {
+      const entry = { step: "approved", action: "approved", actor: "Bulk Approval", notes: "", timestamp: new Date().toISOString() };
+      return updateMutation.mutateAsync({
+        id: pr.id,
+        data: {
+          approval_status: "approved",
+          approved_by: "Bulk Approval",
+          approval_step: "approved",
+          approval_history: [...(pr.approval_history || []), entry],
+        },
+      });
+    }));
+    setSelectedIds(new Set());
+    setBulkApproving(false);
+  };
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -158,7 +207,7 @@ export default function PaymentApprovals() {
             <AlertTriangle className="w-5 h-5 text-chart-3 flex-shrink-0" />
             <div>
               <p className="text-sm font-semibold text-chart-3">{pending.length} Pending Approval</p>
-              <p className="text-xs text-chart-3/80">${totalPending.toLocaleString()} awaiting review</p>
+              <p className="text-xs text-chart-3/80">₱{totalPending.toLocaleString()} awaiting review</p>
             </div>
           </div>
         )}
@@ -167,7 +216,7 @@ export default function PaymentApprovals() {
             <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
             <div>
               <p className="text-sm font-semibold text-primary">{approved.length} Approved — Ready to Pay</p>
-              <p className="text-xs text-primary/80">${totalApproved.toLocaleString()} to be disbursed</p>
+              <p className="text-xs text-primary/80">₱{totalApproved.toLocaleString()} to be disbursed</p>
             </div>
           </div>
         )}
@@ -211,6 +260,36 @@ export default function PaymentApprovals() {
         </div>
       )}
 
+      {/* Bulk action toolbar */}
+      {pendingInView.length > 0 && (
+        <div className="flex items-center justify-between bg-muted/50 border border-border rounded-xl px-4 py-2.5">
+          <div className="flex items-center gap-3">
+            <Checkbox
+              checked={allPendingSelected}
+              onCheckedChange={toggleSelectAll}
+              id="select-all"
+            />
+            <label htmlFor="select-all" className="text-sm font-medium cursor-pointer select-none">
+              {allPendingSelected ? "Deselect all" : `Select all pending (${pendingInView.length})`}
+            </label>
+            {selectedIds.size > 0 && (
+              <span className="text-xs text-muted-foreground">{selectedIds.size} selected</span>
+            )}
+          </div>
+          {selectedIds.size > 0 && (
+            <Button
+              size="sm"
+              onClick={bulkApprove}
+              disabled={bulkApproving}
+              className="gap-2"
+            >
+              <CheckCircle className="w-4 h-4" />
+              {bulkApproving ? "Approving..." : `Approve ${selectedIds.size} Request${selectedIds.size !== 1 ? "s" : ""}`}
+            </Button>
+          )}
+        </div>
+      )}
+
       <div className="grid gap-4">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
         {!isLoading && filtered.length === 0 && <p className="text-center py-12 text-muted-foreground">No payment requests found</p>}
@@ -218,9 +297,17 @@ export default function PaymentApprovals() {
           const StatusIcon = statusIcons[pr.approval_status] || Clock;
           const isOverdue = pr.due_date && new Date(pr.due_date) < new Date() && pr.approval_status !== "paid";
           return (
-            <div key={pr.id} className={`bg-card rounded-2xl border p-5 hover:shadow-md transition-shadow ${isOverdue ? "border-destructive/40" : "border-border"}`}>
+            <div key={pr.id} className={`bg-card rounded-2xl border p-5 hover:shadow-md transition-shadow ${isOverdue ? "border-destructive/40" : "border-border"} ${selectedIds.has(pr.id) ? "ring-2 ring-primary/40" : ""}`}>
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                <div className="flex-1">
+                <div className="flex-1 flex gap-3">
+                  {pr.approval_status === "pending" && (
+                    <Checkbox
+                      checked={selectedIds.has(pr.id)}
+                      onCheckedChange={() => toggleSelect(pr.id)}
+                      className="mt-1 flex-shrink-0"
+                    />
+                  )}
+                  <div className="flex-1">
                   <div className="flex items-center gap-3 flex-wrap mb-2">
                     <h3 className="font-semibold text-foreground">{pr.payee}</h3>
                     {pr.request_number && <span className="text-xs text-muted-foreground font-mono">{pr.request_number}</span>}
@@ -294,8 +381,9 @@ export default function PaymentApprovals() {
                       )}
                     </div>
                   )}
-                </div>
-                <div className="flex sm:flex-col items-center sm:items-end gap-3">
+                  </div>{/* inner flex-1 */}
+                  </div>{/* outer flex-1 flex gap-3 */}
+                  <div className="flex sm:flex-col items-center sm:items-end gap-3">
                   <p className="text-xl font-bold text-foreground">₱{(pr.amount || 0).toLocaleString()}</p>
                   <div className="flex gap-1">
                     {(pr.approval_status === "pending" || pr.approval_status === "approved") && (
