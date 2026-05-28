@@ -58,7 +58,13 @@ function PayeeFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await onSubmit(form);
+    const payload = {
+      ...form,
+      credit_limit: form.credit_limit !== "" && form.credit_limit !== null && form.credit_limit !== undefined
+        ? parseFloat(form.credit_limit)
+        : undefined,
+    };
+    await onSubmit(payload);
     setSaving(false);
     onOpenChange(false);
   };
