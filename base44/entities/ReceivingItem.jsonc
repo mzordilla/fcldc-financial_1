@@ -1,0 +1,81 @@
+{
+  "name": "ReceivingItem",
+  "type": "object",
+  "properties": {
+    "po_id": {
+      "type": "string",
+      "description": "Linked Purchase Order ID"
+    },
+    "po_number": {
+      "type": "string",
+      "description": "Purchase Order number (denormalized)"
+    },
+    "supplier_name": {
+      "type": "string",
+      "description": "Supplier name"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Associated project"
+    },
+    "received_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date items were received"
+    },
+    "received_by": {
+      "type": "string",
+      "description": "Person who received the items"
+    },
+    "line_items": {
+      "type": "array",
+      "description": "Items received",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "quantity_ordered": {
+            "type": "number"
+          },
+          "quantity_received": {
+            "type": "number"
+          },
+          "cost_per_item": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "total_amount": {
+      "type": "number",
+      "description": "Total value of items received"
+    },
+    "receipt_url": {
+      "type": "string",
+      "description": "Delivery document URL"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Delivery / inspection notes"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "partial"
+      ],
+      "default": "complete",
+      "description": "Whether all items were fully received"
+    }
+  },
+  "required": [
+    "po_id",
+    "supplier_name",
+    "received_date"
+  ]
+}

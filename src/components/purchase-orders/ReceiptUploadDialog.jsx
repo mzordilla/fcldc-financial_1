@@ -31,11 +31,36 @@ export default function ReceiptUploadDialog({ open, onOpenChange, po, onSuccess 
       const uploaded = await base44.integrations.Core.UploadFile({ file });
       receiptUrl = uploaded.file_url;
     }
+
+    // Update PO with delivery info
     await base44.entities.PurchaseOrder.update(po.id, {
       receipt_url: receiptUrl,
       delivery_date: form.delivery_date,
       delivery_notes: form.delivery_notes,
     });
+
+    // Auto-create a ReceivingItem record
+    const lineItems = po.line_items?.map(item => ({
+      description: item.description,
+      quantity_ordered: item.quantity,
+      quantity_received: item.quantity,
+      cost_per_item: item.cost_per_item,
+      total: item.total,
+    })) || [];
+
+    await base44.entities.ReceivingItem.create({
+      po_id: po.id,
+      po_number: po.po_number || "",
+      supplier_name: po.supplier_name,
+      project_name: po.project_name || "",
+      received_date: form.delivery_date,
+      line_items: lineItems,
+      total_amount: po.amount || 0,
+      receipt_url: receiptUrl || "",
+      notes: form.delivery_notes || "",
+      status: "complete",
+    });
+
     setSending(false);
     onOpenChange(false);
     onSuccess?.();
