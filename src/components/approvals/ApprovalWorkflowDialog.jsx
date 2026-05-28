@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle, XCircle, ChevronRight, User, FileText, History, Banknote } from "lucide-react";
 import ApprovalHistoryLog from "./ApprovalHistoryLog";
 
@@ -12,6 +15,12 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
   const [step, setStep] = useState(0);
   const [actor, setActor] = useState("");
   const [notes, setNotes] = useState("");
+
+  const { data: adminUsers = [] } = useQuery({
+    queryKey: ["admin_users"],
+    queryFn: () => base44.entities.User.filter({ role: "admin" }, "full_name", 100),
+    enabled: open,
+  });
 
   const reset = () => { setStep(0); setActor(""); setNotes(""); };
 
@@ -71,14 +80,18 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
           <div className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-sm font-medium flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5" /> Reviewer Name <span className="text-destructive">*</span>
+                <User className="w-3.5 h-3.5" /> Approver <span className="text-destructive">*</span>
               </label>
-              <input
-                className="w-full px-3 py-2 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-                placeholder="Your full name"
-                value={actor}
-                onChange={(e) => setActor(e.target.value)}
-              />
+              <Select value={actor} onValueChange={setActor}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an approver..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {adminUsers.map(u => (
+                    <SelectItem key={u.id} value={u.full_name}>{u.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium flex items-center gap-1.5">
