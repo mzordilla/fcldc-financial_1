@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import ReceivableFormDialog from "../components/receivables/ReceivableFormDialog";
+import MarkReceivableAsCollectedDialog from "../components/receivables/MarkReceivableAsCollectedDialog";
 
 function getAgingBucket(dueDateStr, status) {
   if (status === "paid") return null;
@@ -84,6 +85,7 @@ const fields = [
 export default function Receivables() {
   const [showAdd, setShowAdd] = useState(false);
   const [editingR, setEditingR] = useState(null);
+  const [collectingR, setCollectingR] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
 
@@ -107,7 +109,7 @@ export default function Receivables() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["receivables"] }),
   });
 
-  const markPaid = (r) => updateMutation.mutate({ id: r.id, data: { status: "paid", amount_paid: r.amount } });
+  const markCollected = (r, data) => updateMutation.mutate({ id: r.id, data });
 
   const filtered = statusFilter === "all" ? receivables : receivables.filter(r => r.status === statusFilter);
 
@@ -175,7 +177,7 @@ export default function Receivables() {
                   <p className="text-lg font-bold text-foreground">₱{remaining.toLocaleString()}</p>
                   <div className="flex gap-1">
                     {r.status !== "paid" && (
-                      <Button variant="ghost" size="icon" onClick={() => markPaid(r)} className="text-primary hover:text-primary">
+                      <Button variant="ghost" size="icon" onClick={() => setCollectingR(r)} className="text-primary hover:text-primary">
                         <CheckCircle className="w-4 h-4" />
                       </Button>
                     )}
@@ -207,6 +209,12 @@ export default function Receivables() {
         fields={fields}
         initialData={editingR || {}}
         onSubmit={(data) => updateMutation.mutateAsync({ id: editingR.id, data })}
+      />
+      <MarkReceivableAsCollectedDialog
+        open={!!collectingR}
+        onOpenChange={(v) => { if (!v) setCollectingR(null); }}
+        receivable={collectingR}
+        onConfirm={(data) => markCollected(collectingR, data)}
       />
     </div>
   );

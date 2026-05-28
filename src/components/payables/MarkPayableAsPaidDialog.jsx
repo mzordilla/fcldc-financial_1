@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +17,15 @@ export default function MarkPayableAsPaidDialog({ open, onOpenChange, payable, o
     payment_reference: "",
     payment_notes: "",
     amount_paid: "",
+    bank_account_id: "",
   });
   const [saving, setSaving] = useState(false);
+
+  const { data: bankAccounts = [] } = useQuery({
+    queryKey: ["bankaccounts"],
+    queryFn: () => base44.entities.BankAccount.list("-created_date", 100),
+    enabled: open,
+  });
 
   useEffect(() => {
     if (payable) {
@@ -26,20 +35,39 @@ export default function MarkPayableAsPaidDialog({ open, onOpenChange, payable, o
         payment_reference: "",
         payment_notes: "",
         amount_paid: String(payable.amount || ""),
+        bank_account_id: "",
       });
     }
   }, [payable]);
 
   const handleSubmit = async () => {
     setSaving(true);
+    const amountPaid = parseFloat(form.amount_paid) || payable.amount;
+
+    // Update payable status
     await onConfirm({
       status: "paid",
-      amount_paid: parseFloat(form.amount_paid) || payable.amount,
+      amount_paid: amountPaid,
       payment_date: form.payment_date,
       payment_method: form.payment_method,
       payment_reference: form.payment_reference,
       payment_notes: form.payment_notes,
     });
+
+    // Auto-create linked expense transaction
+    if (form.bank_account_id) {
+      await base44.entities.Transaction.create({
+        description: `Payable payment – ${payable.supplier_name}${payable.invoice_number ? ` (${payable.invoice_number})` : ""}`,
+        amount: amountPaid,
+        type: "expense",
+        category: payable.category || "other",
+        project_name: payable.project_name || "",
+        bank_account_id: form.bank_account_id,
+        date: form.payment_date,
+        status: "completed",
+      });
+    }
+
     setSaving(false);
     onOpenChange(false);
   };
@@ -91,6 +119,20 @@ export default function MarkPayableAsPaidDialog({ open, onOpenChange, payable, o
                 <SelectItem value="cash">Cash</SelectItem>
                 <SelectItem value="credit_card">Credit Card</SelectItem>
                 <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Bank Account <span className="text-muted-foreground font-normal">(for expense transaction)</span></Label>
+            <Select value={form.bank_account_id} onValueChange={v => setForm(f => ({ ...f, bank_account_id: v }))}>
+              <SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger>
+              <SelectContent>
+                {bankAccounts.filter(a => a.status !== "closed").map(a => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.account_name} – {a.bank_name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
