@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,6 +46,7 @@ export default function PurchaseOrders() {
   const [uploadingReceipt, setUploadingReceipt] = useState(null);
   const [expandedHistory, setExpandedHistory] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedIds, setSelectedIds] = useState(new Set());
   const queryClient = useQueryClient();
 
   const { data: orders = [], isLoading } = useQuery({
@@ -92,6 +94,39 @@ export default function PurchaseOrders() {
   const pending = orders.filter(o => o.approval_status === "pending");
   const totalPendingValue = pending.reduce((s, o) => s + (o.amount || 0), 0);
 
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAllPending = () => {
+    if (selectedIds.size === pending.length && pending.every(p => selectedIds.has(p.id))) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(pending.map(p => p.id)));
+    }
+  };
+
+  const bulkApprove = async () => {
+    const timestamp = new Date().toISOString();
+    const selectedPOs = orders.filter(o => selectedIds.has(o.id));
+    await Promise.all(selectedPOs.map(po => {
+      const newEntry = { step: "approved", action: "approved", actor: "Bulk Approval", notes: "", timestamp };
+      return updateMutation.mutateAsync({
+        id: po.id,
+        data: {
+          approval_status: "approved",
+          approval_step: "approved",
+          approval_history: [...(po.approval_history || []), newEntry],
+        },
+      });
+    }));
+    setSelectedIds(new Set());
+  };
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -123,11 +158,23 @@ export default function PurchaseOrders() {
 
       {/* Pending banner */}
       {pending.length > 0 && (
-        <div className="bg-chart-3/10 border border-chart-3/20 rounded-2xl p-4 flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 text-chart-3 flex-shrink-0" />
-          <p className="text-sm text-chart-3 font-medium">
-            {pending.length} purchase order{pending.length > 1 ? "s" : ""} awaiting approval totalling ₱{totalPendingValue.toLocaleString()}
-          </p>
+        <div className="bg-chart-3/10 border border-chart-3/20 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-chart-3 flex-shrink-0" />
+            <p className="text-sm text-chart-3 font-medium">
+              {pending.length} purchase order{pending.length > 1 ? "s" : ""} awaiting approval · ₱{totalPendingValue.toLocaleString()}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={toggleSelectAllPending} className="text-xs text-chart-3 underline underline-offset-2 hover:opacity-80">
+              {selectedIds.size === pending.length && pending.length > 0 ? "Deselect all" : "Select all pending"}
+            </button>
+            {selectedIds.size > 0 && (
+              <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={bulkApprove}>
+                <CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Approve {selectedIds.size} PO{selectedIds.size > 1 ? "s" : ""}
+              </Button>
+            )}
+          </div>
         </div>
       )}
 
@@ -137,9 +184,17 @@ export default function PurchaseOrders() {
         {filtered.map((po) => {
           const StatusIcon = statusIcons[po.approval_status] || Clock;
           return (
-            <div key={po.id} className="bg-card rounded-2xl border border-border p-5 hover:shadow-md transition-shadow">
+            <div key={po.id} className={`bg-card rounded-2xl border p-5 hover:shadow-md transition-shadow ${selectedIds.has(po.id) ? "ring-2 ring-primary/40 border-primary/30" : "border-border"}`}>
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                <div className="flex-1">
+                <div className="flex-1 flex gap-3">
+                  {po.approval_status === "pending" && (
+                    <Checkbox
+                      checked={selectedIds.has(po.id)}
+                      onCheckedChange={() => toggleSelect(po.id)}
+                      className="mt-1 flex-shrink-0"
+                    />
+                  )}
+                  <div className="flex-1">
                   <div className="flex items-center gap-3 flex-wrap mb-2">
                     <h3 className="font-semibold text-foreground">{po.supplier_name}</h3>
                     {po.po_number && <span className="text-xs text-muted-foreground font-mono">{po.po_number}</span>}
@@ -217,7 +272,8 @@ export default function PurchaseOrders() {
                       <ApprovalHistoryLog history={po.approval_history} />
                     </div>
                   )}
-                </div>
+                  </div>{/* inner flex-1 */}
+                </div>{/* outer flex gap-3 */}
                 <div className="flex sm:flex-col items-center sm:items-end gap-3">
                   <p className="text-xl font-bold text-foreground">₱{(po.amount || 0).toLocaleString()}</p>
                   <div className="flex gap-1">
