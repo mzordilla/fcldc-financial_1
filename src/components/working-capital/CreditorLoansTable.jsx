@@ -38,7 +38,7 @@ export default function CreditorLoansTable({
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-12 hidden"></TableHead>
-              <TableHead className="pl-1">Description</TableHead>
+              <TableHead className="pr-1 pl-1">Description</TableHead>
               <TableHead className="text-right">Amount</TableHead>
               <TableHead className="text-right">Outstanding</TableHead>
               <TableHead className="text-right">Rate</TableHead>
