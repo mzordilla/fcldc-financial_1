@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle, XCircle, ChevronRight, User, FileText, History, Banknote } from "lucide-react";
 import ApprovalHistoryLog from "./ApprovalHistoryLog";
@@ -22,9 +23,9 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
   const [actor, setActor] = useState("");
   const [notes, setNotes] = useState("");
 
-  const { data: adminUsers = [] } = useQuery({
-    queryKey: ["admin_users"],
-    queryFn: () => base44.entities.User.filter({ role: "admin" }, "full_name", 100),
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ["all_users"],
+    queryFn: () => base44.entities.User.list("full_name", 100),
     enabled: open,
   });
 
@@ -88,16 +89,24 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
               <label className="text-sm font-medium flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5" /> Approver <span className="text-destructive">*</span>
               </label>
-              <Select value={actor} onValueChange={setActor}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select an approver..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {adminUsers.map(u => (
-                    <SelectItem key={u.id} value={u.full_name}>{u.full_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {allUsers.length > 0 ? (
+                <Select value={actor} onValueChange={setActor}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an approver..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allUsers.map(u => (
+                      <SelectItem key={u.id} value={u.full_name}>{u.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  placeholder="Enter approver name..."
+                  value={actor}
+                  onChange={(e) => setActor(e.target.value)}
+                />
+              )}
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium flex items-center gap-1.5">
