@@ -64,6 +64,22 @@ export default function PaymentApprovals() {
     queryFn: () => base44.entities.PurchaseOrder.filter({ approval_status: "approved" }, "-created_date", 100),
   });
 
+  // Filter out POs that already have a payment request linked to them
+  const poIdsWithRequests = new Set(
+    requests
+      .map(r => r.supporting_docs)
+      .filter(Boolean)
+      .map(doc => {
+        const match = doc.match(/PO:\s*(.+)/);
+        return match ? match[1].trim() : null;
+      })
+      .filter(Boolean)
+  );
+  const availablePOs = approvedPOs.filter(po => {
+    const poRef = po.po_number || "";
+    return !poIdsWithRequests.has(poRef);
+  });
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.PaymentRequest.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["payment_requests"] }),
@@ -232,14 +248,14 @@ export default function PaymentApprovals() {
       </div>
 
       {/* Approved Purchase Orders */}
-      {approvedPOs.length > 0 && (
+      {availablePOs.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <ShoppingCart className="w-4 h-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Approved Purchase Orders — Ready to Pay</h2>
           </div>
           <div className="grid gap-3">
-            {approvedPOs.map(po => (
+            {availablePOs.map(po => (
               <div key={po.id} className="bg-card border border-border rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
