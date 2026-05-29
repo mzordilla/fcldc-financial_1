@@ -21,6 +21,8 @@ const defaultForm = {
   billing_amount: "",
   retention_rate: "",
   retention_amount: "",
+  down_payment: "",
+  down_payment_deduction: "",
   net_billing_amount: "",
   due_date: "",
   description: "",
@@ -51,12 +53,15 @@ export default function BillingCycleFormDialog({ open, onOpenChange, title, init
       const accomplishPct = parseFloat(next.accomplishment_percentage) || 0;
       const retentionRate = parseFloat(next.retention_rate) || 0;
 
-      if (["contract_amount", "accomplishment_percentage", "retention_rate"].includes(key)) {
+      if (["contract_amount", "accomplishment_percentage", "retention_rate", "down_payment"].includes(key)) {
+        const downPayment = parseFloat(next.down_payment) || 0;
         const billing = contractAmt * (accomplishPct / 100);
         const retention = billing * (retentionRate / 100);
+        const downPaymentDeduction = downPayment * (accomplishPct / 100);
         next.billing_amount = billing.toFixed(2);
         next.retention_amount = retention.toFixed(2);
-        next.net_billing_amount = (billing - retention).toFixed(2);
+        next.down_payment_deduction = downPaymentDeduction.toFixed(2);
+        next.net_billing_amount = (billing - retention - downPaymentDeduction).toFixed(2);
       }
       return next;
     });
@@ -88,6 +93,8 @@ export default function BillingCycleFormDialog({ open, onOpenChange, title, init
       billing_amount: parseFloat(form.billing_amount) || 0,
       retention_rate: parseFloat(form.retention_rate) || 0,
       retention_amount: parseFloat(form.retention_amount) || 0,
+      down_payment: parseFloat(form.down_payment) || 0,
+      down_payment_deduction: parseFloat(form.down_payment_deduction) || 0,
       net_billing_amount: parseFloat(form.net_billing_amount) || 0,
     };
     await onSubmit(payload);
@@ -164,10 +171,16 @@ export default function BillingCycleFormDialog({ open, onOpenChange, title, init
             </div>
           </div>
 
+          <div className="space-y-1.5">
+            <Label>Down Payment Received (₱)</Label>
+            <Input type="number" step="0.01" min="0" placeholder="0.00 — leave blank if none" value={form.down_payment} onChange={e => set("down_payment", e.target.value)} />
+            <p className="text-xs text-muted-foreground">Total down payment received from client. A proportional deduction will be applied each billing cycle based on accomplishment %.</p>
+          </div>
+
           {/* Auto-calculated amounts */}
           <div className="bg-muted/40 rounded-xl p-4 space-y-2 border border-border">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Calculated Amounts</p>
-            <div className="grid grid-cols-3 gap-3 text-sm">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
               <div>
                 <p className="text-xs text-muted-foreground">Gross Billing</p>
                 <p className="font-semibold">₱{parseFloat(form.billing_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
@@ -175,6 +188,10 @@ export default function BillingCycleFormDialog({ open, onOpenChange, title, init
               <div>
                 <p className="text-xs text-muted-foreground">Retention</p>
                 <p className="font-semibold text-chart-3">-₱{parseFloat(form.retention_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Down Pmt Deduction</p>
+                <p className="font-semibold text-chart-3">-₱{parseFloat(form.down_payment_deduction || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Net Billing</p>

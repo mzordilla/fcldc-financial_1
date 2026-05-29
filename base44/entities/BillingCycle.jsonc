@@ -58,9 +58,19 @@
       "default": 0,
       "description": "Retention amount withheld"
     },
+    "down_payment": {
+      "type": "number",
+      "default": 0,
+      "description": "Total contract down payment received from client (to be recouped proportionally per billing cycle)"
+    },
+    "down_payment_deduction": {
+      "type": "number",
+      "default": 0,
+      "description": "Down payment deducted this cycle (down_payment \u00d7 accomplishment%)"
+    },
     "net_billing_amount": {
       "type": "number",
-      "description": "Net amount after retention"
+      "description": "Net amount after retention and down payment deduction"
     },
     "due_date": {
       "type": "string",
