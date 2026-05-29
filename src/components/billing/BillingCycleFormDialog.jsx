@@ -152,7 +152,7 @@ export default function BillingCycleFormDialog({ open, onOpenChange, title, init
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Accomplishment % <span className="text-destructive">*</span></Label>
-              <Input required type="number" step="0.01" min="0" max="100" placeholder="e.g. 25" value={form.accomplishment_percentage} onChange={e => set("accomplishment_percentage", e.target.value)} />
+              <Input required type="number" step="0.000001" min="0" max="100" placeholder="e.g. 25.000000" value={form.accomplishment_percentage} onChange={e => set("accomplishment_percentage", e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label>Cumulative %</Label>
