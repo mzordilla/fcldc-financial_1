@@ -15,8 +15,16 @@ Deno.serve(async (req) => {
     const entityName = event.entity_name;
     const entityId = event.entity_id;
 
-    // Determine actor from data
-    const actor = data?.created_by || old_data?.created_by || 'system';
+    // Determine actor from data — for updates use updated_by (who made the change),
+    // for creates use created_by, for deletes fall back to old_data.created_by
+    let actor = 'system';
+    if (action === 'create') {
+      actor = data?.created_by || 'system';
+    } else if (action === 'update') {
+      actor = data?.updated_by || data?.created_by || old_data?.created_by || 'system';
+    } else if (action === 'delete') {
+      actor = old_data?.updated_by || old_data?.created_by || 'system';
+    }
 
     // Build summary
     let summary = '';
