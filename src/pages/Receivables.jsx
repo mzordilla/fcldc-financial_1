@@ -95,8 +95,24 @@ export default function Receivables() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Receivable.create(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["receivables"] }),
+    mutationFn: async (data) => {
+      const receivable = await base44.entities.Receivable.create(data);
+      // Record income at creation time for P&L
+      await base44.entities.Transaction.create({
+        description: `Receivable: ${data.client_name}${data.invoice_number ? ` (${data.invoice_number})` : ""}${data.project_name ? ` — ${data.project_name}` : ""}`,
+        amount: data.amount,
+        type: "income",
+        category: "project_payment",
+        project_name: data.project_name || "",
+        date: data.due_date || new Date().toISOString().split("T")[0],
+        status: "pending",
+      });
+      return receivable;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["receivables"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
   });
 
   const updateMutation = useMutation({

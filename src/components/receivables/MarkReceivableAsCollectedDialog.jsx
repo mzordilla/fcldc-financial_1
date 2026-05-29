@@ -48,13 +48,14 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
       amount_paid: amountCollected,
     });
 
-    // Auto-create linked income transaction
+    // Only record bank movement — income was already recorded at receivable creation (no P&L double-entry)
     if (form.bank_account_id) {
+      // Record as bank_reconciliation so it shows in bank transactions but NOT in P&L income
       await base44.entities.Transaction.create({
-        description: `Receivable collected – ${receivable.client_name}${receivable.invoice_number ? ` (${receivable.invoice_number})` : ""}`,
+        description: `Collection received – ${receivable.client_name}${receivable.invoice_number ? ` (${receivable.invoice_number})` : ""}`,
         amount: amountCollected,
         type: "income",
-        category: "project_payment",
+        category: "bank_reconciliation",
         project_name: receivable.project_name || "",
         bank_account_id: form.bank_account_id,
         date: form.collection_date,
