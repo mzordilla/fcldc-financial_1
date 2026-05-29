@@ -60,7 +60,7 @@ export default function BillingCycles() {
       approval_history: history,
     };
 
-    // If approved, create a Receivable + an income Transaction
+    // If approved, create a Receivable only (no income transaction yet — income is recorded when collected)
     if (action === "approved") {
       const billingAmount = bc.net_billing_amount || bc.billing_amount || 0;
       const today = new Date().toISOString().split("T")[0];
@@ -76,17 +76,6 @@ export default function BillingCycles() {
         notes: `Auto-created from Billing Cycle: ${bc.billing_number || ""} — ${bc.period_label || ""} (${bc.accomplishment_percentage}% accomplishment)`,
       });
       updateData.receivable_id = receivable.id;
-
-      // Create an income transaction so project P&L and dashboard update automatically
-      await base44.entities.Transaction.create({
-        description: `Billing: ${bc.billing_number || bc.period_label || "Billing Cycle"} — ${bc.project_name}`,
-        amount: billingAmount,
-        type: "income",
-        category: "project_payment",
-        project_name: bc.project_name,
-        date: today,
-        status: "completed",
-      });
     }
 
     updateMutation.mutate({ id: bc.id, data: updateData });
