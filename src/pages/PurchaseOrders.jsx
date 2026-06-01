@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
@@ -47,7 +47,12 @@ export default function PurchaseOrders() {
   const [expandedHistory, setExpandedHistory] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [isAdmin, setIsAdmin] = useState(false);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    base44.auth.me().then(u => setIsAdmin(u?.role === "admin")).catch(() => {});
+  }, []);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["purchase_orders"],
@@ -165,16 +170,18 @@ export default function PurchaseOrders() {
               {pending.length} purchase order{pending.length > 1 ? "s" : ""} awaiting approval · ₱{totalPendingValue.toLocaleString()}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={toggleSelectAllPending} className="text-xs text-chart-3 underline underline-offset-2 hover:opacity-80">
-              {selectedIds.size === pending.length && pending.length > 0 ? "Deselect all" : "Select all pending"}
-            </button>
-            {selectedIds.size > 0 && (
-              <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={bulkApprove}>
-                <CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Approve {selectedIds.size} PO{selectedIds.size > 1 ? "s" : ""}
-              </Button>
-            )}
-          </div>
+          {isAdmin && (
+            <div className="flex items-center gap-3">
+              <button onClick={toggleSelectAllPending} className="text-xs text-chart-3 underline underline-offset-2 hover:opacity-80">
+                {selectedIds.size === pending.length && pending.length > 0 ? "Deselect all" : "Select all pending"}
+              </button>
+              {selectedIds.size > 0 && (
+                <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={bulkApprove}>
+                  <CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Approve {selectedIds.size} PO{selectedIds.size > 1 ? "s" : ""}
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -187,7 +194,7 @@ export default function PurchaseOrders() {
             <div key={po.id} className={`bg-card rounded-2xl border p-5 hover:shadow-md transition-shadow ${selectedIds.has(po.id) ? "ring-2 ring-primary/40 border-primary/30" : "border-border"}`}>
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="flex-1 flex gap-3">
-                  {po.approval_status === "pending" && (
+                  {isAdmin && po.approval_status === "pending" && (
                     <Checkbox
                       checked={selectedIds.has(po.id)}
                       onCheckedChange={() => toggleSelect(po.id)}
@@ -277,7 +284,7 @@ export default function PurchaseOrders() {
                 <div className="flex sm:flex-col items-center sm:items-end gap-3">
                   <p className="text-xl font-bold text-foreground">₱{(po.amount || 0).toLocaleString()}</p>
                   <div className="flex gap-1">
-                    {po.approval_status === "pending" && (
+                    {isAdmin && po.approval_status === "pending" && (
                       <Button size="sm" variant="outline" onClick={() => setReviewPO(po)}>
                         Review
                       </Button>

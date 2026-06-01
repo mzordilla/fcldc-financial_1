@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -17,11 +17,18 @@ const FINAL_STATUSES = ["rejected", "paid"];
 
 export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summary, history = [], onDecision, currentStatus }) {
   const isFinal = FINAL_STATUSES.includes(currentStatus);
-  // For final statuses, only show Details and History tabs
-  const visibleSteps = isFinal ? ["Details", "History"] : STEPS;
+  // For final statuses or non-admins, only show Details and History tabs
+  const visibleSteps = (isFinal || !isAdmin) ? ["Details", "History"] : STEPS;
   const [step, setStep] = useState(0);
   const [actor, setActor] = useState("");
   const [notes, setNotes] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      base44.auth.me().then(u => setIsAdmin(u?.role === "admin")).catch(() => {});
+    }
+  }, [open]);
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ["all_users"],
@@ -82,8 +89,8 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
           </div>
         )}
 
-        {/* Step 1: Decision (only for non-final statuses) */}
-        {step === 1 && !isFinal && (
+        {/* Step 1: Decision (only for non-final statuses, admin only) */}
+        {step === 1 && !isFinal && isAdmin && (
           <div className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-sm font-medium flex items-center gap-1.5">
@@ -142,7 +149,7 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
               Next <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           )}
-          {step === 1 && !isFinal && (
+          {step === 1 && !isFinal && isAdmin && (
             <>
               {currentStatus !== "approved" && (
                 <Button variant="destructive" onClick={() => handleDecide("rejected")} disabled={!actor.trim()}>

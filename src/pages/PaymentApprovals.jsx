@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
@@ -52,7 +52,12 @@ export default function PaymentApprovals() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkApproving, setBulkApproving] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    base44.auth.me().then(u => setIsAdmin(u?.role === "admin")).catch(() => {});
+  }, []);
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["payment_requests"],
@@ -285,8 +290,8 @@ export default function PaymentApprovals() {
         </div>
       )}
 
-      {/* Bulk action toolbar */}
-      {pendingInView.length > 0 && (
+      {/* Bulk action toolbar — admin only */}
+      {isAdmin && pendingInView.length > 0 && (
         <div className="flex items-center justify-between bg-muted/50 border border-border rounded-xl px-4 py-2.5">
           <div className="flex items-center gap-3">
             <Checkbox
@@ -378,7 +383,7 @@ export default function PaymentApprovals() {
                     <div key={pr.id} className={`bg-card rounded-2xl border p-5 hover:shadow-md transition-shadow ${isOverdue ? "border-destructive/40" : "border-border"} ${selectedIds.has(pr.id) ? "ring-2 ring-primary/40" : ""}`}>
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <div className="flex-1 flex gap-3">
-                          {pr.approval_status === "pending" && (
+                          {isAdmin && pr.approval_status === "pending" && (
                             <Checkbox
                               checked={selectedIds.has(pr.id)}
                               onCheckedChange={() => toggleSelect(pr.id)}
@@ -462,12 +467,12 @@ export default function PaymentApprovals() {
                         <div className="flex sm:flex-col items-center sm:items-end gap-3">
                           <p className="text-xl font-bold text-foreground">₱{(pr.amount || 0).toLocaleString()}</p>
                           <div className="flex gap-1">
-                            {pr.approval_status === "pending" && (
+                            {isAdmin && pr.approval_status === "pending" && (
                               <Button size="sm" variant="outline" onClick={() => setReviewPR(pr)}>
                                 Review
                               </Button>
                             )}
-                            {pr.approval_status === "approved" && (
+                            {isAdmin && pr.approval_status === "approved" && (
                               <Button size="sm" onClick={() => setReviewPR(pr)}>
                                 <Banknote className="w-3.5 h-3.5 mr-1" /> Disburse
                               </Button>
