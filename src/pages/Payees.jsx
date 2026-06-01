@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Trash2, Pencil, Users, List, FileUp, Download } from "lucide-react";
+import { Plus, Trash2, Pencil, Users, List, FileUp, Download, ShieldCheck, ShieldOff } from "lucide-react";
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
 import BatchPayeeDialog from "../components/payees/BatchPayeeDialog";
@@ -31,7 +31,7 @@ const categoryStyles = {
   other: "bg-muted text-muted-foreground border-border",
 };
 
-const defaultForm = { name: "", category: "", contact: "", credit_limit: "", bank_account_name: "", bank_account_number: "", terms_of_payment: "", vat_status: "", notes: "" };
+const defaultForm = { name: "", category: "", contact: "", credit_limit: "", bank_account_name: "", bank_account_number: "", terms_of_payment: "", vat_status: "", is_accredited: false, notes: "" };
 
 function PayeeFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
   const [form, setForm] = useState(defaultForm);
@@ -127,6 +127,16 @@ function PayeeFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => set("is_accredited", !form.is_accredited)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${form.is_accredited ? "bg-primary/10 text-primary border-primary/30" : "bg-muted text-muted-foreground border-border"}`}
+            >
+              {form.is_accredited ? <ShieldCheck className="w-4 h-4" /> : <ShieldOff className="w-4 h-4" />}
+              {form.is_accredited ? "Accredited" : "Not Accredited"}
+            </button>
           </div>
           <div className="space-y-1.5">
             <Label>Notes</Label>
@@ -299,6 +309,7 @@ export default function Payees() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Contact</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Terms</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">VAT</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Accredited</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Outstanding</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Credit Limit</th>
                 <th className="px-4 py-3" />
@@ -325,6 +336,16 @@ export default function Payees() {
                         {p.vat_status === "vat" ? "VAT" : "Non-VAT"}
                       </Badge>
                     ) : <span className="text-muted-foreground text-xs">—</span>}
+                  </td>
+                  <td className="px-4 py-3 hidden md:table-cell">
+                     <button
+                       onClick={() => updateMutation.mutate({ id: p.id, data: { is_accredited: !p.is_accredited } })}
+                       title={p.is_accredited ? "Accredited — click to revoke" : "Not Accredited — click to accredit"}
+                       className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-medium transition-colors ${p.is_accredited ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "bg-muted text-muted-foreground border-border hover:bg-accent"}`}
+                     >
+                       {p.is_accredited ? <ShieldCheck className="w-3.5 h-3.5" /> : <ShieldOff className="w-3.5 h-3.5" />}
+                       {p.is_accredited ? "Yes" : "No"}
+                     </button>
                   </td>
                   <td className="px-4 py-3 text-right font-medium">
                     {getOutstandingBalance(p.name) > 0 ? (
