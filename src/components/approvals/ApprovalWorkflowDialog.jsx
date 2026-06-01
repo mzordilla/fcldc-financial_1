@@ -16,13 +16,13 @@ const STEPS = ["Details", "Decision", "History"];
 const FINAL_STATUSES = ["rejected", "paid"];
 
 export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summary, history = [], onDecision, currentStatus }) {
-  const isFinal = FINAL_STATUSES.includes(currentStatus);
-  // For final statuses or non-admins, only show Details and History tabs
-  const visibleSteps = (isFinal || !isAdmin) ? ["Details", "History"] : STEPS;
+  const [isAdmin, setIsAdmin] = useState(false);
   const [step, setStep] = useState(0);
   const [actor, setActor] = useState("");
   const [notes, setNotes] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
+  const isFinal = FINAL_STATUSES.includes(currentStatus);
+  // For final statuses or non-admins, only show Details and History tabs
+  const visibleSteps = (isFinal || !isAdmin) ? ["Details", "History"] : STEPS;
 
   useEffect(() => {
     if (open) {
