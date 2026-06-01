@@ -33,6 +33,12 @@
         "permits",
         "insurance",
         "bank_reconciliation",
+        "non_current_assets",
+        "current_assets",
+        "current_liabilities",
+        "non_current_liabilities",
+        "repair_and_maintenance",
+        "fixtures",
         "other"
       ],
       "description": "Maps to transaction category"
@@ -50,23 +56,5 @@
   "required": [
     "account_name",
     "account_type"
-  ],
-  "rls": {
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "read": {},
-    "update": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
-  }
+  ]
 }
