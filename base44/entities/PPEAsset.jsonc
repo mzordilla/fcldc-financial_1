@@ -1,0 +1,85 @@
+{
+  "name": "PPEAsset",
+  "type": "object",
+  "properties": {
+    "asset_name": {
+      "type": "string",
+      "description": "Name or description of the asset"
+    },
+    "asset_type": {
+      "type": "string",
+      "enum": [
+        "land",
+        "vehicle",
+        "furniture_and_fixture",
+        "building",
+        "equipment",
+        "other"
+      ],
+      "description": "Type/category of PPE asset"
+    },
+    "asset_code": {
+      "type": "string",
+      "description": "Internal asset reference code"
+    },
+    "acquisition_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the asset was acquired"
+    },
+    "acquisition_cost": {
+      "type": "number",
+      "description": "Original cost of the asset"
+    },
+    "useful_life_years": {
+      "type": "number",
+      "description": "Estimated useful life in years"
+    },
+    "depreciation_method": {
+      "type": "string",
+      "enum": [
+        "straight_line",
+        "declining_balance",
+        "none"
+      ],
+      "default": "straight_line",
+      "description": "Depreciation method used"
+    },
+    "accumulated_depreciation": {
+      "type": "number",
+      "default": 0,
+      "description": "Total accumulated depreciation to date"
+    },
+    "book_value": {
+      "type": "number",
+      "description": "Current book value (cost minus accumulated depreciation)"
+    },
+    "location": {
+      "type": "string",
+      "description": "Where the asset is located or assigned"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Person or project the asset is assigned to"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "disposed",
+        "under_maintenance",
+        "fully_depreciated"
+      ],
+      "default": "active"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "asset_name",
+    "asset_type",
+    "acquisition_cost"
+  ]
+}
