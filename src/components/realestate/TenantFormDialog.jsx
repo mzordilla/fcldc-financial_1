@@ -121,6 +121,10 @@ export default function TenantFormDialog({ open, onOpenChange, initialData, unit
               <Input type="number" value={form.association_dues} disabled placeholder="Auto-computed" />
             </div>
             <div className="space-y-1">
+              <Label>Total Monthly (Rent + Dues)</Label>
+              <Input type="number" value={form.monthly_rent ? Number(form.monthly_rent) + (form.association_dues ? Number(form.association_dues) : 0) : 0} disabled />
+            </div>
+            <div className="space-y-1">
               <Label>Status</Label>
               <Select value={form.status} onValueChange={v => set("status", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
