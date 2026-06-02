@@ -32,7 +32,7 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ["all_users"],
-    queryFn: () => base44.entities.User.filter({ role: "admin" }, "full_name", 100),
+    queryFn: () => base44.entities.User.list("full_name", 100),
     enabled: open,
   });
 
