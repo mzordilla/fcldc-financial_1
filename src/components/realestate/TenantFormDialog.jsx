@@ -109,11 +109,16 @@ export default function TenantFormDialog({ open, onOpenChange, initialData, unit
             </div>
             <div className="space-y-1">
               <Label>Association Dues per sqm (₱)</Label>
-              <Input type="number" value={form.association_dues_per_sqm} onChange={e => set("association_dues_per_sqm", e.target.value)} placeholder="Auto-calculated from unit" />
+              <Input type="number" value={form.association_dues_per_sqm} onChange={e => {
+                const rate = e.target.value ? Number(e.target.value) : 0;
+                set("association_dues_per_sqm", rate.toString());
+                const area = form.area_sqm ? Number(form.area_sqm) : 0;
+                set("association_dues", (area * rate).toString());
+              }} placeholder="Enter rate per sqm" />
             </div>
             <div className="space-y-1">
               <Label>Association Dues (₱/mo)</Label>
-              <Input type="number" value={form.association_dues} onChange={e => set("association_dues", e.target.value)} />
+              <Input type="number" value={form.association_dues} disabled placeholder="Auto-computed" />
             </div>
             <div className="space-y-1">
               <Label>Status</Label>
