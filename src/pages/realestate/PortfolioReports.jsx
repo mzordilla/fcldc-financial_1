@@ -108,18 +108,35 @@ export default function PortfolioReports() {
 
       {/* Charts */}
       <div className="grid sm:grid-cols-2 gap-6">
-        {/* Unit Status Pie */}
-        <div className="bg-card border border-border rounded-2xl p-5">
-          <h3 className="font-semibold text-foreground mb-4">Unit Status Breakdown</h3>
+        {/* Unit Status Breakdown - full width */}
+        <div className="bg-card border border-border rounded-2xl p-5 sm:col-span-2">
+          <h3 className="font-semibold text-foreground mb-1">Unit Status Breakdown</h3>
+          <p className="text-xs text-muted-foreground mb-4">{units.length} total units</p>
           {statusData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, value }) => `${name}: ${value}`}>
-                  {statusData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              <ResponsiveContainer width="100%" height={220} className="flex-1 min-w-0">
+                <PieChart>
+                  <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={85} innerRadius={40}>
+                    {statusData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip formatter={(v, name) => [`${v} units`, name]} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex flex-col gap-2 min-w-[180px]">
+                {statusData.map((d, i) => (
+                  <div key={d.name} className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                      <span className="text-sm text-foreground">{d.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-foreground">{d.value}</span>
+                      <span className="text-xs text-muted-foreground">({Math.round(d.value / units.length * 100)}%)</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : <p className="text-muted-foreground text-sm text-center py-8">No data</p>}
         </div>
 
