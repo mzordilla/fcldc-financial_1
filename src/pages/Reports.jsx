@@ -9,6 +9,7 @@ import { jsPDF } from "jspdf";
 import WorkingCapitalLoansReport from "../components/reports/WorkingCapitalLoansReport";
 import BankTransactionsReport from "../components/reports/BankTransactionsReport";
 import IncomeTrendChart from "../components/reports/IncomeTrendChart";
+import BalanceSheetReport from "../components/reports/BalanceSheetReport";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 const fmtSigned = (v) => (v < 0 ? `-₱${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : `₱${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`);
@@ -415,6 +416,7 @@ export default function Reports() {
           { key: "pnl", label: "P&L / Cash Flow" },
           { key: "wc_loans", label: "Working Capital Loans" },
           { key: "bank_transactions", label: "Bank Transactions" },
+          { key: "balance_sheet", label: "Balance Sheet" },
         ].map(tab => (
           <button
             key={tab.key}
@@ -440,6 +442,10 @@ export default function Reports() {
 
       {activeTab === "bank_transactions" && (
         <BankTransactionsReport dateFrom={dateFrom} dateTo={dateTo} />
+      )}
+
+      {activeTab === "balance_sheet" && (
+        <BalanceSheetReport asOfDate={format(parseISO(dateTo), "MMMM d, yyyy")} />
       )}
 
       {activeTab === "pnl" && <>
