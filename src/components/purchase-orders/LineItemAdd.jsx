@@ -50,7 +50,7 @@ export default function LineItemAdd({ onAdd, suggestions = [] }) {
 
   return (
     <div className="space-y-2 p-3 bg-muted/30 rounded-lg">
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-[1fr_80px_1fr] gap-2">
         {/* Description with autocomplete */}
         <div className="relative" ref={wrapperRef}>
           <Input

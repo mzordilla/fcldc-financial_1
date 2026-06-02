@@ -185,7 +185,7 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
                   <thead>
                     <tr className="bg-muted/50 border-b border-border">
                       <th className="px-2 py-1 text-left font-semibold">Description</th>
-                      <th className="px-2 py-1 text-right font-semibold w-16">Qty</th>
+                      <th className="px-2 py-1 text-right font-semibold w-8">Qty</th>
                       <th className="px-2 py-1 text-right font-semibold w-20">Cost/Item</th>
                       <th className="px-2 py-1 text-right font-semibold w-20">Total</th>
                       <th className="w-6"></th>
