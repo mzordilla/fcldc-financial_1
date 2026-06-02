@@ -1,22 +1,23 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, Banknote, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, BookOpen, ScanLine, Users, RefreshCw, Receipt, PackageCheck, ClipboardList, Boxes, Package } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, Banknote, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, BookOpen, ScanLine, Users, RefreshCw, Receipt, PackageCheck, ClipboardList, Boxes, Package, Home } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { navItemsByRole } from "@/lib/access-control";
 
+// Groups define sidebar sections. Items without a group go ungrouped at the top.
 const allNavItems = [
 { label: "Dashboard", icon: LayoutDashboard, path: "/" },
-{ label: "Projects", icon: Briefcase, path: "/projects" },
-{ label: "Transactions", icon: ArrowLeftRight, path: "/transactions" },
-{ label: "Project P&L", icon: FolderKanban, path: "/project-pnl" },
+{ label: "Projects", icon: Briefcase, path: "/projects", group: "Real Estate Portfolio" },
+{ label: "Project P&L", icon: FolderKanban, path: "/project-pnl", group: "Real Estate Portfolio" },
+{ label: "Billing Cycles", icon: Receipt, path: "/billing-cycles", group: "Real Estate Portfolio" },
+{ label: "Receivables", icon: FileText, path: "/receivables", group: "Real Estate Portfolio" },
 { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
 { label: "Payment Approvals", icon: CircleDollarSign, path: "/payment-approvals" },
-{ label: "Supplier Masterlist", icon: Users, path: "/payees" },
-{ label: "Billing Cycles", icon: Receipt, path: "/billing-cycles" },
 { label: "Receiving Items", icon: PackageCheck, path: "/receiving-items" },
 { label: "Materials History", icon: Package, path: "/materials-history" },
-{ label: "Receivables", icon: FileText, path: "/receivables" },
+{ label: "Transactions", icon: ArrowLeftRight, path: "/transactions" },
 { label: "Payables", icon: CreditCard, path: "/payables" },
+{ label: "Supplier Masterlist", icon: Users, path: "/payees" },
 { label: "Bank Accounts", icon: Building2, path: "/bank-accounts" },
 { label: "Bank Reconciliation", icon: RefreshCw, path: "/bank-reconciliation" },
 { label: "Working Capital Loans", icon: Landmark, path: "/working-capital-loans" },
@@ -47,24 +48,46 @@ export default function Sidebar() {
          </div>
        </div>
 
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-              isActive ?
-              "bg-primary text-primary-foreground shadow-lg shadow-primary/25" :
-              "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"}`
-              }>
-              
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </Link>);
+      <nav className="flex-1 p-4 overflow-y-auto">
+        {(() => {
+          const ungrouped = navItems.filter(i => !i.group);
+          const groups = [...new Set(navItems.filter(i => i.group).map(i => i.group))];
 
-        })}
+          const renderLink = (item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                isActive ?
+                "bg-primary text-primary-foreground shadow-lg shadow-primary/25" :
+                "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}>
+                <item.icon className="w-4 h-4" />
+                {item.label}
+              </Link>
+            );
+          };
+
+          return (
+            <div className="space-y-1">
+              {ungrouped.map(renderLink)}
+              {groups.map(group => {
+                const groupItems = navItems.filter(i => i.group === group);
+                return (
+                  <div key={group} className="mt-3">
+                    <div className="px-3 pt-2 pb-1">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">{group}</p>
+                    </div>
+                    <div className="space-y-1">
+                      {groupItems.map(renderLink)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
       </nav>
 
       <div className="p-4 border-t border-sidebar-border">
