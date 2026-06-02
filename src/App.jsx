@@ -28,6 +28,7 @@ import BillingCycles from './pages/BillingCycles';
 import ReceivingItems from './pages/ReceivingItems';
 import AuditTrail from './pages/AuditTrail';
 import PPEAssets from './pages/PPEAssets';
+import MaterialsHistory from './pages/MaterialsHistory';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -78,6 +79,7 @@ const AuthenticatedApp = () => {
         <Route path="/receiving-items" element={<ReceivingItems />} />
         <Route path="/audit-trail" element={<AuditTrail />} />
         <Route path="/ppe-assets" element={<PPEAssets />} />
+        <Route path="/materials-history" element={<MaterialsHistory />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
