@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Building2, Pencil, Trash2, Home } from "lucide-react";
+import { Plus, Building2, Pencil, Trash2, Home, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import UnitFormDialog from "@/components/realestate/UnitFormDialog";
+import BulkEditDialog from "@/components/realestate/BulkEditDialog";
 
 const statusStyles = {
   available_for_sale: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -40,6 +42,8 @@ export default function CondoUnits() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [showBulkEdit, setShowBulkEdit] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
   const queryClient = useQueryClient();
 
   const { data: units = [], isLoading } = useQuery({
@@ -61,6 +65,27 @@ export default function CondoUnits() {
     mutationFn: (id) => base44.entities.CondoUnit.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["condo-units"] }),
   });
+
+  const bulkUpdateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.CondoUnit.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["condo-units"] }),
+  });
+
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(u => u.id)));
+    }
+  };
 
   const filtered = statusFilter === "all" ? units : units.filter(u => u.status === statusFilter);
 
@@ -96,20 +121,42 @@ export default function CondoUnits() {
         ))}
       </div>
 
-      {/* Filter */}
-      <div className="flex items-center gap-3">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="available_for_sale">For Sale</SelectItem>
-            <SelectItem value="available_for_lease">For Lease</SelectItem>
-            <SelectItem value="reserved">Reserved</SelectItem>
-            <SelectItem value="sold">Sold</SelectItem>
-            <SelectItem value="leased">Leased</SelectItem>
-            <SelectItem value="under_renovation">Renovation</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* Filter and Bulk Actions */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="available_for_sale">For Sale</SelectItem>
+              <SelectItem value="available_for_lease">For Lease</SelectItem>
+              <SelectItem value="reserved">Reserved</SelectItem>
+              <SelectItem value="sold">Sold</SelectItem>
+              <SelectItem value="leased">Leased</SelectItem>
+              <SelectItem value="under_renovation">Renovation</SelectItem>
+            </SelectContent>
+          </Select>
+          {filtered.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowBulkEdit(true)}
+              disabled={selectedIds.size === 0}
+            >
+              <Square className="w-4 h-4 mr-2" />
+              Bulk Edit {selectedIds.size > 0 && `(${selectedIds.size})`}
+            </Button>
+          )}
+        </div>
+        {selectedIds.size > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedIds(new Set())}
+          >
+            Clear selection
+          </Button>
+        )}
       </div>
 
       {/* Grid */}
@@ -122,11 +169,23 @@ export default function CondoUnits() {
       )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map(u => (
-          <div key={u.id} className="bg-card border border-border rounded-2xl p-5 hover:shadow-md transition-shadow space-y-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="font-bold text-foreground text-lg">Unit {u.unit_number}</p>
-                {u.building && <p className="text-sm text-muted-foreground">{u.building}{u.floor ? ` · Floor ${u.floor}` : ""}</p>}
+          <div
+            key={u.id}
+            className={`bg-card border border-border rounded-2xl p-5 hover:shadow-md transition-shadow space-y-3 ${
+              selectedIds.has(u.id) ? "ring-2 ring-primary/40" : ""
+            }`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2 flex-1">
+                <Checkbox
+                  checked={selectedIds.has(u.id)}
+                  onCheckedChange={() => toggleSelect(u.id)}
+                  className="mt-1 flex-shrink-0"
+                />
+                <div className="flex-1">
+                  <p className="font-bold text-foreground text-lg">Unit {u.unit_number}</p>
+                  {u.building && <p className="text-sm text-muted-foreground">{u.building}{u.floor ? ` · Floor ${u.floor}` : ""}</p>}
+                </div>
               </div>
               <Badge variant="outline" className={`text-xs ${statusStyles[u.status]}`}>
                 {statusLabels[u.status]}
@@ -180,6 +239,13 @@ export default function CondoUnits() {
           ? updateMutation.mutateAsync({ id: editing.id, data })
           : createMutation.mutateAsync(data)
         }
+      />
+
+      <BulkEditDialog
+        open={showBulkEdit}
+        onOpenChange={setShowBulkEdit}
+        units={filtered}
+        onSubmit={(update) => bulkUpdateMutation.mutateAsync(update)}
       />
     </div>
   );
