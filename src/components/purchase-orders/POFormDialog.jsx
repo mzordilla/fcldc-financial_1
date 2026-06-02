@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -56,6 +56,27 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
     queryFn: () => base44.entities.ChartOfAccount.list("account_code", 200),
     enabled: open,
   });
+
+  const { data: historicalPOs = [] } = useQuery({
+    queryKey: ["purchase_orders_for_autocomplete"],
+    queryFn: () => base44.entities.PurchaseOrder.list("-requested_date", 500),
+    enabled: open,
+  });
+
+  // Build deduplicated material suggestions from all historical line items
+  // Keep the most recent entry per description (lowest index = most recent since sorted by -requested_date)
+  const materialSuggestions = useMemo(() => {
+    const seen = new Map();
+    historicalPOs.forEach((po) => {
+      (po.line_items || []).forEach((item) => {
+        const key = (item.description || "").toLowerCase().trim();
+        if (key && !seen.has(key)) {
+          seen.set(key, { ...item, supplier_name: po.supplier_name });
+        }
+      });
+    });
+    return Array.from(seen.values()).sort((a, b) => (a.description || "").localeCompare(b.description || ""));
+  }, [historicalPOs]);
 
   useEffect(() => {
     if (open) {
@@ -188,7 +209,10 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
                 </table>
               </div>
             )}
-            <LineItemAdd onAdd={(item) => setForm(prev => ({ ...prev, line_items: [...(prev.line_items || []), item] }))} />
+            <LineItemAdd
+              onAdd={(item) => setForm(prev => ({ ...prev, line_items: [...(prev.line_items || []), item] }))}
+              suggestions={materialSuggestions}
+            />
           </div>
 
           <div className="space-y-1.5">
