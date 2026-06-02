@@ -31,13 +31,39 @@ export default function Tenants() {
     queryFn: () => base44.entities.CondoUnit.list("-created_date", 200),
   });
 
+  const { data: listings = [] } = useQuery({
+    queryKey: ["property-listings"],
+    queryFn: () => base44.entities.PropertyListing.list("-created_date", 200),
+  });
+
+  // When a tenant is active, auto-mark the linked for_lease listing as "leased"
+  // and the linked CondoUnit as "leased"
+  const cascadeLeaseStatus = async (data) => {
+    if (data.status !== "active" || !data.unit_id) return;
+    const listing = listings.find(l => l.unit_id === data.unit_id && l.listing_type === "for_lease" && l.status !== "leased");
+    if (listing) {
+      await base44.entities.PropertyListing.update(listing.id, { status: "leased" });
+      queryClient.invalidateQueries({ queryKey: ["property-listings"] });
+    }
+    await base44.entities.CondoUnit.update(data.unit_id, { status: "leased" });
+    queryClient.invalidateQueries({ queryKey: ["condo-units"] });
+  };
+
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Tenant.create(data),
+    mutationFn: async (data) => {
+      const tenant = await base44.entities.Tenant.create(data);
+      await cascadeLeaseStatus(data);
+      return tenant;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tenants"] }),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Tenant.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      const tenant = await base44.entities.Tenant.update(id, data);
+      await cascadeLeaseStatus(data);
+      return tenant;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tenants"] }),
   });
 

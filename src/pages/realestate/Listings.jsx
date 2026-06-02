@@ -35,13 +35,33 @@ export default function Listings() {
     queryFn: () => base44.entities.CondoUnit.list("-created_date", 200),
   });
 
+  // When a listing is marked sold/leased, auto-update the linked CondoUnit status
+  const cascadeUnitStatus = async (data) => {
+    if (!data.unit_id) return;
+    if (data.status === "sold") {
+      await base44.entities.CondoUnit.update(data.unit_id, { status: "sold" });
+      queryClient.invalidateQueries({ queryKey: ["condo-units"] });
+    } else if (data.status === "leased") {
+      await base44.entities.CondoUnit.update(data.unit_id, { status: "leased" });
+      queryClient.invalidateQueries({ queryKey: ["condo-units"] });
+    }
+  };
+
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.PropertyListing.create(data),
+    mutationFn: async (data) => {
+      const listing = await base44.entities.PropertyListing.create(data);
+      await cascadeUnitStatus(data);
+      return listing;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["property-listings"] }),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.PropertyListing.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      const listing = await base44.entities.PropertyListing.update(id, data);
+      await cascadeUnitStatus(data);
+      return listing;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["property-listings"] }),
   });
 
