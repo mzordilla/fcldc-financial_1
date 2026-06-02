@@ -77,7 +77,7 @@ export default function Tenants() {
     if (t.status !== "active" || !t.lease_end) return false;
     return differenceInDays(new Date(t.lease_end), new Date()) <= 30;
   }).length;
-  const totalMonthlyRent = tenants.filter(t => t.status === "active").reduce((s, t) => s + (t.monthly_rent || 0), 0);
+  const totalMonthlyRent = tenants.filter(t => t.status === "active").reduce((s, t) => s + (t.monthly_rent || 0) + (t.association_dues || 0), 0);
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
