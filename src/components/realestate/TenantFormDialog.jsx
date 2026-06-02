@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 const defaults = {
   full_name: "", email: "", contact_number: "", unit_id: "", unit_number: "",
-  building: "", lease_start: "", lease_end: "", monthly_rent: "",
+  building: "", area_sqm: "", lease_start: "", lease_end: "", monthly_rent: "",
   deposit_amount: "", association_dues_per_sqm: "", association_dues: "", status: "active", notes: "",
 };
 
@@ -28,6 +28,7 @@ export default function TenantFormDialog({ open, onOpenChange, initialData, unit
     if (unit) {
       set("unit_number", unit.unit_number || "");
       set("building", unit.building || "");
+      set("area_sqm", unit.area_sqm || 0);
       // Auto-calculate association dues: area_sqm × association_dues_per_sqm
       const area = unit.area_sqm || 0;
       const ratePerSqm = unit.price_per_sqm_rent || 0;
@@ -83,6 +84,12 @@ export default function TenantFormDialog({ open, onOpenChange, initialData, unit
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label>Unit Area (sqm)</Label>
+              <Input type="number" value={form.area_sqm} disabled placeholder="Auto-filled from unit" />
             </div>
             <div className="space-y-1">
               <Label>Lease Start *</Label>
