@@ -16,9 +16,14 @@ export default function TenantFormDialog({ open, onOpenChange, initialData, unit
   const [form, setForm] = useState(defaults);
   const [saving, setSaving] = useState(false);
 
+  // Auto-calculate association dues when area or rate changes
   useEffect(() => {
-    setForm(initialData ? { ...defaults, ...initialData } : defaults);
-  }, [initialData, open]);
+    const area = form.area_sqm ? Number(form.area_sqm) : 0;
+    const rate = form.association_dues_per_sqm ? Number(form.association_dues_per_sqm) : 0;
+    if (area > 0 && rate > 0) {
+      setForm(f => ({ ...f, association_dues: (area * rate).toString() }));
+    }
+  }, [form.area_sqm, form.association_dues_per_sqm]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -29,12 +34,7 @@ export default function TenantFormDialog({ open, onOpenChange, initialData, unit
       set("unit_number", unit.unit_number || "");
       set("building", unit.building || "");
       set("area_sqm", unit.area_sqm || 0);
-      // Auto-calculate association dues: area_sqm × association_dues_per_sqm
-      const area = unit.area_sqm || 0;
-      const ratePerSqm = unit.price_per_sqm_rent || 0;
-      const dues = area * ratePerSqm;
-      set("association_dues_per_sqm", ratePerSqm.toString());
-      set("association_dues", dues.toString());
+      set("association_dues_per_sqm", (unit.price_per_sqm_rent || 0).toString());
     }
   };
 
