@@ -45,11 +45,11 @@
     },
     "price_per_sqm": {
       "type": "number",
-      "description": "Price per square meter"
+      "description": "Price per square meter for selling"
     },
     "selling_price": {
       "type": "number",
-      "description": "Listed selling price"
+      "description": "Listed selling price (computed: area_sqm \u00d7 price_per_sqm)"
     },
     "vat_percentage": {
       "type": "number",
@@ -61,9 +61,13 @@
       "default": 0,
       "description": "Closing fees percentage on the selling price (e.g. 3 for 3%)"
     },
+    "price_per_sqm_rent": {
+      "type": "number",
+      "description": "Monthly rent per square meter"
+    },
     "monthly_rent": {
       "type": "number",
-      "description": "Monthly rental rate"
+      "description": "Monthly rental rate (computed: area_sqm \u00d7 price_per_sqm_rent)"
     },
     "floor_plan_url": {
       "type": "string",

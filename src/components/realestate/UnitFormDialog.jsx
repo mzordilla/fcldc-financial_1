@@ -10,7 +10,8 @@ const defaults = {
   unit_number: "", building: "", floor: "", unit_type: "1br",
   status: "available_for_sale", area_sqm: "", price_per_sqm: "", selling_price: "",
   vat_percentage: 0, closing_fees_percentage: 0,
-  monthly_rent: "", description: "", amenities: "", parking_slots: 0, notes: "",
+  price_per_sqm_rent: "", monthly_rent: "",
+  description: "", amenities: "", parking_slots: 0, notes: "",
 };
 
 export default function UnitFormDialog({ open, onOpenChange, initialData, onSubmit }) {
@@ -32,6 +33,15 @@ export default function UnitFormDialog({ open, onOpenChange, initialData, onSubm
     }
   }, [form.area_sqm, form.price_per_sqm]);
 
+  // Auto-calculate monthly rent when price_per_sqm_rent or area_sqm changes
+  useEffect(() => {
+    const area = Number(form.area_sqm) || 0;
+    const pricePerSqmRent = Number(form.price_per_sqm_rent) || 0;
+    if (area > 0 && pricePerSqmRent > 0) {
+      set("monthly_rent", (area * pricePerSqmRent).toString());
+    }
+  }, [form.area_sqm, form.price_per_sqm_rent]);
+
   const sellingPrice = Number(form.selling_price) || 0;
   const vatAmt = sellingPrice * (Number(form.vat_percentage) || 0) / 100;
   const closingAmt = sellingPrice * (Number(form.closing_fees_percentage) || 0) / 100;
@@ -49,6 +59,7 @@ export default function UnitFormDialog({ open, onOpenChange, initialData, onSubm
       selling_price: form.selling_price ? Number(form.selling_price) : undefined,
       vat_percentage: Number(form.vat_percentage) || 0,
       closing_fees_percentage: Number(form.closing_fees_percentage) || 0,
+      price_per_sqm_rent: form.price_per_sqm_rent ? Number(form.price_per_sqm_rent) : undefined,
       monthly_rent: form.monthly_rent ? Number(form.monthly_rent) : undefined,
       parking_slots: Number(form.parking_slots) || 0,
     });
@@ -124,6 +135,10 @@ export default function UnitFormDialog({ open, onOpenChange, initialData, onSubm
               <Label>Closing Fees (%)</Label>
               <Input type="number" min="0" max="100" step="0.01" value={form.closing_fees_percentage} onChange={e => set("closing_fees_percentage", e.target.value)} placeholder="e.g. 3" />
             </div>
+            <div className="space-y-1">
+              <Label>Price per sqm Rent (₱)</Label>
+              <Input type="number" value={form.price_per_sqm_rent} onChange={e => set("price_per_sqm_rent", e.target.value)} placeholder="Auto-calculates monthly rent" />
+            </div>
           </div>
 
           {sellingPrice > 0 && (
@@ -153,10 +168,6 @@ export default function UnitFormDialog({ open, onOpenChange, initialData, onSubm
           )}
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label>Monthly Rent (₱)</Label>
-              <Input type="number" value={form.monthly_rent} onChange={e => set("monthly_rent", e.target.value)} />
-            </div>
             <div className="space-y-1">
               <Label>Parking Slots</Label>
               <Input type="number" value={form.parking_slots} onChange={e => set("parking_slots", e.target.value)} />
