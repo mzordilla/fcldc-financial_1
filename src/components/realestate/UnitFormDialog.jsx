@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 const defaults = {
   unit_number: "", building: "", floor: "", unit_type: "1br",
   status: "available_for_sale", area_sqm: "", selling_price: "",
+  vat_percentage: 0, closing_fees_percentage: 0,
   monthly_rent: "", description: "", amenities: "", parking_slots: 0, notes: "",
 };
 
@@ -29,6 +30,8 @@ export default function UnitFormDialog({ open, onOpenChange, initialData, onSubm
       ...form,
       area_sqm: form.area_sqm ? Number(form.area_sqm) : undefined,
       selling_price: form.selling_price ? Number(form.selling_price) : undefined,
+      vat_percentage: Number(form.vat_percentage) || 0,
+      closing_fees_percentage: Number(form.closing_fees_percentage) || 0,
       monthly_rent: form.monthly_rent ? Number(form.monthly_rent) : undefined,
       parking_slots: Number(form.parking_slots) || 0,
     });
@@ -91,6 +94,14 @@ export default function UnitFormDialog({ open, onOpenChange, initialData, onSubm
             <div className="space-y-1">
               <Label>Selling Price (₱)</Label>
               <Input type="number" value={form.selling_price} onChange={e => set("selling_price", e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>VAT (%)</Label>
+              <Input type="number" min="0" max="100" step="0.01" value={form.vat_percentage} onChange={e => set("vat_percentage", e.target.value)} placeholder="e.g. 12" />
+            </div>
+            <div className="space-y-1">
+              <Label>Closing Fees (%)</Label>
+              <Input type="number" min="0" max="100" step="0.01" value={form.closing_fees_percentage} onChange={e => set("closing_fees_percentage", e.target.value)} placeholder="e.g. 3" />
             </div>
             <div className="space-y-1">
               <Label>Monthly Rent (₱)</Label>

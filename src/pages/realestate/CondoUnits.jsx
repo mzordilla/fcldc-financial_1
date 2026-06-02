@@ -141,9 +141,13 @@ export default function CondoUnits() {
 
             <div className="grid grid-cols-2 gap-2">
               {u.selling_price && (
-                <div className="bg-emerald-50 rounded-lg p-2">
+                <div className="bg-emerald-50 rounded-lg p-2 col-span-2">
                   <p className="text-xs text-muted-foreground">Selling Price</p>
                   <p className="font-semibold text-emerald-700 text-sm">{fmt(u.selling_price)}</p>
+                  <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
+                    {u.vat_percentage > 0 && <span>VAT {u.vat_percentage}% = {fmt(u.selling_price * u.vat_percentage / 100)}</span>}
+                    {u.closing_fees_percentage > 0 && <span>Closing {u.closing_fees_percentage}% = {fmt(u.selling_price * u.closing_fees_percentage / 100)}</span>}
+                  </div>
                 </div>
               )}
               {u.monthly_rent && (

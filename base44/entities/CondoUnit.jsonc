@@ -47,6 +47,16 @@
       "type": "number",
       "description": "Listed selling price"
     },
+    "vat_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "VAT percentage on the selling price (e.g. 12 for 12%)"
+    },
+    "closing_fees_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Closing fees percentage on the selling price (e.g. 3 for 3%)"
+    },
     "monthly_rent": {
       "type": "number",
       "description": "Monthly rental rate"
