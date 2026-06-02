@@ -8,7 +8,8 @@
         "admin",
         "disbursement",
         "accounting",
-        "procurement"
+        "procurement",
+        "marketing"
       ],
       "default": "procurement",
       "description": "User role controlling access level"
