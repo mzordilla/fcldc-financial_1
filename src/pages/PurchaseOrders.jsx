@@ -11,6 +11,7 @@ import POFormDialog from "../components/purchase-orders/POFormDialog";
 import POExcelImportDialog from "../components/purchase-orders/POExcelImportDialog";
 import POToPayableDialog from "../components/purchase-orders/POToPayableDialog";
 import ReceiptUploadDialog from "../components/purchase-orders/ReceiptUploadDialog";
+import NoticeOfDeliveryPDF from "../components/purchase-orders/NoticeOfDeliveryPDF";
 import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
 import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
 
@@ -327,6 +328,9 @@ export default function PurchaseOrders() {
                       <Button size="sm" variant="outline" onClick={() => setUploadingReceipt(po)} className="text-primary hover:text-primary">
                         <Package className="w-3.5 h-3.5 mr-1.5" /> Receipt
                       </Button>
+                    )}
+                    {po.approval_status === "approved" && (
+                      <NoticeOfDeliveryPDF po={po} />
                     )}
                     {po.approval_status === "approved" && (
                       <div title={!po.receipt_url ? "Upload a receipt before converting to payable" : ""}>
