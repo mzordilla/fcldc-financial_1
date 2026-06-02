@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -68,6 +68,12 @@ export default function ProjectDetail() {
   const { data: project, isLoading } = useQuery({
     queryKey: ["project", id],
     queryFn: () => base44.entities.Project.list("id", 1).then(items => items.find(p => p.id === id))
+  });
+
+  const { data: billingCycles = [] } = useQuery({
+    queryKey: ["billing_cycles_project", project?.project_name],
+    queryFn: () => base44.entities.BillingCycle.filter({ project_name: project.project_name }, "-period_start", 100),
+    enabled: !!project?.project_name,
   });
 
   const updateMutation = useMutation({
@@ -173,6 +179,91 @@ export default function ProjectDetail() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Billing Cycles / Progress Billings */}
+      <div className="bg-card rounded-2xl border border-border overflow-hidden">
+        <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
+          <Receipt className="w-4 h-4 text-primary" />
+          <h2 className="font-semibold text-foreground">Progress Billings</h2>
+          <span className="ml-auto text-xs text-muted-foreground">{billingCycles.length} billing cycle{billingCycles.length !== 1 ? "s" : ""}</span>
+        </div>
+
+        {billingCycles.length === 0 ? (
+          <p className="text-center py-10 text-muted-foreground text-sm">No billing cycles recorded for this project.</p>
+        ) : (
+          <>
+            {/* Summary bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 border-b border-border">
+              {[
+                { label: "Contract Amount", value: `₱${(project.contract_amount || 0).toLocaleString()}`, color: "" },
+                { label: "Total Billed", value: `₱${billingCycles.reduce((s, b) => s + (b.billing_amount || 0), 0).toLocaleString()}`, color: "text-primary" },
+                { label: "Net Collected", value: `₱${billingCycles.reduce((s, b) => s + (b.net_billing_amount || 0), 0).toLocaleString()}`, color: "text-chart-2" },
+                { label: "Latest Progress", value: `${Math.max(...billingCycles.map(b => b.cumulative_percentage || 0), 0)}%`, color: "text-chart-3" },
+              ].map((item, i) => (
+                <div key={i} className="px-5 py-3 border-r border-border last:border-r-0">
+                  <p className="text-xs text-muted-foreground">{item.label}</p>
+                  <p className={`font-bold text-sm mt-0.5 ${item.color || "text-foreground"}`}>{item.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Progress bar: billed vs contract */}
+            <div className="px-6 py-4 border-b border-border">
+              <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
+                <span>Billed vs Contract</span>
+                <span>{Math.round((billingCycles.reduce((s, b) => s + (b.billing_amount || 0), 0) / (project.contract_amount || 1)) * 100)}%</span>
+              </div>
+              <Progress value={Math.min((billingCycles.reduce((s, b) => s + (b.billing_amount || 0), 0) / (project.contract_amount || 1)) * 100, 100)} className="h-2" />
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Period</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden sm:table-cell">Billing #</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">This Period %</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Cumulative %</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Billing Amount</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden md:table-cell">Retention</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Net Amount</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {billingCycles.map((b, i) => (
+                    <tr key={b.id} className={`border-b border-border/50 hover:bg-muted/20 transition-colors ${i % 2 === 0 ? "" : "bg-muted/5"}`}>
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-foreground">{b.period_label || "—"}</p>
+                        {b.due_date && <p className="text-xs text-muted-foreground">Due: {b.due_date}</p>}
+                      </td>
+                      <td className="px-4 py-3 text-xs font-mono text-muted-foreground hidden sm:table-cell">{b.billing_number || "—"}</td>
+                      <td className="px-4 py-3 text-right text-foreground">{b.accomplishment_percentage ?? 0}%</td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="text-foreground font-medium">{b.cumulative_percentage ?? 0}%</span>
+                          <div className="w-16 bg-muted rounded-full h-1.5 hidden lg:block">
+                            <div className="bg-primary h-1.5 rounded-full" style={{ width: `${Math.min(b.cumulative_percentage || 0, 100)}%` }} />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right font-medium text-foreground">₱{(b.billing_amount || 0).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right text-chart-3 hidden md:table-cell">₱{(b.retention_amount || 0).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-primary">₱{(b.net_billing_amount || 0).toLocaleString()}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant="outline" className={`text-xs ${b.approval_status === "approved" ? "bg-primary/10 text-primary border-primary/20" : b.approval_status === "rejected" ? "bg-destructive/10 text-destructive border-destructive/20" : "bg-chart-3/10 text-chart-3 border-chart-3/20"}`}>
+                          {b.approval_status || "pending"}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
 
       <AddFormDialog
