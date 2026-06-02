@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 const defaults = {
   unit_number: "", building: "", floor: "", unit_type: "1br",
-  status: "available_for_sale", area_sqm: "", selling_price: "",
+  status: "available_for_sale", area_sqm: "", price_per_sqm: "", selling_price: "",
   vat_percentage: 0, closing_fees_percentage: 0,
   monthly_rent: "", description: "", amenities: "", parking_slots: 0, notes: "",
 };
@@ -23,6 +23,15 @@ export default function UnitFormDialog({ open, onOpenChange, initialData, onSubm
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  // Auto-calculate selling price when price_per_sqm or area_sqm changes
+  useEffect(() => {
+    const area = Number(form.area_sqm) || 0;
+    const pricePerSqm = Number(form.price_per_sqm) || 0;
+    if (area > 0 && pricePerSqm > 0) {
+      set("selling_price", (area * pricePerSqm).toString());
+    }
+  }, [form.area_sqm, form.price_per_sqm]);
+
   const sellingPrice = Number(form.selling_price) || 0;
   const vatAmt = sellingPrice * (Number(form.vat_percentage) || 0) / 100;
   const closingAmt = sellingPrice * (Number(form.closing_fees_percentage) || 0) / 100;
@@ -36,6 +45,7 @@ export default function UnitFormDialog({ open, onOpenChange, initialData, onSubm
     await onSubmit({
       ...form,
       area_sqm: form.area_sqm ? Number(form.area_sqm) : undefined,
+      price_per_sqm: form.price_per_sqm ? Number(form.price_per_sqm) : undefined,
       selling_price: form.selling_price ? Number(form.selling_price) : undefined,
       vat_percentage: Number(form.vat_percentage) || 0,
       closing_fees_percentage: Number(form.closing_fees_percentage) || 0,
@@ -69,6 +79,10 @@ export default function UnitFormDialog({ open, onOpenChange, initialData, onSubm
             <div className="space-y-1">
               <Label>Area (sqm)</Label>
               <Input type="number" value={form.area_sqm} onChange={e => set("area_sqm", e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>Price per sqm (₱)</Label>
+              <Input type="number" value={form.price_per_sqm} onChange={e => set("price_per_sqm", e.target.value)} placeholder="Auto-calculates selling price" />
             </div>
             <div className="space-y-1">
               <Label>Unit Type *</Label>
