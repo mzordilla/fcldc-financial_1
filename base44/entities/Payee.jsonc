@@ -18,6 +18,10 @@
       ],
       "description": "Type of payee"
     },
+    "chart_of_account": {
+      "type": "string",
+      "description": "Linked Chart of Account name for this payee"
+    },
     "contact": {
       "type": "string",
       "description": "Contact number or email"

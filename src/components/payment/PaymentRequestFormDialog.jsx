@@ -36,6 +36,12 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
     queryFn: () => base44.entities.Project.list("-created_date", 200),
   });
 
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ["chartofaccounts"],
+    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 200),
+    enabled: open,
+  });
+
   useEffect(() => {
     if (open) {
       if (initialData) {
@@ -201,13 +207,20 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
               <Select value={form.category} onValueChange={v => setField("category", v)}>
                 <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="supplier_invoice">Supplier Invoice</SelectItem>
-                  <SelectItem value="subcontractor">Subcontractor</SelectItem>
-                  <SelectItem value="labor">Labor</SelectItem>
-                  <SelectItem value="equipment">Equipment</SelectItem>
-                  <SelectItem value="expense_reimbursement">Expense Reimbursement</SelectItem>
-                  <SelectItem value="utilities">Utilities</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  {chartOfAccounts.filter(a => a.is_active !== false && a.category).map(a => (
+                    <SelectItem key={a.id} value={a.category}>
+                      {a.account_code ? `${a.account_code} — ` : ""}{a.account_name}
+                    </SelectItem>
+                  ))}
+                  {chartOfAccounts.filter(a => a.is_active !== false && a.category).length === 0 && <>
+                    <SelectItem value="supplier_invoice">Supplier Invoice</SelectItem>
+                    <SelectItem value="subcontractor">Subcontractor</SelectItem>
+                    <SelectItem value="labor">Labor</SelectItem>
+                    <SelectItem value="equipment">Equipment</SelectItem>
+                    <SelectItem value="expense_reimbursement">Expense Reimbursement</SelectItem>
+                    <SelectItem value="utilities">Utilities</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </>}
                 </SelectContent>
               </Select>
             </div>

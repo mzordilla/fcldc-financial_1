@@ -31,11 +31,17 @@ const categoryStyles = {
   other: "bg-muted text-muted-foreground border-border",
 };
 
-const defaultForm = { name: "", category: "", contact: "", credit_limit: "", bank_account_name: "", bank_account_number: "", terms_of_payment: "", vat_status: "", is_accredited: false, notes: "" };
+const defaultForm = { name: "", category: "", chart_of_account: "", contact: "", credit_limit: "", bank_account_name: "", bank_account_number: "", terms_of_payment: "", vat_status: "", is_accredited: false, notes: "" };
 
 function PayeeFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
   const [form, setForm] = useState(defaultForm);
   const [saving, setSaving] = useState(false);
+
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ["chartofaccounts"],
+    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 200),
+    enabled: open,
+  });
 
   // Properly sync form when dialog opens with initialData
   useEffect(() => {
@@ -91,6 +97,20 @@ function PayeeFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
                 <SelectItem value="government">Government</SelectItem>
                 <SelectItem value="utility">Utility</SelectItem>
                 <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Chart of Account</Label>
+            <Select value={form.chart_of_account || ""} onValueChange={v => set("chart_of_account", v)}>
+              <SelectTrigger><SelectValue placeholder="Link to chart of account..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={null}>— None —</SelectItem>
+                {chartOfAccounts.filter(a => a.is_active !== false).map(a => (
+                  <SelectItem key={a.id} value={a.account_name}>
+                    {a.account_code ? `${a.account_code} — ` : ""}{a.account_name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -309,6 +329,7 @@ export default function Payees() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Contact</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Terms</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">VAT</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Chart of Account</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Accredited</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Outstanding</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Credit Limit</th>
@@ -337,9 +358,14 @@ export default function Payees() {
                       </Badge>
                     ) : <span className="text-muted-foreground text-xs">—</span>}
                   </td>
+                  <td className="px-4 py-3 hidden lg:table-cell">
+                    {p.chart_of_account
+                      ? <Badge variant="secondary" className="text-xs">{p.chart_of_account}</Badge>
+                      : <span className="text-muted-foreground text-xs">—</span>}
+                  </td>
                   <td className="px-4 py-3 hidden md:table-cell">
-                     <button
-                       onClick={() => updateMutation.mutate({ id: p.id, data: { is_accredited: !p.is_accredited } })}
+                    <button
+                      onClick={() => updateMutation.mutate({ id: p.id, data: { is_accredited: !p.is_accredited } })}
                        title={p.is_accredited ? "Accredited — click to revoke" : "Not Accredited — click to accredit"}
                        className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-medium transition-colors ${p.is_accredited ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "bg-muted text-muted-foreground border-border hover:bg-accent"}`}
                      >

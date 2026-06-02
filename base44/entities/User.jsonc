@@ -13,5 +13,6 @@
       "default": "procurement",
       "description": "User role controlling access level"
     }
-  }
+  },
+  "required": []
 }

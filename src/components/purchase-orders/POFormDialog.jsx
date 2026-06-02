@@ -10,6 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Plus } from "lucide-react";
 import LineItemAdd from "./LineItemAdd";
 
+const COA_CATEGORY_LABELS = {
+  project_payment: "Project Payment", material_cost: "Material Cost", labor: "Labor",
+  equipment: "Equipment", subcontractor: "Subcontractor", overhead: "Overhead",
+  permits: "Permits", insurance: "Insurance", bank_reconciliation: "Bank Reconciliation",
+  non_current_assets: "Non-Current Assets", current_assets: "Current Assets",
+  current_liabilities: "Current Liabilities", non_current_liabilities: "Non-Current Liabilities",
+  repair_and_maintenance: "Repair & Maintenance", fixtures: "Fixtures", other: "Other",
+};
+
 const defaultForm = {
   po_number: "",
   supplier_name: "",
@@ -40,6 +49,12 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
   const { data: projects = [] } = useQuery({
     queryKey: ["projects"],
     queryFn: () => base44.entities.Project.list("project_name", 200),
+  });
+
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ["chartofaccounts"],
+    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 200),
+    enabled: open,
   });
 
   useEffect(() => {
@@ -199,12 +214,15 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
               <Select value={form.category} onValueChange={v => set("category", v)}>
                 <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="materials">Materials</SelectItem>
-                  <SelectItem value="equipment">Equipment</SelectItem>
-                  <SelectItem value="subcontractor">Subcontractor</SelectItem>
-                  <SelectItem value="services">Services</SelectItem>
-                  <SelectItem value="utilities">Utilities</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  {chartOfAccounts.filter(a => a.is_active !== false && a.category).map(a => (
+                    <SelectItem key={a.id} value={a.category}>
+                      {a.account_code ? `${a.account_code} — ` : ""}{a.account_name}
+                    </SelectItem>
+                  ))}
+                  {/* fallback defaults if COA not set up */}
+                  {chartOfAccounts.filter(a => a.is_active !== false && a.category).length === 0 && Object.entries(COA_CATEGORY_LABELS).map(([val, label]) => (
+                    <SelectItem key={val} value={val}>{label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

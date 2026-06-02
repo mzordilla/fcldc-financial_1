@@ -22,6 +22,12 @@ const CATEGORIES = [
   { value: "permits", label: "Permits" },
   { value: "insurance", label: "Insurance" },
   { value: "bank_reconciliation", label: "Bank Reconciliation" },
+  { value: "non_current_assets", label: "Non-Current Assets" },
+  { value: "current_assets", label: "Current Assets" },
+  { value: "current_liabilities", label: "Current Liabilities" },
+  { value: "non_current_liabilities", label: "Non-Current Liabilities" },
+  { value: "repair_and_maintenance", label: "Repair & Maintenance" },
+  { value: "fixtures", label: "Fixtures" },
   { value: "fund_transfer", label: "Fund Transfer" },
   { value: "other", label: "Other" },
 ];
