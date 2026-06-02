@@ -25,10 +25,10 @@ export default function AppLayout() {
       <div className="hidden md:block">
         <Sidebar />
       </div>
-      <main className="md:ml-64 pb-20 md:pb-0">
+      <main className="md:ml-64 md:pb-0 pb-20">
         {allowed ? <Outlet /> : <AccessDenied />}
       </main>
       <MobileNav />
-    </div>
-  );
+    </div>);
+
 }
