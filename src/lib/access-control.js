@@ -1,6 +1,7 @@
 // Define which routes each role can access
 export const roleAccess = {
   admin: "*", // full access
+  // Real estate routes are admin-only by default
   disbursement: ["/", "/bank-accounts", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/payables", "/chart-of-accounts", "/billing-cycles", "/receiving-items"],
   accounting: ["/", "/projects", "/project-pnl", "/billing-cycles", "/receivables", "/payables", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/chart-of-accounts", "/receiving-items"],
   procurement: ["/", "/purchase-orders", "/payment-approvals", "/payees", "/receiving-items"],

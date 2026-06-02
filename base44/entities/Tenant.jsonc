@@ -1,0 +1,68 @@
+{
+  "name": "Tenant",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Tenant full name"
+    },
+    "email": {
+      "type": "string",
+      "description": "Tenant email address"
+    },
+    "contact_number": {
+      "type": "string",
+      "description": "Tenant contact number"
+    },
+    "unit_id": {
+      "type": "string",
+      "description": "Linked CondoUnit ID"
+    },
+    "unit_number": {
+      "type": "string",
+      "description": "Unit number (denormalized)"
+    },
+    "building": {
+      "type": "string",
+      "description": "Building name (denormalized)"
+    },
+    "lease_start": {
+      "type": "string",
+      "format": "date",
+      "description": "Lease start date"
+    },
+    "lease_end": {
+      "type": "string",
+      "format": "date",
+      "description": "Lease end date"
+    },
+    "monthly_rent": {
+      "type": "number",
+      "description": "Agreed monthly rent"
+    },
+    "deposit_amount": {
+      "type": "number",
+      "description": "Security deposit amount"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "expired",
+        "terminated",
+        "pending"
+      ],
+      "default": "active",
+      "description": "Lease status"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "full_name",
+    "unit_id",
+    "lease_start",
+    "monthly_rent"
+  ]
+}

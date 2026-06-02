@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, Banknote, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, BookOpen, ScanLine, Users, RefreshCw, Receipt, PackageCheck, ClipboardList, Boxes, Package, Home } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, Banknote, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, BookOpen, ScanLine, Users, RefreshCw, Receipt, PackageCheck, ClipboardList, Boxes, Package, Home, List, PieChart } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { navItemsByRole } from "@/lib/access-control";
@@ -7,10 +7,14 @@ import { navItemsByRole } from "@/lib/access-control";
 // Groups define sidebar sections. Items without a group go ungrouped at the top.
 const allNavItems = [
 { label: "Dashboard", icon: LayoutDashboard, path: "/" },
-{ label: "Projects", icon: Briefcase, path: "/projects", group: "Real Estate Portfolio" },
-{ label: "Project P&L", icon: FolderKanban, path: "/project-pnl", group: "Real Estate Portfolio" },
-{ label: "Billing Cycles", icon: Receipt, path: "/billing-cycles", group: "Real Estate Portfolio" },
-{ label: "Receivables", icon: FileText, path: "/receivables", group: "Real Estate Portfolio" },
+{ label: "Condo Units", icon: Home, path: "/re/units", group: "Real Estate Portfolio" },
+{ label: "Tenants", icon: Users, path: "/re/tenants", group: "Real Estate Portfolio" },
+{ label: "Listings", icon: List, path: "/re/listings", group: "Real Estate Portfolio" },
+{ label: "Portfolio Reports", icon: PieChart, path: "/re/reports", group: "Real Estate Portfolio" },
+{ label: "Projects", icon: Briefcase, path: "/projects" },
+{ label: "Project P&L", icon: FolderKanban, path: "/project-pnl" },
+{ label: "Billing Cycles", icon: Receipt, path: "/billing-cycles" },
+{ label: "Receivables", icon: FileText, path: "/receivables" },
 { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
 { label: "Payment Approvals", icon: CircleDollarSign, path: "/payment-approvals" },
 { label: "Receiving Items", icon: PackageCheck, path: "/receiving-items" },

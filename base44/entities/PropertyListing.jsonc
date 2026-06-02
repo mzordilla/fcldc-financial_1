@@ -1,0 +1,76 @@
+{
+  "name": "PropertyListing",
+  "type": "object",
+  "properties": {
+    "unit_id": {
+      "type": "string",
+      "description": "Linked CondoUnit ID"
+    },
+    "unit_number": {
+      "type": "string",
+      "description": "Unit number (denormalized)"
+    },
+    "building": {
+      "type": "string",
+      "description": "Building name"
+    },
+    "listing_type": {
+      "type": "string",
+      "enum": [
+        "for_sale",
+        "for_lease"
+      ],
+      "description": "Type of listing"
+    },
+    "asking_price": {
+      "type": "number",
+      "description": "Asking price or monthly rent"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "under_negotiation",
+        "sold",
+        "leased",
+        "cancelled"
+      ],
+      "default": "active",
+      "description": "Listing status"
+    },
+    "buyer_tenant_name": {
+      "type": "string",
+      "description": "Interested or confirmed buyer/tenant name"
+    },
+    "buyer_tenant_contact": {
+      "type": "string",
+      "description": "Contact number or email"
+    },
+    "date_listed": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the listing was created"
+    },
+    "date_closed": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the deal was closed"
+    },
+    "final_price": {
+      "type": "number",
+      "description": "Final agreed price or rent"
+    },
+    "agent": {
+      "type": "string",
+      "description": "Handling agent or broker"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "unit_id",
+    "listing_type",
+    "asking_price"
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "name": "CondoUnit",
+  "type": "object",
+  "properties": {
+    "unit_number": {
+      "type": "string",
+      "description": "Unit number or identifier"
+    },
+    "building": {
+      "type": "string",
+      "description": "Building or tower name"
+    },
+    "floor": {
+      "type": "string",
+      "description": "Floor level"
+    },
+    "unit_type": {
+      "type": "string",
+      "enum": [
+        "studio",
+        "1br",
+        "2br",
+        "3br",
+        "penthouse",
+        "commercial"
+      ],
+      "description": "Unit type / bedroom count"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "available_for_sale",
+        "available_for_lease",
+        "sold",
+        "leased",
+        "reserved",
+        "under_renovation"
+      ],
+      "default": "available_for_sale",
+      "description": "Current status of the unit"
+    },
+    "area_sqm": {
+      "type": "number",
+      "description": "Floor area in square meters"
+    },
+    "selling_price": {
+      "type": "number",
+      "description": "Listed selling price"
+    },
+    "monthly_rent": {
+      "type": "number",
+      "description": "Monthly rental rate"
+    },
+    "floor_plan_url": {
+      "type": "string",
+      "description": "URL to floor plan image"
+    },
+    "description": {
+      "type": "string",
+      "description": "Unit description and features"
+    },
+    "amenities": {
+      "type": "string",
+      "description": "Comma-separated list of amenities"
+    },
+    "parking_slots": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of parking slots included"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "unit_number",
+    "unit_type",
+    "status"
+  ]
+}
