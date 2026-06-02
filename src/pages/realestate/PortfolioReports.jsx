@@ -67,21 +67,46 @@ export default function PortfolioReports() {
   const closedLeases = listings.filter(l => l.status === "leased");
   const totalSalesValue = closedSales.reduce((s, l) => s + (l.final_price || l.asking_price || 0), 0);
 
-  // Buildings breakdown
+  // Buildings breakdown with occupancy rates
+  const buildingStats = units.reduce((acc, u) => {
+    const b = u.building || "Unknown";
+    if (!acc[b]) acc[b] = { total: 0, leased: 0, sold: 0, available: 0 };
+    acc[b].total += 1;
+    if (u.status === "leased") acc[b].leased += 1;
+    else if (u.status === "sold") acc[b].sold += 1;
+    else if (u.status === "available_for_lease" || u.status === "available_for_sale") acc[b].available += 1;
+    return acc;
+  }, {});
+
   const buildingRent = activeTenants.reduce((acc, t) => {
     const b = t.building || "Unknown";
     acc[b] = (acc[b] || 0) + (t.monthly_rent || 0);
     return acc;
   }, {});
-  const buildingData = Object.entries(buildingRent).map(([name, rent]) => ({ name, rent }));
+
+  const buildingData = Object.entries(buildingStats).map(([name, stats]) => ({
+    name,
+    total: stats.total,
+    leased: stats.leased,
+    sold: stats.sold,
+    available: stats.available,
+    occupancyRate: stats.total > 0 ? Math.round((stats.leased / stats.total) * 100) : 0,
+    rent: buildingRent[name] || 0,
+  }));
+
+  // Overall occupancy rate
+  const totalLeased = units.filter(u => u.status === "leased").length;
+  const totalSold = units.filter(u => u.status === "sold").length;
+  const overallOccupancyRate = units.length > 0 ? Math.round(((totalLeased + totalSold) / units.length) * 100) : 0;
+  const rentalOccupancyRate = units.length > 0 ? Math.round((totalLeased / units.length) * 100) : 0;
 
   const kpis = [
     { label: "Total Units", value: units.length, icon: Home, color: "text-foreground" },
+    { label: "Occupancy Rate", value: `${overallOccupancyRate}%`, icon: TrendingUp, color: "text-emerald-600" },
+    { label: "Rental Occupancy", value: `${rentalOccupancyRate}%`, icon: TrendingUp, color: "text-blue-600" },
     { label: "Active Tenants", value: activeTenants.length, icon: Users, color: "text-emerald-600" },
-    { label: "Active Listings", value: listings.filter(l => l.status === "active").length, icon: List, color: "text-blue-600" },
-    { label: "Monthly Rental Income", value: fmt(totalMonthlyRent), icon: TrendingUp, color: "text-primary" },
-    { label: "Annual Rental Income", value: fmt(annualRent), icon: TrendingUp, color: "text-primary" },
-    { label: "Total Closed Sales Value", value: fmt(totalSalesValue), icon: BarChart2, color: "text-purple-600" },
+    { label: "Monthly Revenue", value: fmt(totalMonthlyRent), icon: TrendingUp, color: "text-primary" },
+    { label: "Annual Revenue", value: fmt(annualRent), icon: TrendingUp, color: "text-primary" },
   ];
 
   return (
@@ -155,18 +180,30 @@ export default function PortfolioReports() {
           ) : <p className="text-muted-foreground text-sm text-center py-8">No data</p>}
         </div>
 
-        {/* Rental Income by Building */}
+        {/* Occupancy Rate by Building */}
         {buildingData.length > 0 && (
           <div className="bg-card border border-border rounded-2xl p-5 sm:col-span-2">
-            <h3 className="font-semibold text-foreground mb-4">Monthly Rental Income by Building</h3>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={buildingData}>
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} tickFormatter={v => `₱${(v/1000).toFixed(0)}k`} />
-                <Tooltip formatter={(v) => fmt(v)} />
-                <Bar dataKey="rent" fill="#3b82f6" radius={[4,4,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <h3 className="font-semibold text-foreground mb-4">Occupancy Rate by Building</h3>
+            <div className="space-y-4">
+              {buildingData.map(b => (
+                <div key={b.name} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-foreground">{b.name}</span>
+                    <span className="text-sm text-muted-foreground">{b.leased}/{b.total} units ({b.occupancyRate}%)</span>
+                  </div>
+                  <div className="h-3 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary transition-all" 
+                      style={{ width: `${b.occupancyRate}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Revenue: {fmt(b.rent)}/mo</span>
+                    <span>Available: {b.available}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
