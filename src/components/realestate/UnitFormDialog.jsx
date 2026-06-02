@@ -23,6 +23,13 @@ export default function UnitFormDialog({ open, onOpenChange, initialData, onSubm
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  const sellingPrice = Number(form.selling_price) || 0;
+  const vatAmt = sellingPrice * (Number(form.vat_percentage) || 0) / 100;
+  const closingAmt = sellingPrice * (Number(form.closing_fees_percentage) || 0) / 100;
+  const totalAmount = sellingPrice + vatAmt + closingAmt;
+
+  const fmt = (n) => n.toLocaleString("en-PH", { style: "currency", currency: "PHP", minimumFractionDigits: 2 });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -103,6 +110,35 @@ export default function UnitFormDialog({ open, onOpenChange, initialData, onSubm
               <Label>Closing Fees (%)</Label>
               <Input type="number" min="0" max="100" step="0.01" value={form.closing_fees_percentage} onChange={e => set("closing_fees_percentage", e.target.value)} placeholder="e.g. 3" />
             </div>
+          </div>
+
+          {sellingPrice > 0 && (
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2 text-sm">
+              <p className="font-semibold text-slate-700 mb-1">Total Contract Price Breakdown</p>
+              <div className="flex justify-between text-slate-600">
+                <span>Selling Price</span>
+                <span>{fmt(sellingPrice)}</span>
+              </div>
+              {vatAmt > 0 && (
+                <div className="flex justify-between text-slate-600">
+                  <span>VAT ({form.vat_percentage}%)</span>
+                  <span>{fmt(vatAmt)}</span>
+                </div>
+              )}
+              {closingAmt > 0 && (
+                <div className="flex justify-between text-slate-600">
+                  <span>Closing Fees ({form.closing_fees_percentage}%)</span>
+                  <span>{fmt(closingAmt)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold text-slate-800 border-t border-slate-300 pt-2">
+                <span>Total Amount</span>
+                <span className="text-emerald-700">{fmt(totalAmount)}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label>Monthly Rent (₱)</Label>
               <Input type="number" value={form.monthly_rent} onChange={e => set("monthly_rent", e.target.value)} />
@@ -111,7 +147,7 @@ export default function UnitFormDialog({ open, onOpenChange, initialData, onSubm
               <Label>Parking Slots</Label>
               <Input type="number" value={form.parking_slots} onChange={e => set("parking_slots", e.target.value)} />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 col-span-2">
               <Label>Amenities</Label>
               <Input value={form.amenities} onChange={e => set("amenities", e.target.value)} placeholder="Pool, Gym, etc." />
             </div>
