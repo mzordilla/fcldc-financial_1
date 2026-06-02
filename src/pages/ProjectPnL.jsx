@@ -267,6 +267,19 @@ export default function ProjectPnL() {
     Loss: Math.max(p.expenses - p.income, 0),
   }));
 
+  // Budget vs Actual: only projects with a contract_amount (budget)
+  const budgetChartData = projectsData
+    .filter(p => p.contract_amount > 0 && (p.contract_status === "active" || p.contract_status === "approved" || p.contract_status === "completed"))
+    .map(p => {
+      const pData = allProjects.find(ap => ap.name === p.project_name);
+      return {
+        name: p.project_name.length > 14 ? p.project_name.slice(0, 14) + "…" : p.project_name,
+        Budget: p.contract_amount,
+        Actual: pData ? pData.expenses : 0,
+      };
+    })
+    .slice(0, 8);
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <div>
@@ -288,6 +301,43 @@ export default function ProjectPnL() {
           </div>
         ))}
       </div>
+
+      {/* Budget vs Actual chart */}
+      {budgetChartData.length > 0 && (
+        <div className="bg-card rounded-2xl border border-border p-6">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-base font-semibold">Budget vs Actual Cost — Active Projects</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">Contract amount vs actual expenses per project</p>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={budgetChartData} margin={{ top: 0, right: 10, left: -10, bottom: 0 }} barSize={22} barCategoryGap="30%">
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }} tickFormatter={(v) => `₱${(v/1000).toFixed(0)}k`} />
+                <Tooltip
+                  formatter={(v, name) => [`₱${v.toLocaleString()}`, name]}
+                  contentStyle={{ borderRadius: 10, fontSize: 12 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="Budget" fill="hsl(199, 89%, 48%)" radius={[3, 3, 0, 0]} name="Budget (Contract)" />
+                <Bar dataKey="Actual" fill="hsl(0, 84%, 60%)" radius={[3, 3, 0, 0]} name="Actual Cost">
+                  {budgetChartData.map((entry, index) => (
+                    <Cell
+                      key={index}
+                      fill={entry.Actual > entry.Budget ? "hsl(0, 84%, 60%)" : "hsl(43, 96%, 56%)"}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2 text-center">
+            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-yellow-400 mr-1" />Actual within budget &nbsp;
+            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-500 mr-1" />Over budget
+          </p>
+        </div>
+      )}
 
       {/* Overview chart */}
       {chartData.length > 0 && (
