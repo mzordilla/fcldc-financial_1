@@ -98,6 +98,13 @@ export default function PurchaseOrders() {
   const filtered = statusFilter === "all" ? orders : orders.filter(o => o.approval_status === statusFilter);
   const pending = orders.filter(o => o.approval_status === "pending");
   const totalPendingValue = pending.reduce((s, o) => s + (o.amount || 0), 0);
+  const approved = orders.filter(o => o.approval_status === "approved");
+  const totalApprovedValue = approved.reduce((s, o) => s + (o.amount || 0), 0);
+  const approvedByCategory = approved.reduce((acc, o) => {
+    const key = o.category || "other";
+    acc[key] = (acc[key] || 0) + (o.amount || 0);
+    return acc;
+  }, {});
 
   const toggleSelect = (id) => {
     setSelectedIds(prev => {
@@ -160,6 +167,33 @@ export default function PurchaseOrders() {
           </Button>
         </div>
       </div>
+
+      {/* Approved PO Summary */}
+      {approved.length > 0 && (
+        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div>
+              <p className="text-sm font-semibold text-primary">Approved Purchase Orders</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{approved.length} order{approved.length !== 1 ? "s" : ""} approved</p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-foreground">₱{totalApprovedValue.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Total Approved Value</p>
+            </div>
+          </div>
+          {Object.keys(approvedByCategory).length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              {Object.entries(approvedByCategory).sort((a, b) => b[1] - a[1]).map(([cat, val]) => (
+                <div key={cat} className="bg-card border border-border rounded-xl p-3">
+                  <p className="text-xs text-muted-foreground capitalize">{cat.replace(/_/g, " ")}</p>
+                  <p className="text-sm font-bold text-foreground mt-0.5">₱{val.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">{approved.filter(o => (o.category || "other") === cat).length} PO{approved.filter(o => (o.category || "other") === cat).length !== 1 ? "s" : ""}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Pending banner */}
       {pending.length > 0 && (
