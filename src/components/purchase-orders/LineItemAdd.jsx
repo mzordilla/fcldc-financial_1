@@ -58,7 +58,7 @@ export default function LineItemAdd({ onAdd, suggestions = [] }) {
             value={item.description}
             onChange={(e) => {setItem({ ...item, description: e.target.value });setShowSuggestions(true);}}
             onFocus={() => setShowSuggestions(true)}
-            className="text-xs h-8 pt-1 pr-3 pb-1 pl-4"
+            className="text-xs h-8 pt-1 pr-3 pb-1 pl-2"
             autoComplete="off" />
           
           {showSuggestions && filteredSuggestions.length > 0 &&
