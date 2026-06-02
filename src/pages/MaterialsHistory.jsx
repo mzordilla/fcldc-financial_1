@@ -18,6 +18,7 @@ export default function MaterialsHistory() {
   const [filterSupplier, setFilterSupplier] = useState("all");
   const [filterProject, setFilterProject] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterPO, setFilterPO] = useState("all");
 
   const { data: purchaseOrders = [], isLoading } = useQuery({
     queryKey: ["purchase_orders_materials"],
@@ -56,6 +57,7 @@ export default function MaterialsHistory() {
 
   const suppliers = useMemo(() => [...new Set(allMaterials.map(m => m.supplier_name).filter(Boolean))].sort(), [allMaterials]);
   const projects = useMemo(() => [...new Set(allMaterials.map(m => m.project_name).filter(Boolean))].sort(), [allMaterials]);
+  const poNumbers = useMemo(() => [...new Set(allMaterials.map(m => m.po_number).filter(Boolean))].sort(), [allMaterials]);
 
   const filtered = useMemo(() => {
     return allMaterials.filter((m) => {
@@ -64,9 +66,10 @@ export default function MaterialsHistory() {
       const matchSupplier = filterSupplier === "all" || m.supplier_name === filterSupplier;
       const matchProject = filterProject === "all" || m.project_name === filterProject;
       const matchStatus = filterStatus === "all" || m.approval_status === filterStatus;
-      return matchSearch && matchSupplier && matchProject && matchStatus;
+      const matchPO = filterPO === "all" || m.po_number === filterPO;
+      return matchSearch && matchSupplier && matchProject && matchStatus && matchPO;
     });
-  }, [allMaterials, search, filterSupplier, filterProject, filterStatus]);
+  }, [allMaterials, search, filterSupplier, filterProject, filterStatus, filterPO]);
 
   const totalValue = useMemo(() => filtered.reduce((s, m) => s + (m.total || 0), 0), [filtered]);
   const totalQty = useMemo(() => filtered.reduce((s, m) => s + (m.quantity || 0), 0), [filtered]);
@@ -124,6 +127,13 @@ export default function MaterialsHistory() {
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="rejected">Rejected</SelectItem>
             <SelectItem value="cancelled">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filterPO} onValueChange={setFilterPO}>
+          <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="All PO #" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All PO #</SelectItem>
+            {poNumbers.map(po => <SelectItem key={po} value={po}>{po}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
