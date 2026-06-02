@@ -154,7 +154,8 @@ export default function Transactions() {
                 <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Description</th>
                 <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">Project</th>
                 <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">Category</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Account Name</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Chart of Account</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden xl:table-cell">Account Name</th>
                 <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Date</th>
                 <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">Amount</th>
                 <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3 w-20"></th>
@@ -162,10 +163,10 @@ export default function Transactions() {
             </thead>
             <tbody>
               {isLoading && (
-                <tr><td colSpan={7} className="text-center py-12 text-muted-foreground">Loading...</td></tr>
+                <tr><td colSpan={8} className="text-center py-12 text-muted-foreground">Loading...</td></tr>
               )}
               {!isLoading && filtered.length === 0 && (
-                <tr><td colSpan={7} className="text-center py-12 text-muted-foreground">No transactions yet</td></tr>
+                <tr><td colSpan={8} className="text-center py-12 text-muted-foreground">No transactions yet</td></tr>
               )}
               {filtered.map((t) => {
                 const account = t.bank_account_id ? accountMap[t.bank_account_id] : null;
@@ -189,6 +190,11 @@ export default function Transactions() {
                       {t.category && <Badge variant="secondary" className="text-xs">{t.category.replace(/_/g, " ")}</Badge>}
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
+                      {t.chart_of_account
+                        ? <Badge variant="secondary" className="text-xs">{t.chart_of_account}</Badge>
+                        : <span className="text-xs text-muted-foreground">—</span>}
+                    </td>
+                    <td className="px-4 py-3 hidden xl:table-cell">
                       {account ? (
                         <div className="flex items-center gap-1.5">
                           <Building2 className="w-3.5 h-3.5 text-muted-foreground" />

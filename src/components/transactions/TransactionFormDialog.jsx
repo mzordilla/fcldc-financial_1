@@ -153,6 +153,22 @@ export default function TransactionFormDialog({ open, onOpenChange, title, bankA
             </Select>
           </div>
 
+          {/* Chart of Account */}
+          <div className="space-y-1.5">
+            <Label>Chart of Account</Label>
+            <Select value={formData.chart_of_account || ""} onValueChange={(v) => set("chart_of_account", v === "none" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="Link to chart of account..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— None —</SelectItem>
+                {activeAccounts.map(a => (
+                  <SelectItem key={a.id} value={a.account_name}>
+                    {a.account_code ? `${a.account_code} — ` : ""}{a.account_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Bank Account */}
           <div className="space-y-1.5">
             <Label>Account Name</Label>

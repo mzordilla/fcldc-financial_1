@@ -35,6 +35,10 @@
       ],
       "description": "Transaction category"
     },
+    "chart_of_account": {
+      "type": "string",
+      "description": "Linked Chart of Account name"
+    },
     "project_name": {
       "type": "string",
       "description": "Associated project name"
