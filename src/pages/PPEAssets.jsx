@@ -43,6 +43,7 @@ const EMPTY_FORM = {
   asset_name: "",
   asset_type: "land",
   asset_code: "",
+  title_no: "",
   acquisition_date: "",
   acquisition_cost: "",
   useful_life_years: "",
@@ -86,6 +87,10 @@ function AssetFormDialog({ open, onClose, asset, onSubmit }) {
             <div className="sm:col-span-2">
               <Label>Asset Name *</Label>
               <Input value={form.asset_name} onChange={e => set("asset_name", e.target.value)} required />
+            </div>
+            <div>
+              <Label>Title No.</Label>
+              <Input value={form.title_no || ""} onChange={e => set("title_no", e.target.value)} placeholder="e.g. TCT-12345A" />
             </div>
             <div>
               <Label>Asset Type *</Label>
@@ -293,6 +298,7 @@ export default function PPEAssets() {
                     <tr key={a.id} className={`border-b border-border/50 hover:bg-muted/20 transition-colors ${i % 2 === 0 ? "" : "bg-muted/5"}`}>
                       <td className="px-4 py-3">
                         <p className="font-medium text-foreground">{a.asset_name}</p>
+                        {a.title_no && <p className="text-xs text-muted-foreground">Title No.: {a.title_no}</p>}
                         {a.asset_code && <p className="text-xs text-muted-foreground">{a.asset_code}</p>}
                         {a.location && <p className="text-xs text-muted-foreground">{a.location}</p>}
                       </td>
