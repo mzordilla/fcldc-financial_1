@@ -29,6 +29,12 @@ export default function MaterialsHistory() {
     const rows = [];
     purchaseOrders.forEach((po) => {
       if (po.line_items && po.line_items.length > 0) {
+        let daysToDeliver = null;
+        if (po.requested_date && po.delivery_date) {
+          const start = new Date(po.requested_date);
+          const end = new Date(po.delivery_date);
+          daysToDeliver = Math.round((end - start) / (1000 * 60 * 60 * 24));
+        }
         po.line_items.forEach((item) => {
           rows.push({
             ...item,
@@ -37,8 +43,10 @@ export default function MaterialsHistory() {
             supplier_name: po.supplier_name,
             project_name: po.project_name,
             requested_date: po.requested_date,
+            delivery_date: po.delivery_date,
             approval_status: po.approval_status,
             category: po.category,
+            days_to_deliver: daysToDeliver,
           });
         });
       }
@@ -138,7 +146,9 @@ export default function MaterialsHistory() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden sm:table-cell">Supplier</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden md:table-cell">Project</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden lg:table-cell">PO #</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden lg:table-cell">Date</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden lg:table-cell">Date Requested</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden lg:table-cell">Date Delivered</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden lg:table-cell">Days to Deliver</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Status</th>
                 </tr>
               </thead>
@@ -155,6 +165,20 @@ export default function MaterialsHistory() {
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{m.project_name || "—"}</td>
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden lg:table-cell">{m.po_number || "—"}</td>
                     <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell">{m.requested_date || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell">{m.delivery_date || "—"}</td>
+                    <td className="px-4 py-3 text-right hidden lg:table-cell">
+                      {m.days_to_deliver !== null ? (
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          m.days_to_deliver <= 7 ? "bg-primary/10 text-primary" :
+                          m.days_to_deliver <= 30 ? "bg-chart-3/10 text-chart-3" :
+                          "bg-destructive/10 text-destructive"
+                        }`}>
+                          {m.days_to_deliver}d
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <Badge variant="outline" className={`text-xs ${STATUS_STYLES[m.approval_status] || STATUS_STYLES.pending}`}>
                         {m.approval_status || "pending"}
