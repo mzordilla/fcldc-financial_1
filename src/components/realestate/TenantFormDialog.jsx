@@ -15,6 +15,7 @@ const defaults = {
 export default function TenantFormDialog({ open, onOpenChange, initialData, units = [], onSubmit }) {
   const [form, setForm] = useState(defaults);
   const [saving, setSaving] = useState(false);
+  const isEdit = !!initialData;
 
   // Auto-calculate association dues when area or rate changes
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function TenantFormDialog({ open, onOpenChange, initialData, unit
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{initialData ? "Edit Tenant" : "Add Tenant"}</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit Tenant" : "Add Tenant"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
