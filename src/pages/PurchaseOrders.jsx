@@ -329,9 +329,17 @@ export default function PurchaseOrders() {
                       </Button>
                     )}
                     {po.approval_status === "approved" && (
-                      <Button size="sm" variant="outline" onClick={() => setConvertingPO(po)} className="text-primary hover:text-primary">
-                        <CreditCard className="w-3.5 h-3.5 mr-1.5" /> Payable
-                      </Button>
+                      <div title={!po.receipt_url ? "Upload a receipt before converting to payable" : ""}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setConvertingPO(po)}
+                          disabled={!po.receipt_url}
+                          className="text-primary hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <CreditCard className="w-3.5 h-3.5 mr-1.5" /> Payable
+                        </Button>
+                      </div>
                     )}
                     <Button variant="ghost" size="icon" onClick={() => setReviewPO(po)} title="View History" className="text-muted-foreground hover:text-foreground">
                       <History className="w-4 h-4" />
