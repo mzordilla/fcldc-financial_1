@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import UnitFormDialog from "@/components/realestate/UnitFormDialog";
 import BulkEditDialog from "@/components/realestate/BulkEditDialog";
 
@@ -159,7 +160,7 @@ export default function CondoUnits() {
         )}
       </div>
 
-      {/* Grid */}
+      {/* List Table */}
       {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
       {!isLoading && filtered.length === 0 && (
         <div className="text-center py-16">
@@ -167,68 +168,95 @@ export default function CondoUnits() {
           <p className="text-muted-foreground">No units found</p>
         </div>
       )}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map(u => (
-          <div
-            key={u.id}
-            className={`bg-card border border-border rounded-2xl p-5 hover:shadow-md transition-shadow space-y-3 ${
-              selectedIds.has(u.id) ? "ring-2 ring-primary/40" : ""
-            }`}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-start gap-2 flex-1">
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50">
+              <TableHead className="w-12">
                 <Checkbox
-                  checked={selectedIds.has(u.id)}
-                  onCheckedChange={() => toggleSelect(u.id)}
-                  className="mt-1 flex-shrink-0"
+                  checked={selectedIds.size === filtered.length && filtered.length > 0}
+                  onCheckedChange={toggleSelectAll}
+                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
-                <div className="flex-1">
-                  <p className="font-bold text-foreground text-lg">Unit {u.unit_number}</p>
-                  {u.building && <p className="text-sm text-muted-foreground">{u.building}{u.floor ? ` · Floor ${u.floor}` : ""}</p>}
-                </div>
-              </div>
-              <Badge variant="outline" className={`text-xs ${statusStyles[u.status]}`}>
-                {statusLabels[u.status]}
-              </Badge>
-            </div>
-
-            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-              {u.unit_type && <span className="bg-muted rounded px-2 py-0.5">{typeLabels[u.unit_type]}</span>}
-              {u.area_sqm && <span className="bg-muted rounded px-2 py-0.5">{u.area_sqm} sqm</span>}
-              {u.parking_slots > 0 && <span className="bg-muted rounded px-2 py-0.5">{u.parking_slots} parking</span>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              {u.selling_price && (
-                <div className="bg-emerald-50 rounded-lg p-2 col-span-2">
-                  <p className="text-xs text-muted-foreground">Selling Price</p>
-                  <p className="font-semibold text-emerald-700 text-sm">{fmt(u.selling_price)}</p>
-                  <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-                    {u.vat_percentage > 0 && <span>VAT {u.vat_percentage}% = {fmt(u.selling_price * u.vat_percentage / 100)}</span>}
-                    {u.closing_fees_percentage > 0 && <span>Closing {u.closing_fees_percentage}% = {fmt(u.selling_price * u.closing_fees_percentage / 100)}</span>}
+              </TableHead>
+              <TableHead>Unit</TableHead>
+              <TableHead>Building</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Area</TableHead>
+              <TableHead>Price/sqm</TableHead>
+              <TableHead>Selling Price</TableHead>
+              <TableHead>Monthly Rent</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map(u => (
+              <TableRow
+                key={u.id}
+                className={`hover:bg-muted/30 ${selectedIds.has(u.id) ? "bg-primary/5" : ""}`}
+              >
+                <TableCell>
+                  <Checkbox
+                    checked={selectedIds.has(u.id)}
+                    onCheckedChange={() => toggleSelect(u.id)}
+                  />
+                </TableCell>
+                <TableCell className="font-semibold">{u.unit_number}</TableCell>
+                <TableCell>
+                  {u.building && (
+                    <div>
+                      <p className="text-sm">{u.building}</p>
+                      {u.floor && <p className="text-xs text-muted-foreground">Floor {u.floor}</p>}
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>{u.unit_type ? typeLabels[u.unit_type] : "—"}</TableCell>
+                <TableCell>{u.area_sqm ? `${u.area_sqm} sqm` : "—"}</TableCell>
+                <TableCell>{u.price_per_sqm ? fmt(u.price_per_sqm) : "—"}</TableCell>
+                <TableCell>
+                  {u.selling_price ? (
+                    <div>
+                      <p className="font-semibold text-emerald-700">{fmt(u.selling_price)}</p>
+                      {(u.vat_percentage > 0 || u.closing_fees_percentage > 0) && (
+                        <p className="text-xs text-muted-foreground">
+                          {u.vat_percentage > 0 && `+${u.vat_percentage}% VAT`}
+                          {u.closing_fees_percentage > 0 && ` +${u.closing_fees_percentage}% Closing`}
+                        </p>
+                      )}
+                    </div>
+                  ) : "—"}
+                </TableCell>
+                <TableCell>{u.monthly_rent ? `${fmt(u.monthly_rent)}/mo` : "—"}</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={`text-xs ${statusStyles[u.status]}`}>
+                    {statusLabels[u.status]}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      onClick={() => { setEditing(u); setShowForm(true); }}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => deleteMutation.mutate(u.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
-                </div>
-              )}
-              {u.monthly_rent && (
-                <div className="bg-blue-50 rounded-lg p-2">
-                  <p className="text-xs text-muted-foreground">Monthly Rent</p>
-                  <p className="font-semibold text-blue-700 text-sm">{fmt(u.monthly_rent)}/mo</p>
-                </div>
-              )}
-            </div>
-
-            {u.description && <p className="text-xs text-muted-foreground line-clamp-2">{u.description}</p>}
-
-            <div className="flex justify-end gap-1 pt-1 border-t border-border">
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => { setEditing(u); setShowForm(true); }}>
-                <Pencil className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => deleteMutation.mutate(u.id)}>
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        ))}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
       <UnitFormDialog
