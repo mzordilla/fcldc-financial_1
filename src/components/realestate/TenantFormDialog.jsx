@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 const defaults = {
   full_name: "", email: "", contact_number: "", unit_id: "", unit_number: "",
   building: "", lease_start: "", lease_end: "", monthly_rent: "",
-  deposit_amount: "", status: "active", notes: "",
+  deposit_amount: "", association_dues: "", status: "active", notes: "",
 };
 
 export default function TenantFormDialog({ open, onOpenChange, initialData, units = [], onSubmit }) {
@@ -28,6 +28,11 @@ export default function TenantFormDialog({ open, onOpenChange, initialData, unit
     if (unit) {
       set("unit_number", unit.unit_number || "");
       set("building", unit.building || "");
+      // Auto-calculate association dues: area_sqm × rate (you can adjust the rate)
+      const ratePerSqm = 150; // PHP per sqm - adjust as needed
+      const area = unit.area_sqm || 0;
+      const dues = area * ratePerSqm;
+      set("association_dues", dues.toString());
     }
   };
 
@@ -38,6 +43,7 @@ export default function TenantFormDialog({ open, onOpenChange, initialData, unit
       ...form,
       monthly_rent: form.monthly_rent ? Number(form.monthly_rent) : undefined,
       deposit_amount: form.deposit_amount ? Number(form.deposit_amount) : undefined,
+      association_dues: form.association_dues ? Number(form.association_dues) : undefined,
     });
     setSaving(false);
     onOpenChange(false);
@@ -91,6 +97,10 @@ export default function TenantFormDialog({ open, onOpenChange, initialData, unit
             <div className="space-y-1">
               <Label>Security Deposit (₱)</Label>
               <Input type="number" value={form.deposit_amount} onChange={e => set("deposit_amount", e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>Association Dues (₱/mo)</Label>
+              <Input type="number" value={form.association_dues} onChange={e => set("association_dues", e.target.value)} />
             </div>
             <div className="space-y-1">
               <Label>Status</Label>
