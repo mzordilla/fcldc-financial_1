@@ -10,6 +10,7 @@ import WorkingCapitalLoansReport from "../components/reports/WorkingCapitalLoans
 import BankTransactionsReport from "../components/reports/BankTransactionsReport";
 import IncomeTrendChart from "../components/reports/IncomeTrendChart";
 import BalanceSheetReport from "../components/reports/BalanceSheetReport";
+import IncomeStatementReport from "../components/reports/IncomeStatementReport";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 const fmtSigned = (v) => (v < 0 ? `-₱${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : `₱${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`);
@@ -417,6 +418,7 @@ export default function Reports() {
           { key: "wc_loans", label: "Working Capital Loans" },
           { key: "bank_transactions", label: "Bank Transactions" },
           { key: "balance_sheet", label: "Balance Sheet" },
+          { key: "income_statement", label: "Income Statement" },
         ].map(tab => (
           <button
             key={tab.key}
@@ -446,6 +448,10 @@ export default function Reports() {
 
       {activeTab === "balance_sheet" && (
         <BalanceSheetReport asOfDate={format(parseISO(dateTo), "MMMM d, yyyy")} />
+      )}
+
+      {activeTab === "income_statement" && (
+        <IncomeStatementReport dateFrom={dateFrom} dateTo={dateTo} />
       )}
 
       {activeTab === "pnl" && <>
