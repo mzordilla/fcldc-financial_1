@@ -16,6 +16,7 @@ const ASSET_TYPES = [
   { value: "furniture_and_fixture", label: "Furnitures & Fixtures" },
   { value: "building", label: "Building" },
   { value: "equipment", label: "Equipment" },
+  { value: "heavy_equipment", label: "Heavy Equipment" },
   { value: "other", label: "Other" },
 ];
 
