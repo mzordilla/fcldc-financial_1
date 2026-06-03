@@ -42,11 +42,80 @@
     },
     "contract_amount": {
       "type": "number",
-      "description": "Total contract amount"
+      "description": "Original contract amount"
+    },
+    "change_orders": {
+      "type": "array",
+      "description": "Change orders (additive or deductive) that modify the contract amount",
+      "items": {
+        "type": "object",
+        "properties": {
+          "co_number": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "additive",
+              "deductive"
+            ]
+          },
+          "amount": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "adjusted_contract_amount": {
+      "type": "number",
+      "description": "Contract amount after applying all change orders"
     },
     "billing_amount": {
       "type": "number",
-      "description": "Amount billed this cycle (accomplishment \u00d7 contract)"
+      "description": "Gross billing this cycle (accomplishment% \u00d7 adjusted contract)"
+    },
+    "additive_rows": {
+      "type": "array",
+      "description": "Additional charges to add to the billing",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "deductive_rows": {
+      "type": "array",
+      "description": "Deductions from the billing",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "total_additives": {
+      "type": "number",
+      "default": 0,
+      "description": "Sum of all additive rows"
+    },
+    "total_deductives": {
+      "type": "number",
+      "default": 0,
+      "description": "Sum of all deductive rows"
     },
     "retention_rate": {
       "type": "number",
@@ -61,16 +130,16 @@
     "down_payment": {
       "type": "number",
       "default": 0,
-      "description": "Total contract down payment received from client (to be recouped proportionally per billing cycle)"
+      "description": "Total contract down payment received from client"
     },
     "down_payment_deduction": {
       "type": "number",
       "default": 0,
-      "description": "Down payment deducted this cycle (down_payment \u00d7 accomplishment%)"
+      "description": "Down payment deducted this cycle"
     },
     "net_billing_amount": {
       "type": "number",
-      "description": "Net amount after retention and down payment deduction"
+      "description": "Net amount after all additions, deductions, retention, and down payment"
     },
     "due_date": {
       "type": "string",
