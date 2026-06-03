@@ -54,6 +54,11 @@ export default function BalanceSheetReport({ asOfDate }) {
     queryFn: () => base44.entities.Transaction.list("-date", 1000),
   });
 
+  const { data: ppeAssets = [] } = useQuery({
+    queryKey: ["ppeassets"],
+    queryFn: () => base44.entities.PPEAsset.list("-created_date", 200),
+  });
+
   const bs = useMemo(() => {
     // --- ASSETS ---
     // Current Assets
@@ -76,7 +81,16 @@ export default function BalanceSheetReport({ asOfDate }) {
       .filter(t => t.category === "equipment" && t.type === "expense")
       .reduce((s, t) => s + (t.amount || 0), 0);
 
-    const totalNonCurrentAssets = nonCurrentAssetTx + equipmentTx;
+    // PPE Assets (book value = acquisition cost - accumulated depreciation)
+    const ppeNetBookValue = ppeAssets
+      .filter(a => a.status !== "disposed")
+      .reduce((s, a) => {
+        const cost = a.acquisition_cost || 0;
+        const accDep = a.accumulated_depreciation || 0;
+        return s + Math.max(0, cost - accDep);
+      }, 0);
+
+    const totalNonCurrentAssets = nonCurrentAssetTx + equipmentTx + ppeNetBookValue;
     const totalAssets = totalCurrentAssets + totalNonCurrentAssets;
 
     // --- LIABILITIES ---
@@ -119,6 +133,7 @@ export default function BalanceSheetReport({ asOfDate }) {
       totalCurrentAssets,
       nonCurrentAssetTx,
       equipmentTx,
+      ppeNetBookValue,
       totalNonCurrentAssets,
       totalAssets,
       unpaidPayables,
@@ -129,7 +144,7 @@ export default function BalanceSheetReport({ asOfDate }) {
       retainedEarnings,
       totalEquity,
     };
-  }, [bankAccounts, receivables, payables, loans, wcLoans, transactions]);
+  }, [bankAccounts, receivables, payables, loans, wcLoans, transactions, ppeAssets]);
 
   const handleExport = () => {
     const rows = [
@@ -142,7 +157,8 @@ export default function BalanceSheetReport({ asOfDate }) {
       ["  Total Current Assets", bs.totalCurrentAssets],
       [],
       ["Non-Current Assets"],
-      ["  Property, Plant & Equipment", bs.equipmentTx],
+      ["  PPE Assets (Net Book Value)", bs.ppeNetBookValue],
+      ["  Equipment (Transactions)", bs.equipmentTx],
       ["  Other Non-Current Assets", bs.nonCurrentAssetTx],
       ["  Total Non-Current Assets", bs.totalNonCurrentAssets],
       [],
@@ -195,7 +211,8 @@ export default function BalanceSheetReport({ asOfDate }) {
           <BSRow label="Total Current Assets" value={bs.totalCurrentAssets} isTotal colorClass="text-primary" />
 
           <SectionHeader label="Non-Current Assets" />
-          <BSRow label="Property, Plant & Equipment" value={bs.equipmentTx} isSub />
+          <BSRow label="PPE Assets (Net Book Value)" value={bs.ppeNetBookValue} isSub />
+          <BSRow label="Equipment (Transactions)" value={bs.equipmentTx} isSub />
           <BSRow label="Other Non-Current Assets" value={bs.nonCurrentAssetTx} isSub />
           <BSRow label="Total Non-Current Assets" value={bs.totalNonCurrentAssets} isTotal />
 
