@@ -369,7 +369,7 @@ export default function PaymentApprovals() {
           return (
             <div key={payee} className="space-y-2">
               {/* Group header */}
-              <div className="flex items-center justify-between px-1">
+              <div className="flex items-center justify-between bg-muted/60 border border-border rounded-xl px-4 py-3">
                 <div className="flex items-center gap-3">
                   {pendingItems.length > 0 && (
                     <Checkbox
@@ -378,7 +378,7 @@ export default function PaymentApprovals() {
                       className="flex-shrink-0"
                     />
                   )}
-                  <h2 className="text-sm font-bold text-foreground">{payee}</h2>
+                  <h2 className="text-base font-bold text-foreground">{payee}</h2>
                   <span className="text-xs text-muted-foreground">{items.length} request{items.length !== 1 ? "s" : ""}</span>
                   {pendingItems.length > 0 && (
                     <span className="text-xs bg-chart-3/10 text-chart-3 border border-chart-3/20 px-2 py-0.5 rounded-full font-medium">
@@ -386,7 +386,10 @@ export default function PaymentApprovals() {
                     </span>
                   )}
                 </div>
-                <span className="text-sm font-semibold text-foreground">₱{groupTotal.toLocaleString()}</span>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Total</p>
+                  <p className="text-lg font-bold text-foreground">₱{groupTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                </div>
               </div>
 
               {/* Group items */}
