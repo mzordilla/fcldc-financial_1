@@ -290,7 +290,9 @@ export default function PurchaseOrders() {
                     <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                       {po.requested_date ? format(new Date(po.requested_date), "MMM d, yyyy") : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right font-bold text-foreground whitespace-nowrap">₱{(po.amount || 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right font-bold text-foreground whitespace-nowrap">
+                      ₱{(po.amount || (po.line_items || []).reduce((s, i) => s + (i.total || (i.quantity * i.cost_per_item) || 0), 0)).toLocaleString()}
+                    </td>
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
                         {isAdmin && po.approval_status === "pending" && (
