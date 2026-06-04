@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays } from "date-fns";
-import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download, Layers, ChevronDown } from "lucide-react";
+import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download } from "lucide-react";
 
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
@@ -10,11 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import MarkPayableAsPaidDialog from "../components/payables/MarkPayableAsPaidDialog";
-import BillsPaymentSheet from "../components/payables/BillsPaymentSheet";
-import PaymentRequestFormDialog from "../components/payment/PaymentRequestFormDialog";
 
 function getAgingBucket(dueDateStr, status) {
   if (status === "paid") return null;
@@ -99,8 +96,6 @@ const fields = [
 export default function Payables() {
   const [showAdd, setShowAdd] = useState(false);
   const [markingPaid, setMarkingPaid] = useState(null);
-  const [showBillsPayment, setShowBillsPayment] = useState(false);
-  const [showNewRequest, setShowNewRequest] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
   const importRef = useRef();
@@ -188,24 +183,9 @@ export default function Payables() {
             <FileUp className="w-4 h-4 mr-2" /> Import
           </Button>
           <input ref={importRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportFile} />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" /> New <ChevronDown className="w-3.5 h-3.5 ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setShowAdd(true)}>
-                <Plus className="w-4 h-4 mr-2" /> Add Payable
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowNewRequest(true)}>
-                <CreditCard className="w-4 h-4 mr-2" /> New Payment Request
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowBillsPayment(true)}>
-                <Layers className="w-4 h-4 mr-2" /> Bills Payment
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button onClick={() => setShowAdd(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Add Payable
+          </Button>
         </div>
       </div>
 
@@ -300,8 +280,6 @@ export default function Payables() {
         payable={markingPaid}
         onConfirm={(paymentData) => markPaid(markingPaid, paymentData)}
       />
-      <BillsPaymentSheet open={showBillsPayment} onOpenChange={setShowBillsPayment} />
-      <PaymentRequestFormDialog open={showNewRequest} onOpenChange={setShowNewRequest} title="New Payment Request" onSubmit={(data) => base44.entities.PaymentRequest.create(data)} />
     </div>
   );
 }
