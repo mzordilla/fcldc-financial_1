@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays } from "date-fns";
-import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download } from "lucide-react";
+import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download, Layers } from "lucide-react";
+import BillsPaymentSheet from "../components/payables/BillsPaymentSheet";
 
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
@@ -96,6 +97,7 @@ const fields = [
 export default function Payables() {
   const [showAdd, setShowAdd] = useState(false);
   const [markingPaid, setMarkingPaid] = useState(null);
+  const [showBillsPayment, setShowBillsPayment] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const queryClient = useQueryClient();
   const importRef = useRef();
@@ -183,6 +185,9 @@ export default function Payables() {
             <FileUp className="w-4 h-4 mr-2" /> Import
           </Button>
           <input ref={importRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportFile} />
+          <Button variant="outline" onClick={() => setShowBillsPayment(true)}>
+            <Layers className="w-4 h-4 mr-2" /> Bills Payment
+          </Button>
           <Button onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4 mr-2" /> Add Payable
           </Button>
@@ -274,6 +279,7 @@ export default function Payables() {
         fields={fields}
         onSubmit={(data) => createMutation.mutateAsync(data)}
       />
+      <BillsPaymentSheet open={showBillsPayment} onOpenChange={setShowBillsPayment} />
       <MarkPayableAsPaidDialog
         open={!!markingPaid}
         onOpenChange={(v) => { if (!v) setMarkingPaid(null); }}
