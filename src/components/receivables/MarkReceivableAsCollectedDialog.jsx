@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
+import { Banknote, CheckCircle2 } from "lucide-react";
 
 const today = format(new Date(), "yyyy-MM-dd");
 
@@ -28,9 +30,10 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
 
   useEffect(() => {
     if (receivable) {
+      const remaining = (receivable.amount || 0) - (receivable.amount_paid || 0);
       setForm({
         collection_date: today,
-        amount_collected: String(receivable.amount || ""),
+        amount_collected: String(remaining > 0 ? remaining : ""),
         bank_account_id: "",
         reference: "",
         notes: "",
@@ -38,22 +41,42 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
     }
   }, [receivable]);
 
+  if (!receivable) return null;
+
+  const totalAmount = receivable.amount || 0;
+  const alreadyPaid = receivable.amount_paid || 0;
+  const remaining = totalAmount - alreadyPaid;
+  const thisCollection = parseFloat(form.amount_collected) || 0;
+  const newTotalPaid = alreadyPaid + thisCollection;
+  const paidPct = totalAmount ? Math.min((alreadyPaid / totalAmount) * 100, 100) : 0;
+  const history = receivable.payment_history || [];
+
   const handleSubmit = async () => {
     setSaving(true);
-    const amountCollected = parseFloat(form.amount_collected) || receivable.amount;
 
-    // Update receivable status
+    const newEntry = {
+      collection_date: form.collection_date,
+      amount: thisCollection,
+      bank_account_id: form.bank_account_id,
+      reference: form.reference,
+      notes: form.notes,
+    };
+
+    const updatedHistory = [...history, newEntry];
+    const updatedAmountPaid = alreadyPaid + thisCollection;
+    const isFullyPaid = updatedAmountPaid >= totalAmount;
+
     await onConfirm({
-      status: "paid",
-      amount_paid: amountCollected,
+      status: isFullyPaid ? "paid" : "partially_paid",
+      amount_paid: updatedAmountPaid,
+      payment_history: updatedHistory,
     });
 
-    // Only record bank movement — income was already recorded at receivable creation (no P&L double-entry)
+    // Record bank movement (not P&L income — already recorded at creation)
     if (form.bank_account_id) {
-      // Record as bank_reconciliation so it shows in bank transactions but NOT in P&L income
       await base44.entities.Transaction.create({
         description: `Collection received – ${receivable.client_name}${receivable.invoice_number ? ` (${receivable.invoice_number})` : ""}`,
-        amount: amountCollected,
+        amount: thisCollection,
         type: "income",
         category: "bank_reconciliation",
         project_name: receivable.project_name || "",
@@ -67,82 +90,151 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
     onOpenChange(false);
   };
 
-  if (!receivable) return null;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Mark as Collected</DialogTitle>
+          <DialogTitle>Record Collection</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-1 bg-muted/40 rounded-lg px-4 py-3 text-sm">
+        {/* Summary */}
+        <div className="space-y-2 bg-muted/40 rounded-lg px-4 py-3 text-sm">
           <p className="font-semibold text-foreground">{receivable.client_name}</p>
           {receivable.project_name && <p className="text-muted-foreground">{receivable.project_name}</p>}
           {receivable.invoice_number && <p className="text-muted-foreground">Invoice: {receivable.invoice_number}</p>}
-          <p className="text-primary font-bold">₱{(receivable.amount || 0).toLocaleString()}</p>
-        </div>
-
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>Amount Collected</Label>
-              <Input
-                type="number"
-                value={form.amount_collected}
-                onChange={e => setForm(f => ({ ...f, amount_collected: e.target.value }))}
-                placeholder="0.00"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Collection Date</Label>
-              <Input
-                type="date"
-                value={form.collection_date}
-                onChange={e => setForm(f => ({ ...f, collection_date: e.target.value }))}
-              />
-            </div>
+          <div className="flex justify-between items-center mt-2">
+            <span className="text-muted-foreground">Total</span>
+            <span className="font-bold">₱{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
-
-          <div className="space-y-1.5">
-            <Label>Bank Account <span className="text-muted-foreground font-normal">(for income transaction)</span></Label>
-            <Select value={form.bank_account_id} onValueChange={v => setForm(f => ({ ...f, bank_account_id: v }))}>
-              <SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger>
-              <SelectContent>
-                {bankAccounts.filter(a => a.status !== "closed").map(a => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.account_name} – {a.bank_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Reference # <span className="text-muted-foreground font-normal">(optional)</span></Label>
-            <Input
-              value={form.reference}
-              onChange={e => setForm(f => ({ ...f, reference: e.target.value }))}
-              placeholder="e.g. OR-00123 or TRF-2026-0501"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Notes <span className="text-muted-foreground font-normal">(optional)</span></Label>
-            <Input
-              value={form.notes}
-              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-              placeholder="Any additional notes..."
-            />
+          <Progress value={paidPct} className="h-2" />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Collected: ₱{alreadyPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            <span>Remaining: ₱{remaining.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={saving}>
-            {saving ? "Saving..." : "Confirm Collection"}
-          </Button>
-        </DialogFooter>
+        {/* Collection History */}
+        {history.length > 0 && (
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Collection History</p>
+            <div className="rounded-lg border border-border divide-y divide-border">
+              {history.map((h, i) => (
+                <div key={i} className="flex items-center justify-between px-3 py-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Banknote className="w-3.5 h-3.5 text-muted-foreground" />
+                    <div>
+                      {h.reference && <span className="font-medium text-xs">{h.reference}</span>}
+                      <div className="text-xs text-muted-foreground">
+                        {h.collection_date ? format(new Date(h.collection_date), "MMM d, yyyy") : ""}
+                        {h.notes ? ` · ${h.notes}` : ""}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="font-semibold text-primary">₱{(h.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                </div>
+              ))}
+              <div className="flex justify-between px-3 py-2 bg-muted/30 text-sm font-semibold">
+                <span>Total Collected</span>
+                <span>₱{alreadyPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Fully paid state */}
+        {remaining <= 0 ? (
+          <>
+            <div className="flex items-center gap-2 text-primary bg-primary/10 rounded-lg px-4 py-3 text-sm font-medium">
+              <CheckCircle2 className="w-4 h-4" />
+              This receivable is fully collected.
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">New Collection</p>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Amount Collecting Now</Label>
+                  <Input
+                    type="number"
+                    value={form.amount_collected}
+                    onChange={e => setForm(f => ({ ...f, amount_collected: e.target.value }))}
+                    placeholder="0.00"
+                    max={remaining}
+                  />
+                  <p className="text-xs text-muted-foreground">Max: ₱{remaining.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Collection Date</Label>
+                  <Input
+                    type="date"
+                    value={form.collection_date}
+                    onChange={e => setForm(f => ({ ...f, collection_date: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Bank Account <span className="text-muted-foreground font-normal">(for income transaction)</span></Label>
+                <Select value={form.bank_account_id} onValueChange={v => setForm(f => ({ ...f, bank_account_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger>
+                  <SelectContent>
+                    {bankAccounts.filter(a => a.status !== "closed").map(a => (
+                      <SelectItem key={a.id} value={a.id}>
+                        {a.account_name} – {a.bank_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Reference # <span className="text-muted-foreground font-normal">(OR no., transfer ref., etc.)</span></Label>
+                <Input
+                  value={form.reference}
+                  onChange={e => setForm(f => ({ ...f, reference: e.target.value }))}
+                  placeholder="e.g. OR-00123 or TRF-2026-0501"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Notes <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                <Input
+                  value={form.notes}
+                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                  placeholder="Any additional notes..."
+                />
+              </div>
+
+              {/* Preview */}
+              {thisCollection > 0 && (
+                <div className="bg-muted/40 rounded-lg px-4 py-3 text-sm space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">After this collection</span>
+                    <span className="font-semibold">₱{newTotalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })} / ₱{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Status</span>
+                    <span className={`font-semibold ${newTotalPaid >= totalAmount ? "text-primary" : "text-chart-3"}`}>
+                      {newTotalPaid >= totalAmount ? "Fully Collected" : "Partially Collected"}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button onClick={handleSubmit} disabled={saving || thisCollection <= 0}>
+                {saving ? "Saving..." : "Confirm Collection"}
+              </Button>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

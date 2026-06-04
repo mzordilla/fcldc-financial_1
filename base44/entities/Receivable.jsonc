@@ -21,7 +21,7 @@
     "amount_paid": {
       "type": "number",
       "default": 0,
-      "description": "Amount already paid"
+      "description": "Amount already collected"
     },
     "due_date": {
       "type": "string",
@@ -37,6 +37,30 @@
         "overdue"
       ],
       "default": "outstanding"
+    },
+    "payment_history": {
+      "type": "array",
+      "description": "Log of all partial and full collections",
+      "items": {
+        "type": "object",
+        "properties": {
+          "collection_date": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "bank_account_id": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
     },
     "notes": {
       "type": "string"

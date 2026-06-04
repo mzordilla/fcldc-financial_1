@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays } from "date-fns";
-import { Plus, Trash2, CheckCircle, Pencil } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Pencil, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -188,13 +188,34 @@ export default function Receivables() {
                       ₱{(r.amount_paid || 0).toLocaleString()} / ₱{(r.amount || 0).toLocaleString()}
                     </span>
                   </div>
-                </div>
-                <div className="flex items-center gap-2 sm:flex-col sm:items-end">
+                  {/* Payment history breakdown */}
+                  {(r.payment_history || []).length > 0 && (
+                    <div className="mt-3 rounded-lg border border-border divide-y divide-border text-xs">
+                      {(r.payment_history || []).map((h, i) => (
+                        <div key={i} className="flex items-center justify-between px-3 py-1.5">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Banknote className="w-3 h-3" />
+                            {h.reference && <span className="font-medium">{h.reference}</span>}
+                            {h.collection_date && <span>· {format(new Date(h.collection_date), "MMM d, yyyy")}</span>}
+                            {h.notes && <span className="italic">· {h.notes}</span>}
+                          </div>
+                          <span className="font-semibold text-primary">₱{(h.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  </div>
+                  <div className="flex items-center gap-2 sm:flex-col sm:items-end">
                   <p className="text-lg font-bold text-foreground">₱{remaining.toLocaleString()}</p>
                   <div className="flex gap-1">
                     {r.status !== "paid" && (
-                      <Button variant="ghost" size="icon" onClick={() => setCollectingR(r)} className="text-primary hover:text-primary">
+                      <Button variant="ghost" size="icon" onClick={() => setCollectingR(r)} className="text-primary hover:text-primary" title="Record Collection">
                         <CheckCircle className="w-4 h-4" />
+                      </Button>
+                    )}
+                    {r.status === "paid" && (r.payment_history || []).length > 0 && (
+                      <Button variant="ghost" size="icon" onClick={() => setCollectingR(r)} className="text-muted-foreground hover:text-primary" title="View Collections">
+                        <Banknote className="w-4 h-4" />
                       </Button>
                     )}
                     <Button variant="ghost" size="icon" onClick={() => setEditingR(r)} className="text-muted-foreground hover:text-foreground">
@@ -204,7 +225,7 @@ export default function Receivables() {
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
-                </div>
+                  </div>
               </div>
             </div>
           );
