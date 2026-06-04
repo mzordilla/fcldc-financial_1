@@ -99,7 +99,10 @@ export default function PaymentApprovals() {
 
   const availablePOs = approvedPOs.filter(po => {
     const poRef = po.po_number || "";
-    return !poIdsWithRequests.has(poRef) && !poIdsWithPayables.has(po.id) && !poIdsWithPayables.has(poRef);
+    const hasPaymentRequest = poIdsWithRequests.has(poRef);
+    const hasPayableById = poIdsWithPayables.has(po.id);
+    const hasPayableByRef = poIdsWithPayables.has(poRef);
+    return !hasPaymentRequest && !hasPayableById && !hasPayableByRef;
   });
 
   const createMutation = useMutation({
