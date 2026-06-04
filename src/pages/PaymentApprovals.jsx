@@ -52,6 +52,7 @@ export default function PaymentApprovals() {
   const [reviewPR, setReviewPR] = useState(null);
   const [markingPaidPR, setMarkingPaidPR] = useState(null);
   const [expandedHistory, setExpandedHistory] = useState(null);
+  const [expandedSuppliers, setExpandedSuppliers] = useState(new Set());
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkApproving, setBulkApproving] = useState(false);
@@ -366,15 +367,26 @@ export default function PaymentApprovals() {
             });
           };
 
+          const isSupplierExpanded = expandedSuppliers.has(payee);
+          const toggleSupplier = () => setExpandedSuppliers(prev => {
+            const next = new Set(prev);
+            next.has(payee) ? next.delete(payee) : next.add(payee);
+            return next;
+          });
+
           return (
             <div key={payee} className="space-y-2">
               {/* Group header */}
-              <div className="flex items-center justify-between bg-muted/60 border border-border rounded-xl px-4 py-3">
+              <div
+                className="flex items-center justify-between bg-muted/60 border border-border rounded-xl px-4 py-3 cursor-pointer hover:bg-muted/80 transition-colors"
+                onClick={toggleSupplier}
+              >
                 <div className="flex items-center gap-3">
                   {pendingItems.length > 0 && (
                     <Checkbox
                       checked={allGroupPendingSelected}
-                      onCheckedChange={toggleGroupSelect}
+                      onCheckedChange={e => { e.stopPropagation(); toggleGroupSelect(); }}
+                      onClick={e => e.stopPropagation()}
                       className="flex-shrink-0"
                     />
                   )}
@@ -386,14 +398,17 @@ export default function PaymentApprovals() {
                     </span>
                   )}
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Total</p>
-                  <p className="text-lg font-bold text-foreground">₱{groupTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Total</p>
+                    <p className="text-lg font-bold text-foreground">₱{groupTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                  </div>
+                  {isSupplierExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                 </div>
               </div>
 
-              {/* Group items */}
-              <div className="grid gap-2 pl-0">
+              {/* Group items — only shown when expanded */}
+              {isSupplierExpanded && (<div className="grid gap-2 pl-0">
                 {items.map((pr) => {
                   const StatusIcon = statusIcons[pr.approval_status] || Clock;
                   const isOverdue = pr.due_date && new Date(pr.due_date) < new Date() && pr.approval_status !== "paid";
@@ -512,7 +527,7 @@ export default function PaymentApprovals() {
                     </div>
                   );
                 })}
-              </div>
+              </div>)}
             </div>
           );
         });
