@@ -409,13 +409,13 @@ export default function PurchaseOrders() {
                     const hasItems = po.line_items && po.line_items.length > 0;
                     return (
                       <>
-                        {/* PO Header Row — click to expand items, click PO# to open detail */}
+                        {/* PO Row — compact single line, click to expand items */}
                         <tr
                           key={po.id}
                           className="hover:bg-primary/5 cursor-pointer transition-colors"
                           onClick={() => hasItems && setExpandedSummaryPO(isExpanded ? null : po.id)}
                         >
-                          <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                          <td className="px-4 py-2 font-mono text-xs text-muted-foreground">
                             <button
                               className="underline underline-offset-2 hover:text-primary transition-colors"
                               onClick={e => { e.stopPropagation(); setShowApprovedSummary(false); setSummarySearch(""); setExpandedSummaryPO(null); setTimeout(() => setReviewPO(po), 150); }}
@@ -423,25 +423,21 @@ export default function PurchaseOrders() {
                               {po.po_number || "—"}
                             </button>
                           </td>
-                          <td className="px-4 py-3 font-semibold text-foreground flex items-center gap-2">
-                            {po.supplier_name}
-                            {hasItems && (
-                              <span className="text-xs text-muted-foreground font-normal">({po.line_items.length} item{po.line_items.length !== 1 ? "s" : ""})</span>
-                            )}
+                          <td className="px-4 py-2 text-sm text-foreground">
+                            <span className="font-medium">{po.supplier_name}</span>
+                            {hasItems && <span className="ml-2 text-xs text-muted-foreground">{po.line_items.map(i => i.description).join(", ")}</span>}
                           </td>
-                          <td className="px-4 py-3 text-right font-bold text-foreground flex items-center justify-end gap-2">
+                          <td className="px-4 py-2 text-right text-sm font-semibold text-foreground whitespace-nowrap">
                             ₱{(po.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                            {hasItems && (
-                              isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                            )}
+                            {hasItems && (isExpanded ? <ChevronUp className="inline w-3 h-3 ml-1 text-muted-foreground" /> : <ChevronDown className="inline w-3 h-3 ml-1 text-muted-foreground" />)}
                           </td>
                         </tr>
-                        {/* Line Items — only shown when expanded */}
+                        {/* Line Items — expanded detail */}
                         {isExpanded && (po.line_items || []).map((item, idx) => (
                           <tr key={`${po.id}-item-${idx}`} className="bg-muted/20">
-                            <td className="px-4 py-1.5 text-xs text-muted-foreground"></td>
-                            <td className="px-4 py-1.5 text-xs text-muted-foreground pl-8">↳ {item.description}{item.quantity ? ` × ${item.quantity}` : ""}</td>
-                            <td className="px-4 py-1.5 text-right text-xs text-muted-foreground">₱{(item.total || (item.quantity * item.cost_per_item) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                            <td className="px-4 py-1 text-xs text-muted-foreground"></td>
+                            <td className="px-4 py-1 text-xs text-muted-foreground pl-8">↳ {item.description}{item.quantity ? ` × ${item.quantity}` : ""}</td>
+                            <td className="px-4 py-1 text-right text-xs text-muted-foreground">₱{(item.total || (item.quantity * item.cost_per_item) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                           </tr>
                         ))}
                       </>
