@@ -58,6 +58,10 @@
           },
           "notes": {
             "type": "string"
+          },
+          "receipt_url": {
+            "type": "string",
+            "description": "URL of uploaded receipt/image"
           }
         }
       }

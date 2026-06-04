@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Banknote, CheckCircle2 } from "lucide-react";
+import { Banknote, CheckCircle2, Upload, X, ImageIcon } from "lucide-react";
 
 const today = format(new Date(), "yyyy-MM-dd");
 
@@ -19,8 +19,10 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
     bank_account_id: "",
     reference: "",
     notes: "",
+    receipt_url: "",
   });
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ["bankaccounts"],
@@ -37,6 +39,7 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
         bank_account_id: "",
         reference: "",
         notes: "",
+        receipt_url: "",
       });
     }
   }, [receivable]);
@@ -51,6 +54,15 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
   const paidPct = totalAmount ? Math.min((alreadyPaid / totalAmount) * 100, 100) : 0;
   const history = receivable.payment_history || [];
 
+  const handleReceiptUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setForm(f => ({ ...f, receipt_url: file_url }));
+    setUploading(false);
+  };
+
   const handleSubmit = async () => {
     setSaving(true);
 
@@ -60,6 +72,7 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
       bank_account_id: form.bank_account_id,
       reference: form.reference,
       notes: form.notes,
+      receipt_url: form.receipt_url,
     };
 
     const updatedHistory = [...history, newEntry];
@@ -119,18 +132,25 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Collection History</p>
             <div className="rounded-lg border border-border divide-y divide-border">
               {history.map((h, i) => (
-                <div key={i} className="flex items-center justify-between px-3 py-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Banknote className="w-3.5 h-3.5 text-muted-foreground" />
-                    <div>
-                      {h.reference && <span className="font-medium text-xs">{h.reference}</span>}
-                      <div className="text-xs text-muted-foreground">
-                        {h.collection_date ? format(new Date(h.collection_date), "MMM d, yyyy") : ""}
-                        {h.notes ? ` · ${h.notes}` : ""}
+                <div key={i} className="px-3 py-2 text-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Banknote className="w-3.5 h-3.5 text-muted-foreground" />
+                      <div>
+                        {h.reference && <span className="font-medium text-xs">{h.reference}</span>}
+                        <div className="text-xs text-muted-foreground">
+                          {h.collection_date ? format(new Date(h.collection_date), "MMM d, yyyy") : ""}
+                          {h.notes ? ` · ${h.notes}` : ""}
+                        </div>
                       </div>
                     </div>
+                    <span className="font-semibold text-primary">₱{(h.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
-                  <span className="font-semibold text-primary">₱{(h.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  {h.receipt_url && (
+                    <a href={h.receipt_url} target="_blank" rel="noopener noreferrer" className="block">
+                      <img src={h.receipt_url} alt="Receipt" className="rounded-md border border-border max-h-32 object-contain bg-muted w-full hover:opacity-80 transition-opacity" />
+                    </a>
+                  )}
                 </div>
               ))}
               <div className="flex justify-between px-3 py-2 bg-muted/30 text-sm font-semibold">
@@ -208,6 +228,29 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
                   onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                   placeholder="Any additional notes..."
                 />
+              </div>
+
+              {/* Receipt / Image Upload */}
+              <div className="space-y-1.5">
+                <Label>Receipt / Image <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                {form.receipt_url ? (
+                  <div className="relative group rounded-lg overflow-hidden border border-border w-full">
+                    <img src={form.receipt_url} alt="Receipt" className="w-full max-h-48 object-contain bg-muted" />
+                    <button
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, receipt_url: "" }))}
+                      className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-destructive transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className={`flex items-center justify-center gap-2 border border-dashed border-border rounded-lg px-4 py-4 text-sm text-muted-foreground cursor-pointer hover:bg-muted/40 transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+                    {uploading ? <Upload className="w-4 h-4 animate-bounce" /> : <ImageIcon className="w-4 h-4" />}
+                    {uploading ? "Uploading..." : "Click to upload receipt or image"}
+                    <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleReceiptUpload} />
+                  </label>
+                )}
               </div>
 
               {/* Preview */}

@@ -192,14 +192,21 @@ export default function Receivables() {
                   {(r.payment_history || []).length > 0 && (
                     <div className="mt-3 rounded-lg border border-border divide-y divide-border text-xs">
                       {(r.payment_history || []).map((h, i) => (
-                        <div key={i} className="flex items-center justify-between px-3 py-1.5">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Banknote className="w-3 h-3" />
-                            {h.reference && <span className="font-medium">{h.reference}</span>}
-                            {h.collection_date && <span>· {format(new Date(h.collection_date), "MMM d, yyyy")}</span>}
-                            {h.notes && <span className="italic">· {h.notes}</span>}
+                        <div key={i} className="px-3 py-1.5 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Banknote className="w-3 h-3" />
+                              {h.reference && <span className="font-medium">{h.reference}</span>}
+                              {h.collection_date && <span>· {format(new Date(h.collection_date), "MMM d, yyyy")}</span>}
+                              {h.notes && <span className="italic">· {h.notes}</span>}
+                            </div>
+                            <span className="font-semibold text-primary">₱{(h.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                           </div>
-                          <span className="font-semibold text-primary">₱{(h.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                          {h.receipt_url && (
+                            <a href={h.receipt_url} target="_blank" rel="noopener noreferrer" className="block">
+                              <img src={h.receipt_url} alt="Receipt" className="rounded border border-border max-h-24 object-contain bg-muted w-full hover:opacity-80 transition-opacity" />
+                            </a>
+                          )}
                         </div>
                       ))}
                     </div>
