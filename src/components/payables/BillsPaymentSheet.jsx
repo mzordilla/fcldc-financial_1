@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, CreditCard, Loader2, CheckCircle2 } from "lucide-react";
 
 const today = format(new Date(), "yyyy-MM-dd");
-
 const fmt = (n) => (n || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
 
 const PAYMENT_METHODS = [
@@ -22,14 +21,20 @@ const PAYMENT_METHODS = [
   { value: "other", label: "Other" },
 ];
 
-const defaultLine = () => ({ payable_id: "", supplier_name: "", project_name: "", amount: "", notes: "" });
+const defaultLine = () => ({
+  payable_id: "",
+  supplier_name: "",
+  project_name: "",
+  chart_of_account: "",
+  amount: "",
+  notes: "",
+});
 
 export default function BillsPaymentSheet({ open, onOpenChange }) {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
 
-  // Header fields
   const [header, setHeader] = useState({
     payment_date: today,
     payment_method: "bank_transfer",
@@ -39,7 +44,6 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
     notes: "",
   });
 
-  // Lines – each targets one payable
   const [lines, setLines] = useState([defaultLine()]);
 
   const { data: payables = [] } = useQuery({
@@ -54,7 +58,24 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
     enabled: open,
   });
 
-  // Reset when opening
+  const { data: payees = [] } = useQuery({
+    queryKey: ["payees"],
+    queryFn: () => base44.entities.Payee.list("name", 200),
+    enabled: open,
+  });
+
+  const { data: projects = [] } = useQuery({
+    queryKey: ["projects"],
+    queryFn: () => base44.entities.Project.list("project_name", 200),
+    enabled: open,
+  });
+
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ["chartofaccounts"],
+    queryFn: () => base44.entities.ChartOfAccount.filter({ is_active: true }, "account_name", 200),
+    enabled: open,
+  });
+
   useEffect(() => {
     if (open) {
       setHeader({ payment_date: today, payment_method: "bank_transfer", bank_account_id: "", check_number: "", reference: "", notes: "" });
@@ -64,6 +85,7 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
   }, [open]);
 
   const unpaidPayables = payables.filter(p => p.status !== "paid");
+  const expenseAccounts = chartOfAccounts.filter(a => a.account_type === "expense");
 
   const totalPayment = lines.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
 
@@ -71,10 +93,9 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
   const removeLine = (i) => setLines(prev => prev.filter((_, idx) => idx !== i));
   const updateLine = (i, field, val) => setLines(prev => prev.map((l, idx) => idx === i ? { ...l, [field]: val } : l));
 
-  // Auto-fill amount, supplier, and project from selected payable
   const handlePayableSelect = (i, payableId) => {
     if (payableId === "manual") {
-      setLines(prev => prev.map((l, idx) => idx === i ? { ...l, payable_id: "manual", supplier_name: "", project_name: "", amount: "" } : l));
+      setLines(prev => prev.map((l, idx) => idx === i ? { ...l, payable_id: "manual", supplier_name: "", project_name: "", amount: "", chart_of_account: "" } : l));
       return;
     }
     const p = payables.find(x => x.id === payableId);
@@ -86,6 +107,7 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
         supplier_name: p.supplier_name || "",
         project_name: p.project_name || "",
         amount: String(remaining > 0 ? remaining : ""),
+        chart_of_account: l.chart_of_account || "",
       } : l));
     }
   };
@@ -94,7 +116,6 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
 
   const handleSubmit = async () => {
     setSaving(true);
-
     const validLines = lines.filter(l => (l.payable_id || l.supplier_name) && parseFloat(l.amount) > 0);
 
     await Promise.all(validLines.map(async (line) => {
@@ -109,7 +130,7 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
         notes: line.notes || header.notes,
       };
 
-      // Update linked payable (if not manual entry)
+      // Update linked payable (if not manual)
       if (line.payable_id && line.payable_id !== "manual") {
         const p = payables.find(x => x.id === line.payable_id);
         if (p) {
@@ -126,7 +147,6 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
         }
       }
 
-      // Resolve supplier/project — prefer line-level (auto-filled or manual), fallback to payable
       const p = line.payable_id && line.payable_id !== "manual" ? payables.find(x => x.id === line.payable_id) : null;
       const supplierName = line.supplier_name || p?.supplier_name || "";
       const projectName = line.project_name || p?.project_name || "";
@@ -138,6 +158,7 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
           amount: paid,
           type: "expense",
           category: "other",
+          chart_of_account: line.chart_of_account || "",
           project_name: projectName,
           bank_account_id: header.bank_account_id,
           date: header.payment_date,
@@ -170,7 +191,7 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
             <CheckCircle2 className="w-16 h-16 text-primary" />
             <h2 className="text-xl font-bold">Payment Recorded</h2>
             <p className="text-muted-foreground text-sm">
-              ₱{fmt(totalPayment)} applied across {lines.filter(l => l.payable_id && parseFloat(l.amount) > 0).length} bill(s).
+              ₱{fmt(totalPayment)} applied across {lines.filter(l => (l.payable_id || l.supplier_name) && parseFloat(l.amount) > 0).length} bill(s).
             </p>
             <Button onClick={() => onOpenChange(false)}>Close</Button>
           </div>
@@ -230,6 +251,8 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
                 {lines.map((line, i) => {
                   const payable = payables.find(x => x.id === line.payable_id);
                   const remaining = payable ? (payable.amount || 0) - (payable.amount_paid || 0) : 0;
+                  const isLinked = !!payable;
+
                   return (
                     <div key={i} className="border border-border rounded-xl p-4 space-y-3 bg-card">
                       <div className="flex items-center justify-between">
@@ -241,6 +264,7 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
                         )}
                       </div>
 
+                      {/* Link to existing payable */}
                       <div className="space-y-1.5">
                         <Label>Select Bill / Payable</Label>
                         <Select value={line.payable_id} onValueChange={v => handlePayableSelect(i, v)}>
@@ -249,39 +273,62 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
                             <SelectItem value="manual">— Manual Entry —</SelectItem>
                             {unpaidPayables.map(p => (
                               <SelectItem key={p.id} value={p.id}>
-                                <span className="flex items-center gap-2">
-                                  <span className="font-medium">{p.supplier_name}</span>
-                                  {p.project_name && <span className="text-muted-foreground text-xs">· {p.project_name}</span>}
-                                  <span className="text-xs text-destructive font-semibold ml-auto">₱{((p.amount || 0) - (p.amount_paid || 0)).toLocaleString()}</span>
-                                </span>
+                                {p.supplier_name}{p.project_name ? ` · ${p.project_name}` : ""} — ₱{((p.amount || 0) - (p.amount_paid || 0)).toLocaleString()}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
 
-                      {/* Supplier & Project — editable on manual, read-only hint on linked payable */}
+                      {/* Supplier (Payee masterlist) & Project */}
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <Label>Supplier</Label>
-                          <Input
-                            value={line.supplier_name}
-                            onChange={e => updateLine(i, "supplier_name", e.target.value)}
-                            placeholder="Supplier name"
-                            readOnly={!!payable}
-                            className={payable ? "bg-muted/40 cursor-default" : ""}
-                          />
+                          {isLinked ? (
+                            <Input value={line.supplier_name} readOnly className="bg-muted/40 cursor-default" />
+                          ) : (
+                            <Select value={line.supplier_name} onValueChange={v => updateLine(i, "supplier_name", v)}>
+                              <SelectTrigger><SelectValue placeholder="Select supplier..." /></SelectTrigger>
+                              <SelectContent>
+                                {payees.map(py => (
+                                  <SelectItem key={py.id} value={py.name}>{py.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
                         </div>
                         <div className="space-y-1.5">
                           <Label>Project</Label>
-                          <Input
-                            value={line.project_name}
-                            onChange={e => updateLine(i, "project_name", e.target.value)}
-                            placeholder="Project name (optional)"
-                            readOnly={!!payable}
-                            className={payable ? "bg-muted/40 cursor-default" : ""}
-                          />
+                          {isLinked ? (
+                            <Input value={line.project_name} readOnly className="bg-muted/40 cursor-default" />
+                          ) : (
+                            <Select value={line.project_name} onValueChange={v => updateLine(i, "project_name", v)}>
+                              <SelectTrigger><SelectValue placeholder="Select project..." /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">— None —</SelectItem>
+                                {projects.map(pr => (
+                                  <SelectItem key={pr.id} value={pr.project_name}>{pr.project_name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
                         </div>
+                      </div>
+
+                      {/* Chart of Accounts */}
+                      <div className="space-y-1.5">
+                        <Label>Chart of Account</Label>
+                        <Select value={line.chart_of_account} onValueChange={v => updateLine(i, "chart_of_account", v)}>
+                          <SelectTrigger><SelectValue placeholder="Select account..." /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">— None —</SelectItem>
+                            {expenseAccounts.map(a => (
+                              <SelectItem key={a.id} value={a.account_name}>
+                                {a.account_code ? `${a.account_code} – ` : ""}{a.account_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       {payable && (
@@ -304,7 +351,7 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
                             value={line.amount}
                             onChange={e => updateLine(i, "amount", e.target.value)}
                             placeholder="0.00"
-                            max={remaining}
+                            max={remaining || undefined}
                           />
                           {payable && <p className="text-xs text-muted-foreground">Max: ₱{fmt(remaining)}</p>}
                         </div>
