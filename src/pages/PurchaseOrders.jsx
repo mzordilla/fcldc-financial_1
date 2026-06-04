@@ -229,146 +229,166 @@ export default function PurchaseOrders() {
         </div>
       )}
 
-      <div className="grid gap-4">
-        {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
-        {!isLoading && filtered.length === 0 && <p className="text-center py-12 text-muted-foreground">No purchase orders found</p>}
-        {filtered.map((po) => {
-          const StatusIcon = statusIcons[po.approval_status] || Clock;
-          return (
-            <div key={po.id} className={`bg-card rounded-2xl border p-5 hover:shadow-md transition-shadow ${selectedIds.has(po.id) ? "ring-2 ring-primary/40 border-primary/30" : "border-border"}`}>
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                <div className="flex-1 flex gap-3">
-                  {isAdmin && po.approval_status === "pending" && (
-                    <Checkbox
-                      checked={selectedIds.has(po.id)}
-                      onCheckedChange={() => toggleSelect(po.id)}
-                      className="mt-1 flex-shrink-0"
-                    />
-                  )}
-                  <div className="flex-1">
-                  <div className="flex items-center gap-3 flex-wrap mb-2">
-                    <h3 className="font-semibold text-foreground">{po.supplier_name}</h3>
-                    {po.po_number && <span className="text-xs text-muted-foreground font-mono">{po.po_number}</span>}
-                    <Badge variant="outline" className={`text-xs ${statusStyles[po.approval_status] || ""}`}>
-                      <StatusIcon className="w-3 h-3 mr-1" />
-                      {(po.approval_status || "pending").replace(/_/g, " ")}
-                    </Badge>
-                    {po.priority && po.priority !== "normal" && (
-                      <Badge className={`text-xs ${priorityStyles[po.priority]}`}>
-                        {po.priority}
+      {/* PO Table */}
+      <div className="rounded-2xl border border-border overflow-hidden bg-card">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/60 border-b border-border">
+            <tr>
+              {isAdmin && <th className="px-3 py-3 w-8"></th>}
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">PO #</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Supplier</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Project</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Description</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Category</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {isLoading && (
+              <tr><td colSpan={10} className="text-center py-12 text-muted-foreground">Loading...</td></tr>
+            )}
+            {!isLoading && filtered.length === 0 && (
+              <tr><td colSpan={10} className="text-center py-12 text-muted-foreground">No purchase orders found</td></tr>
+            )}
+            {filtered.map((po) => {
+              const StatusIcon = statusIcons[po.approval_status] || Clock;
+              const isExpanded = expandedHistory === po.id;
+              const hasLineItems = po.line_items && po.line_items.length > 0;
+              return (
+                <>
+                  <tr
+                    key={po.id}
+                    className={`hover:bg-muted/30 transition-colors cursor-pointer ${selectedIds.has(po.id) ? "bg-primary/5" : ""}`}
+                    onClick={() => setExpandedHistory(isExpanded ? null : po.id)}
+                  >
+                    {isAdmin && (
+                      <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
+                        {po.approval_status === "pending" && (
+                          <Checkbox
+                            checked={selectedIds.has(po.id)}
+                            onCheckedChange={() => toggleSelect(po.id)}
+                          />
+                        )}
+                      </td>
+                    )}
+                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{po.po_number || "—"}</td>
+                    <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{po.supplier_name}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{po.project_name || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-foreground max-w-[200px] truncate">{po.description}</td>
+                    <td className="px-4 py-3">
+                      {po.category && <Badge variant="secondary" className="text-xs capitalize">{po.category.replace(/_/g, " ")}</Badge>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant="outline" className={`text-xs ${statusStyles[po.approval_status] || ""}`}>
+                        <StatusIcon className="w-3 h-3 mr-1" />
+                        {(po.approval_status || "pending").replace(/_/g, " ")}
                       </Badge>
-                    )}
-                    {po.category && <Badge variant="secondary" className="text-xs">{po.category}</Badge>}
-                  </div>
-                  <p className="text-sm text-foreground">{po.description}</p>
-
-                  {po.line_items && po.line_items.length > 0 && (
-                    <div className="mt-3 border border-border rounded-lg overflow-hidden">
-                      <table className="w-full text-xs">
-                        <thead>
-                          <tr className="bg-muted/50 border-b border-border">
-                            <th className="px-3 py-2 text-left font-semibold">Item</th>
-                            <th className="px-3 py-2 text-right font-semibold">Qty</th>
-                            <th className="px-3 py-2 text-right font-semibold">Cost/Item</th>
-                            <th className="px-3 py-2 text-right font-semibold">Total</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {po.line_items.map((item, idx) => (
-                            <tr key={idx} className="border-b border-border/50 last:border-0">
-                              <td className="px-3 py-2 text-left">{item.description}</td>
-                              <td className="px-3 py-2 text-right">{item.quantity}</td>
-                              <td className="px-3 py-2 text-right">₱{(item.cost_per_item || 0).toLocaleString()}</td>
-                              <td className="px-3 py-2 text-right font-semibold">₱{(item.total || 0).toLocaleString()}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                  {po.items && !po.line_items?.length && <p className="text-xs text-muted-foreground mt-1">Items: {po.items}</p>}
-                  <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
-                    {po.project_name && <span>Project: {po.project_name}</span>}
-                    {po.requested_by && <span>Requested by: {po.requested_by}</span>}
-                    {po.requested_date && <span>Date: {format(new Date(po.requested_date), "MMM d, yyyy")}</span>}
-                    {po.required_date && <span>Required by: {format(new Date(po.required_date), "MMM d, yyyy")}</span>}
-                    {po.approved_by && <span>Reviewed by: {po.approved_by}</span>}
-                  </div>
-                  {po.approval_notes && (
-                    <p className="text-xs text-muted-foreground mt-2 italic border-l-2 border-border pl-2">{po.approval_notes}</p>
-                  )}
-                  {po.receipt_url && (
-                    <div className="mt-2 flex items-center gap-2 text-xs text-primary">
-                      <Package className="w-3.5 h-3.5" />
-                      <span>Delivered {po.delivery_date ? format(new Date(po.delivery_date), "MMM d, yyyy") : ""}</span>
-                      {po.receipt_url && <a href={po.receipt_url} target="_blank" rel="noopener noreferrer" className="underline">View receipt</a>}
-                    </div>
-                  )}
-                  {po.delivery_notes && (
-                    <p className="text-xs text-muted-foreground mt-1 italic">{po.delivery_notes}</p>
-                  )}
-                  {/* History toggle */}
-                  {po.approval_history?.length > 0 && (
-                    <button
-                      onClick={() => setExpandedHistory(expandedHistory === po.id ? null : po.id)}
-                      className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <History className="w-3.5 h-3.5" />
-                      {po.approval_history.length} history record{po.approval_history.length !== 1 ? "s" : ""}
-                      {expandedHistory === po.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                    </button>
-                  )}
-                  {expandedHistory === po.id && (
-                    <div className="mt-3 p-3 bg-muted/30 rounded-xl border border-border">
-                      <ApprovalHistoryLog history={po.approval_history} />
-                    </div>
-                  )}
-                  </div>{/* inner flex-1 */}
-                </div>{/* outer flex gap-3 */}
-                <div className="flex sm:flex-col items-center sm:items-end gap-3">
-                  <p className="text-xl font-bold text-foreground">₱{(po.amount || 0).toLocaleString()}</p>
-                  <div className="flex gap-1">
-                    {isAdmin && po.approval_status === "pending" && (
-                      <Button size="sm" variant="outline" onClick={() => setReviewPO(po)}>
-                        Review
-                      </Button>
-                    )}
-                    {po.approval_status === "approved" && !po.receipt_url && (
-                      <Button size="sm" variant="outline" onClick={() => setUploadingReceipt(po)} className="text-primary hover:text-primary">
-                        <Package className="w-3.5 h-3.5 mr-1.5" /> Receipt
-                      </Button>
-                    )}
-                    {po.approval_status === "approved" && (
-                      <NoticeOfDeliveryPDF po={po} />
-                    )}
-                    {po.approval_status === "approved" && (
-                      <div title={!po.receipt_url ? "Upload a receipt before converting to payable" : ""}>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setConvertingPO(po)}
-                          disabled={!po.receipt_url}
-                          className="text-primary hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <CreditCard className="w-3.5 h-3.5 mr-1.5" /> Payable
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                      {po.requested_date ? format(new Date(po.requested_date), "MMM d, yyyy") : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold text-foreground whitespace-nowrap">₱{(po.amount || 0).toLocaleString()}</td>
+                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1">
+                        {isAdmin && po.approval_status === "pending" && (
+                          <Button size="sm" variant="outline" onClick={() => setReviewPO(po)}>Review</Button>
+                        )}
+                        {po.approval_status === "approved" && !po.receipt_url && (
+                          <Button size="sm" variant="outline" onClick={() => setUploadingReceipt(po)} className="text-primary hover:text-primary">
+                            <Package className="w-3.5 h-3.5 mr-1" /> Receipt
+                          </Button>
+                        )}
+                        {po.approval_status === "approved" && <NoticeOfDeliveryPDF po={po} />}
+                        {po.approval_status === "approved" && (
+                          <div title={!po.receipt_url ? "Upload a receipt before converting to payable" : ""}>
+                            <Button size="sm" variant="outline" onClick={() => setConvertingPO(po)} disabled={!po.receipt_url} className="text-primary hover:text-primary disabled:opacity-50">
+                              <CreditCard className="w-3.5 h-3.5 mr-1" /> Payable
+                            </Button>
+                          </div>
+                        )}
+                        <Button variant="ghost" size="icon" onClick={() => setReviewPO(po)} className="text-muted-foreground hover:text-foreground">
+                          <History className="w-4 h-4" />
                         </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setEditingPO(po)} className="text-muted-foreground hover:text-foreground">
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(po.id)} className="text-muted-foreground hover:text-destructive">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                        {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                       </div>
-                    )}
-                    <Button variant="ghost" size="icon" onClick={() => setReviewPO(po)} title="View History" className="text-muted-foreground hover:text-foreground">
-                      <History className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setEditingPO(po)} className="text-muted-foreground hover:text-foreground">
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(po.id)} className="text-muted-foreground hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+                    </td>
+                  </tr>
+                  {isExpanded && (
+                    <tr key={`${po.id}-expanded`} className="bg-muted/20">
+                      <td colSpan={10} className="px-6 py-4">
+                        <div className="space-y-3">
+                          {/* Meta info */}
+                          <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+                            {po.requested_by && <span>Requested by: <span className="text-foreground font-medium">{po.requested_by}</span></span>}
+                            {po.required_date && <span>Required by: <span className="text-foreground font-medium">{format(new Date(po.required_date), "MMM d, yyyy")}</span></span>}
+                            {po.approved_by && <span>Reviewed by: <span className="text-foreground font-medium">{po.approved_by}</span></span>}
+                            {po.priority && po.priority !== "normal" && (
+                              <Badge className={`text-xs ${priorityStyles[po.priority]}`}>{po.priority}</Badge>
+                            )}
+                            {po.receipt_url && (
+                              <span className="text-primary flex items-center gap-1">
+                                <Package className="w-3 h-3" />
+                                Delivered {po.delivery_date ? format(new Date(po.delivery_date), "MMM d, yyyy") : ""}
+                                <a href={po.receipt_url} target="_blank" rel="noopener noreferrer" className="underline ml-1">View receipt</a>
+                              </span>
+                            )}
+                          </div>
+                          {po.approval_notes && (
+                            <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-2">{po.approval_notes}</p>
+                          )}
+                          {po.delivery_notes && (
+                            <p className="text-xs text-muted-foreground italic">{po.delivery_notes}</p>
+                          )}
+                          {/* Line items */}
+                          {hasLineItems && (
+                            <div className="border border-border rounded-lg overflow-hidden">
+                              <table className="w-full text-xs">
+                                <thead>
+                                  <tr className="bg-muted/50 border-b border-border">
+                                    <th className="px-3 py-2 text-left font-semibold">Item</th>
+                                    <th className="px-3 py-2 text-right font-semibold">Qty</th>
+                                    <th className="px-3 py-2 text-right font-semibold">Cost/Item</th>
+                                    <th className="px-3 py-2 text-right font-semibold">Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {po.line_items.map((item, idx) => (
+                                    <tr key={idx} className="border-b border-border/50 last:border-0">
+                                      <td className="px-3 py-2">{item.description}</td>
+                                      <td className="px-3 py-2 text-right">{item.quantity}</td>
+                                      <td className="px-3 py-2 text-right">₱{(item.cost_per_item || 0).toLocaleString()}</td>
+                                      <td className="px-3 py-2 text-right font-semibold">₱{(item.total || 0).toLocaleString()}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                          {po.items && !hasLineItems && <p className="text-xs text-muted-foreground">Items: {po.items}</p>}
+                          {/* Approval history */}
+                          {po.approval_history?.length > 0 && (
+                            <div className="p-3 bg-muted/30 rounded-xl border border-border">
+                              <ApprovalHistoryLog history={po.approval_history} />
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       {/* Approved PO Summary Dialog */}
