@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays, addDays } from "date-fns";
-import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download, Package, Banknote, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download, Package, Banknote, ChevronDown, ChevronUp, CheckSquare, Square, Loader2 } from "lucide-react";
 
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
@@ -99,6 +99,10 @@ export default function Payables() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [showReceivingItems, setShowReceivingItems] = useState(true);
   const [showPaymentRequests, setShowPaymentRequests] = useState(true);
+  const [selectedRIs, setSelectedRIs] = useState(new Set());
+  const [selectedPRs, setSelectedPRs] = useState(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [removingDupes, setRemovingDupes] = useState(false);
   const queryClient = useQueryClient();
   const importRef = useRef();
 
@@ -226,6 +230,47 @@ export default function Payables() {
     });
   };
 
+  // Bulk approve selected RIs
+  const bulkApproveRIs = async () => {
+    setBulkLoading(true);
+    await Promise.all([...selectedRIs].map(id => {
+      const ri = pendingRIs.find(r => r.id === id);
+      return ri ? createFromRI(ri) : Promise.resolve();
+    }));
+    setSelectedRIs(new Set());
+    setBulkLoading(false);
+  };
+
+  // Bulk approve selected PRs
+  const bulkApprovePRs = async () => {
+    setBulkLoading(true);
+    await Promise.all([...selectedPRs].map(id => {
+      const pr = pendingPRs.find(r => r.id === id);
+      return pr ? createFromPR(pr) : Promise.resolve();
+    }));
+    setSelectedPRs(new Set());
+    setBulkLoading(false);
+  };
+
+  // Remove duplicate payables — keep the one with the latest created_date per key
+  const removeDuplicatePayables = async () => {
+    setRemovingDupes(true);
+    const seen = {};
+    const toDelete = [];
+    // Sort newest first so we keep the latest
+    const sorted = [...payables].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    sorted.forEach(p => {
+      const key = `${(p.supplier_name || "").toLowerCase().trim()}|${p.amount}|${(p.invoice_number || "").toLowerCase().trim()}`;
+      if (seen[key]) {
+        toDelete.push(p.id);
+      } else {
+        seen[key] = true;
+      }
+    });
+    await Promise.all(toDelete.map(id => deleteMutation.mutateAsync(id)));
+    setRemovingDupes(false);
+  };
+
   // Detect duplicate payable entries: same supplier + amount + invoice_number
   const payableKeyCount = {};
   payables.forEach(p => {
@@ -236,6 +281,8 @@ export default function Payables() {
     const key = `${(p.supplier_name || "").toLowerCase().trim()}|${p.amount}|${(p.invoice_number || "").toLowerCase().trim()}`;
     return payableKeyCount[key] > 1;
   };
+  // Count how many payables are duplicates (extras beyond the first)
+  const duplicatePayablesCount = Object.values(payableKeyCount).reduce((sum, cnt) => sum + (cnt > 1 ? cnt - 1 : 0), 0);
 
   const filtered = statusFilter === "all" ? payables : payables.filter(p => p.status === statusFilter);
 
@@ -262,6 +309,12 @@ export default function Payables() {
               <SelectItem value="paid">Paid</SelectItem>
             </SelectContent>
           </Select>
+          {duplicatePayablesCount > 0 && (
+            <Button variant="outline" size="sm" onClick={removeDuplicatePayables} disabled={removingDupes} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+              {removingDupes ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+              Remove {duplicatePayablesCount} Duplicate{duplicatePayablesCount > 1 ? "s" : ""}
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => handleExport(payables)}>
             <Download className="w-4 h-4 mr-2" /> Export
           </Button>
@@ -280,21 +333,36 @@ export default function Payables() {
       {/* From Receiving Items */}
       {pendingRIs.length > 0 && (
         <div className="rounded-2xl border border-border overflow-hidden bg-card">
-          <button
-            className="w-full flex items-center justify-between px-5 py-3 bg-muted/50 hover:bg-muted/70 transition-colors"
-            onClick={() => setShowReceivingItems(v => !v)}
-          >
-            <div className="flex items-center gap-2">
+          <div className="w-full flex items-center justify-between px-5 py-3 bg-muted/50">
+            <button className="flex items-center gap-2 flex-1" onClick={() => setShowReceivingItems(v => !v)}>
               <Package className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-semibold text-foreground">From Receiving Items</span>
               <span className="text-xs bg-chart-3/10 text-chart-3 border border-chart-3/20 px-2 py-0.5 rounded-full">{pendingRIs.length} pending</span>
-            </div>
-            {showReceivingItems ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-          </button>
+              {showReceivingItems ? <ChevronUp className="w-4 h-4 text-muted-foreground ml-1" /> : <ChevronDown className="w-4 h-4 text-muted-foreground ml-1" />}
+            </button>
+            {showReceivingItems && (
+              <div className="flex items-center gap-2">
+                <button
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => setSelectedRIs(selectedRIs.size === pendingRIs.length ? new Set() : new Set(pendingRIs.map(r => r.id)))}
+                >
+                  {selectedRIs.size === pendingRIs.length ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                  {selectedRIs.size === pendingRIs.length ? "Deselect All" : "Select All"}
+                </button>
+                {selectedRIs.size > 0 && (
+                  <Button size="sm" onClick={bulkApproveRIs} disabled={bulkLoading} className="text-xs">
+                    {bulkLoading ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <CheckCircle className="w-3 h-3 mr-1" />}
+                    Add {selectedRIs.size} as Payable{selectedRIs.size > 1 ? "s" : ""}
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
           {showReceivingItems && (
             <table className="w-full text-sm">
               <thead className="bg-muted/30 border-y border-border">
                 <tr>
+                  <th className="px-4 py-2 w-8"></th>
                   <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Supplier</th>
                   <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Project</th>
                   <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">PO #</th>
@@ -305,15 +373,20 @@ export default function Payables() {
               </thead>
               <tbody className="divide-y divide-border">
                 {pendingRIs.map(ri => (
-                  <tr key={ri.id} className="hover:bg-muted/20 transition-colors">
+                  <tr key={ri.id} className={`hover:bg-muted/20 transition-colors ${selectedRIs.has(ri.id) ? "bg-primary/5" : ""}`}>
+                    <td className="px-4 py-2.5">
+                      <button onClick={() => setSelectedRIs(prev => { const s = new Set(prev); s.has(ri.id) ? s.delete(ri.id) : s.add(ri.id); return s; })}>
+                        {selectedRIs.has(ri.id) ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4 text-muted-foreground" />}
+                      </button>
+                    </td>
                     <td className="px-4 py-2.5 font-medium text-foreground text-xs">{ri.supplier_name}</td>
                     <td className="px-4 py-2.5 text-xs text-muted-foreground">{ri.project_name || "—"}</td>
                     <td className="px-4 py-2.5 text-xs font-mono text-muted-foreground">{ri.po_number || "—"}</td>
                     <td className="px-4 py-2.5 text-xs text-muted-foreground">{ri.received_date ? format(new Date(ri.received_date), "MMM d, yyyy") : "—"}</td>
                     <td className="px-4 py-2.5 text-right text-xs font-bold text-foreground">₱{(ri.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     <td className="px-4 py-2.5 text-right">
-                      <Button size="sm" variant="outline" onClick={() => createFromRI(ri)} className="text-primary hover:text-primary text-xs">
-                        <Plus className="w-3 h-3 mr-1" /> Add Payable
+                      <Button size="sm" variant="outline" onClick={() => createFromRI(ri)} disabled={bulkLoading} className="text-primary hover:text-primary text-xs">
+                        <Plus className="w-3 h-3 mr-1" /> Add
                       </Button>
                     </td>
                   </tr>
@@ -327,21 +400,36 @@ export default function Payables() {
       {/* From Approved Payment Requests */}
       {pendingPRs.length > 0 && (
         <div className="rounded-2xl border border-border overflow-hidden bg-card">
-          <button
-            className="w-full flex items-center justify-between px-5 py-3 bg-muted/50 hover:bg-muted/70 transition-colors"
-            onClick={() => setShowPaymentRequests(v => !v)}
-          >
-            <div className="flex items-center gap-2">
+          <div className="w-full flex items-center justify-between px-5 py-3 bg-muted/50">
+            <button className="flex items-center gap-2 flex-1" onClick={() => setShowPaymentRequests(v => !v)}>
               <Banknote className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-semibold text-foreground">From Approved Payment Requests</span>
               <span className="text-xs bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full">{pendingPRs.length} pending</span>
-            </div>
-            {showPaymentRequests ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-          </button>
+              {showPaymentRequests ? <ChevronUp className="w-4 h-4 text-muted-foreground ml-1" /> : <ChevronDown className="w-4 h-4 text-muted-foreground ml-1" />}
+            </button>
+            {showPaymentRequests && (
+              <div className="flex items-center gap-2">
+                <button
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => setSelectedPRs(selectedPRs.size === pendingPRs.length ? new Set() : new Set(pendingPRs.map(r => r.id)))}
+                >
+                  {selectedPRs.size === pendingPRs.length ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                  {selectedPRs.size === pendingPRs.length ? "Deselect All" : "Select All"}
+                </button>
+                {selectedPRs.size > 0 && (
+                  <Button size="sm" onClick={bulkApprovePRs} disabled={bulkLoading} className="text-xs">
+                    {bulkLoading ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <CheckCircle className="w-3 h-3 mr-1" />}
+                    Add {selectedPRs.size} as Payable{selectedPRs.size > 1 ? "s" : ""}
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
           {showPaymentRequests && (
             <table className="w-full text-sm">
               <thead className="bg-muted/30 border-y border-border">
                 <tr>
+                  <th className="px-4 py-2 w-8"></th>
                   <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">PR #</th>
                   <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Payee</th>
                   <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Description</th>
@@ -353,7 +441,12 @@ export default function Payables() {
               </thead>
               <tbody className="divide-y divide-border">
                 {pendingPRs.map(pr => (
-                  <tr key={pr.id} className="hover:bg-muted/20 transition-colors">
+                  <tr key={pr.id} className={`hover:bg-muted/20 transition-colors ${selectedPRs.has(pr.id) ? "bg-primary/5" : ""}`}>
+                    <td className="px-4 py-2.5">
+                      <button onClick={() => setSelectedPRs(prev => { const s = new Set(prev); s.has(pr.id) ? s.delete(pr.id) : s.add(pr.id); return s; })}>
+                        {selectedPRs.has(pr.id) ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4 text-muted-foreground" />}
+                      </button>
+                    </td>
                     <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{pr.request_number || "—"}</td>
                     <td className="px-4 py-2.5 font-medium text-foreground text-xs">{pr.payee}</td>
                     <td className="px-4 py-2.5 text-xs text-muted-foreground max-w-[200px] truncate">{pr.description}</td>
@@ -361,8 +454,8 @@ export default function Payables() {
                     <td className="px-4 py-2.5 text-xs text-muted-foreground">{pr.due_date ? format(new Date(pr.due_date), "MMM d, yyyy") : "—"}</td>
                     <td className="px-4 py-2.5 text-right text-xs font-bold text-foreground">₱{(pr.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     <td className="px-4 py-2.5 text-right">
-                      <Button size="sm" variant="outline" onClick={() => createFromPR(pr)} className="text-primary hover:text-primary text-xs">
-                        <Plus className="w-3 h-3 mr-1" /> Add Payable
+                      <Button size="sm" variant="outline" onClick={() => createFromPR(pr)} disabled={bulkLoading} className="text-primary hover:text-primary text-xs">
+                        <Plus className="w-3 h-3 mr-1" /> Add
                       </Button>
                     </td>
                   </tr>
