@@ -393,9 +393,12 @@ export default function PurchaseOrders() {
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur">
                 <tr className="border-b border-border">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide w-32">PO Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Supplier / Item</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide w-36">Amount</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide w-28">PO #</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Supplier</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Description</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide w-12">Qty</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide w-28">Unit Cost</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide w-32">Amount</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -405,46 +408,36 @@ export default function PurchaseOrders() {
                     return !q || (po.supplier_name || "").toLowerCase().includes(q) || (po.po_number || "").toLowerCase().includes(q);
                   })
                   .map((po) => {
-                    const isExpanded = expandedSummaryPO === po.id;
                     const hasItems = po.line_items && po.line_items.length > 0;
-                    return (
-                      <>
-                        {/* PO Header Row — click to expand items, click PO# to open detail */}
+                    if (hasItems) {
+                      return po.line_items.map((item, idx) => (
                         <tr
-                          key={po.id}
+                          key={`${po.id}-${idx}`}
                           className="hover:bg-primary/5 cursor-pointer transition-colors"
-                          onClick={() => hasItems && setExpandedSummaryPO(isExpanded ? null : po.id)}
+                          onClick={() => { setShowApprovedSummary(false); setSummarySearch(""); setExpandedSummaryPO(null); setTimeout(() => setReviewPO(po), 150); }}
                         >
-                          <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                            <button
-                              className="underline underline-offset-2 hover:text-primary transition-colors"
-                              onClick={e => { e.stopPropagation(); setShowApprovedSummary(false); setSummarySearch(""); setExpandedSummaryPO(null); setTimeout(() => setReviewPO(po), 150); }}
-                            >
-                              {po.po_number || "—"}
-                            </button>
-                          </td>
-                          <td className="px-4 py-3 font-semibold text-foreground flex items-center gap-2">
-                            {po.supplier_name}
-                            {hasItems && (
-                              <span className="text-xs text-muted-foreground font-normal">({po.line_items.length} item{po.line_items.length !== 1 ? "s" : ""})</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-right font-bold text-foreground flex items-center justify-end gap-2">
-                            ₱{(po.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                            {hasItems && (
-                              isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                            )}
-                          </td>
+                          <td className="px-3 py-1.5 font-mono text-xs text-muted-foreground">{idx === 0 ? (po.po_number || "—") : ""}</td>
+                          <td className="px-3 py-1.5 text-xs font-medium text-foreground">{idx === 0 ? po.supplier_name : ""}</td>
+                          <td className="px-3 py-1.5 text-xs text-foreground">{item.description}</td>
+                          <td className="px-3 py-1.5 text-xs text-right text-muted-foreground">{item.quantity ?? ""}</td>
+                          <td className="px-3 py-1.5 text-xs text-right text-muted-foreground">{item.cost_per_item ? `₱${item.cost_per_item.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : ""}</td>
+                          <td className="px-3 py-1.5 text-xs text-right font-semibold text-foreground">{idx === 0 ? `₱${(po.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : ""}</td>
                         </tr>
-                        {/* Line Items — only shown when expanded */}
-                        {isExpanded && (po.line_items || []).map((item, idx) => (
-                          <tr key={`${po.id}-item-${idx}`} className="bg-muted/20">
-                            <td className="px-4 py-1.5 text-xs text-muted-foreground"></td>
-                            <td className="px-4 py-1.5 text-xs text-muted-foreground pl-8">↳ {item.description}{item.quantity ? ` × ${item.quantity}` : ""}</td>
-                            <td className="px-4 py-1.5 text-right text-xs text-muted-foreground">₱{(item.total || (item.quantity * item.cost_per_item) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                          </tr>
-                        ))}
-                      </>
+                      ));
+                    }
+                    return (
+                      <tr
+                        key={po.id}
+                        className="hover:bg-primary/5 cursor-pointer transition-colors"
+                        onClick={() => { setShowApprovedSummary(false); setSummarySearch(""); setExpandedSummaryPO(null); setTimeout(() => setReviewPO(po), 150); }}
+                      >
+                        <td className="px-3 py-1.5 font-mono text-xs text-muted-foreground">{po.po_number || "—"}</td>
+                        <td className="px-3 py-1.5 text-xs font-medium text-foreground">{po.supplier_name}</td>
+                        <td className="px-3 py-1.5 text-xs text-muted-foreground">{po.description || "—"}</td>
+                        <td className="px-3 py-1.5 text-xs text-right text-muted-foreground">—</td>
+                        <td className="px-3 py-1.5 text-xs text-right text-muted-foreground">—</td>
+                        <td className="px-3 py-1.5 text-xs text-right font-semibold text-foreground">₱{(po.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      </tr>
                     );
                   })}
               </tbody>
