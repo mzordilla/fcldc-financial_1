@@ -392,9 +392,9 @@ export default function PurchaseOrders() {
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur">
                 <tr className="border-b border-border">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">PO Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Supplier</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide w-32">PO Number</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Supplier / Item</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide w-36">Amount</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -404,15 +404,26 @@ export default function PurchaseOrders() {
                     return !q || (po.supplier_name || "").toLowerCase().includes(q) || (po.po_number || "").toLowerCase().includes(q);
                   })
                   .map((po) => (
-                    <tr
-                      key={po.id}
-                      className="hover:bg-primary/5 cursor-pointer transition-colors"
-                      onClick={() => { setShowApprovedSummary(false); setSummarySearch(""); setTimeout(() => setReviewPO(po), 150); }}
-                    >
-                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{po.po_number || "—"}</td>
-                      <td className="px-4 py-3 font-medium text-foreground">{po.supplier_name}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-foreground">₱{(po.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    </tr>
+                    <>
+                      {/* PO Header Row */}
+                      <tr
+                        key={po.id}
+                        className="bg-muted/30 hover:bg-primary/5 cursor-pointer transition-colors"
+                        onClick={() => { setShowApprovedSummary(false); setSummarySearch(""); setTimeout(() => setReviewPO(po), 150); }}
+                      >
+                        <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{po.po_number || "—"}</td>
+                        <td className="px-4 py-2.5 font-semibold text-foreground">{po.supplier_name}</td>
+                        <td className="px-4 py-2.5 text-right font-bold text-foreground">₱{(po.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      </tr>
+                      {/* Line Items */}
+                      {(po.line_items || []).map((item, idx) => (
+                        <tr key={`${po.id}-item-${idx}`} className="bg-white hover:bg-muted/10 cursor-pointer" onClick={() => { setShowApprovedSummary(false); setSummarySearch(""); setTimeout(() => setReviewPO(po), 150); }}>
+                          <td className="pl-8 pr-4 py-1.5 text-xs text-muted-foreground" colSpan={1}></td>
+                          <td className="px-4 py-1.5 text-xs text-muted-foreground">↳ {item.description} {item.quantity ? `× ${item.quantity}` : ""}</td>
+                          <td className="px-4 py-1.5 text-right text-xs text-muted-foreground">₱{(item.total || (item.quantity * item.cost_per_item) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                      ))}
+                    </>
                   ))}
               </tbody>
             </table>
