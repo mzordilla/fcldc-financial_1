@@ -314,6 +314,9 @@ export default function PurchaseOrders() {
                             </Button>
                           </div>
                         )}
+                        <Button variant="ghost" size="icon" onClick={() => window.print()} title="Print" className="text-muted-foreground hover:text-foreground">
+                          <Printer className="w-4 h-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => setReviewPO(po)} className="text-muted-foreground hover:text-foreground">
                           <History className="w-4 h-4" />
                         </Button>
