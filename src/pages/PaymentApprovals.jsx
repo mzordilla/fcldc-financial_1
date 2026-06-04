@@ -73,7 +73,12 @@ export default function PaymentApprovals() {
     queryFn: () => base44.entities.PurchaseOrder.filter({ approval_status: "approved" }, "-created_date", 100),
   });
 
-  // Filter out POs that already have a payment request linked to them
+  const { data: payables = [] } = useQuery({
+    queryKey: ["payables_for_po_check"],
+    queryFn: () => base44.entities.Payable.list("-created_date", 500),
+  });
+
+  // Filter out POs that already have a payment request OR payable linked to them
   const poIdsWithRequests = new Set(
     requests
       .map(r => r.supporting_docs)
@@ -84,9 +89,17 @@ export default function PaymentApprovals() {
       })
       .filter(Boolean)
   );
+
+  // Also check payables for linked POs
+  const poIdsWithPayables = new Set(
+    payables
+      .map(p => p.po_id || p.po_number)
+      .filter(Boolean)
+  );
+
   const availablePOs = approvedPOs.filter(po => {
     const poRef = po.po_number || "";
-    return !poIdsWithRequests.has(poRef);
+    return !poIdsWithRequests.has(poRef) && !poIdsWithPayables.has(po.id) && !poIdsWithPayables.has(poRef);
   });
 
   const createMutation = useMutation({
