@@ -117,10 +117,10 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
   const handleSubmit = async () => {
     setSaving(true);
     const validLines = lines.filter(l => (l.payable_id || l.supplier_name) && parseFloat(l.amount) > 0);
+    const refStr = header.reference || (header.check_number ? `Check #${header.check_number}` : "");
 
     await Promise.all(validLines.map(async (line) => {
       const paid = parseFloat(line.amount);
-      const refStr = header.reference || (header.check_number ? `Check #${header.check_number}` : "");
       const historyEntry = {
         payment_date: header.payment_date,
         amount: paid,
@@ -130,33 +130,64 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
         notes: line.notes || header.notes,
       };
 
-      if (line.payable_id && line.payable_id !== "manual") {
-        const p = payables.find(x => x.id === line.payable_id);
-        if (p) {
-          const newAmountPaid = (p.amount_paid || 0) + paid;
-          const isFullyPaid = newAmountPaid >= (p.amount || 0);
-          await base44.entities.Payable.update(p.id, {
-            amount_paid: newAmountPaid,
-            status: isFullyPaid ? "paid" : "partially_paid",
-            payment_history: [...(p.payment_history || []), historyEntry],
-            payment_date: header.payment_date,
-            payment_method: header.payment_method,
-            payment_reference: refStr,
-          });
-        }
+      const linkedPayable = line.payable_id && line.payable_id !== "manual" ? payables.find(x => x.id === line.payable_id) : null;
+
+      // 1. Update linked Payable record
+      if (linkedPayable) {
+        const newAmountPaid = (linkedPayable.amount_paid || 0) + paid;
+        const isFullyPaid = newAmountPaid >= (linkedPayable.amount || 0);
+        await base44.entities.Payable.update(linkedPayable.id, {
+          amount_paid: newAmountPaid,
+          status: isFullyPaid ? "paid" : "partially_paid",
+          payment_history: [...(linkedPayable.payment_history || []), historyEntry],
+          payment_date: header.payment_date,
+          payment_method: header.payment_method,
+          payment_reference: refStr,
+        });
       }
 
-      const p = line.payable_id && line.payable_id !== "manual" ? payables.find(x => x.id === line.payable_id) : null;
-      const supplierName = line.supplier_name || p?.supplier_name || "";
-      const projectName = line.project_name !== "none" ? (line.project_name || p?.project_name || "") : "";
+      const supplierName = line.supplier_name || linkedPayable?.supplier_name || "";
+      const projectName = line.project_name !== "none" ? (line.project_name || linkedPayable?.project_name || "") : "";
+      const chartOfAccount = line.chart_of_account !== "none" ? (line.chart_of_account || "") : "";
+      const invoiceNum = linkedPayable?.invoice_number || "";
 
+      // 2. Create a PaymentRequest record (status = "paid") so it shows in Payment Approvals
+      const prNumber = `BP-${Date.now().toString().slice(-8)}`;
+      await base44.entities.PaymentRequest.create({
+        request_number: prNumber,
+        payee: supplierName,
+        description: `Bill payment – ${supplierName}${invoiceNum ? ` (${invoiceNum})` : ""}${line.notes ? ` · ${line.notes}` : ""}`,
+        amount: paid,
+        category: "supplier_invoice",
+        payment_method: header.payment_method,
+        invoice_number: invoiceNum,
+        due_date: linkedPayable?.due_date || header.payment_date,
+        approval_status: "paid",
+        approval_step: "paid",
+        approved_by: "Bills Payment",
+        check_number: header.check_number || "",
+        check_date: header.payment_date,
+        supporting_docs: linkedPayable ? `Payable: ${linkedPayable.id}` : "Manual Entry",
+        project_allocations: projectName ? [{ project_name: projectName, amount: paid }] : [],
+        approval_history: [
+          {
+            step: "paid",
+            action: "paid",
+            actor: "Bills Payment",
+            notes: refStr || header.notes || "Recorded via Bills Payment",
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      });
+
+      // 3. Record expense transaction if bank account selected
       if (header.bank_account_id && header.bank_account_id !== "none") {
         await base44.entities.Transaction.create({
-          description: `Bill payment – ${supplierName}${p?.invoice_number ? ` (${p.invoice_number})` : ""}`,
+          description: `Bill payment – ${supplierName}${invoiceNum ? ` (${invoiceNum})` : ""}`,
           amount: paid,
           type: "expense",
           category: "other",
-          chart_of_account: line.chart_of_account !== "none" ? (line.chart_of_account || "") : "",
+          chart_of_account: chartOfAccount,
           project_name: projectName,
           bank_account_id: header.bank_account_id,
           date: header.payment_date,
@@ -167,6 +198,7 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
 
     queryClient.invalidateQueries({ queryKey: ["payables"] });
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["payment_requests"] });
     setSaving(false);
     setDone(true);
   };
