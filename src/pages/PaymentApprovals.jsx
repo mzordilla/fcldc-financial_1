@@ -206,7 +206,7 @@ export default function PaymentApprovals() {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 md:p-8 w-full mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Payment Approvals</h1>
@@ -345,19 +345,25 @@ export default function PaymentApprovals() {
               <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">PR #</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Payee</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Description</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Project</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Project(s)</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Category</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Invoice #</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Payment</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Requested By</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Due Date</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">W/Tax</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">VAT</th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {isLoading && (
-              <tr><td colSpan={9} className="text-center py-12 text-muted-foreground">Loading...</td></tr>
+              <tr><td colSpan={15} className="text-center py-12 text-muted-foreground">Loading...</td></tr>
             )}
             {!isLoading && filtered.length === 0 && (
-              <tr><td colSpan={9} className="text-center py-12 text-muted-foreground">No payment requests found</td></tr>
+              <tr><td colSpan={15} className="text-center py-12 text-muted-foreground">No payment requests found</td></tr>
             )}
             {filtered.map((pr) => {
               const StatusIcon = statusIcons[pr.approval_status] || Clock;
@@ -379,14 +385,24 @@ export default function PaymentApprovals() {
                     )}
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{pr.request_number || "—"}</td>
                     <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{pr.payee}</td>
-                    <td className="px-4 py-3 text-xs text-foreground max-w-[200px] truncate">{pr.description}</td>
+                    <td className="px-4 py-3 text-xs text-foreground max-w-[180px] truncate">{pr.description}</td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {pr.project_allocations?.length > 0
                         ? pr.project_allocations.map((a, i) => (
-                            <span key={i} className="inline-block bg-muted rounded-full px-2 py-0.5 mr-1">{a.project_name}</span>
+                            <span key={i} className="inline-block bg-muted rounded-full px-2 py-0.5 mr-1 mb-0.5">{a.project_name}</span>
                           ))
                         : "—"}
                     </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                      {pr.project_allocations?.length > 0
+                        ? [...new Set(pr.project_allocations.map(a => a.category).filter(Boolean))].map((cat, i) => (
+                            <span key={i} className="inline-block">{categoryLabels[cat] || cat}</span>
+                          ))
+                        : (pr.category ? categoryLabels[pr.category] || pr.category : "—")}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{pr.invoice_number || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap capitalize">{pr.payment_method ? pr.payment_method.replace(/_/g, " ") : "—"}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{pr.requested_by || "—"}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <Badge variant="outline" className={`text-xs ${statusStyles[pr.approval_status] || ""}`}>
@@ -396,8 +412,14 @@ export default function PaymentApprovals() {
                         {isOverdue && <Badge className="text-xs bg-destructive/10 text-destructive border-destructive/20">Overdue</Badge>}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                      {pr.due_date ? <span className={isOverdue ? "text-destructive font-medium" : ""}>{format(new Date(pr.due_date), "MMM d, yyyy")}</span> : "—"}
+                    <td className="px-4 py-3 text-xs whitespace-nowrap">
+                      {pr.due_date ? <span className={isOverdue ? "text-destructive font-medium" : "text-muted-foreground"}>{format(new Date(pr.due_date), "MMM d, yyyy")}</span> : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right text-xs text-muted-foreground whitespace-nowrap">
+                      {pr.withholding_tax_percentage > 0 ? `-₱${(pr.withholding_tax_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right text-xs text-muted-foreground whitespace-nowrap">
+                      {pr.vat_percentage > 0 ? `+₱${(pr.vat_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "—"}
                     </td>
                     <td className="px-4 py-3 text-right font-bold text-foreground whitespace-nowrap">
                       ₱{(pr.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -427,7 +449,7 @@ export default function PaymentApprovals() {
                   </tr>
                   {isExpanded && (
                     <tr key={`${pr.id}-expanded`} className="bg-muted/20">
-                      <td colSpan={isAdmin ? 9 : 8} className="px-6 py-4">
+                      <td colSpan={isAdmin ? 15 : 14} className="px-6 py-4">
                         <div className="space-y-3">
                           <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
                             {pr.invoice_number && <span>Invoice: <span className="text-foreground font-medium">{pr.invoice_number}</span></span>}
