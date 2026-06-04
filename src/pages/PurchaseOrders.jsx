@@ -42,6 +42,7 @@ const statusIcons = {
 export default function PurchaseOrders() {
   const [showAdd, setShowAdd] = useState(false);
   const [showApprovedSummary, setShowApprovedSummary] = useState(false);
+  const [summarySearch, setSummarySearch] = useState("");
   const [showImport, setShowImport] = useState(false);
   const [editingPO, setEditingPO] = useState(null);
   const [reviewPO, setReviewPO] = useState(null);
@@ -370,41 +371,55 @@ export default function PurchaseOrders() {
       </div>
 
       {/* Approved PO Summary Dialog */}
-      <Dialog open={showApprovedSummary} onOpenChange={setShowApprovedSummary}>
-        <DialogContent className="max-w-2xl">
+      <Dialog open={showApprovedSummary} onOpenChange={(v) => { setShowApprovedSummary(v); if (!v) setSummarySearch(""); }}>
+        <DialogContent className="max-w-2xl flex flex-col max-h-[80vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ClipboardList className="w-5 h-5 text-primary" />
               Approved Purchase Orders Summary
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 mt-2">
-            <div className="rounded-xl border border-border overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/50 border-b border-border">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">PO Number</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Supplier</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {approved.map((po) => (
-                    <tr key={po.id} className="hover:bg-muted/20 transition-colors">
+          <div className="mt-2 mb-2">
+            <input
+              type="text"
+              placeholder="Search by supplier or PO number..."
+              value={summarySearch}
+              onChange={e => setSummarySearch(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div className="flex-1 overflow-y-auto rounded-xl border border-border">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur">
+                <tr className="border-b border-border">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">PO Number</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Supplier</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {approved
+                  .filter(po => {
+                    const q = summarySearch.toLowerCase();
+                    return !q || (po.supplier_name || "").toLowerCase().includes(q) || (po.po_number || "").toLowerCase().includes(q);
+                  })
+                  .map((po) => (
+                    <tr
+                      key={po.id}
+                      className="hover:bg-primary/5 cursor-pointer transition-colors"
+                      onClick={() => { setShowApprovedSummary(false); setSummarySearch(""); setTimeout(() => setReviewPO(po), 150); }}
+                    >
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{po.po_number || "—"}</td>
                       <td className="px-4 py-3 font-medium text-foreground">{po.supplier_name}</td>
                       <td className="px-4 py-3 text-right font-semibold text-foreground">₱{(po.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     </tr>
                   ))}
-                </tbody>
-                <tfoot>
-                  <tr className="bg-primary/5 border-t-2 border-primary/20">
-                    <td className="px-4 py-3 text-xs font-bold text-primary uppercase" colSpan={2}>Total ({approved.length} PO{approved.length !== 1 ? "s" : ""})</td>
-                    <td className="px-4 py-3 text-right text-lg font-bold text-primary">₱{totalApprovedValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+              </tbody>
+            </table>
+          </div>
+          <div className="pt-3 border-t border-border flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">{approved.filter(po => { const q = summarySearch.toLowerCase(); return !q || (po.supplier_name || "").toLowerCase().includes(q) || (po.po_number || "").toLowerCase().includes(q); }).length} of {approved.length} PO{approved.length !== 1 ? "s" : ""}</span>
+            <span className="font-bold text-primary text-base">Total: ₱{totalApprovedValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
         </DialogContent>
       </Dialog>
