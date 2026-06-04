@@ -28,7 +28,7 @@ const defaultForm = {
 
 export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
   const [form, setForm] = useState(defaultForm);
-  const [allocations, setAllocations] = useState([{ project_name: "", amount: "" }]);
+  const [allocations, setAllocations] = useState([{ project_name: "", amount: "", category: "" }]);
   const [saving, setSaving] = useState(false);
 
   const { data: projects = [] } = useQuery({
@@ -49,12 +49,12 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
         setForm({ ...defaultForm, ...rest });
         setAllocations(
           project_allocations && project_allocations.length > 0
-            ? project_allocations.map(a => ({ project_name: a.project_name || "", amount: a.amount || "" }))
-            : [{ project_name: "", amount: "" }]
+            ? project_allocations.map(a => ({ project_name: a.project_name || "", amount: a.amount || "", category: a.category || "" }))
+            : [{ project_name: "", amount: "", category: "" }]
         );
       } else {
         setForm(defaultForm);
-        setAllocations([{ project_name: "", amount: "" }]);
+        setAllocations([{ project_name: "", amount: "", category: "" }]);
       }
     }
   }, [open, initialData]);
@@ -67,7 +67,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
     setAllocations(prev => prev.map((a, i) => i === index ? { ...a, [field]: value } : a));
   };
 
-  const addAllocation = () => setAllocations(prev => [...prev, { project_name: "", amount: "" }]);
+  const addAllocation = () => setAllocations(prev => [...prev, { project_name: "", amount: "", category: "" }]);
   const removeAllocation = (index) => {
     if (allocations.length === 1) return;
     setAllocations(prev => prev.filter((_, i) => i !== index));
@@ -84,8 +84,8 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
       }
     });
     await onSubmit({
-      ...cleanedForm,
-      project_allocations: validAllocations.map(a => ({ project_name: a.project_name, amount: parseFloat(a.amount) || 0 })),
+    ...cleanedForm,
+    project_allocations: validAllocations.map(a => ({ project_name: a.project_name, amount: parseFloat(a.amount) || 0, category: a.category || "" })),
       amount: totalAmount,
       withholding_tax_percentage: parseFloat(form.withholding_tax_percentage) || 0,
       withholding_tax_amount: withholdingTaxAmount,
@@ -141,13 +141,34 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
                        ))}
                      </SelectContent>
                    </Select>
+                   <Select value={alloc.category} onValueChange={v => updateAllocation(i, "category", v)}>
+                     <SelectTrigger className="w-44"><SelectValue placeholder="Category" /></SelectTrigger>
+                     <SelectContent>
+                       {chartOfAccounts.filter(a => a.is_active !== false && a.category).length > 0
+                         ? chartOfAccounts.filter(a => a.is_active !== false && a.category).map(a => (
+                             <SelectItem key={a.id} value={a.category}>
+                               {a.account_code ? `${a.account_code} — ` : ""}{a.account_name}
+                             </SelectItem>
+                           ))
+                         : <>
+                             <SelectItem value="supplier_invoice">Supplier Invoice</SelectItem>
+                             <SelectItem value="subcontractor">Subcontractor</SelectItem>
+                             <SelectItem value="labor">Labor</SelectItem>
+                             <SelectItem value="equipment">Equipment</SelectItem>
+                             <SelectItem value="expense_reimbursement">Expense Reimbursement</SelectItem>
+                             <SelectItem value="utilities">Utilities</SelectItem>
+                             <SelectItem value="other">Other</SelectItem>
+                           </>
+                       }
+                     </SelectContent>
+                   </Select>
                    <Input
                      type="number"
                      step="0.01"
                      placeholder="Amount"
                      value={alloc.amount}
                      onChange={e => updateAllocation(i, "amount", e.target.value)}
-                     className="w-36"
+                     className="w-32"
                    />
                    <Button
                      type="button"
@@ -200,43 +221,19 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
             </div>
           </div>
 
-          {/* Category & Payment Method */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>Category</Label>
-              <Select value={form.category} onValueChange={v => setField("category", v)}>
-                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                <SelectContent>
-                  {chartOfAccounts.filter(a => a.is_active !== false && a.category).map(a => (
-                    <SelectItem key={a.id} value={a.category}>
-                      {a.account_code ? `${a.account_code} — ` : ""}{a.account_name}
-                    </SelectItem>
-                  ))}
-                  {chartOfAccounts.filter(a => a.is_active !== false && a.category).length === 0 && <>
-                    <SelectItem value="supplier_invoice">Supplier Invoice</SelectItem>
-                    <SelectItem value="subcontractor">Subcontractor</SelectItem>
-                    <SelectItem value="labor">Labor</SelectItem>
-                    <SelectItem value="equipment">Equipment</SelectItem>
-                    <SelectItem value="expense_reimbursement">Expense Reimbursement</SelectItem>
-                    <SelectItem value="utilities">Utilities</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </>}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Payment Method</Label>
-              <Select value={form.payment_method} onValueChange={v => setField("payment_method", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="check">Check</SelectItem>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="credit_card">Credit Card</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Payment Method */}
+          <div className="space-y-1.5">
+            <Label>Payment Method</Label>
+            <Select value={form.payment_method} onValueChange={v => setField("payment_method", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                <SelectItem value="check">Check</SelectItem>
+                <SelectItem value="cash">Cash</SelectItem>
+                <SelectItem value="credit_card">Credit Card</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Invoice details */}
