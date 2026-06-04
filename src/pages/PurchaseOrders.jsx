@@ -64,6 +64,18 @@ export default function PurchaseOrders() {
     queryFn: () => base44.entities.PurchaseOrder.list("-created_date", 100),
   });
 
+  const { data: payables = [] } = useQuery({
+    queryKey: ["payables_for_po_check"],
+    queryFn: () => base44.entities.Payable.list("-created_date", 200),
+  });
+
+  // Check which POs have already been converted to payables
+  const poIdsWithPayables = new Set(
+    payables
+      .map(p => p.po_id)
+      .filter(Boolean)
+  );
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.PurchaseOrder.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["purchase_orders"] }),
@@ -308,8 +320,17 @@ export default function PurchaseOrders() {
                         )}
                         {po.approval_status === "approved" && <NoticeOfDeliveryPDF po={po} />}
                         {po.approval_status === "approved" && (
-                          <div title={!po.receipt_url ? "Upload a receipt before converting to payable" : ""}>
-                            <Button size="sm" variant="outline" onClick={() => setConvertingPO(po)} disabled={!po.receipt_url} className="text-primary hover:text-primary disabled:opacity-50">
+                          <div title={
+                            !po.receipt_url ? "Upload a receipt before converting to payable" :
+                            poIdsWithPayables.has(po.id) ? "Already converted to payable" : ""
+                          }>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={() => setConvertingPO(po)} 
+                              disabled={!po.receipt_url || poIdsWithPayables.has(po.id)} 
+                              className="text-primary hover:text-primary disabled:opacity-50"
+                            >
                               <CreditCard className="w-3.5 h-3.5 mr-1" /> Payable
                             </Button>
                           </div>
