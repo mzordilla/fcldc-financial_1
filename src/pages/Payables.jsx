@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays, addDays } from "date-fns";
@@ -76,6 +76,7 @@ export default function Payables() {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [removingDupes, setRemovingDupes] = useState(false);
   const [groupBySupplier, setGroupBySupplier] = useState(true);
+  const [expandedSuppliers, setExpandedSuppliers] = useState(new Set());
   const queryClient = useQueryClient();
   const importRef = useRef();
 
@@ -242,6 +243,21 @@ export default function Payables() {
     return { supplier, items, buckets, total: Object.values(buckets).reduce((a, b) => a + b, 0) };
   }).sort((a, b) => b.total - a.total);
 
+  const toggleSupplier = (supplier) => {
+    setExpandedSuppliers(prev => {
+      const next = new Set(prev);
+      next.has(supplier) ? next.delete(supplier) : next.add(supplier);
+      return next;
+    });
+  };
+
+  // Expand all suppliers by default on first load
+  useEffect(() => {
+    if (supplierAging.length > 0 && expandedSuppliers.size === 0) {
+      setExpandedSuppliers(new Set(supplierAging.map(s => s.supplier)));
+    }
+  }, [supplierAging.length]);
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -347,43 +363,54 @@ export default function Payables() {
         <div className="space-y-6">
           {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
           {!isLoading && supplierAging.length === 0 && <p className="text-center py-12 text-muted-foreground">No outstanding payables</p>}
-          {supplierAging.map(({ supplier, items, buckets, total }) => (
-            <div key={supplier} className="rounded-2xl border border-border overflow-hidden bg-card">
-              <div className="px-5 py-3 bg-muted/50 border-b border-border">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-base font-semibold text-foreground">{supplier}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{items.length} invoice{items.length > 1 ? "s" : ""} · ₱{total.toLocaleString(undefined, { minimumFractionDigits: 2 })} outstanding</p>
+          {supplierAging.map(({ supplier, items, buckets, total }) => {
+            const isExpanded = expandedSuppliers.has(supplier);
+            return (
+              <div key={supplier} className="rounded-2xl border border-border overflow-hidden bg-card">
+                <button
+                  className="w-full px-5 py-3 bg-muted/50 border-b border-border hover:bg-muted/70 transition-colors"
+                  onClick={() => toggleSupplier(supplier)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "" : "-rotate-90"}`} />
+                      <div className="text-left">
+                        <h3 className="text-base font-semibold text-foreground">{supplier}</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">{items.length} invoice{items.length > 1 ? "s" : ""} · ₱{total.toLocaleString(undefined, { minimumFractionDigits: 2 })} outstanding</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 text-xs">
+                        <span className="text-muted-foreground">Current:</span>
+                        <span className="font-semibold text-primary">₱{buckets.current.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs">
+                        <span className="text-muted-foreground">30:</span>
+                        <span className="font-semibold text-chart-3">₱{buckets.days30.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs">
+                        <span className="text-muted-foreground">60:</span>
+                        <span className="font-semibold text-orange-500">₱{buckets.days60.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs">
+                        <span className="text-muted-foreground">90:</span>
+                        <span className="font-semibold text-destructive">₱{buckets.days90.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs">
+                        <span className="text-muted-foreground">90+:</span>
+                        <span className="font-semibold text-destructive">₱{buckets.days90plus.toLocaleString()}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-muted-foreground">Current:</span>
-                      <span className="font-semibold text-primary">₱{buckets.current.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-muted-foreground">30:</span>
-                      <span className="font-semibold text-chart-3">₱{buckets.days30.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-muted-foreground">60:</span>
-                      <span className="font-semibold text-orange-500">₱{buckets.days60.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-muted-foreground">90:</span>
-                      <span className="font-semibold text-destructive">₱{buckets.days90.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-muted-foreground">90+:</span>
-                      <span className="font-semibold text-destructive">₱{buckets.days90plus.toLocaleString()}</span>
-                    </div>
+                </button>
+                {isExpanded && (
+                  <div className="p-4 grid gap-3">
+                    {items.map((p) => <PayableCard key={p.id} p={p} isDuplicate={isDuplicatePayable(p)} onPay={setMarkingPaid} onDelete={(id) => deleteMutation.mutate(id)} />)}
                   </div>
-                </div>
+                )}
               </div>
-              <div className="p-4 grid gap-3">
-                {items.map((p) => <PayableCard key={p.id} p={p} isDuplicate={isDuplicatePayable(p)} onPay={setMarkingPaid} onDelete={(id) => deleteMutation.mutate(id)} />)}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="grid gap-4">
