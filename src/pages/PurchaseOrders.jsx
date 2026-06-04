@@ -297,10 +297,17 @@ export default function PurchaseOrders() {
                       {po.category && <Badge variant="secondary" className="text-xs capitalize">{po.category.replace(/_/g, " ")}</Badge>}
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant="outline" className={`text-xs ${statusStyles[po.approval_status] || ""}`}>
-                        <StatusIcon className="w-3 h-3 mr-1" />
-                        {(po.approval_status || "pending").replace(/_/g, " ")}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className={`text-xs ${statusStyles[po.approval_status] || ""}`}>
+                          <StatusIcon className="w-3 h-3 mr-1" />
+                          {(po.approval_status || "pending").replace(/_/g, " ")}
+                        </Badge>
+                        {poIdsWithPayables.has(po.id) && (
+                          <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
+                            <CreditCard className="w-3 h-3 mr-1" /> Paid
+                          </Badge>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                       {po.requested_date ? format(new Date(po.requested_date), "MMM d, yyyy") : "—"}
