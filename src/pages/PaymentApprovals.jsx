@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart, History, ChevronDown, ChevronUp, Square, CheckSquare, Upload } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart, History, ChevronDown, ChevronUp, Square, CheckSquare, Upload, Layers } from "lucide-react";
+import BillsPaymentSheet from "../components/payables/BillsPaymentSheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,7 @@ const categoryLabels = {
 export default function PaymentApprovals() {
   const [showAdd, setShowAdd] = useState(false);
   const [showBulk, setShowBulk] = useState(false);
+  const [showBillsPayment, setShowBillsPayment] = useState(false);
   const [prefillData, setPrefillData] = useState(null);
   const [editingPR, setEditingPR] = useState(null);
   const [reviewPR, setReviewPR] = useState(null);
@@ -221,6 +223,9 @@ export default function PaymentApprovals() {
               <SelectItem value="rejected">Rejected</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" onClick={() => setShowBillsPayment(true)}>
+            <Layers className="w-4 h-4 mr-2" /> Bills Payment
+          </Button>
           <Button variant="outline" onClick={() => setShowBulk(true)}>
             <Upload className="w-4 h-4 mr-2" /> Bulk Create
           </Button>
@@ -500,6 +505,7 @@ export default function PaymentApprovals() {
         });
       })()}
 
+      <BillsPaymentSheet open={showBillsPayment} onOpenChange={setShowBillsPayment} />
       <BulkPaymentRequestDialog open={showBulk} onOpenChange={setShowBulk} onSubmit={bulkCreateRequests} />
       <PaymentRequestFormDialog open={showAdd} onOpenChange={(v) => { setShowAdd(v); if (!v) setPrefillData(null); }} title="New Payment Request" initialData={prefillData} onSubmit={(data) => createMutation.mutateAsync(data)} />
       <PaymentRequestFormDialog open={!!editingPR} onOpenChange={(v) => { if (!v) setEditingPR(null); }} title="Edit Payment Request" initialData={editingPR || {}} onSubmit={(data) => updateMutation.mutateAsync({ id: editingPR.id, data })} />
