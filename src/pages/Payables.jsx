@@ -163,12 +163,35 @@ export default function Payables() {
 
   const markPaid = (p, paymentData) => updateMutation.mutate({ id: p.id, data: paymentData });
 
-  // IDs already linked to a payable
-  const linkedRIIds = new Set(payables.map(p => p.notes).filter(Boolean).map(n => { const m = n.match(/RI:(\S+)/); return m ? m[1] : null; }).filter(Boolean));
-  const linkedPRIds = new Set(payables.map(p => p.notes).filter(Boolean).map(n => { const m = n.match(/PR:(\S+)/); return m ? m[1] : null; }).filter(Boolean));
+  // IDs already linked via notes tag
+  const linkedRIIds = new Set(payables.flatMap(p => {
+    if (!p.notes) return [];
+    const m = p.notes.match(/RI:(\S+)/);
+    return m ? [m[1]] : [];
+  }));
+  const linkedPRIds = new Set(payables.flatMap(p => {
+    if (!p.notes) return [];
+    const m = p.notes.match(/PR:(\S+)/);
+    return m ? [m[1]] : [];
+  }));
 
-  const pendingRIs = receivingItems.filter(ri => !linkedRIIds.has(ri.id));
-  const pendingPRs = paymentRequests.filter(pr => !linkedPRIds.has(pr.id));
+  // Also deduplicate by matching supplier + amount + invoice_number against existing payables (any status including paid)
+  const existingPayableKeys = new Set(payables.map(p =>
+    `${(p.supplier_name || "").toLowerCase().trim()}|${p.amount}|${(p.invoice_number || "").toLowerCase().trim()}`
+  ));
+
+  const riKey = (ri) =>
+    `${(ri.supplier_name || "").toLowerCase().trim()}|${ri.total_amount}|${(ri.po_number || "").toLowerCase().trim()}`;
+
+  const prKey = (pr) =>
+    `${(pr.payee || "").toLowerCase().trim()}|${pr.amount}|${(pr.invoice_number || pr.request_number || "").toLowerCase().trim()}`;
+
+  const pendingRIs = receivingItems.filter(ri =>
+    !linkedRIIds.has(ri.id) && !existingPayableKeys.has(riKey(ri))
+  );
+  const pendingPRs = paymentRequests.filter(pr =>
+    !linkedPRIds.has(pr.id) && !existingPayableKeys.has(prKey(pr))
+  );
 
   const createFromRI = async (ri) => {
     const due = format(addDays(new Date(ri.received_date), 30), "yyyy-MM-dd");
