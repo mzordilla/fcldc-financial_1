@@ -202,10 +202,21 @@ export default function Receivables() {
                             </div>
                             <span className="font-semibold text-primary">₱{(h.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                           </div>
-                          {h.receipt_url && (
-                            <a href={h.receipt_url} target="_blank" rel="noopener noreferrer" className="block">
-                              <img src={h.receipt_url} alt="Receipt" className="rounded border border-border max-h-24 object-contain bg-muted w-full hover:opacity-80 transition-opacity" />
-                            </a>
+                          {(h.receipt_url || h.check_image_url) && (
+                            <div className="grid grid-cols-2 gap-2">
+                              {h.receipt_url && (
+                                <a href={h.receipt_url} target="_blank" rel="noopener noreferrer" className="block">
+                                  <p className="text-muted-foreground mb-0.5">Receipt</p>
+                                  <img src={h.receipt_url} alt="Receipt" className="rounded border border-border max-h-20 object-contain bg-muted w-full hover:opacity-80 transition-opacity" />
+                                </a>
+                              )}
+                              {h.check_image_url && (
+                                <a href={h.check_image_url} target="_blank" rel="noopener noreferrer" className="block">
+                                  <p className="text-muted-foreground mb-0.5">Check</p>
+                                  <img src={h.check_image_url} alt="Check" className="rounded border border-border max-h-20 object-contain bg-muted w-full hover:opacity-80 transition-opacity" />
+                                </a>
+                              )}
+                            </div>
                           )}
                         </div>
                       ))}

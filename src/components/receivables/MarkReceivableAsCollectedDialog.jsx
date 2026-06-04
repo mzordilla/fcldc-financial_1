@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Banknote, CheckCircle2, Upload, X, ImageIcon } from "lucide-react";
+import { Banknote, CheckCircle2, Upload, X, ImageIcon, FileImage } from "lucide-react";
 
 const today = format(new Date(), "yyyy-MM-dd");
 
@@ -20,9 +20,11 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
     reference: "",
     notes: "",
     receipt_url: "",
+    check_image_url: "",
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingCheck, setUploadingCheck] = useState(false);
 
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ["bankaccounts"],
@@ -40,6 +42,7 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
         reference: "",
         notes: "",
         receipt_url: "",
+        check_image_url: "",
       });
     }
   }, [receivable]);
@@ -63,6 +66,15 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
     setUploading(false);
   };
 
+  const handleCheckUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingCheck(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setForm(f => ({ ...f, check_image_url: file_url }));
+    setUploadingCheck(false);
+  };
+
   const handleSubmit = async () => {
     setSaving(true);
 
@@ -73,6 +85,7 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
       reference: form.reference,
       notes: form.notes,
       receipt_url: form.receipt_url,
+      check_image_url: form.check_image_url,
     };
 
     const updatedHistory = [...history, newEntry];
@@ -146,10 +159,21 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
                     </div>
                     <span className="font-semibold text-primary">₱{(h.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
-                  {h.receipt_url && (
-                    <a href={h.receipt_url} target="_blank" rel="noopener noreferrer" className="block">
-                      <img src={h.receipt_url} alt="Receipt" className="rounded-md border border-border max-h-32 object-contain bg-muted w-full hover:opacity-80 transition-opacity" />
-                    </a>
+                  {(h.receipt_url || h.check_image_url) && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {h.receipt_url && (
+                        <a href={h.receipt_url} target="_blank" rel="noopener noreferrer" className="block">
+                          <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><ImageIcon className="w-3 h-3" /> Receipt</p>
+                          <img src={h.receipt_url} alt="Receipt" className="rounded-md border border-border max-h-28 object-contain bg-muted w-full hover:opacity-80 transition-opacity" />
+                        </a>
+                      )}
+                      {h.check_image_url && (
+                        <a href={h.check_image_url} target="_blank" rel="noopener noreferrer" className="block">
+                          <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><FileImage className="w-3 h-3" /> Check</p>
+                          <img src={h.check_image_url} alt="Check" className="rounded-md border border-border max-h-28 object-contain bg-muted w-full hover:opacity-80 transition-opacity" />
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}
@@ -249,6 +273,29 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
                     {uploading ? <Upload className="w-4 h-4 animate-bounce" /> : <ImageIcon className="w-4 h-4" />}
                     {uploading ? "Uploading..." : "Click to upload receipt or image"}
                     <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleReceiptUpload} />
+                  </label>
+                )}
+              </div>
+
+              {/* Check Image Upload */}
+              <div className="space-y-1.5">
+                <Label>Check Image <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                {form.check_image_url ? (
+                  <div className="relative group rounded-lg overflow-hidden border border-border w-full">
+                    <img src={form.check_image_url} alt="Check" className="w-full max-h-48 object-contain bg-muted" />
+                    <button
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, check_image_url: "" }))}
+                      className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-destructive transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className={`flex items-center justify-center gap-2 border border-dashed border-border rounded-lg px-4 py-4 text-sm text-muted-foreground cursor-pointer hover:bg-muted/40 transition-colors ${uploadingCheck ? "opacity-50 pointer-events-none" : ""}`}>
+                    {uploadingCheck ? <Upload className="w-4 h-4 animate-bounce" /> : <FileImage className="w-4 h-4" />}
+                    {uploadingCheck ? "Uploading..." : "Click to upload check image"}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleCheckUpload} />
                   </label>
                 )}
               </div>
