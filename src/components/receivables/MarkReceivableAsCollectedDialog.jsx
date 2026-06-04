@@ -78,10 +78,12 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
   const handleSubmit = async () => {
     setSaving(true);
 
+    const isUndeposited = form.bank_account_id === "undeposited";
     const newEntry = {
       collection_date: form.collection_date,
       amount: thisCollection,
-      bank_account_id: form.bank_account_id,
+      bank_account_id: isUndeposited ? null : form.bank_account_id,
+      undeposited: isUndeposited,
       reference: form.reference,
       notes: form.notes,
       receipt_url: form.receipt_url,
@@ -98,8 +100,8 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
       payment_history: updatedHistory,
     });
 
-    // Record bank movement (not P&L income — already recorded at creation)
-    if (form.bank_account_id) {
+    // Record bank movement only if a real bank account is selected
+    if (form.bank_account_id && !isUndeposited) {
       await base44.entities.Transaction.create({
         description: `Collection received – ${receivable.client_name}${receivable.invoice_number ? ` (${receivable.invoice_number})` : ""}`,
         amount: thisCollection,
@@ -150,7 +152,14 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
                     <div className="flex items-center gap-2">
                       <Banknote className="w-3.5 h-3.5 text-muted-foreground" />
                       <div>
-                        {h.reference && <span className="font-medium text-xs">{h.reference}</span>}
+                        <div className="flex items-center gap-1.5">
+                          {h.reference && <span className="font-medium text-xs">{h.reference}</span>}
+                          {h.undeposited && (
+                            <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 rounded px-1.5 py-0.5 font-medium">
+                              📥 Undeposited
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           {h.collection_date ? format(new Date(h.collection_date), "MMM d, yyyy") : ""}
                           {h.notes ? ` · ${h.notes}` : ""}
@@ -223,10 +232,13 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
               </div>
 
               <div className="space-y-1.5">
-                <Label>Bank Account <span className="text-muted-foreground font-normal">(for income transaction)</span></Label>
+                <Label>Deposit To <span className="text-muted-foreground font-normal">(bank account or undeposited)</span></Label>
                 <Select value={form.bank_account_id} onValueChange={v => setForm(f => ({ ...f, bank_account_id: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select destination" /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="undeposited">
+                      <span className="flex items-center gap-2">📥 Undeposited Collections</span>
+                    </SelectItem>
                     {bankAccounts.filter(a => a.status !== "closed").map(a => (
                       <SelectItem key={a.id} value={a.id}>
                         {a.account_name} – {a.bank_name}
@@ -234,6 +246,9 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
                     ))}
                   </SelectContent>
                 </Select>
+                {form.bank_account_id === "undeposited" && (
+                  <p className="text-xs text-muted-foreground">Collection will be recorded but not posted to any bank account yet.</p>
+                )}
               </div>
 
               <div className="space-y-1.5">
