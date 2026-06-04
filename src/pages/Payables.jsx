@@ -2,16 +2,16 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays, addDays } from "date-fns";
-import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download, Package, Banknote, ChevronDown, ChevronUp, CheckSquare, Square, Loader2 } from "lucide-react";
+import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download, Package, Banknote, ChevronDown, ChevronUp, CheckSquare, Square, Loader2, History } from "lucide-react";
 
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import MarkPayableAsPaidDialog from "../components/payables/MarkPayableAsPaidDialog";
+import PayableCard from "../components/payables/PayableCard";
 
 function getAgingBucket(dueDateStr, status) {
   if (status === "paid") return null;
@@ -96,9 +96,9 @@ const fields = [
 export default function Payables() {
   const [showAdd, setShowAdd] = useState(false);
   const [markingPaid, setMarkingPaid] = useState(null);
-  const [statusFilter, setStatusFilter] = useState("all");
   const [showReceivingItems, setShowReceivingItems] = useState(true);
   const [showPaymentRequests, setShowPaymentRequests] = useState(true);
+  const [showPaid, setShowPaid] = useState(false);
   const [selectedRIs, setSelectedRIs] = useState(new Set());
   const [selectedPRs, setSelectedPRs] = useState(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
@@ -284,9 +284,10 @@ export default function Payables() {
   // Count how many payables are duplicates (extras beyond the first)
   const duplicatePayablesCount = Object.values(payableKeyCount).reduce((sum, cnt) => sum + (cnt > 1 ? cnt - 1 : 0), 0);
 
-  const filtered = statusFilter === "all" ? payables : payables.filter(p => p.status === statusFilter);
+  const unpaidPayables = payables.filter(p => p.status !== "paid");
+  const paidPayables = payables.filter(p => p.status === "paid");
 
-  const totalUnpaid = payables.filter(p => p.status !== "paid").reduce((s, p) => s + ((p.amount || 0) - (p.amount_paid || 0)), 0);
+  const totalUnpaid = unpaidPayables.reduce((s, p) => s + ((p.amount || 0) - (p.amount_paid || 0)), 0);
   const overdueCount = payables.filter(p => p.status === "overdue").length;
 
   return (
@@ -298,17 +299,7 @@ export default function Payables() {
             ₱{totalUnpaid.toLocaleString()} outstanding · {overdueCount} overdue
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="unpaid">Unpaid</SelectItem>
-              <SelectItem value="partially_paid">Partially Paid</SelectItem>
-              <SelectItem value="overdue">Overdue</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-3 flex-wrap">
           {duplicatePayablesCount > 0 && (
             <Button variant="outline" size="sm" onClick={removeDuplicatePayables} disabled={removingDupes} className="text-destructive border-destructive/30 hover:bg-destructive/10">
               {removingDupes ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
@@ -466,86 +457,34 @@ export default function Payables() {
         </div>
       )}
 
+      {/* Unpaid / Outstanding */}
       <div className="grid gap-4">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
-        {!isLoading && filtered.length === 0 && <p className="text-center py-12 text-muted-foreground">No payables yet</p>}
-        {filtered.map((p) => {
-          const remaining = (p.amount || 0) - (p.amount_paid || 0);
-          const paidPct = p.amount ? Math.min(((p.amount_paid || 0) / p.amount) * 100, 100) : 0;
-          const aging = getAgingBucket(p.due_date, p.status);
-          return (
-            <div key={p.id} className="bg-card rounded-2xl border border-border p-5 hover:shadow-md transition-shadow">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-1 flex-wrap">
-                    <h3 className="font-semibold text-foreground">{p.supplier_name}</h3>
-                    {p.po_number && <Badge variant="secondary" className="text-xs">PO: {p.po_number}</Badge>}
-                    <Badge variant="outline" className={`text-xs ${statusStyles[p.status] || ""}`}>
-                      {(p.status || "unpaid").replace(/_/g, " ")}
-                    </Badge>
-                    {p.category && <Badge variant="secondary" className="text-xs">{p.category}</Badge>}
-                    {aging && <Badge variant="outline" className={`text-xs ${aging.style}`}>{aging.label}</Badge>}
-                    {isDuplicatePayable(p) && (
-                      <Badge variant="outline" className="text-xs bg-chart-3/10 text-chart-3 border-chart-3/20 flex items-center gap-1">
-                        ⚠ Possible Duplicate
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {p.description || ""}
-                    {p.invoice_number ? ` · ${p.invoice_number}` : ""}
-                    {p.project_name ? ` · ${p.project_name}` : ""}
-                    {p.due_date && ` · Due ${format(new Date(p.due_date), "MMM d, yyyy")}`}
-                  </p>
-                  <div className="mt-3 flex items-center gap-3">
-                    <Progress value={paidPct} className="h-2 flex-1" />
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      ₱{(p.amount_paid || 0).toLocaleString()} / ₱{(p.amount || 0).toLocaleString()}
-                    </span>
-                  </div>
-                  {/* Payment History Breakdown */}
-                  {(p.payment_history || []).length > 0 && (
-                    <div className="mt-3 rounded-lg border border-border divide-y divide-border text-xs">
-                      {(p.payment_history || []).map((h, i) => (
-                        <div key={i} className="flex items-center justify-between px-3 py-1.5">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <CreditCard className="w-3 h-3" />
-                            <span className="capitalize">{(h.payment_method || "").replace(/_/g, " ")}</span>
-                            {h.reference && <span>· {h.reference}</span>}
-                            {h.payment_date && <span>· {format(new Date(h.payment_date), "MMM d, yyyy")}</span>}
-                            {h.notes && <span className="italic">· {h.notes}</span>}
-                          </div>
-                          <span className="font-semibold text-primary">₱{(h.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-                  <p className={`text-lg font-bold ${p.status === "paid" ? "text-primary" : "text-destructive"}`}>
-                    {p.status === "paid" ? "PAID" : `₱${remaining.toLocaleString()}`}
-                  </p>
-                  <div className="flex gap-1">
-                    {p.status !== "paid" && (
-                      <Button variant="ghost" size="icon" onClick={() => setMarkingPaid(p)} className="text-primary hover:text-primary" title="Record Payment">
-                        <CheckCircle className="w-4 h-4" />
-                      </Button>
-                    )}
-                    {p.status === "paid" && (p.payment_history || []).length > 0 && (
-                      <Button variant="ghost" size="icon" onClick={() => setMarkingPaid(p)} className="text-muted-foreground hover:text-primary" title="View Payments">
-                        <CreditCard className="w-4 h-4" />
-                      </Button>
-                    )}
-                    <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(p.id)} className="text-muted-foreground hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {!isLoading && unpaidPayables.length === 0 && <p className="text-center py-12 text-muted-foreground">No outstanding payables</p>}
+        {unpaidPayables.map((p) => <PayableCard key={p.id} p={p} isDuplicate={isDuplicatePayable(p)} onPay={setMarkingPaid} onDelete={(id) => deleteMutation.mutate(id)} />)}
       </div>
+
+      {/* Paid — collapsible */}
+      {paidPayables.length > 0 && (
+        <div className="rounded-2xl border border-border overflow-hidden bg-card">
+          <button
+            className="w-full flex items-center justify-between px-5 py-3 bg-muted/50 hover:bg-muted/70 transition-colors"
+            onClick={() => setShowPaid(v => !v)}
+          >
+            <div className="flex items-center gap-2">
+              <History className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-semibold text-foreground">Paid</span>
+              <span className="text-xs bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full">{paidPayables.length}</span>
+            </div>
+            {showPaid ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+          </button>
+          {showPaid && (
+            <div className="grid gap-4 p-4">
+              {paidPayables.map((p) => <PayableCard key={p.id} p={p} isDuplicate={isDuplicatePayable(p)} onPay={setMarkingPaid} onDelete={(id) => deleteMutation.mutate(id)} />)}
+            </div>
+          )}
+        </div>
+      )}
 
       <AddFormDialog
         open={showAdd}
