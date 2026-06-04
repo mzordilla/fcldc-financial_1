@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { CreditCard, CheckCircle2 } from "lucide-react";
+import { CreditCard, CheckCircle2, AlertTriangle } from "lucide-react";
 
 const today = format(new Date(), "yyyy-MM-dd");
 
@@ -54,6 +54,12 @@ export default function MarkPayableAsPaidDialog({ open, onOpenChange, payable, o
   const newTotalPaid = alreadyPaid + thisPayment;
   const paidPct = totalAmount ? Math.min((alreadyPaid / totalAmount) * 100, 100) : 0;
   const history = payable.payment_history || [];
+
+  // Detect duplicate payment: same date + same amount already in history
+  const isDuplicatePayment = history.some(h =>
+    h.payment_date === form.payment_date &&
+    Math.abs((h.amount || 0) - thisPayment) < 0.01
+  );
 
   const handleSubmit = async () => {
     setSaving(true);
@@ -228,6 +234,14 @@ export default function MarkPayableAsPaidDialog({ open, onOpenChange, payable, o
                 />
               </div>
 
+              {/* Duplicate Warning */}
+              {isDuplicatePayment && (
+                <div className="flex items-center gap-2 text-chart-3 bg-chart-3/10 border border-chart-3/20 rounded-lg px-4 py-3 text-sm font-medium">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  A payment of the same amount on this date already exists. Please verify before submitting.
+                </div>
+              )}
+
               {/* Preview */}
               {thisPayment > 0 && (
                 <div className="bg-muted/40 rounded-lg px-4 py-3 text-sm space-y-1">
@@ -247,7 +261,7 @@ export default function MarkPayableAsPaidDialog({ open, onOpenChange, payable, o
 
             <DialogFooter>
               <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button onClick={handleSubmit} disabled={saving || thisPayment <= 0}>
+              <Button onClick={handleSubmit} disabled={saving || thisPayment <= 0 || isDuplicatePayment}>
                 {saving ? "Saving..." : "Confirm Payment"}
               </Button>
             </DialogFooter>

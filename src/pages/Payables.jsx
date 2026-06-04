@@ -226,6 +226,17 @@ export default function Payables() {
     });
   };
 
+  // Detect duplicate payable entries: same supplier + amount + invoice_number
+  const payableKeyCount = {};
+  payables.forEach(p => {
+    const key = `${(p.supplier_name || "").toLowerCase().trim()}|${p.amount}|${(p.invoice_number || "").toLowerCase().trim()}`;
+    payableKeyCount[key] = (payableKeyCount[key] || 0) + 1;
+  });
+  const isDuplicatePayable = (p) => {
+    const key = `${(p.supplier_name || "").toLowerCase().trim()}|${p.amount}|${(p.invoice_number || "").toLowerCase().trim()}`;
+    return payableKeyCount[key] > 1;
+  };
+
   const filtered = statusFilter === "all" ? payables : payables.filter(p => p.status === statusFilter);
 
   const totalUnpaid = payables.filter(p => p.status !== "paid").reduce((s, p) => s + ((p.amount || 0) - (p.amount_paid || 0)), 0);
@@ -381,6 +392,11 @@ export default function Payables() {
                     </Badge>
                     {p.category && <Badge variant="secondary" className="text-xs">{p.category}</Badge>}
                     {aging && <Badge variant="outline" className={`text-xs ${aging.style}`}>{aging.label}</Badge>}
+                    {isDuplicatePayable(p) && (
+                      <Badge variant="outline" className="text-xs bg-chart-3/10 text-chart-3 border-chart-3/20 flex items-center gap-1">
+                        ⚠ Possible Duplicate
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {p.description || ""}
