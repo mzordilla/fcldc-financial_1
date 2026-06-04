@@ -69,10 +69,26 @@ export default function PurchaseOrders() {
     queryFn: () => base44.entities.Payable.list("-created_date", 200),
   });
 
-  // Check which POs have already been converted to payables
+  const { data: paymentRequests = [] } = useQuery({
+    queryKey: ["payment_requests_for_po_check"],
+    queryFn: () => base44.entities.PaymentRequest.list("-created_date", 200),
+  });
+
+  // Check which POs have been converted to payables
   const poIdsWithPayables = new Set(
     payables
       .map(p => p.po_id)
+      .filter(Boolean)
+  );
+
+  // Check which POs have paid payment requests (not just created)
+  const poIdsWithPaidRequests = new Set(
+    paymentRequests
+      .filter(pr => pr.approval_status === "paid" && pr.supporting_docs)
+      .map(pr => {
+        const match = pr.supporting_docs.match(/PO:\s*(.+)/);
+        return match ? match[1].trim() : null;
+      })
       .filter(Boolean)
   );
 
@@ -302,7 +318,7 @@ export default function PurchaseOrders() {
                           <StatusIcon className="w-3 h-3 mr-1" />
                           {(po.approval_status || "pending").replace(/_/g, " ")}
                         </Badge>
-                        {poIdsWithPayables.has(po.id) && (
+                        {(poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number)) && (
                           <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
                             <CreditCard className="w-3 h-3 mr-1" /> Paid
                           </Badge>
@@ -329,13 +345,13 @@ export default function PurchaseOrders() {
                         {po.approval_status === "approved" && (
                           <div title={
                             !po.receipt_url ? "Upload a receipt before converting to payable" :
-                            poIdsWithPayables.has(po.id) ? "Already converted to payable" : ""
+                            poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number) ? "Already paid" : ""
                           }>
                             <Button 
                               size="sm" 
                               variant="outline" 
                               onClick={() => setConvertingPO(po)} 
-                              disabled={!po.receipt_url || poIdsWithPayables.has(po.id)} 
+                              disabled={!po.receipt_url || poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number)} 
                               className="text-primary hover:text-primary disabled:opacity-50"
                             >
                               <CreditCard className="w-3.5 h-3.5 mr-1" /> Payable
