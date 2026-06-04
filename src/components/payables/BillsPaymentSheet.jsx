@@ -22,7 +22,7 @@ const PAYMENT_METHODS = [
   { value: "other", label: "Other" },
 ];
 
-const defaultLine = () => ({ payable_id: "", amount: "", notes: "" });
+const defaultLine = () => ({ payable_id: "", supplier_name: "", project_name: "", amount: "", notes: "" });
 
 export default function BillsPaymentSheet({ open, onOpenChange }) {
   const queryClient = useQueryClient();
@@ -71,56 +71,74 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
   const removeLine = (i) => setLines(prev => prev.filter((_, idx) => idx !== i));
   const updateLine = (i, field, val) => setLines(prev => prev.map((l, idx) => idx === i ? { ...l, [field]: val } : l));
 
-  // Auto-fill amount with payable's remaining balance
+  // Auto-fill amount, supplier, and project from selected payable
   const handlePayableSelect = (i, payableId) => {
+    if (payableId === "manual") {
+      setLines(prev => prev.map((l, idx) => idx === i ? { ...l, payable_id: "manual", supplier_name: "", project_name: "", amount: "" } : l));
+      return;
+    }
     const p = payables.find(x => x.id === payableId);
     if (p) {
       const remaining = (p.amount || 0) - (p.amount_paid || 0);
-      updateLine(i, "payable_id", payableId);
-      setLines(prev => prev.map((l, idx) => idx === i ? { ...l, payable_id: payableId, amount: String(remaining > 0 ? remaining : "") } : l));
+      setLines(prev => prev.map((l, idx) => idx === i ? {
+        ...l,
+        payable_id: payableId,
+        supplier_name: p.supplier_name || "",
+        project_name: p.project_name || "",
+        amount: String(remaining > 0 ? remaining : ""),
+      } : l));
     }
   };
 
-  const canSave = lines.some(l => l.payable_id && parseFloat(l.amount) > 0);
+  const canSave = lines.some(l => (l.payable_id || l.supplier_name) && parseFloat(l.amount) > 0);
 
   const handleSubmit = async () => {
     setSaving(true);
 
-    const validLines = lines.filter(l => l.payable_id && parseFloat(l.amount) > 0);
+    const validLines = lines.filter(l => (l.payable_id || l.supplier_name) && parseFloat(l.amount) > 0);
 
     await Promise.all(validLines.map(async (line) => {
-      const p = payables.find(x => x.id === line.payable_id);
-      if (!p) return;
       const paid = parseFloat(line.amount);
-      const newAmountPaid = (p.amount_paid || 0) + paid;
-      const isFullyPaid = newAmountPaid >= (p.amount || 0);
-
+      const refStr = header.reference || (header.check_number ? `Check #${header.check_number}` : "");
       const historyEntry = {
         payment_date: header.payment_date,
         amount: paid,
         payment_method: header.payment_method,
         bank_account_id: header.bank_account_id || null,
-        reference: header.reference || (header.check_number ? `Check #${header.check_number}` : ""),
+        reference: refStr,
         notes: line.notes || header.notes,
       };
 
-      await base44.entities.Payable.update(p.id, {
-        amount_paid: newAmountPaid,
-        status: isFullyPaid ? "paid" : "partially_paid",
-        payment_history: [...(p.payment_history || []), historyEntry],
-        payment_date: header.payment_date,
-        payment_method: header.payment_method,
-        payment_reference: historyEntry.reference,
-      });
+      // Update linked payable (if not manual entry)
+      if (line.payable_id && line.payable_id !== "manual") {
+        const p = payables.find(x => x.id === line.payable_id);
+        if (p) {
+          const newAmountPaid = (p.amount_paid || 0) + paid;
+          const isFullyPaid = newAmountPaid >= (p.amount || 0);
+          await base44.entities.Payable.update(p.id, {
+            amount_paid: newAmountPaid,
+            status: isFullyPaid ? "paid" : "partially_paid",
+            payment_history: [...(p.payment_history || []), historyEntry],
+            payment_date: header.payment_date,
+            payment_method: header.payment_method,
+            payment_reference: refStr,
+          });
+        }
+      }
+
+      // Resolve supplier/project — prefer line-level (auto-filled or manual), fallback to payable
+      const p = line.payable_id && line.payable_id !== "manual" ? payables.find(x => x.id === line.payable_id) : null;
+      const supplierName = line.supplier_name || p?.supplier_name || "";
+      const projectName = line.project_name || p?.project_name || "";
 
       // Record expense transaction if bank account selected
-      if (header.bank_account_id) {
+      if (header.bank_account_id && header.bank_account_id !== "none") {
         await base44.entities.Transaction.create({
-          description: `Bill payment – ${p.supplier_name}${p.invoice_number ? ` (${p.invoice_number})` : ""}`,
+          description: `Bill payment – ${supplierName}${p?.invoice_number ? ` (${p.invoice_number})` : ""}`,
           amount: paid,
           type: "expense",
           category: "other",
-          project_name: p.project_name || "",
+          project_name: projectName,
           bank_account_id: header.bank_account_id,
           date: header.payment_date,
           status: "completed",
@@ -226,8 +244,9 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
                       <div className="space-y-1.5">
                         <Label>Select Bill / Payable</Label>
                         <Select value={line.payable_id} onValueChange={v => handlePayableSelect(i, v)}>
-                          <SelectTrigger><SelectValue placeholder="Choose a payable..." /></SelectTrigger>
+                          <SelectTrigger><SelectValue placeholder="Choose a payable or manual entry..." /></SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="manual">— Manual Entry —</SelectItem>
                             {unpaidPayables.map(p => (
                               <SelectItem key={p.id} value={p.id}>
                                 <span className="flex items-center gap-2">
@@ -241,9 +260,32 @@ export default function BillsPaymentSheet({ open, onOpenChange }) {
                         </Select>
                       </div>
 
+                      {/* Supplier & Project — editable on manual, read-only hint on linked payable */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label>Supplier</Label>
+                          <Input
+                            value={line.supplier_name}
+                            onChange={e => updateLine(i, "supplier_name", e.target.value)}
+                            placeholder="Supplier name"
+                            readOnly={!!payable}
+                            className={payable ? "bg-muted/40 cursor-default" : ""}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Project</Label>
+                          <Input
+                            value={line.project_name}
+                            onChange={e => updateLine(i, "project_name", e.target.value)}
+                            placeholder="Project name (optional)"
+                            readOnly={!!payable}
+                            className={payable ? "bg-muted/40 cursor-default" : ""}
+                          />
+                        </div>
+                      </div>
+
                       {payable && (
                         <div className="text-xs text-muted-foreground flex flex-wrap gap-3 px-1">
-                          {payable.project_name && <span>📁 {payable.project_name}</span>}
                           {payable.invoice_number && <span>Invoice: {payable.invoice_number}</span>}
                           <span>Balance: <span className="font-semibold text-foreground">₱{fmt(remaining)}</span></span>
                           {payable.due_date && (
