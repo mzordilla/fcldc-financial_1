@@ -2,14 +2,13 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays, addDays } from "date-fns";
-import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download, Package, Banknote, ChevronDown, ChevronUp, CheckSquare, Square, Loader2, History } from "lucide-react";
+import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download, Banknote, ChevronDown, ChevronUp, CheckSquare, Square, Loader2, History } from "lucide-react";
 
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import AddFormDialog from "../components/shared/AddFormDialog";
 import MarkPayableAsPaidDialog from "../components/payables/MarkPayableAsPaidDialog";
 import PayableCard from "../components/payables/PayableCard";
 
@@ -69,37 +68,10 @@ const statusStyles = {
   overdue: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
-const fields = [
-  { name: "supplier_name", label: "Supplier Name", required: true, placeholder: "e.g. SteelCo Supplies" },
-  { name: "description", label: "Description", placeholder: "e.g. Rebar delivery for Tower project" },
-  { name: "invoice_number", label: "Invoice #", placeholder: "SUP-INV-001" },
-  { name: "amount", label: "Total Amount (₱)", type: "number", required: true, placeholder: "0.00" },
-  { name: "amount_paid", label: "Amount Paid (₱)", type: "number", placeholder: "0.00" },
-  { name: "due_date", label: "Due Date", type: "date", required: true },
-  { name: "project_name", label: "Project Name", placeholder: "e.g. Main Street Tower" },
-  { name: "category", label: "Category", type: "select", options: [
-    { value: "materials", label: "Materials" },
-    { value: "equipment", label: "Equipment" },
-    { value: "subcontractor", label: "Subcontractor" },
-    { value: "services", label: "Services" },
-    { value: "utilities", label: "Utilities" },
-    { value: "other", label: "Other" },
-  ]},
-  { name: "status", label: "Status", type: "select", options: [
-    { value: "unpaid", label: "Unpaid" },
-    { value: "partially_paid", label: "Partially Paid" },
-    { value: "paid", label: "Paid" },
-    { value: "overdue", label: "Overdue" },
-  ]},
-];
-
 export default function Payables() {
-  const [showAdd, setShowAdd] = useState(false);
   const [markingPaid, setMarkingPaid] = useState(null);
-  const [showReceivingItems, setShowReceivingItems] = useState(true);
   const [showPaymentRequests, setShowPaymentRequests] = useState(true);
   const [showPaid, setShowPaid] = useState(false);
-  const [selectedRIs, setSelectedRIs] = useState(new Set());
   const [selectedPRs, setSelectedPRs] = useState(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [removingDupes, setRemovingDupes] = useState(false);
@@ -140,11 +112,6 @@ export default function Payables() {
     queryFn: () => base44.entities.Payable.list("-due_date", 200),
   });
 
-  const { data: receivingItems = [] } = useQuery({
-    queryKey: ["receiving_items_for_payables"],
-    queryFn: () => base44.entities.ReceivingItem.list("-received_date", 200),
-  });
-
   const { data: paymentRequests = [] } = useQuery({
     queryKey: ["payment_requests_for_payables"],
     queryFn: () => base44.entities.PaymentRequest.filter({ approval_status: "approved" }, "-created_date", 200),
@@ -168,11 +135,6 @@ export default function Payables() {
   const markPaid = (p, paymentData) => updateMutation.mutate({ id: p.id, data: paymentData });
 
   // IDs already linked via notes tag
-  const linkedRIIds = new Set(payables.flatMap(p => {
-    if (!p.notes) return [];
-    const m = p.notes.match(/RI:(\S+)/);
-    return m ? [m[1]] : [];
-  }));
   const linkedPRIds = new Set(payables.flatMap(p => {
     if (!p.notes) return [];
     const m = p.notes.match(/PR:(\S+)/);
@@ -184,36 +146,12 @@ export default function Payables() {
     `${(p.supplier_name || "").toLowerCase().trim()}|${p.amount}|${(p.invoice_number || "").toLowerCase().trim()}`
   ));
 
-  const riKey = (ri) =>
-    `${(ri.supplier_name || "").toLowerCase().trim()}|${ri.total_amount}|${(ri.po_number || "").toLowerCase().trim()}`;
-
   const prKey = (pr) =>
     `${(pr.payee || "").toLowerCase().trim()}|${pr.amount}|${(pr.invoice_number || pr.request_number || "").toLowerCase().trim()}`;
 
-  const pendingRIs = receivingItems.filter(ri =>
-    !linkedRIIds.has(ri.id) && !existingPayableKeys.has(riKey(ri))
-  );
   const pendingPRs = paymentRequests.filter(pr =>
     !linkedPRIds.has(pr.id) && !existingPayableKeys.has(prKey(pr))
   );
-
-  const createFromRI = async (ri) => {
-    const due = format(addDays(new Date(ri.received_date), 30), "yyyy-MM-dd");
-    await createMutation.mutateAsync({
-      supplier_name: ri.supplier_name,
-      description: `Delivery from ${ri.supplier_name}${ri.po_number ? ` · PO: ${ri.po_number}` : ""}`,
-      invoice_number: ri.po_number || "",
-      po_id: ri.po_id || "",
-      po_number: ri.po_number || "",
-      amount: ri.total_amount || 0,
-      amount_paid: 0,
-      due_date: due,
-      project_name: ri.project_name || "",
-      category: "materials",
-      status: "unpaid",
-      notes: `RI:${ri.id}`,
-    });
-  };
 
   const createFromPR = async (pr) => {
     await createMutation.mutateAsync({
@@ -228,17 +166,6 @@ export default function Payables() {
       status: "unpaid",
       notes: `PR:${pr.id}`,
     });
-  };
-
-  // Bulk approve selected RIs
-  const bulkApproveRIs = async () => {
-    setBulkLoading(true);
-    await Promise.all([...selectedRIs].map(id => {
-      const ri = pendingRIs.find(r => r.id === id);
-      return ri ? createFromRI(ri) : Promise.resolve();
-    }));
-    setSelectedRIs(new Set());
-    setBulkLoading(false);
   };
 
   // Bulk approve selected PRs
@@ -313,80 +240,10 @@ export default function Payables() {
             <FileUp className="w-4 h-4 mr-2" /> Import
           </Button>
           <input ref={importRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportFile} />
-          <Button onClick={() => setShowAdd(true)}>
-            <Plus className="w-4 h-4 mr-2" /> Add Payable
-          </Button>
         </div>
       </div>
 
       <AgingSummary items={payables} />
-
-      {/* From Receiving Items */}
-      {pendingRIs.length > 0 && (
-        <div className="rounded-2xl border border-border overflow-hidden bg-card">
-          <div className="w-full flex items-center justify-between px-5 py-3 bg-muted/50">
-            <button className="flex items-center gap-2 flex-1" onClick={() => setShowReceivingItems(v => !v)}>
-              <Package className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-semibold text-foreground">From Receiving Items</span>
-              <span className="text-xs bg-chart-3/10 text-chart-3 border border-chart-3/20 px-2 py-0.5 rounded-full">{pendingRIs.length} pending</span>
-              {showReceivingItems ? <ChevronUp className="w-4 h-4 text-muted-foreground ml-1" /> : <ChevronDown className="w-4 h-4 text-muted-foreground ml-1" />}
-            </button>
-            {showReceivingItems && (
-              <div className="flex items-center gap-2">
-                <button
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                  onClick={() => setSelectedRIs(selectedRIs.size === pendingRIs.length ? new Set() : new Set(pendingRIs.map(r => r.id)))}
-                >
-                  {selectedRIs.size === pendingRIs.length ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
-                  {selectedRIs.size === pendingRIs.length ? "Deselect All" : "Select All"}
-                </button>
-                {selectedRIs.size > 0 && (
-                  <Button size="sm" onClick={bulkApproveRIs} disabled={bulkLoading} className="text-xs">
-                    {bulkLoading ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <CheckCircle className="w-3 h-3 mr-1" />}
-                    Add {selectedRIs.size} as Payable{selectedRIs.size > 1 ? "s" : ""}
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-          {showReceivingItems && (
-            <table className="w-full text-sm">
-              <thead className="bg-muted/30 border-y border-border">
-                <tr>
-                  <th className="px-4 py-2 w-8"></th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Supplier</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Project</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">PO #</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Received</th>
-                  <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
-                  <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {pendingRIs.map(ri => (
-                  <tr key={ri.id} className={`hover:bg-muted/20 transition-colors ${selectedRIs.has(ri.id) ? "bg-primary/5" : ""}`}>
-                    <td className="px-4 py-2.5">
-                      <button onClick={() => setSelectedRIs(prev => { const s = new Set(prev); s.has(ri.id) ? s.delete(ri.id) : s.add(ri.id); return s; })}>
-                        {selectedRIs.has(ri.id) ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4 text-muted-foreground" />}
-                      </button>
-                    </td>
-                    <td className="px-4 py-2.5 font-medium text-foreground text-xs">{ri.supplier_name}</td>
-                    <td className="px-4 py-2.5 text-xs text-muted-foreground">{ri.project_name || "—"}</td>
-                    <td className="px-4 py-2.5 text-xs font-mono text-muted-foreground">{ri.po_number || "—"}</td>
-                    <td className="px-4 py-2.5 text-xs text-muted-foreground">{ri.received_date ? format(new Date(ri.received_date), "MMM d, yyyy") : "—"}</td>
-                    <td className="px-4 py-2.5 text-right text-xs font-bold text-foreground">₱{(ri.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    <td className="px-4 py-2.5 text-right">
-                      <Button size="sm" variant="outline" onClick={() => createFromRI(ri)} disabled={bulkLoading} className="text-primary hover:text-primary text-xs">
-                        <Plus className="w-3 h-3 mr-1" /> Add
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      )}
 
       {/* From Approved Payment Requests */}
       {pendingPRs.length > 0 && (
@@ -486,13 +343,6 @@ export default function Payables() {
         </div>
       )}
 
-      <AddFormDialog
-        open={showAdd}
-        onOpenChange={setShowAdd}
-        title="Add Payable"
-        fields={fields}
-        onSubmit={(data) => createMutation.mutateAsync(data)}
-      />
       <MarkPayableAsPaidDialog
         open={!!markingPaid}
         onOpenChange={(v) => { if (!v) setMarkingPaid(null); }}
