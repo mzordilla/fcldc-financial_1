@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package, ClipboardList } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +41,7 @@ const statusIcons = {
 
 export default function PurchaseOrders() {
   const [showAdd, setShowAdd] = useState(false);
+  const [showApprovedSummary, setShowApprovedSummary] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [editingPO, setEditingPO] = useState(null);
   const [reviewPO, setReviewPO] = useState(null);
@@ -160,6 +162,11 @@ export default function PurchaseOrders() {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
+          {approved.length > 0 && (
+            <Button variant="outline" onClick={() => setShowApprovedSummary(true)}>
+              <ClipboardList className="w-4 h-4 mr-2" /> Approved Summary
+            </Button>
+          )}
           <Button variant="outline" onClick={() => setShowImport(true)}>
             <FileUp className="w-4 h-4 mr-2" /> Import Excel
           </Button>
@@ -361,6 +368,46 @@ export default function PurchaseOrders() {
           );
         })}
       </div>
+
+      {/* Approved PO Summary Dialog */}
+      <Dialog open={showApprovedSummary} onOpenChange={setShowApprovedSummary}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-primary" />
+              Approved Purchase Orders Summary
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div className="rounded-xl border border-border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted/50 border-b border-border">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">PO Number</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Supplier</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {approved.map((po) => (
+                    <tr key={po.id} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{po.po_number || "—"}</td>
+                      <td className="px-4 py-3 font-medium text-foreground">{po.supplier_name}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-foreground">₱{(po.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-primary/5 border-t-2 border-primary/20">
+                    <td className="px-4 py-3 text-xs font-bold text-primary uppercase" colSpan={2}>Total ({approved.length} PO{approved.length !== 1 ? "s" : ""})</td>
+                    <td className="px-4 py-3 text-right text-lg font-bold text-primary">₱{totalApprovedValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <POExcelImportDialog
         open={showImport}
