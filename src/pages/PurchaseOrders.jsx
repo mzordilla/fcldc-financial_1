@@ -15,6 +15,7 @@ import ReceiptUploadDialog from "../components/purchase-orders/ReceiptUploadDial
 import NoticeOfDeliveryPDF from "../components/purchase-orders/NoticeOfDeliveryPDF";
 import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
 import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
+import ReceiveItemsDialog from "../components/purchase-orders/ReceiveItemsDialog";
 
 const statusStyles = {
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
@@ -49,6 +50,7 @@ export default function PurchaseOrders() {
   const [reviewPO, setReviewPO] = useState(null);
   const [convertingPO, setConvertingPO] = useState(null);
   const [uploadingReceipt, setUploadingReceipt] = useState(null);
+  const [receivingItems, setReceivingItems] = useState(null);
   const [expandedHistory, setExpandedHistory] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -341,6 +343,11 @@ export default function PurchaseOrders() {
                             <Package className="w-3.5 h-3.5 mr-1" /> Receipt
                           </Button>
                         )}
+                        {po.approval_status === "approved" && (
+                          <Button size="sm" variant="outline" onClick={() => setReceivingItems(po)} className="text-primary hover:text-primary">
+                            <Package className="w-3.5 h-3.5 mr-1" /> Receive
+                          </Button>
+                        )}
                         {po.approval_status === "approved" && <NoticeOfDeliveryPDF po={po} />}
                         {po.approval_status === "approved" && (
                           <div title={
@@ -578,6 +585,11 @@ export default function PurchaseOrders() {
           queryClient.invalidateQueries({ queryKey: ["purchase_orders"] });
           setUploadingReceipt(null);
         }}
+      />
+      <ReceiveItemsDialog
+        open={!!receivingItems}
+        onOpenChange={(v) => { if (!v) setReceivingItems(null); }}
+        po={receivingItems}
       />
     </div>
   );
