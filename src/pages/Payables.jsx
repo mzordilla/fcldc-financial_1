@@ -75,6 +75,7 @@ export default function Payables() {
   const [selectedPRs, setSelectedPRs] = useState(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [removingDupes, setRemovingDupes] = useState(false);
+  const [groupBySupplier, setGroupBySupplier] = useState(true);
   const queryClient = useQueryClient();
   const importRef = useRef();
 
@@ -217,6 +218,30 @@ export default function Payables() {
   const totalUnpaid = unpaidPayables.reduce((s, p) => s + ((p.amount || 0) - (p.amount_paid || 0)), 0);
   const overdueCount = payables.filter(p => p.status === "overdue").length;
 
+  // Group unpaid payables by supplier
+  const groupedBySupplier = unpaidPayables.reduce((acc, p) => {
+    const supplier = p.supplier_name || "Unknown Supplier";
+    if (!acc[supplier]) acc[supplier] = [];
+    acc[supplier].push(p);
+    return acc;
+  }, {});
+
+  // Calculate aging per supplier
+  const supplierAging = Object.entries(groupedBySupplier).map(([supplier, items]) => {
+    const buckets = { current: 0, days30: 0, days60: 0, days90: 0, days90plus: 0 };
+    items.forEach(p => {
+      if (!p.due_date) return;
+      const days = differenceInDays(new Date(), new Date(p.due_date));
+      const rem = (p.amount || 0) - (p.amount_paid || 0);
+      if (days <= 0) buckets.current += rem;
+      else if (days <= 30) buckets.days30 += rem;
+      else if (days <= 60) buckets.days60 += rem;
+      else if (days <= 90) buckets.days90 += rem;
+      else buckets.days90plus += rem;
+    });
+    return { supplier, items, buckets, total: Object.values(buckets).reduce((a, b) => a + b, 0) };
+  }).sort((a, b) => b.total - a.total);
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -233,6 +258,9 @@ export default function Payables() {
               Remove {duplicatePayablesCount} Duplicate{duplicatePayablesCount > 1 ? "s" : ""}
             </Button>
           )}
+          <Button variant="outline" size="sm" onClick={() => setGroupBySupplier(!groupBySupplier)}>
+            {groupBySupplier ? "Ungroup" : "Group by Supplier"}
+          </Button>
           <Button variant="outline" size="sm" onClick={() => handleExport(payables)}>
             <Download className="w-4 h-4 mr-2" /> Export
           </Button>
@@ -314,12 +342,56 @@ export default function Payables() {
         </div>
       )}
 
-      {/* Unpaid / Outstanding */}
-      <div className="grid gap-4">
-        {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
-        {!isLoading && unpaidPayables.length === 0 && <p className="text-center py-12 text-muted-foreground">No outstanding payables</p>}
-        {unpaidPayables.map((p) => <PayableCard key={p.id} p={p} isDuplicate={isDuplicatePayable(p)} onPay={setMarkingPaid} onDelete={(id) => deleteMutation.mutate(id)} />)}
-      </div>
+      {/* Unpaid / Outstanding - Grouped by Supplier */}
+      {groupBySupplier ? (
+        <div className="space-y-6">
+          {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
+          {!isLoading && supplierAging.length === 0 && <p className="text-center py-12 text-muted-foreground">No outstanding payables</p>}
+          {supplierAging.map(({ supplier, items, buckets, total }) => (
+            <div key={supplier} className="rounded-2xl border border-border overflow-hidden bg-card">
+              <div className="px-5 py-3 bg-muted/50 border-b border-border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground">{supplier}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{items.length} invoice{items.length > 1 ? "s" : ""} · ₱{total.toLocaleString(undefined, { minimumFractionDigits: 2 })} outstanding</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-muted-foreground">Current:</span>
+                      <span className="font-semibold text-primary">₱{buckets.current.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-muted-foreground">30:</span>
+                      <span className="font-semibold text-chart-3">₱{buckets.days30.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-muted-foreground">60:</span>
+                      <span className="font-semibold text-orange-500">₱{buckets.days60.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-muted-foreground">90:</span>
+                      <span className="font-semibold text-destructive">₱{buckets.days90.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-muted-foreground">90+:</span>
+                      <span className="font-semibold text-destructive">₱{buckets.days90plus.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 grid gap-3">
+                {items.map((p) => <PayableCard key={p.id} p={p} isDuplicate={isDuplicatePayable(p)} onPay={setMarkingPaid} onDelete={(id) => deleteMutation.mutate(id)} />)}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
+          {!isLoading && unpaidPayables.length === 0 && <p className="text-center py-12 text-muted-foreground">No outstanding payables</p>}
+          {unpaidPayables.map((p) => <PayableCard key={p.id} p={p} isDuplicate={isDuplicatePayable(p)} onPay={setMarkingPaid} onDelete={(id) => deleteMutation.mutate(id)} />)}
+        </div>
+      )}
 
       {/* Paid — collapsible */}
       {paidPayables.length > 0 && (
