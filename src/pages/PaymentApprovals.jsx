@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart, History, ChevronDown, ChevronUp, Square, CheckSquare, Upload, Layers } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart, History, ChevronDown, ChevronUp, Square, CheckSquare, Upload, Layers, CreditCard } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import BillsPaymentSheet from "../components/payables/BillsPaymentSheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -223,15 +224,24 @@ export default function PaymentApprovals() {
               <SelectItem value="rejected">Rejected</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={() => setShowBillsPayment(true)}>
-            <Layers className="w-4 h-4 mr-2" /> Bills Payment
-          </Button>
           <Button variant="outline" onClick={() => setShowBulk(true)}>
             <Upload className="w-4 h-4 mr-2" /> Bulk Create
           </Button>
-          <Button onClick={() => { setPrefillData(null); setShowAdd(true); }}>
-            <Plus className="w-4 h-4 mr-2" /> New Request
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" /> New Request <ChevronDown className="w-3.5 h-3.5 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => { setPrefillData(null); setShowAdd(true); }}>
+                <Plus className="w-4 h-4 mr-2" /> New Payment Request
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowBillsPayment(true)}>
+                <CreditCard className="w-4 h-4 mr-2" /> Bills Payment
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
