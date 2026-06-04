@@ -358,7 +358,7 @@ export default function Payables() {
         </div>
       )}
 
-      {/* Unpaid / Outstanding - Grouped by Supplier */}
+      {/* Unpaid / Outstanding - Grouped by Supplier (Tabular) */}
       {groupBySupplier ? (
         <div className="space-y-6">
           {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
@@ -404,8 +404,56 @@ export default function Payables() {
                   </div>
                 </button>
                 {isExpanded && (
-                  <div className="p-4 grid gap-3">
-                    {items.map((p) => <PayableCard key={p.id} p={p} isDuplicate={isDuplicatePayable(p)} onPay={setMarkingPaid} onDelete={(id) => deleteMutation.mutate(id)} />)}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/30 border-y border-border">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Invoice #</th>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Description</th>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Project</th>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Due Date</th>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Aging</th>
+                          <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
+                          <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Paid</th>
+                          <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Balance</th>
+                          <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {items.map((p) => {
+                          const bucket = getAgingBucket(p.due_date, p.status);
+                          const balance = (p.amount || 0) - (p.amount_paid || 0);
+                          return (
+                            <tr key={p.id} className="hover:bg-muted/20 transition-colors">
+                              <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{p.invoice_number || "—"}</td>
+                              <td className="px-4 py-3 text-xs text-foreground max-w-[200px] truncate">{p.description}</td>
+                              <td className="px-4 py-3 text-xs text-muted-foreground">{p.project_name || "—"}</td>
+                              <td className="px-4 py-3 text-xs text-muted-foreground">{p.due_date ? format(new Date(p.due_date), "MMM d, yyyy") : "—"}</td>
+                              <td className="px-4 py-3">
+                                {bucket ? (
+                                  <Badge className={bucket.style} variant="outline">{bucket.label}</Badge>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">—</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 text-right text-xs font-semibold text-foreground">₱{(p.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                              <td className="px-4 py-3 text-right text-xs text-primary">₱{(p.amount_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                              <td className="px-4 py-3 text-right text-xs font-bold text-foreground">₱{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button size="sm" variant="outline" onClick={() => setMarkingPaid(p)} className="text-xs text-primary hover:text-primary">
+                                    <CreditCard className="w-3 h-3 mr-1" /> Pay
+                                  </Button>
+                                  <Button size="sm" variant="outline" onClick={() => deleteMutation.mutate(p.id)} className="text-xs text-destructive hover:text-destructive">
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
@@ -413,10 +461,60 @@ export default function Payables() {
           })}
         </div>
       ) : (
-        <div className="grid gap-4">
-          {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
-          {!isLoading && unpaidPayables.length === 0 && <p className="text-center py-12 text-muted-foreground">No outstanding payables</p>}
-          {unpaidPayables.map((p) => <PayableCard key={p.id} p={p} isDuplicate={isDuplicatePayable(p)} onPay={setMarkingPaid} onDelete={(id) => deleteMutation.mutate(id)} />)}
+        <div className="rounded-2xl border border-border overflow-hidden bg-card">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30 border-y border-border">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Supplier</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Invoice #</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Description</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Project</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Due Date</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Aging</th>
+                  <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
+                  <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Paid</th>
+                  <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Balance</th>
+                  <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {unpaidPayables.map((p) => {
+                  const bucket = getAgingBucket(p.due_date, p.status);
+                  const balance = (p.amount || 0) - (p.amount_paid || 0);
+                  return (
+                    <tr key={p.id} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-4 py-3 text-xs font-medium text-foreground">{p.supplier_name}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{p.invoice_number || "—"}</td>
+                      <td className="px-4 py-3 text-xs text-foreground max-w-[200px] truncate">{p.description}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{p.project_name || "—"}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{p.due_date ? format(new Date(p.due_date), "MMM d, yyyy") : "—"}</td>
+                      <td className="px-4 py-3">
+                        {bucket ? (
+                          <Badge className={bucket.style} variant="outline">{bucket.label}</Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-xs font-semibold text-foreground">₱{(p.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      <td className="px-4 py-3 text-right text-xs text-primary">₱{(p.amount_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      <td className="px-4 py-3 text-right text-xs font-bold text-foreground">₱{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button size="sm" variant="outline" onClick={() => setMarkingPaid(p)} className="text-xs text-primary hover:text-primary">
+                            <CreditCard className="w-3 h-3 mr-1" /> Pay
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => deleteMutation.mutate(p.id)} className="text-xs text-destructive hover:text-destructive">
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
