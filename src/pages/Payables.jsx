@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays } from "date-fns";
 import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download } from "lucide-react";
+
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -222,21 +223,21 @@ export default function Payables() {
                       ₱{(p.amount_paid || 0).toLocaleString()} / ₱{(p.amount || 0).toLocaleString()}
                     </span>
                   </div>
-                  {p.status === "paid" && (p.payment_date || p.payment_method || p.payment_reference) && (
-                    <div className="mt-2 flex flex-wrap gap-2 items-center">
-                      <CreditCard className="w-3.5 h-3.5 text-primary" />
-                      {p.payment_date && (
-                        <span className="text-xs text-muted-foreground">Paid {format(new Date(p.payment_date), "MMM d, yyyy")}</span>
-                      )}
-                      {p.payment_method && (
-                        <Badge variant="secondary" className="text-xs capitalize">{p.payment_method.replace(/_/g, " ")}</Badge>
-                      )}
-                      {p.payment_reference && (
-                        <span className="text-xs text-muted-foreground">Ref: <span className="font-medium text-foreground">{p.payment_reference}</span></span>
-                      )}
-                      {p.payment_notes && (
-                        <span className="text-xs text-muted-foreground italic">— {p.payment_notes}</span>
-                      )}
+                  {/* Payment History Breakdown */}
+                  {(p.payment_history || []).length > 0 && (
+                    <div className="mt-3 rounded-lg border border-border divide-y divide-border text-xs">
+                      {(p.payment_history || []).map((h, i) => (
+                        <div key={i} className="flex items-center justify-between px-3 py-1.5">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <CreditCard className="w-3 h-3" />
+                            <span className="capitalize">{(h.payment_method || "").replace(/_/g, " ")}</span>
+                            {h.reference && <span>· {h.reference}</span>}
+                            {h.payment_date && <span>· {format(new Date(h.payment_date), "MMM d, yyyy")}</span>}
+                            {h.notes && <span className="italic">· {h.notes}</span>}
+                          </div>
+                          <span className="font-semibold text-primary">₱{(h.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -246,8 +247,13 @@ export default function Payables() {
                   </p>
                   <div className="flex gap-1">
                     {p.status !== "paid" && (
-                      <Button variant="ghost" size="icon" onClick={() => setMarkingPaid(p)} className="text-primary hover:text-primary" title="Mark as Paid">
+                      <Button variant="ghost" size="icon" onClick={() => setMarkingPaid(p)} className="text-primary hover:text-primary" title="Record Payment">
                         <CheckCircle className="w-4 h-4" />
+                      </Button>
+                    )}
+                    {p.status === "paid" && (p.payment_history || []).length > 0 && (
+                      <Button variant="ghost" size="icon" onClick={() => setMarkingPaid(p)} className="text-muted-foreground hover:text-primary" title="View Payments">
+                        <CreditCard className="w-4 h-4" />
                       </Button>
                     )}
                     <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(p.id)} className="text-muted-foreground hover:text-destructive">

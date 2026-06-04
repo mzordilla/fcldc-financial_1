@@ -61,10 +61,37 @@
       ],
       "default": "unpaid"
     },
+    "payment_history": {
+      "type": "array",
+      "description": "Log of all partial and full payments made",
+      "items": {
+        "type": "object",
+        "properties": {
+          "payment_date": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "payment_method": {
+            "type": "string"
+          },
+          "bank_account_id": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "payment_date": {
       "type": "string",
       "format": "date",
-      "description": "Date payment was made"
+      "description": "Date of last payment"
     },
     "payment_method": {
       "type": "string",
@@ -75,7 +102,7 @@
         "credit_card",
         "other"
       ],
-      "description": "How payment was made"
+      "description": "Method of last payment"
     },
     "payment_reference": {
       "type": "string",
