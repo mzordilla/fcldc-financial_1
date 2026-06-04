@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { format, differenceInDays } from "date-fns";
-import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download } from "lucide-react";
+import { format, differenceInDays, addDays } from "date-fns";
+import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download, Package, Banknote, ChevronDown, ChevronUp } from "lucide-react";
 
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
@@ -97,6 +97,8 @@ export default function Payables() {
   const [showAdd, setShowAdd] = useState(false);
   const [markingPaid, setMarkingPaid] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [showReceivingItems, setShowReceivingItems] = useState(true);
+  const [showPaymentRequests, setShowPaymentRequests] = useState(true);
   const queryClient = useQueryClient();
   const importRef = useRef();
 
@@ -131,7 +133,17 @@ export default function Payables() {
 
   const { data: payables = [], isLoading } = useQuery({
     queryKey: ["payables"],
-    queryFn: () => base44.entities.Payable.list("-due_date", 100),
+    queryFn: () => base44.entities.Payable.list("-due_date", 200),
+  });
+
+  const { data: receivingItems = [] } = useQuery({
+    queryKey: ["receiving_items_for_payables"],
+    queryFn: () => base44.entities.ReceivingItem.list("-received_date", 200),
+  });
+
+  const { data: paymentRequests = [] } = useQuery({
+    queryKey: ["payment_requests_for_payables"],
+    queryFn: () => base44.entities.PaymentRequest.filter({ approval_status: "approved" }, "-created_date", 200),
   });
 
   const createMutation = useMutation({
@@ -150,6 +162,46 @@ export default function Payables() {
   });
 
   const markPaid = (p, paymentData) => updateMutation.mutate({ id: p.id, data: paymentData });
+
+  // IDs already linked to a payable
+  const linkedRIIds = new Set(payables.map(p => p.notes).filter(Boolean).map(n => { const m = n.match(/RI:(\S+)/); return m ? m[1] : null; }).filter(Boolean));
+  const linkedPRIds = new Set(payables.map(p => p.notes).filter(Boolean).map(n => { const m = n.match(/PR:(\S+)/); return m ? m[1] : null; }).filter(Boolean));
+
+  const pendingRIs = receivingItems.filter(ri => !linkedRIIds.has(ri.id));
+  const pendingPRs = paymentRequests.filter(pr => !linkedPRIds.has(pr.id));
+
+  const createFromRI = async (ri) => {
+    const due = format(addDays(new Date(ri.received_date), 30), "yyyy-MM-dd");
+    await createMutation.mutateAsync({
+      supplier_name: ri.supplier_name,
+      description: `Delivery from ${ri.supplier_name}${ri.po_number ? ` · PO: ${ri.po_number}` : ""}`,
+      invoice_number: ri.po_number || "",
+      po_id: ri.po_id || "",
+      po_number: ri.po_number || "",
+      amount: ri.total_amount || 0,
+      amount_paid: 0,
+      due_date: due,
+      project_name: ri.project_name || "",
+      category: "materials",
+      status: "unpaid",
+      notes: `RI:${ri.id}`,
+    });
+  };
+
+  const createFromPR = async (pr) => {
+    await createMutation.mutateAsync({
+      supplier_name: pr.payee,
+      description: pr.description,
+      invoice_number: pr.invoice_number || pr.request_number || "",
+      amount: pr.amount || 0,
+      amount_paid: 0,
+      due_date: pr.due_date || format(addDays(new Date(), 30), "yyyy-MM-dd"),
+      project_name: pr.project_allocations?.[0]?.project_name || "",
+      category: pr.project_allocations?.[0]?.category || pr.category || "other",
+      status: "unpaid",
+      notes: `PR:${pr.id}`,
+    });
+  };
 
   const filtered = statusFilter === "all" ? payables : payables.filter(p => p.status === statusFilter);
 
@@ -190,6 +242,102 @@ export default function Payables() {
       </div>
 
       <AgingSummary items={payables} />
+
+      {/* From Receiving Items */}
+      {pendingRIs.length > 0 && (
+        <div className="rounded-2xl border border-border overflow-hidden bg-card">
+          <button
+            className="w-full flex items-center justify-between px-5 py-3 bg-muted/50 hover:bg-muted/70 transition-colors"
+            onClick={() => setShowReceivingItems(v => !v)}
+          >
+            <div className="flex items-center gap-2">
+              <Package className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-semibold text-foreground">From Receiving Items</span>
+              <span className="text-xs bg-chart-3/10 text-chart-3 border border-chart-3/20 px-2 py-0.5 rounded-full">{pendingRIs.length} pending</span>
+            </div>
+            {showReceivingItems ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+          </button>
+          {showReceivingItems && (
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30 border-y border-border">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Supplier</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Project</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">PO #</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Received</th>
+                  <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
+                  <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {pendingRIs.map(ri => (
+                  <tr key={ri.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-2.5 font-medium text-foreground text-xs">{ri.supplier_name}</td>
+                    <td className="px-4 py-2.5 text-xs text-muted-foreground">{ri.project_name || "—"}</td>
+                    <td className="px-4 py-2.5 text-xs font-mono text-muted-foreground">{ri.po_number || "—"}</td>
+                    <td className="px-4 py-2.5 text-xs text-muted-foreground">{ri.received_date ? format(new Date(ri.received_date), "MMM d, yyyy") : "—"}</td>
+                    <td className="px-4 py-2.5 text-right text-xs font-bold text-foreground">₱{(ri.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-2.5 text-right">
+                      <Button size="sm" variant="outline" onClick={() => createFromRI(ri)} className="text-primary hover:text-primary text-xs">
+                        <Plus className="w-3 h-3 mr-1" /> Add Payable
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {/* From Approved Payment Requests */}
+      {pendingPRs.length > 0 && (
+        <div className="rounded-2xl border border-border overflow-hidden bg-card">
+          <button
+            className="w-full flex items-center justify-between px-5 py-3 bg-muted/50 hover:bg-muted/70 transition-colors"
+            onClick={() => setShowPaymentRequests(v => !v)}
+          >
+            <div className="flex items-center gap-2">
+              <Banknote className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-semibold text-foreground">From Approved Payment Requests</span>
+              <span className="text-xs bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full">{pendingPRs.length} pending</span>
+            </div>
+            {showPaymentRequests ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+          </button>
+          {showPaymentRequests && (
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30 border-y border-border">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">PR #</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Payee</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Description</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Project</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Due</th>
+                  <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
+                  <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {pendingPRs.map(pr => (
+                  <tr key={pr.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{pr.request_number || "—"}</td>
+                    <td className="px-4 py-2.5 font-medium text-foreground text-xs">{pr.payee}</td>
+                    <td className="px-4 py-2.5 text-xs text-muted-foreground max-w-[200px] truncate">{pr.description}</td>
+                    <td className="px-4 py-2.5 text-xs text-muted-foreground">{pr.project_allocations?.[0]?.project_name || "—"}</td>
+                    <td className="px-4 py-2.5 text-xs text-muted-foreground">{pr.due_date ? format(new Date(pr.due_date), "MMM d, yyyy") : "—"}</td>
+                    <td className="px-4 py-2.5 text-right text-xs font-bold text-foreground">₱{(pr.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td className="px-4 py-2.5 text-right">
+                      <Button size="sm" variant="outline" onClick={() => createFromPR(pr)} className="text-primary hover:text-primary text-xs">
+                        <Plus className="w-3 h-3 mr-1" /> Add Payable
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
 
       <div className="grid gap-4">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
