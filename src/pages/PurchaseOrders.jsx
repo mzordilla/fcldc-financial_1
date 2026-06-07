@@ -347,6 +347,7 @@ export default function PurchaseOrders() {
 
       {/* PO Table */}
       <div className="rounded-2xl border border-border overflow-hidden bg-card">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/60 border-b border-border">
             <tr>
@@ -541,6 +542,7 @@ export default function PurchaseOrders() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
         </TabsContent>
