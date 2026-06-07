@@ -32,6 +32,7 @@ import Tenants from './pages/realestate/Tenants';
 import Listings from './pages/realestate/Listings';
 import PortfolioReports from './pages/realestate/PortfolioReports';
 import RealEstatePortfolio from './pages/realestate/RealEstatePortfolio';
+import WorkflowDiagram from './pages/WorkflowDiagram';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -86,6 +87,7 @@ const AuthenticatedApp = () => {
         <Route path="/re/listings" element={<Listings />} />
         <Route path="/re/reports" element={<PortfolioReports />} />
         <Route path="/re/portfolio" element={<RealEstatePortfolio />} />
+        <Route path="/workflow" element={<WorkflowDiagram />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
