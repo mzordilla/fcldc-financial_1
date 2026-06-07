@@ -12,7 +12,6 @@ const allNavItems = [
 { label: "Listings", icon: List, path: "/re/listings", group: "Real Estate Portfolio" },
 { label: "Portfolio Reports", icon: PieChart, path: "/re/reports", group: "Real Estate Portfolio" },
 { label: "Projects", icon: Briefcase, path: "/projects" },
-{ label: "Billing Cycles", icon: Receipt, path: "/billing-cycles" },
 
 { label: "Receivables", icon: FileText, path: "/receivables" },
 { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
