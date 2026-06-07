@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package, ClipboardList, Printer } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package, ClipboardList, Printer, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -188,6 +190,61 @@ export default function PurchaseOrders() {
     setSelectedIds(new Set());
   };
 
+  // ── Receiving Items tab state ──
+  const { data: receivingGroups = [] } = useQuery({
+    queryKey: ["receiving_items_tab"],
+    queryFn: () => base44.entities.ReceivingItem.list("-received_date", 500),
+  });
+  const [expandedRIPO, setExpandedRIPO] = useState(null);
+  const riByPO = useMemo(() => {
+    const map = {};
+    for (const item of receivingGroups) {
+      const key = item.po_id || item.po_number || "unknown";
+      if (!map[key]) map[key] = { po_id: item.po_id, po_number: item.po_number, supplier_name: item.supplier_name, project_name: item.project_name, receipts: [], total_received: 0 };
+      map[key].receipts.push(item);
+      map[key].total_received += item.total_amount || 0;
+    }
+    return Object.values(map).sort((a, b) => (b.receipts[0]?.received_date || "").localeCompare(a.receipts[0]?.received_date || ""));
+  }, [receivingGroups]);
+
+  // ── Materials History tab state ──
+  const { data: poForMaterials = [], isLoading: matLoading } = useQuery({
+    queryKey: ["purchase_orders_materials"],
+    queryFn: () => base44.entities.PurchaseOrder.list("-requested_date", 500),
+  });
+  const [matSearch, setMatSearch] = useState("");
+  const [matFilterSupplier, setMatFilterSupplier] = useState("all");
+  const [matFilterProject, setMatFilterProject] = useState("all");
+  const [matFilterStatus, setMatFilterStatus] = useState("all");
+
+  const allMaterials = useMemo(() => {
+    const rows = [];
+    poForMaterials.forEach((po) => {
+      if (po.line_items?.length > 0) {
+        let daysToDeliver = null;
+        if (po.requested_date && po.delivery_date) {
+          daysToDeliver = Math.round((new Date(po.delivery_date) - new Date(po.requested_date)) / 86400000);
+        }
+        po.line_items.forEach((item) => rows.push({ ...item, po_number: po.po_number, supplier_name: po.supplier_name, project_name: po.project_name, requested_date: po.requested_date, delivery_date: po.delivery_date, approval_status: po.approval_status, days_to_deliver: daysToDeliver }));
+      }
+    });
+    return rows;
+  }, [poForMaterials]);
+
+  const matSuppliers = useMemo(() => [...new Set(allMaterials.map(m => m.supplier_name).filter(Boolean))].sort(), [allMaterials]);
+  const matProjects = useMemo(() => [...new Set(allMaterials.map(m => m.project_name).filter(Boolean))].sort(), [allMaterials]);
+  const filteredMaterials = useMemo(() => allMaterials.filter(m => {
+    const q = matSearch.toLowerCase();
+    return (!q || (m.description || "").toLowerCase().includes(q) || (m.supplier_name || "").toLowerCase().includes(q) || (m.po_number || "").toLowerCase().includes(q))
+      && (matFilterSupplier === "all" || m.supplier_name === matFilterSupplier)
+      && (matFilterProject === "all" || m.project_name === matFilterProject)
+      && (matFilterStatus === "all" || m.approval_status === matFilterStatus);
+  }), [allMaterials, matSearch, matFilterSupplier, matFilterProject, matFilterStatus]);
+
+  const matTotalValue = useMemo(() => filteredMaterials.reduce((s, m) => s + (m.total || 0), 0), [filteredMaterials]);
+
+  const MAT_STATUS_STYLES = { approved: "bg-primary/10 text-primary border-primary/20", pending: "bg-chart-3/10 text-chart-3 border-chart-3/20", rejected: "bg-destructive/10 text-destructive border-destructive/20", cancelled: "bg-muted text-muted-foreground border-border" };
+
   return (
     <div className="p-4 md:p-8 w-full mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -224,6 +281,15 @@ export default function PurchaseOrders() {
           </Button>
         </div>
       </div>
+
+      <Tabs defaultValue="orders" className="w-full">
+        <TabsList className="mb-2">
+          <TabsTrigger value="orders">Purchase Orders</TabsTrigger>
+          <TabsTrigger value="receiving">Receiving Items</TabsTrigger>
+          <TabsTrigger value="materials">Materials History</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="orders" className="space-y-6">
 
       {/* Approved PO Summary */}
       {approved.length > 0 && (
@@ -469,6 +535,160 @@ export default function PurchaseOrders() {
           </tbody>
         </table>
       </div>
+
+        </TabsContent>
+
+        {/* ── Receiving Items Tab ── */}
+        <TabsContent value="receiving" className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">{riByPO.length} PO{riByPO.length !== 1 ? "s" : ""} · {receivingGroups.length} receipt transaction{receivingGroups.length !== 1 ? "s" : ""}</h2>
+          </div>
+          {riByPO.length === 0 && <p className="text-center py-12 text-muted-foreground">No receiving records yet.</p>}
+          {riByPO.map((group) => {
+            const key = group.po_id || group.po_number || "unknown";
+            const expanded = expandedRIPO === key;
+            const complete = group.receipts.some(r => r.status === "complete");
+            return (
+              <div key={key} className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-md transition-shadow">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 cursor-pointer" onClick={() => setExpandedRIPO(expanded ? null : key)}>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 flex-wrap mb-1">
+                      <Package className="w-4 h-4 text-primary" />
+                      <h3 className="font-semibold text-foreground">{group.supplier_name}</h3>
+                      {group.po_number && <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded text-muted-foreground">PO: {group.po_number}</span>}
+                      <Badge variant="outline" className={`text-xs ${complete ? "bg-primary/10 text-primary border-primary/20" : "bg-amber-500/10 text-amber-700 border-amber-200"}`}>
+                        <CheckCircle className="w-3 h-3 mr-1" />{complete ? "Fully Received" : "Partially Received"}
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                      {group.project_name && <span>Project: <span className="text-foreground font-medium">{group.project_name}</span></span>}
+                      <span>{group.receipts.length} receipt transaction{group.receipts.length !== 1 ? "s" : ""}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="sm:text-right">
+                      <p className="text-xl font-bold text-foreground">₱{group.total_received.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">Total Received Value</p>
+                    </div>
+                    {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
+                  </div>
+                </div>
+                {expanded && (
+                  <div className="border-t border-border divide-y divide-border">
+                    {group.receipts.map((receipt) => (
+                      <div key={receipt.id} className="px-5 py-4 bg-muted/20">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
+                          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                            <span>Received: <span className="text-foreground font-medium">{receipt.received_date ? format(new Date(receipt.received_date), "MMM d, yyyy") : "—"}</span></span>
+                            {receipt.received_by && <span>By: <span className="text-foreground">{receipt.received_by}</span></span>}
+                            <Badge variant="outline" className={`text-xs ${receipt.status === "complete" ? "bg-primary/10 text-primary border-primary/20" : "bg-amber-500/10 text-amber-700 border-amber-200"}`}>
+                              {receipt.status === "complete" ? "Complete" : "Partial"}
+                            </Badge>
+                          </div>
+                          <span className="text-sm font-bold text-foreground">₱{(receipt.total_amount || 0).toLocaleString()}</span>
+                        </div>
+                        {receipt.line_items?.length > 0 && (
+                          <div className="border border-border rounded-lg overflow-hidden">
+                            <table className="w-full text-xs">
+                              <thead><tr className="bg-muted/50 border-b border-border"><th className="px-3 py-2 text-left font-semibold">Item</th><th className="px-3 py-2 text-right font-semibold">Ordered</th><th className="px-3 py-2 text-right font-semibold">Received</th><th className="px-3 py-2 text-right font-semibold">Total</th></tr></thead>
+                              <tbody>{receipt.line_items.map((li, idx) => (<tr key={idx} className="border-b border-border/50 last:border-0"><td className="px-3 py-2">{li.description}</td><td className="px-3 py-2 text-right">{li.quantity_ordered}</td><td className="px-3 py-2 text-right">{li.quantity_received}</td><td className="px-3 py-2 text-right font-semibold">₱{(li.total || 0).toLocaleString()}</td></tr>))}</tbody>
+                            </table>
+                          </div>
+                        )}
+                        {receipt.notes && <p className="text-xs text-muted-foreground mt-2 italic border-l-2 border-border pl-2">{receipt.notes}</p>}
+                        {receipt.receipt_url && <a href={receipt.receipt_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary underline">View receipt document</a>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </TabsContent>
+
+        {/* ── Materials History Tab ── */}
+        <TabsContent value="materials" className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Total Line Items", value: filteredMaterials.length.toLocaleString() },
+              { label: "Total Quantity", value: filteredMaterials.reduce((s, m) => s + (m.quantity || 0), 0).toLocaleString() },
+              { label: "Total Value", value: `₱${matTotalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, highlight: true },
+              { label: "Unique Materials", value: [...new Set(filteredMaterials.map(m => (m.description || "").toLowerCase().trim()))].length.toLocaleString() },
+            ].map((kpi, i) => (
+              <div key={i} className="bg-card rounded-xl border border-border p-4">
+                <p className="text-xs text-muted-foreground">{kpi.label}</p>
+                <p className={`text-lg font-bold mt-1 ${kpi.highlight ? "text-primary" : "text-foreground"}`}>{kpi.value}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Search materials, supplier, PO#..." className="pl-9" value={matSearch} onChange={e => setMatSearch(e.target.value)} />
+            </div>
+            <Select value={matFilterSupplier} onValueChange={setMatFilterSupplier}>
+              <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="All Suppliers" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All Suppliers</SelectItem>{matSuppliers.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={matFilterProject} onValueChange={setMatFilterProject}>
+              <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="All Projects" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All Projects</SelectItem>{matProjects.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={matFilterStatus} onValueChange={setMatFilterStatus}>
+              <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="All Statuses" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All Statuses</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="rejected">Rejected</SelectItem><SelectItem value="cancelled">Cancelled</SelectItem></SelectContent>
+            </Select>
+          </div>
+          <div className="bg-card rounded-xl border border-border overflow-hidden">
+            {matLoading ? <p className="text-center py-16 text-muted-foreground">Loading materials...</p>
+              : filteredMaterials.length === 0 ? <p className="text-center py-16 text-muted-foreground">No materials found.</p>
+              : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead><tr className="border-b border-border bg-muted/30">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Description</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Qty</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Unit Cost</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Total</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden sm:table-cell">Supplier</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden md:table-cell">Project</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden lg:table-cell">PO #</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden lg:table-cell">Date Requested</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden lg:table-cell">Date Delivered</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden lg:table-cell">Days</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Status</th>
+                  </tr></thead>
+                  <tbody>
+                    {filteredMaterials.map((m, i) => (
+                      <tr key={i} className={`border-b border-border/50 hover:bg-muted/20 transition-colors ${i % 2 === 0 ? "" : "bg-muted/5"}`}>
+                        <td className="px-4 py-3 font-medium text-foreground max-w-xs"><span className="line-clamp-2">{m.description || "—"}</span></td>
+                        <td className="px-4 py-3 text-right text-muted-foreground">{m.quantity ?? "—"}</td>
+                        <td className="px-4 py-3 text-right text-muted-foreground">₱{(m.cost_per_item || 0).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right font-semibold text-foreground">₱{(m.total || 0).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{m.supplier_name || "—"}</td>
+                        <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{m.project_name || "—"}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden lg:table-cell">{m.po_number || "—"}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell">{m.requested_date || "—"}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell">{m.delivery_date || "—"}</td>
+                        <td className="px-4 py-3 text-right hidden lg:table-cell">
+                          {m.days_to_deliver !== null ? <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${m.days_to_deliver <= 7 ? "bg-primary/10 text-primary" : m.days_to_deliver <= 30 ? "bg-chart-3/10 text-chart-3" : "bg-destructive/10 text-destructive"}`}>{m.days_to_deliver}d</span> : <span className="text-xs text-muted-foreground">—</span>}
+                        </td>
+                        <td className="px-4 py-3"><Badge variant="outline" className={`text-xs ${MAT_STATUS_STYLES[m.approval_status] || MAT_STATUS_STYLES.pending}`}>{m.approval_status || "pending"}</Badge></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot><tr className="bg-muted/30 border-t border-border">
+                    <td className="px-4 py-3 font-semibold text-foreground" colSpan={3}>Total ({filteredMaterials.length} items)</td>
+                    <td className="px-4 py-3 text-right font-bold text-primary">₱{matTotalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td colSpan={7}></td>
+                  </tr></tfoot>
+                </table>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+      </Tabs>
 
       {/* Approved PO Summary Dialog */}
       <Dialog open={showApprovedSummary} onOpenChange={(v) => { setShowApprovedSummary(v); if (!v) { setSummarySearch(""); setExpandedSummaryPO(null); } }}>

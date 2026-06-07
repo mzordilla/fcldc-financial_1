@@ -25,10 +25,8 @@ import ReceiptScanner from './pages/ReceiptScanner';
 import Payees from './pages/Payees';
 import BankReconciliation from './pages/BankReconciliation';
 import BillingCycles from './pages/BillingCycles';
-import ReceivingItems from './pages/ReceivingItems';
 import AuditTrail from './pages/AuditTrail';
 import PPEAssets from './pages/PPEAssets';
-import MaterialsHistory from './pages/MaterialsHistory';
 import CondoUnits from './pages/realestate/CondoUnits';
 import Tenants from './pages/realestate/Tenants';
 import Listings from './pages/realestate/Listings';
@@ -80,10 +78,8 @@ const AuthenticatedApp = () => {
         <Route path="/payees" element={<Payees />} />
         <Route path="/bank-reconciliation" element={<BankReconciliation />} />
         <Route path="/billing-cycles" element={<BillingCycles />} />
-        <Route path="/receiving-items" element={<ReceivingItems />} />
         <Route path="/audit-trail" element={<AuditTrail />} />
         <Route path="/ppe-assets" element={<PPEAssets />} />
-        <Route path="/materials-history" element={<MaterialsHistory />} />
         <Route path="/re/units" element={<CondoUnits />} />
         <Route path="/re/tenants" element={<Tenants />} />
         <Route path="/re/listings" element={<Listings />} />
