@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import ReceivableFormDialog from "../components/receivables/ReceivableFormDialog";
 import MarkReceivableAsCollectedDialog from "../components/receivables/MarkReceivableAsCollectedDialog";
+import BillingCycles from "./BillingCycles";
 
 function getAgingBucket(dueDateStr, status) {
   if (status === "paid") return null;
@@ -134,6 +136,13 @@ export default function Receivables() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+      <Tabs defaultValue="receivables" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="receivables">Receivables</TabsTrigger>
+          <TabsTrigger value="billing-cycles">Billing Cycles</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="receivables" className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Receivables</h1>
@@ -271,6 +280,12 @@ export default function Receivables() {
         receivable={collectingR}
         onConfirm={(data) => markCollected(collectingR, data)}
       />
+        </TabsContent>
+
+        <TabsContent value="billing-cycles">
+          <BillingCycles embedded />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

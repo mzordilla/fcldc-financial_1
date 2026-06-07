@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ScanLine, Users, Receipt, ClipboardList, Boxes, Home, List, PieChart, RefreshCw } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ScanLine, ClipboardList, Boxes, Home } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { navItemsByRole } from "@/lib/access-control";
@@ -7,19 +7,14 @@ import { navItemsByRole } from "@/lib/access-control";
 // Groups define sidebar sections. Items without a group go ungrouped at the top.
 const allNavItems = [
 { label: "Dashboard", icon: LayoutDashboard, path: "/" },
-{ label: "Condo Units", icon: Home, path: "/re/units", group: "Real Estate Portfolio" },
-{ label: "Tenants", icon: Users, path: "/re/tenants", group: "Real Estate Portfolio" },
-{ label: "Listings", icon: List, path: "/re/listings", group: "Real Estate Portfolio" },
-{ label: "Portfolio Reports", icon: PieChart, path: "/re/reports", group: "Real Estate Portfolio" },
+{ label: "Real Estate Portfolio", icon: Home, path: "/re/portfolio" },
 { label: "Projects", icon: Briefcase, path: "/projects" },
-{ label: "Billing Cycles", icon: Receipt, path: "/billing-cycles" },
 { label: "Receivables", icon: FileText, path: "/receivables" },
 { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
 { label: "Payment Approvals", icon: CircleDollarSign, path: "/payment-approvals" },
 { label: "Transactions", icon: ArrowLeftRight, path: "/transactions" },
 { label: "Payables", icon: CreditCard, path: "/payables" },
 { label: "Bank Accounts", icon: Building2, path: "/bank-accounts" },
-{ label: "Bank Reconciliation", icon: RefreshCw, path: "/bank-reconciliation" },
 { label: "Working Capital Loans", icon: Landmark, path: "/working-capital-loans" },
 { label: "PPE Assets", icon: Boxes, path: "/ppe-assets" },
 { label: "Reports", icon: BarChart2, path: "/reports" },
