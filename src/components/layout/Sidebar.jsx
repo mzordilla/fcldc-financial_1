@@ -24,8 +24,8 @@ const allNavItems = [
 { label: "Bank Reconciliation", icon: RefreshCw, path: "/bank-reconciliation" },
 { label: "Working Capital Loans", icon: Landmark, path: "/working-capital-loans" },
 { label: "PPE Assets", icon: Boxes, path: "/ppe-assets" },
-{ label: "Reports", icon: BarChart2, path: "/reports" },
-{ label: "Chart of Accounts", icon: BookOpen, path: "/chart-of-accounts" },
+{ label: "Reports", icon: BarChart2, path: "/reports", group: "Reports" },
+{ label: "Chart of Accounts", icon: BookOpen, path: "/chart-of-accounts", group: "Reports" },
 { label: "Receipt Scanner", icon: ScanLine, path: "/receipt-scanner" },
 { label: "Audit Trail", icon: ClipboardList, path: "/audit-trail" }];
 
