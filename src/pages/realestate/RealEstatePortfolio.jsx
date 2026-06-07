@@ -12,11 +12,19 @@ export default function RealEstatePortfolio() {
         <p className="text-muted-foreground mt-1">Manage condo units, tenants, listings, and reports</p>
       </div>
       <Tabs defaultValue="units" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="units">Condo Units</TabsTrigger>
-          <TabsTrigger value="tenants">Tenants</TabsTrigger>
-          <TabsTrigger value="listings">Listings</TabsTrigger>
-          <TabsTrigger value="reports">Portfolio Reports</TabsTrigger>
+        <TabsList className="mb-4 bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 p-1 rounded-xl">
+          <TabsTrigger value="units" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600 data-[state=active]:text-white transition-all">
+            🏢 Condo Units
+          </TabsTrigger>
+          <TabsTrigger value="tenants" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all">
+            👥 Tenants
+          </TabsTrigger>
+          <TabsTrigger value="listings" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-600 data-[state=active]:text-white transition-all">
+            📋 Listings
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-600 data-[state=active]:text-white transition-all">
+            📊 Portfolio Reports
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="units">
           <CondoUnits embedded />
