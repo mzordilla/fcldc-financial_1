@@ -2,11 +2,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { ArrowLeft, Pencil, Trash2, Receipt } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Receipt, Plus, TrendingUp, TrendingDown, AlertCircle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import AddFormDialog from "../components/shared/AddFormDialog";
+import ChangeOrderFormDialog from "../components/projects/ChangeOrderFormDialog";
 import { useState } from "react";
 
 const contractStatusStyles = {
@@ -63,6 +64,8 @@ export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [editingProject, setEditingProject] = useState(null);
+  const [showAddCO, setShowAddCO] = useState(false);
+  const [editingCO, setEditingCO] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: project, isLoading } = useQuery({
@@ -74,6 +77,27 @@ export default function ProjectDetail() {
     queryKey: ["billing_cycles_project", project?.project_name],
     queryFn: () => base44.entities.BillingCycle.filter({ project_name: project.project_name }, "-period_start", 100),
     enabled: !!project?.project_name,
+  });
+
+  const { data: changeOrders = [] } = useQuery({
+    queryKey: ["change_orders", id],
+    queryFn: () => base44.entities.ChangeOrder.filter({ project_id: id }, "-date_issued", 100),
+    enabled: !!id,
+  });
+
+  const createCOMutation = useMutation({
+    mutationFn: (data) => base44.entities.ChangeOrder.create({ ...data, project_id: id, project_name: project?.project_name }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["change_orders", id] }),
+  });
+
+  const updateCOMutation = useMutation({
+    mutationFn: ({ coId, data }) => base44.entities.ChangeOrder.update(coId, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["change_orders", id] }),
+  });
+
+  const deleteCOMutation = useMutation({
+    mutationFn: (coId) => base44.entities.ChangeOrder.delete(coId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["change_orders", id] }),
   });
 
   const updateMutation = useMutation({
@@ -96,9 +120,24 @@ export default function ProjectDetail() {
   if (!project) return <div className="p-8 text-center text-muted-foreground">Project not found</div>;
 
   const completedPct = project.completed_percentage || 0;
-  const completedAmt = (project.contract_amount || 0) * (completedPct / 100);
-  const remainingAmt = (project.contract_amount || 0) - completedAmt;
+
+  // Change Order consolidation — only approved COs affect the adjusted contract amount
+  const approvedCOs = changeOrders.filter(co => co.status === "approved");
+  const coAdditives = approvedCOs.filter(co => co.co_type === "additive").reduce((s, co) => s + (co.amount || 0), 0);
+  const coDeductives = approvedCOs.filter(co => co.co_type === "deductive").reduce((s, co) => s + (co.amount || 0), 0);
+  const netCOAdjustment = coAdditives - coDeductives;
+  const adjustedContractAmount = (project.contract_amount || 0) + netCOAdjustment;
+
+  const completedAmt = adjustedContractAmount * (completedPct / 100);
+  const remainingAmt = adjustedContractAmount - completedAmt;
   const retentionAmt = completedAmt * ((project.retention_rate || 0) / 100);
+
+  const coStatusStyles = {
+    pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
+    approved: "bg-primary/10 text-primary border-primary/20",
+    rejected: "bg-destructive/10 text-destructive border-destructive/20",
+    cancelled: "bg-muted text-muted-foreground border-border",
+  };
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
@@ -162,9 +201,21 @@ export default function ProjectDetail() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-muted/40 rounded-lg p-3 border border-border">
-              <p className="text-xs text-muted-foreground mb-1">Contract Value</p>
+              <p className="text-xs text-muted-foreground mb-1">Main Contract</p>
               <p className="font-semibold text-foreground">₱{(project.contract_amount || 0).toLocaleString()}</p>
+              {changeOrders.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-0.5">(immutable baseline)</p>
+              )}
             </div>
+            {changeOrders.length > 0 && (
+              <div className={`rounded-lg p-3 border ${netCOAdjustment >= 0 ? "bg-primary/5 border-primary/20" : "bg-destructive/5 border-destructive/20"}`}>
+                <p className="text-xs text-muted-foreground mb-1">Adjusted Contract</p>
+                <p className={`font-semibold ${netCOAdjustment >= 0 ? "text-primary" : "text-destructive"}`}>₱{adjustedContractAmount.toLocaleString()}</p>
+                <p className={`text-xs mt-0.5 ${netCOAdjustment >= 0 ? "text-primary/70" : "text-destructive/70"}`}>
+                  {netCOAdjustment >= 0 ? "+" : ""}₱{netCOAdjustment.toLocaleString()} from {approvedCOs.length} CO{approvedCOs.length !== 1 ? "s" : ""}
+                </p>
+              </div>
+            )}
             <div className="bg-primary/5 rounded-lg p-3 border border-primary/20">
               <p className="text-xs text-muted-foreground mb-1">Completed</p>
               <p className="font-semibold text-primary">₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
@@ -266,6 +317,111 @@ export default function ProjectDetail() {
         )}
       </div>
 
+      {/* Change Orders Section */}
+      <div className="bg-card rounded-2xl border border-border overflow-hidden">
+        <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
+          <FileText className="w-4 h-4 text-primary" />
+          <h2 className="font-semibold text-foreground">Change Orders</h2>
+          <span className="text-xs text-muted-foreground ml-1">({changeOrders.length})</span>
+          <div className="ml-auto flex items-center gap-3">
+            {changeOrders.length > 0 && (
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                {coAdditives > 0 && (
+                  <span className="flex items-center gap-1 text-primary font-medium">
+                    <TrendingUp className="w-3 h-3" /> +₱{coAdditives.toLocaleString()}
+                  </span>
+                )}
+                {coDeductives > 0 && (
+                  <span className="flex items-center gap-1 text-destructive font-medium">
+                    <TrendingDown className="w-3 h-3" /> -₱{coDeductives.toLocaleString()}
+                  </span>
+                )}
+              </div>
+            )}
+            <Button size="sm" onClick={() => setShowAddCO(true)}>
+              <Plus className="w-4 h-4 mr-1" /> Add CO
+            </Button>
+          </div>
+        </div>
+
+        {changeOrders.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            <AlertCircle className="w-6 h-6 mx-auto mb-2 text-muted-foreground/30" />
+            <p>No change orders recorded.</p>
+            <p className="text-xs mt-1">The main contract amount of ₱{(project.contract_amount || 0).toLocaleString()} is the active baseline.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">CO #</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Description</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden sm:table-cell">Date Issued</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Type</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Amount</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Status</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {changeOrders.map((co, i) => (
+                  <tr key={co.id} className={`border-b border-border/50 hover:bg-muted/20 transition-colors ${i % 2 === 0 ? "" : "bg-muted/5"}`}>
+                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{co.co_number || `CO-${String(i + 1).padStart(3, "0")}`}</td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-foreground">{co.description}</p>
+                      {co.scope_change && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{co.scope_change}</p>}
+                      {(co.timeline_impact_days !== 0 && co.timeline_impact_days) && (
+                        <p className="text-xs text-chart-3 mt-0.5">Timeline: {co.timeline_impact_days > 0 ? "+" : ""}{co.timeline_impact_days} day{Math.abs(co.timeline_impact_days) !== 1 ? "s" : ""}</p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground hidden sm:table-cell">
+                      {co.date_issued ? format(new Date(co.date_issued), "MMM d, yyyy") : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={`inline-flex items-center gap-1 text-xs font-medium ${co.co_type === "additive" ? "text-primary" : "text-destructive"}`}>
+                        {co.co_type === "additive" ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                        {co.co_type}
+                      </span>
+                    </td>
+                    <td className={`px-4 py-3 text-right font-semibold ${co.co_type === "additive" ? "text-primary" : "text-destructive"}`}>
+                      {co.co_type === "additive" ? "+" : "-"}₱{(co.amount || 0).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant="outline" className={`text-xs ${coStatusStyles[co.status] || ""}`}>
+                        {co.status || "pending"}
+                      </Badge>
+                      {co.approved_by && <p className="text-xs text-muted-foreground mt-0.5">{co.approved_by}</p>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1 justify-end">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => setEditingCO(co)}>
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteCOMutation.mutate(co.id)}>
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-border bg-muted/20">
+                  <td colSpan={4} className="px-4 py-3 text-sm font-semibold text-foreground">Net CO Adjustment (Approved only)</td>
+                  <td className={`px-4 py-3 text-right font-bold ${netCOAdjustment >= 0 ? "text-primary" : "text-destructive"}`}>
+                    {netCOAdjustment >= 0 ? "+" : ""}₱{netCOAdjustment.toLocaleString()}
+                  </td>
+                  <td colSpan={2} className="px-4 py-3 text-right text-xs text-muted-foreground">
+                    Adjusted: ₱{adjustedContractAmount.toLocaleString()}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+      </div>
+
       <AddFormDialog
         open={!!editingProject}
         onOpenChange={(open) => {if (!open) setEditingProject(null);}}
@@ -273,6 +429,20 @@ export default function ProjectDetail() {
         fields={fields}
         initialData={editingProject || {}}
         onSubmit={(data) => updateMutation.mutateAsync({ id: editingProject.id, data })}
+      />
+
+      <ChangeOrderFormDialog
+        open={showAddCO}
+        onOpenChange={setShowAddCO}
+        title="New Change Order"
+        onSubmit={(data) => createCOMutation.mutateAsync(data)}
+      />
+      <ChangeOrderFormDialog
+        open={!!editingCO}
+        onOpenChange={(v) => { if (!v) setEditingCO(null); }}
+        title="Edit Change Order"
+        initialData={editingCO || {}}
+        onSubmit={(data) => updateCOMutation.mutateAsync({ coId: editingCO.id, data })}
       />
     </div>
   );

@@ -1,0 +1,78 @@
+{
+  "name": "ChangeOrder",
+  "type": "object",
+  "properties": {
+    "co_number": {
+      "type": "string",
+      "description": "Change Order reference number (e.g. CO-001)"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Linked Project ID"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Project name (denormalized)"
+    },
+    "co_type": {
+      "type": "string",
+      "enum": [
+        "additive",
+        "deductive"
+      ],
+      "description": "Whether this CO increases or decreases the contract amount"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Change Order amount (always positive; co_type determines direction)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Scope of change / reason for the Change Order"
+    },
+    "scope_change": {
+      "type": "string",
+      "description": "Detailed description of what scope is being changed"
+    },
+    "date_issued": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the CO was issued"
+    },
+    "date_approved": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the CO was approved"
+    },
+    "timeline_impact_days": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of days added to or removed from project timeline (positive = extension)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "cancelled"
+      ],
+      "default": "pending",
+      "description": "Approval status of the Change Order"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Name of the person who approved the CO"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes or remarks"
+    }
+  },
+  "required": [
+    "project_id",
+    "co_type",
+    "amount",
+    "description"
+  ]
+}
