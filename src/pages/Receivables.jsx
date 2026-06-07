@@ -24,68 +24,7 @@ function getAgingBucket(dueDateStr, status) {
   return { label: "90+ days", style: "bg-destructive/20 text-destructive font-semibold" };
 }
 
-function MonthlyTotals({ items }) {
-  const monthMap = {};
-  items.forEach(r => {
-    const key = r.due_date ? format(new Date(r.due_date), "MMM yyyy") : "No Date";
-    const sortKey = r.due_date ? r.due_date.substring(0, 7) : "0000-00";
-    if (!monthMap[key]) monthMap[key] = { label: key, sortKey, billed: 0, collected: 0 };
-    monthMap[key].billed += r.amount || 0;
-    monthMap[key].collected += r.amount_paid || 0;
-  });
 
-  const months = Object.values(monthMap).sort((a, b) => b.sortKey.localeCompare(a.sortKey)).slice(0, 6);
-
-  if (months.length === 0) return null;
-
-  return (
-    <div className="bg-card rounded-2xl border border-border p-5">
-      <h3 className="text-sm font-semibold text-foreground mb-4">Monthly Collection Efficiency</h3>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-xs text-muted-foreground border-b border-border">
-              <th className="text-left pb-2 font-medium">Month</th>
-              <th className="text-right pb-2 font-medium">Billed</th>
-              <th className="text-right pb-2 font-medium">Collected</th>
-              <th className="text-right pb-2 font-medium">Outstanding</th>
-              <th className="text-right pb-2 font-medium">Efficiency</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {months.map(m => {
-              const outstanding = m.billed - m.collected;
-              const efficiency = m.billed > 0 ? ((m.collected / m.billed) * 100) : 0;
-              return (
-                <tr key={m.label} className="hover:bg-muted/40 transition-colors">
-                  <td className="py-2 font-medium text-foreground">{m.label}</td>
-                  <td className="py-2 text-right text-foreground">₱{m.billed.toLocaleString()}</td>
-                  <td className="py-2 text-right text-primary">₱{m.collected.toLocaleString()}</td>
-                  <td className={`py-2 text-right font-semibold ${outstanding > 0 ? "text-destructive" : "text-primary"}`}>
-                    ₱{outstanding.toLocaleString()}
-                  </td>
-                  <td className="py-2 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full ${efficiency >= 80 ? "bg-primary" : efficiency >= 50 ? "bg-chart-3" : "bg-destructive"}`}
-                          style={{ width: `${efficiency}%` }}
-                        />
-                      </div>
-                      <span className={`text-xs font-bold ${efficiency >= 80 ? "text-primary" : efficiency >= 50 ? "text-chart-3" : "text-destructive"}`}>
-                        {efficiency.toFixed(1)}%
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
 
 function AgingSummary({ items }) {
   const today = new Date();
@@ -234,8 +173,6 @@ export default function Receivables() {
       </div>
 
       <AgingSummary items={receivables} />
-
-      <MonthlyTotals items={receivables} />
 
       <div className="grid gap-4">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}

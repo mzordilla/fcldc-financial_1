@@ -11,6 +11,7 @@ import BankTransactionsReport from "../components/reports/BankTransactionsReport
 import IncomeTrendChart from "../components/reports/IncomeTrendChart";
 import BalanceSheetReport from "../components/reports/BalanceSheetReport";
 import IncomeStatementReport from "../components/reports/IncomeStatementReport";
+import EfficiencyReport from "../components/reports/EfficiencyReport";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import { Badge } from "@/components/ui/badge";
@@ -505,6 +506,7 @@ export default function Reports() {
       {/* Tabs */}
       <div className="flex gap-1 border-b border-border">
         {[
+          { key: "efficiency", label: "Efficiency Dashboard" },
           { key: "trend", label: "Trend Analysis" },
           { key: "pnl", label: "P&L / Cash Flow" },
           { key: "wc_loans", label: "Working Capital Loans" },
@@ -526,6 +528,10 @@ export default function Reports() {
           </button>
         ))}
       </div>
+
+      {activeTab === "efficiency" && (
+        <EfficiencyReport dateFrom={dateFrom} dateTo={dateTo} />
+      )}
 
       {activeTab === "trend" && (
         <IncomeTrendChart transactions={filteredTransactions} dateFrom={dateFrom} dateTo={dateTo} />

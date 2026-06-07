@@ -157,31 +157,7 @@ export default function PurchaseOrders() {
     return acc;
   }, {});
 
-  // Monthly delivery efficiency calculation
-  const monthlyDeliveryData = approved.filter(po => po.requested_date && po.delivery_date).reduce((acc, po) => {
-    const monthKey = po.delivery_date.substring(0, 7);
-    if (!acc[monthKey]) acc[monthKey] = { total: 0, onTime: 0, delayed: 0 };
-    acc[monthKey].total += 1;
-    const requested = new Date(po.requested_date);
-    const delivered = new Date(po.delivery_date);
-    if (delivered <= requested) {
-      acc[monthKey].onTime += 1;
-    } else {
-      acc[monthKey].delayed += 1;
-    }
-    return acc;
-  }, {});
 
-  const monthlyDeliveryEfficiency = Object.entries(monthlyDeliveryData)
-    .map(([month, data]) => ({
-      month,
-      total: data.total,
-      onTime: data.onTime,
-      delayed: data.delayed,
-      efficiency: data.total > 0 ? ((data.onTime / data.total) * 100) : 0,
-    }))
-    .sort((a, b) => b.month.localeCompare(a.month))
-    .slice(0, 6);
 
   const toggleSelect = (id) => {
     setSelectedIds(prev => {
@@ -316,49 +292,6 @@ export default function PurchaseOrders() {
         </TabsList>
 
         <TabsContent value="orders" className="space-y-6">
-
-      {/* Monthly Delivery Efficiency */}
-      {monthlyDeliveryEfficiency.length > 0 && (
-        <div className="bg-card rounded-2xl border border-border p-5">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Monthly Delivery Efficiency</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-xs text-muted-foreground border-b border-border">
-                  <th className="text-left pb-2 font-medium">Month</th>
-                  <th className="text-center pb-2 font-medium">Total POs</th>
-                  <th className="text-center pb-2 font-medium">On Time</th>
-                  <th className="text-center pb-2 font-medium">Delayed</th>
-                  <th className="text-right pb-2 font-medium">Efficiency</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {monthlyDeliveryEfficiency.map(m => (
-                  <tr key={m.month} className="hover:bg-muted/40 transition-colors">
-                    <td className="py-2 font-medium text-foreground">{format(new Date(m.month + "-01"), "MMM yyyy")}</td>
-                    <td className="py-2 text-center text-foreground">{m.total}</td>
-                    <td className="py-2 text-center text-primary">{m.onTime}</td>
-                    <td className="py-2 text-center text-destructive">{m.delayed}</td>
-                    <td className="py-2 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full ${m.efficiency >= 80 ? "bg-primary" : m.efficiency >= 50 ? "bg-chart-3" : "bg-destructive"}`}
-                            style={{ width: `${m.efficiency}%` }}
-                          />
-                        </div>
-                        <span className={`text-xs font-bold ${m.efficiency >= 80 ? "text-primary" : m.efficiency >= 50 ? "text-chart-3" : "text-destructive"}`}>
-                          {m.efficiency.toFixed(1)}%
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
       {/* Approved PO Summary */}
       {approved.length > 0 && (

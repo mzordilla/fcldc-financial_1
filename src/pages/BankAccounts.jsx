@@ -142,29 +142,6 @@ export default function BankAccounts() {
   const positiveCount = activeAccounts.filter((a) => (a.current_balance ?? 0) >= 0).length;
   const negativeCount = activeAccounts.filter((a) => (a.current_balance ?? 0) < 0).length;
 
-  // Banking efficiency metrics - monthly transaction velocity and utilization
-  const monthlyBankData = transactions.reduce((acc, t) => {
-    const monthKey = t.date ? t.date.substring(0, 7) : null;
-    if (!monthKey) return acc;
-    if (!acc[monthKey]) acc[monthKey] = { income: 0, expense: 0, count: 0 };
-    acc[monthKey].count += 1;
-    if (t.type === "income") acc[monthKey].income += t.amount || 0;
-    else acc[monthKey].expense += t.amount || 0;
-    return acc;
-  }, {});
-
-  const monthlyBankingEfficiency = Object.entries(monthlyBankData)
-    .map(([month, data]) => ({
-      month,
-      income: data.income,
-      expense: data.expense,
-      count: data.count,
-      netFlow: data.income - data.expense,
-      efficiency: data.income > 0 ? ((data.income - data.expense) / data.income) * 100 : 0,
-    }))
-    .sort((a, b) => b.month.localeCompare(a.month))
-    .slice(0, 6);
-
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
@@ -201,52 +178,6 @@ export default function BankAccounts() {
       {activeTab === "reconciliation" && <BankReconciliationPage />}
 
       {activeTab === "accounts" && <>
-      {/* Monthly Banking Efficiency */}
-      {monthlyBankingEfficiency.length > 0 && (
-        <div className="bg-card rounded-2xl border border-border p-5">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Monthly Banking Efficiency</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-xs text-muted-foreground border-b border-border">
-                  <th className="text-left pb-2 font-medium">Month</th>
-                  <th className="text-right pb-2 font-medium">Transactions</th>
-                  <th className="text-right pb-2 font-medium">Inflow</th>
-                  <th className="text-right pb-2 font-medium">Outflow</th>
-                  <th className="text-right pb-2 font-medium">Net Flow</th>
-                  <th className="text-right pb-2 font-medium">Efficiency</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {monthlyBankingEfficiency.map(m => (
-                  <tr key={m.month} className="hover:bg-muted/40 transition-colors">
-                    <td className="py-2 font-medium text-foreground">{format(new Date(m.month + "-01"), "MMM yyyy")}</td>
-                    <td className="py-2 text-center text-foreground">{m.count}</td>
-                    <td className="py-2 text-right text-primary">₱{m.income.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    <td className="py-2 text-right text-destructive">₱{m.expense.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    <td className={`py-2 text-right font-semibold ${m.netFlow >= 0 ? "text-primary" : "text-destructive"}`}>
-                      {m.netFlow >= 0 ? "+" : ""}₱{m.netFlow.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="py-2 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full ${m.efficiency >= 50 ? "bg-primary" : m.efficiency >= 0 ? "bg-chart-3" : "bg-destructive"}`}
-                            style={{ width: `${m.efficiency >= 0 ? Math.min(m.efficiency, 100) : 0}%` }}
-                          />
-                        </div>
-                        <span className={`text-xs font-bold ${m.efficiency >= 50 ? "text-primary" : m.efficiency >= 0 ? "text-chart-3" : "text-destructive"}`}>
-                          {m.efficiency.toFixed(1)}%
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
