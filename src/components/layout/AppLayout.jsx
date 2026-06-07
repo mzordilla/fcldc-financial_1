@@ -21,11 +21,11 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="hidden md:block">
+    <div className="h-screen overflow-hidden flex bg-background">
+      <div className="hidden md:block flex-shrink-0">
         <Sidebar />
       </div>
-      <main className="md:ml-64 md:pb-0 pb-20">
+      <main className="flex-1 overflow-y-auto overflow-x-auto pb-20 md:pb-0 min-w-0">
         {allowed ? <Outlet /> : <AccessDenied />}
       </main>
       <MobileNav />
