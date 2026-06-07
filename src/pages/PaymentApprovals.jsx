@@ -14,6 +14,7 @@ import BulkPaymentRequestDialog from "../components/payment/BulkPaymentRequestDi
 import MarkPaidDialog from "../components/payment/MarkPaidDialog";
 import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
 import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
+import GroupedPaymentRequests from "../components/payment/GroupedPaymentRequests";
 
 const statusStyles = {
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
@@ -53,6 +54,7 @@ export default function PaymentApprovals() {
   const [markingPaidPR, setMarkingPaidPR] = useState(null);
   const [expandedHistory, setExpandedHistory] = useState(null);
   const [expandedSuppliers, setExpandedSuppliers] = useState(new Set());
+  const [expandedGroups, setExpandedGroups] = useState({ pending: true, approved: true, rejected: false, paid: false });
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkApproving, setBulkApproving] = useState(false);
@@ -218,6 +220,10 @@ export default function PaymentApprovals() {
   const pendingInView = filtered.filter(r => r.approval_status === "pending");
   const allPendingSelected = pendingInView.length > 0 && pendingInView.every(r => selectedIds.has(r.id));
 
+  const toggleGroup = (status) => {
+    setExpandedGroups(prev => ({ ...prev, [status]: !prev[status] }));
+  };
+
   const toggleSelect = (id) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -261,7 +267,91 @@ export default function PaymentApprovals() {
     setBulkApproving(false);
   };
 
+  const renderPRRow = (pr) => {
+    const StatusIcon = statusIcons[pr.approval_status] || Clock;
+    const isOverdue = pr.due_date && new Date(pr.due_date) < new Date() && pr.approval_status !== "paid";
+    const isExpanded = expandedHistory === pr.id;
+    return (
+      <>
+        <tr
+          key={pr.id}
+          className={`hover:bg-muted/30 transition-colors cursor-pointer ${selectedIds.has(pr.id) ? "bg-primary/5" : ""} ${isOverdue ? "border-l-2 border-l-destructive" : ""}`}
+          onClick={() => setExpandedHistory(isExpanded ? null : pr.id)}
+        >
+          {isAdmin && (
+            <td className="px-2 py-2" onClick={e => e.stopPropagation()}>
+              {pr.approval_status === "pending" && (
+                <Checkbox checked={selectedIds.has(pr.id)} onCheckedChange={() => toggleSelect(pr.id)} />
+              )}
+            </td>
+          )}
+          <td className="px-3 py-2 font-mono text-xs text-muted-foreground whitespace-nowrap">{pr.request_number || "—"}</td>
+          <td className="px-3 py-2 font-medium text-foreground whitespace-nowrap">{pr.payee}</td>
+          <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">{pr.invoice_number || "—"}</td>
+          <td className="px-3 py-2 text-xs whitespace-nowrap">
+            {pr.due_date ? <span className={isOverdue ? "text-destructive font-medium" : "text-muted-foreground"}>{format(new Date(pr.due_date), "MMM d, yyyy")}</span> : "—"}
+          </td>
+          <td className="px-3 py-2 text-right font-bold text-foreground whitespace-nowrap">
+            ₱{(pr.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          </td>
+          <td className="px-2 py-2" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-end gap-1">
+              {isAdmin && pr.approval_status === "pending" && (
+                <Button size="sm" variant="outline" onClick={() => setReviewPR(pr)}>Review</Button>
+              )}
+              {isAdmin && pr.approval_status === "approved" && (
+                <Button size="sm" onClick={() => setReviewPR(pr)}>
+                  <Banknote className="w-3.5 h-3.5 mr-1" /> Disburse
+                </Button>
+              )}
+              <Button variant="ghost" size="icon" onClick={() => setReviewPR(pr)} title="History" className="text-muted-foreground hover:text-foreground">
+                <History className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setEditingPR(pr)} title="Edit" className="text-muted-foreground hover:text-foreground">
+                <Pencil className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(pr.id)} title="Delete" className="text-muted-foreground hover:text-destructive">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+              {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </div>
+          </td>
+        </tr>
+        {isExpanded && (
+          <tr key={`${pr.id}-expanded`} className="bg-muted/20">
+            <td colSpan={10} className="px-6 py-4">
+              <div className="space-y-3">
+                <div>
+                  <span className="text-xs font-semibold text-muted-foreground uppercase">Description:</span>
+                  <p className="text-sm text-foreground mt-1">{pr.description}</p>
+                </div>
+                <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+                  {pr.project_allocations?.length > 0 && (
+                    <span>Projects: <span className="text-foreground">{pr.project_allocations.map(a => a.project_name).join(", ")}</span></span>
+                  )}
+                  {pr.category && <span>Category: <span className="text-foreground">{categoryLabels[pr.category] || pr.category}</span></span>}
+                  {pr.payment_method && <span>Payment: <span className="text-foreground">{pr.payment_method.replace(/_/g, " ")}</span></span>}
+                  {pr.requested_by && <span>Requested by: <span className="text-foreground">{pr.requested_by}</span></span>}
+                  {pr.supporting_docs && <span>Docs: <a href={pr.supporting_docs} target="_blank" rel="noopener noreferrer" className="text-primary underline">View</a></span>}
+                </div>
+                {pr.approval_notes && (
+                  <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-2">{pr.approval_notes}</p>
+                )}
+                {pr.approval_history?.length > 0 && (
+                  <div className="p-3 bg-muted/30 rounded-xl border border-border">
+                    <ApprovalHistoryLog history={pr.approval_history} />
+                  </div>
+                )}
+              </div>
+            </td>
+          </tr>
+        )}
+      </>
+    );
+  };
+
   return (
+
     <div className="p-4 md:p-8 w-full mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -392,190 +482,22 @@ export default function PaymentApprovals() {
         </div>
       )}
 
-      {/* Payment Requests Table */}
-      <div className="rounded-2xl border border-border overflow-hidden bg-card">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/60 border-b border-border">
-            <tr>
-              {isAdmin && <th className="px-3 py-3 w-8"></th>}
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">PR #</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Payee</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Description</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Project(s)</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Category</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Invoice #</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Payment</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Requested By</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Due Date</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">W/Tax</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">VAT</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {isLoading && (
-              <tr><td colSpan={15} className="text-center py-12 text-muted-foreground">Loading...</td></tr>
-            )}
-            {!isLoading && filtered.length === 0 && (
-              <tr><td colSpan={15} className="text-center py-12 text-muted-foreground">No payment requests found</td></tr>
-            )}
-            {filtered.map((pr) => {
-              const StatusIcon = statusIcons[pr.approval_status] || Clock;
-              const isOverdue = pr.due_date && new Date(pr.due_date) < new Date() && pr.approval_status !== "paid";
-              const isExpanded = expandedHistory === pr.id;
-              return (
-                <>
-                  <tr
-                    key={pr.id}
-                    className={`hover:bg-muted/30 transition-colors cursor-pointer ${selectedIds.has(pr.id) ? "bg-primary/5" : ""} ${isOverdue ? "border-l-2 border-l-destructive" : ""}`}
-                    onClick={() => setExpandedHistory(isExpanded ? null : pr.id)}
-                  >
-                    {isAdmin && (
-                      <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
-                        {pr.approval_status === "pending" && (
-                          <Checkbox checked={selectedIds.has(pr.id)} onCheckedChange={() => toggleSelect(pr.id)} />
-                        )}
-                      </td>
-                    )}
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{pr.request_number || "—"}</td>
-                    <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{pr.payee}</td>
-                    <td className="px-4 py-3 text-xs text-foreground max-w-[180px] truncate">{pr.description}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {pr.project_allocations?.length > 0
-                        ? pr.project_allocations.map((a, i) => (
-                            <span key={i} className="inline-block bg-muted rounded-full px-2 py-0.5 mr-1 mb-0.5">{a.project_name}</span>
-                          ))
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                      {pr.project_allocations?.length > 0
-                        ? [...new Set(pr.project_allocations.map(a => a.category).filter(Boolean))].map((cat, i) => (
-                            <span key={i} className="inline-block">{categoryLabels[cat] || cat}</span>
-                          ))
-                        : (pr.category ? categoryLabels[pr.category] || pr.category : "—")}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{pr.invoice_number || "—"}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap capitalize">{pr.payment_method ? pr.payment_method.replace(/_/g, " ") : "—"}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{pr.requested_by || "—"}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <Badge variant="outline" className={`text-xs ${statusStyles[pr.approval_status] || ""}`}>
-                          <StatusIcon className="w-3 h-3 mr-1" />
-                          {(pr.approval_status || "pending").replace(/_/g, " ")}
-                        </Badge>
-                        {isOverdue && <Badge className="text-xs bg-destructive/10 text-destructive border-destructive/20">Overdue</Badge>}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-xs whitespace-nowrap">
-                      {pr.due_date ? <span className={isOverdue ? "text-destructive font-medium" : "text-muted-foreground"}>{format(new Date(pr.due_date), "MMM d, yyyy")}</span> : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right text-xs text-muted-foreground whitespace-nowrap">
-                      {pr.withholding_tax_percentage > 0 ? `-₱${(pr.withholding_tax_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right text-xs text-muted-foreground whitespace-nowrap">
-                      {pr.vat_percentage > 0 ? `+₱${(pr.vat_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold text-foreground whitespace-nowrap">
-                      ₱{(pr.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1">
-                        {isAdmin && pr.approval_status === "pending" && (
-                          <Button size="sm" variant="outline" onClick={() => setReviewPR(pr)}>Review</Button>
-                        )}
-                        {isAdmin && pr.approval_status === "approved" && (
-                          <Button size="sm" onClick={() => setReviewPR(pr)}>
-                            <Banknote className="w-3.5 h-3.5 mr-1" /> Disburse
-                          </Button>
-                        )}
-                        <Button variant="ghost" size="icon" onClick={() => setReviewPR(pr)} title="History" className="text-muted-foreground hover:text-foreground">
-                          <History className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setEditingPR(pr)} className="text-muted-foreground hover:text-foreground">
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(pr.id)} className="text-muted-foreground hover:text-destructive">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                        {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-                      </div>
-                    </td>
-                  </tr>
-                  {isExpanded && (
-                    <tr key={`${pr.id}-expanded`} className="bg-muted/20">
-                      <td colSpan={isAdmin ? 15 : 14} className="px-6 py-4">
-                        <div className="space-y-3">
-                          <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-                            {pr.invoice_number && <span>Invoice: <span className="text-foreground font-medium">{pr.invoice_number}</span></span>}
-                            {pr.payment_method && <span>Payment: <span className="text-foreground font-medium">{pr.payment_method.replace(/_/g, " ")}</span></span>}
-                            {pr.requested_by && <span>Requested by: <span className="text-foreground font-medium">{pr.requested_by}</span></span>}
-                            {pr.approved_by && <span>Approved by: <span className="text-foreground font-medium">{pr.approved_by}</span></span>}
-                            {pr.supporting_docs && <span>Docs: <span className="text-foreground">{pr.supporting_docs}</span></span>}
-                          </div>
-                          {pr.project_allocations?.length > 0 && (
-                            <div className="border border-border rounded-lg overflow-hidden">
-                              <table className="w-full text-xs">
-                                <thead>
-                                  <tr className="bg-muted/50 border-b border-border">
-                                    <th className="px-3 py-2 text-left font-semibold">Project</th>
-                                    <th className="px-3 py-2 text-left font-semibold">Category</th>
-                                    <th className="px-3 py-2 text-right font-semibold">Amount</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {pr.project_allocations.map((a, i) => (
-                                    <tr key={i} className="border-b border-border/50 last:border-0">
-                                      <td className="px-3 py-2">{a.project_name}</td>
-                                      <td className="px-3 py-2 text-muted-foreground">{a.category ? (categoryLabels[a.category] || a.category) : "—"}</td>
-                                      <td className="px-3 py-2 text-right font-semibold">₱{(a.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
-                          {(pr.withholding_tax_percentage > 0 || pr.vat_percentage > 0) && (
-                            <div className="text-xs space-y-1 bg-muted/40 rounded-lg px-3 py-2">
-                              {pr.withholding_tax_percentage > 0 && (
-                                <div className="flex justify-between"><span>Withholding Tax ({pr.withholding_tax_percentage}%):</span><span className="font-medium text-destructive">-₱{(pr.withholding_tax_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
-                              )}
-                              {pr.vat_percentage > 0 && (
-                                <div className="flex justify-between"><span>VAT ({pr.vat_percentage}%):</span><span className="font-medium text-chart-2">+₱{(pr.vat_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
-                              )}
-                            </div>
-                          )}
-                          {pr.approval_notes && (
-                            <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-2">{pr.approval_notes}</p>
-                          )}
-                          {pr.approval_status === "paid" && (pr.check_number || pr.check_date || pr.check_attachment) && (
-                            <div className="flex flex-wrap items-center gap-3 bg-chart-2/5 border border-chart-2/20 rounded-lg px-3 py-2">
-                              <Banknote className="w-3.5 h-3.5 text-chart-2 flex-shrink-0" />
-                              {pr.check_number && <span className="text-xs font-medium text-chart-2">Check #{pr.check_number}</span>}
-                              {pr.check_date && <span className="text-xs text-muted-foreground">{format(new Date(pr.check_date), "MMM d, yyyy")}</span>}
-                              {pr.check_attachment && (
-                                <a href={pr.check_attachment} target="_blank" rel="noopener noreferrer" className="text-xs flex items-center gap-1 text-primary hover:underline">
-                                  <Paperclip className="w-3 h-3" /> View Attachment
-                                </a>
-                              )}
-                            </div>
-                          )}
-                          {pr.approval_history?.length > 0 && (
-                            <div className="p-3 bg-muted/30 rounded-xl border border-border">
-                              <ApprovalHistoryLog history={pr.approval_history} />
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      {/* Grouped Payment Requests Table */}
+      {isLoading ? (
+        <div className="text-center py-12 text-muted-foreground">Loading...</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">No payment requests found</div>
+      ) : (
+        <GroupedPaymentRequests
+          requests={filtered}
+          expandedGroups={expandedGroups}
+          toggleGroup={toggleGroup}
+          renderPRRow={renderPRRow}
+          isAdmin={isAdmin}
+          selectedIds={selectedIds}
+          toggleSelect={toggleSelect}
+        />
+      )}
 
       <BillsPaymentSheet open={showBillsPayment} onOpenChange={setShowBillsPayment} />
       <BulkPaymentRequestDialog open={showBulk} onOpenChange={setShowBulk} onSubmit={bulkCreateRequests} />
