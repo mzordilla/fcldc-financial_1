@@ -19,6 +19,7 @@ import PurchaseOrderPDF from "../components/purchase-orders/PurchaseOrderPDF";
 import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
 import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
 import ReceiveItemsDialog from "../components/purchase-orders/ReceiveItemsDialog";
+import GroupedPurchaseOrders from "../components/purchase-orders/GroupedPurchaseOrders";
 
 const statusStyles = {
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
@@ -55,6 +56,7 @@ export default function PurchaseOrders() {
   const [uploadingReceipt, setUploadingReceipt] = useState(null);
   const [receivingItems, setReceivingItems] = useState(null);
   const [expandedHistory, setExpandedHistory] = useState(null);
+  const [expandedGroups, setExpandedGroups] = useState({ pending: true, approved: true, rejected: false, cancelled: false });
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isAdmin, setIsAdmin] = useState(false);
@@ -63,6 +65,159 @@ export default function PurchaseOrders() {
   useEffect(() => {
     base44.auth.me().then(u => setIsAdmin(u?.role === "admin")).catch(() => {});
   }, []);
+
+  const toggleGroup = (status) => {
+    setExpandedGroups(prev => ({ ...prev, [status]: !prev[status] }));
+  };
+
+  const renderPORow = (po) => {
+    const StatusIcon = statusIcons[po.approval_status] || Clock;
+    const isExpanded = expandedHistory === po.id;
+    const hasLineItems = po.line_items && po.line_items.length > 0;
+    return (
+      <>
+        <tr
+          key={po.id}
+          className={`hover:bg-muted/30 transition-colors cursor-pointer ${selectedIds.has(po.id) ? "bg-primary/5" : ""}`}
+          onClick={() => setExpandedHistory(isExpanded ? null : po.id)}
+        >
+          {isAdmin && (
+            <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
+              {po.approval_status === "pending" && (
+                <Checkbox
+                  checked={selectedIds.has(po.id)}
+                  onCheckedChange={() => toggleSelect(po.id)}
+                />
+              )}
+            </td>
+          )}
+          <td className="px-4 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{po.po_number || "—"}</td>
+          <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{po.supplier_name}</td>
+          <td className="px-2 py-3 text-xs text-muted-foreground whitespace-nowrap">{po.project_name || "—"}</td>
+          <td className="px-4 py-3">
+            {po.category && <Badge variant="secondary" className="text-xs capitalize">{po.category.replace(/_/g, " ")}</Badge>}
+          </td>
+          <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+            {po.requested_date ? format(new Date(po.requested_date), "MMM d, yyyy") : "—"}
+          </td>
+          <td className="px-4 py-3 text-right font-bold text-foreground whitespace-nowrap">
+            ₱{(po.amount || (po.line_items || []).reduce((s, i) => s + (i.total || (i.quantity * i.cost_per_item) || 0), 0)).toLocaleString()}
+          </td>
+          <td className="px-2 py-3" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-end gap-1">
+              {isAdmin && po.approval_status === "pending" && (
+                <Button size="sm" variant="outline" onClick={() => setReviewPO(po)}>Review</Button>
+              )}
+              {po.approval_status === "approved" && !po.receipt_url && (
+                <Button size="sm" variant="outline" onClick={() => setUploadingReceipt(po)} className="text-primary hover:text-primary">
+                  <Package className="w-3.5 h-3.5 mr-1" /> Receipt
+                </Button>
+              )}
+              {po.approval_status === "approved" && (
+                <Button size="sm" variant="outline" onClick={() => setReceivingItems(po)} className="text-primary hover:text-primary">
+                  <Package className="w-3.5 h-3.5 mr-1" /> Receive
+                </Button>
+              )}
+              {po.approval_status === "approved" && <NoticeOfDeliveryPDF po={po} />}
+              {po.approval_status === "approved" && (
+                <div title={
+                  !po.receipt_url ? "Upload a receipt before converting to payable" :
+                  poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number) ? "Already paid" : ""
+                }>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => setConvertingPO(po)} 
+                    disabled={!po.receipt_url || poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number)} 
+                    className="text-primary hover:text-primary disabled:opacity-50"
+                  >
+                    <CreditCard className="w-3.5 h-3.5 mr-1" /> Payable
+                  </Button>
+                </div>
+              )}
+              <PurchaseOrderPDF po={po} />
+              <Button variant="ghost" size="icon" onClick={() => window.print()} title="Print" className="text-muted-foreground hover:text-foreground">
+                <Printer className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setReviewPO(po)} className="text-muted-foreground hover:text-foreground">
+                <History className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setEditingPO(po)} className="text-muted-foreground hover:text-foreground">
+                <Pencil className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(po.id)} className="text-muted-foreground hover:text-destructive">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+              {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </div>
+          </td>
+        </tr>
+        {isExpanded && (
+          <tr key={`${po.id}-expanded`} className="bg-muted/20">
+            <td colSpan={10} className="px-6 py-4">
+              <div className="space-y-3">
+                <div>
+                  <span className="text-xs font-semibold text-muted-foreground uppercase">Description:</span>
+                  <p className="text-sm text-foreground mt-1">{po.description}</p>
+                </div>
+                <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+                  {po.requested_by && <span>Requested by: <span className="text-foreground font-medium">{po.requested_by}</span></span>}
+                  {po.required_date && <span>Required by: <span className="text-foreground font-medium">{format(new Date(po.required_date), "MMM d, yyyy")}</span></span>}
+                  {po.approved_by && <span>Reviewed by: <span className="text-foreground font-medium">{po.approved_by}</span></span>}
+                  {po.priority && po.priority !== "normal" && (
+                    <Badge className={`text-xs ${priorityStyles[po.priority]}`}>{po.priority}</Badge>
+                  )}
+                  {po.receipt_url && (
+                    <span className="text-primary flex items-center gap-1">
+                      <Package className="w-3 h-3" />
+                      Delivered {po.delivery_date ? format(new Date(po.delivery_date), "MMM d, yyyy") : ""}
+                      <a href={po.receipt_url} target="_blank" rel="noopener noreferrer" className="underline ml-1">View receipt</a>
+                    </span>
+                  )}
+                </div>
+                {po.approval_notes && (
+                  <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-2">{po.approval_notes}</p>
+                )}
+                {po.delivery_notes && (
+                  <p className="text-xs text-muted-foreground italic">{po.delivery_notes}</p>
+                )}
+                {hasLineItems && (
+                  <div className="border border-border rounded-lg overflow-hidden">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="bg-muted/50 border-b border-border">
+                          <th className="px-3 py-2 text-left font-semibold">Item</th>
+                          <th className="px-3 py-2 text-right font-semibold">Qty</th>
+                          <th className="px-3 py-2 text-right font-semibold">Cost/Item</th>
+                          <th className="px-3 py-2 text-right font-semibold">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {po.line_items.map((item, idx) => (
+                          <tr key={idx} className="border-b border-border/50 last:border-0">
+                            <td className="px-3 py-2">{item.description}</td>
+                            <td className="px-3 py-2 text-right">{item.quantity}</td>
+                            <td className="px-3 py-2 text-right">₱{(item.cost_per_item || 0).toLocaleString()}</td>
+                            <td className="px-3 py-2 text-right font-semibold">₱{(item.total || 0).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                {po.items && !hasLineItems && <p className="text-xs text-muted-foreground">Items: {po.items}</p>}
+                {po.approval_history?.length > 0 && (
+                  <div className="p-3 bg-muted/30 rounded-xl border border-border">
+                    <ApprovalHistoryLog history={po.approval_history} />
+                  </div>
+                )}
+              </div>
+            </td>
+          </tr>
+        )}
+      </>
+    );
+  };
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["purchase_orders"],
@@ -345,205 +500,19 @@ export default function PurchaseOrders() {
         </div>
       )}
 
-      {/* PO Table */}
-      <div className="rounded-2xl border border-border overflow-hidden bg-card">
-        <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/60 border-b border-border">
-            <tr>
-              {isAdmin && <th className="px-3 py-3 w-8"></th>}
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">PO #</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Supplier</th>
-              <th className="px-2 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Project</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Category</th>
-              <th className="px-2 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
-              <th className="px-2 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {isLoading && (
-              <tr><td colSpan={10} className="text-center py-12 text-muted-foreground">Loading...</td></tr>
-            )}
-            {!isLoading && filtered.length === 0 && (
-              <tr><td colSpan={10} className="text-center py-12 text-muted-foreground">No purchase orders found</td></tr>
-            )}
-            {filtered.map((po) => {
-              const StatusIcon = statusIcons[po.approval_status] || Clock;
-              const isExpanded = expandedHistory === po.id;
-              const hasLineItems = po.line_items && po.line_items.length > 0;
-              return (
-                <>
-                  <tr
-                    key={po.id}
-                    className={`hover:bg-muted/30 transition-colors cursor-pointer ${selectedIds.has(po.id) ? "bg-primary/5" : ""}`}
-                    onClick={() => setExpandedHistory(isExpanded ? null : po.id)}
-                  >
-                    {isAdmin && (
-                      <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
-                        {po.approval_status === "pending" && (
-                          <Checkbox
-                            checked={selectedIds.has(po.id)}
-                            onCheckedChange={() => toggleSelect(po.id)}
-                          />
-                        )}
-                      </td>
-                    )}
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{po.po_number || "—"}</td>
-                    <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{po.supplier_name}</td>
-                    <td className="px-2 py-3 text-xs text-muted-foreground whitespace-nowrap">{po.project_name || "—"}</td>
-                    <td className="px-4 py-3">
-                      {po.category && <Badge variant="secondary" className="text-xs capitalize">{po.category.replace(/_/g, " ")}</Badge>}
-                    </td>
-                    <td className="px-2 py-3">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={`text-xs ${statusStyles[po.approval_status] || ""}`}>
-                          <StatusIcon className="w-3 h-3 mr-1" />
-                          {(po.approval_status || "pending").replace(/_/g, " ")}
-                        </Badge>
-                        {receivingByPO[po.id] && (
-                          <Badge variant="outline" className={`text-xs ${receivingByPO[po.id].isComplete ? "bg-primary/10 text-primary border-primary/20" : "bg-amber-500/10 text-amber-700 border-amber-200"}`}>
-                            <Package className="w-3 h-3 mr-1" />
-                            {receivingByPO[po.id].isComplete ? "Received" : `${receivingByPO[po.id].count}x Partial`}
-                          </Badge>
-                        )}
-                        {(poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number)) && (
-                          <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
-                            <CreditCard className="w-3 h-3 mr-1" /> Paid
-                          </Badge>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                      {po.requested_date ? format(new Date(po.requested_date), "MMM d, yyyy") : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold text-foreground whitespace-nowrap">
-                      ₱{(po.amount || (po.line_items || []).reduce((s, i) => s + (i.total || (i.quantity * i.cost_per_item) || 0), 0)).toLocaleString()}
-                    </td>
-                    <td className="px-2 py-3" onClick={e => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1">
-                        {isAdmin && po.approval_status === "pending" && (
-                          <Button size="sm" variant="outline" onClick={() => setReviewPO(po)}>Review</Button>
-                        )}
-                        {po.approval_status === "approved" && !po.receipt_url && (
-                          <Button size="sm" variant="outline" onClick={() => setUploadingReceipt(po)} className="text-primary hover:text-primary">
-                            <Package className="w-3.5 h-3.5 mr-1" /> Receipt
-                          </Button>
-                        )}
-                        {po.approval_status === "approved" && (
-                          <Button size="sm" variant="outline" onClick={() => setReceivingItems(po)} className="text-primary hover:text-primary">
-                            <Package className="w-3.5 h-3.5 mr-1" /> Receive
-                          </Button>
-                        )}
-                        {po.approval_status === "approved" && <NoticeOfDeliveryPDF po={po} />}
-                        {po.approval_status === "approved" && (
-                          <div title={
-                            !po.receipt_url ? "Upload a receipt before converting to payable" :
-                            poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number) ? "Already paid" : ""
-                          }>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => setConvertingPO(po)} 
-                              disabled={!po.receipt_url || poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number)} 
-                              className="text-primary hover:text-primary disabled:opacity-50"
-                            >
-                              <CreditCard className="w-3.5 h-3.5 mr-1" /> Payable
-                            </Button>
-                          </div>
-                        )}
-                        <PurchaseOrderPDF po={po} />
-                        <Button variant="ghost" size="icon" onClick={() => window.print()} title="Print" className="text-muted-foreground hover:text-foreground">
-                          <Printer className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setReviewPO(po)} className="text-muted-foreground hover:text-foreground">
-                          <History className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setEditingPO(po)} className="text-muted-foreground hover:text-foreground">
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(po.id)} className="text-muted-foreground hover:text-destructive">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                        {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-                      </div>
-                    </td>
-                  </tr>
-                  {isExpanded && (
-                    <tr key={`${po.id}-expanded`} className="bg-muted/20">
-                      <td colSpan={10} className="px-6 py-4">
-                        <div className="space-y-3">
-                          {/* Description */}
-                          <div>
-                            <span className="text-xs font-semibold text-muted-foreground uppercase">Description:</span>
-                            <p className="text-sm text-foreground mt-1">{po.description}</p>
-                          </div>
-                          {/* Meta info */}
-                          <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-                            {po.requested_by && <span>Requested by: <span className="text-foreground font-medium">{po.requested_by}</span></span>}
-                            {po.required_date && <span>Required by: <span className="text-foreground font-medium">{format(new Date(po.required_date), "MMM d, yyyy")}</span></span>}
-                            {po.approved_by && <span>Reviewed by: <span className="text-foreground font-medium">{po.approved_by}</span></span>}
-                            {po.priority && po.priority !== "normal" && (
-                              <Badge className={`text-xs ${priorityStyles[po.priority]}`}>{po.priority}</Badge>
-                            )}
-                            {po.receipt_url && (
-                              <span className="text-primary flex items-center gap-1">
-                                <Package className="w-3 h-3" />
-                                Delivered {po.delivery_date ? format(new Date(po.delivery_date), "MMM d, yyyy") : ""}
-                                <a href={po.receipt_url} target="_blank" rel="noopener noreferrer" className="underline ml-1">View receipt</a>
-                              </span>
-                            )}
-                          </div>
-                          {po.approval_notes && (
-                            <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-2">{po.approval_notes}</p>
-                          )}
-                          {po.delivery_notes && (
-                            <p className="text-xs text-muted-foreground italic">{po.delivery_notes}</p>
-                          )}
-                          {/* Line items */}
-                          {hasLineItems && (
-                            <div className="border border-border rounded-lg overflow-hidden">
-                              <table className="w-full text-xs">
-                                <thead>
-                                  <tr className="bg-muted/50 border-b border-border">
-                                    <th className="px-3 py-2 text-left font-semibold">Item</th>
-                                    <th className="px-3 py-2 text-right font-semibold">Qty</th>
-                                    <th className="px-3 py-2 text-right font-semibold">Cost/Item</th>
-                                    <th className="px-3 py-2 text-right font-semibold">Total</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {po.line_items.map((item, idx) => (
-                                    <tr key={idx} className="border-b border-border/50 last:border-0">
-                                      <td className="px-3 py-2">{item.description}</td>
-                                      <td className="px-3 py-2 text-right">{item.quantity}</td>
-                                      <td className="px-3 py-2 text-right">₱{(item.cost_per_item || 0).toLocaleString()}</td>
-                                      <td className="px-3 py-2 text-right font-semibold">₱{(item.total || 0).toLocaleString()}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
-                          {po.items && !hasLineItems && <p className="text-xs text-muted-foreground">Items: {po.items}</p>}
-                          {/* Approval history */}
-                          {po.approval_history?.length > 0 && (
-                            <div className="p-3 bg-muted/30 rounded-xl border border-border">
-                              <ApprovalHistoryLog history={po.approval_history} />
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </>
-              );
-            })}
-          </tbody>
-        </table>
-        </div>
-      </div>
+      {/* Grouped PO Table */}
+      {isLoading ? (
+        <div className="text-center py-12 text-muted-foreground">Loading...</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">No purchase orders found</div>
+      ) : (
+        <GroupedPurchaseOrders
+          orders={filtered}
+          expandedGroups={expandedGroups}
+          toggleGroup={toggleGroup}
+          renderPORow={renderPORow}
+        />
+      )}
 
         </TabsContent>
 
