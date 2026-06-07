@@ -100,10 +100,10 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
       payment_history: updatedHistory,
     });
 
-    // Record bank movement only if a real bank account is selected
+    // Record cash deposit to bank only (income was already recognized when billing was forwarded to AR — do NOT record income again)
     if (form.bank_account_id && !isUndeposited) {
       await base44.entities.Transaction.create({
-        description: `Collection received – ${receivable.client_name}${receivable.invoice_number ? ` (${receivable.invoice_number})` : ""}`,
+        description: `AR collection — ${receivable.client_name}${receivable.invoice_number ? ` (${receivable.invoice_number})` : ""}${form.reference ? ` · ${form.reference}` : ""}`,
         amount: thisCollection,
         type: "income",
         category: "bank_reconciliation",

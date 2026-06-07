@@ -89,8 +89,9 @@ export default function BillingApprovalDialog({ open, onOpenChange, billingCycle
               <p className="text-xs text-chart-3">Retention ({billingCycle.retention_rate}%): -₱{(billingCycle.retention_amount || 0).toLocaleString()}</p>
             )}
 
-            <div className="pt-2 bg-primary/5 border border-primary/20 rounded-lg p-3 text-xs text-primary">
-              ✓ On approval, a Receivable of <strong>₱{net.toLocaleString()}</strong> will be automatically created.
+            <div className="pt-2 bg-primary/5 border border-primary/20 rounded-lg p-3 text-xs text-primary space-y-1">
+              <p>✓ On approval, <strong>₱{net.toLocaleString()}</strong> will be recognized as <strong>income in the P&L</strong> immediately.</p>
+              <p className="text-primary/70">A corresponding Accounts Receivable record will be created. Collections will reduce the AR balance without affecting recognized income.</p>
             </div>
           </div>
         )}
@@ -122,7 +123,7 @@ export default function BillingApprovalDialog({ open, onOpenChange, billingCycle
               />
             </div>
             <div className="bg-muted/30 rounded-lg p-3 text-xs text-muted-foreground">
-              Approving will automatically generate a Receivable for ₱{net.toLocaleString()}.
+              Approving will recognize ₱{net.toLocaleString()} as income in the P&L and create a corresponding Accounts Receivable. Collections against this AR will not affect the recognized income.
             </div>
           </div>
         )}
