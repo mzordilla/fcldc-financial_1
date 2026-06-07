@@ -49,7 +49,7 @@ export default function BatchTransactionDialog({ open, onOpenChange, bankAccount
       amount: parseFloat(r.amount) || 0,
       bank_account_id: r.bank_account_id || undefined,
       category: r.category || undefined,
-      project_name: r.project_name || undefined,
+      project_code: r.project_name || undefined,
     }));
     await onSubmit(cleaned);
     setRows([EMPTY_ROW()]);
@@ -73,7 +73,7 @@ export default function BatchTransactionDialog({ open, onOpenChange, bankAccount
                 <th className="text-left pb-2 pr-2 font-medium">Amount *</th>
                 <th className="text-left pb-2 pr-2 font-medium">Date *</th>
                 <th className="text-left pb-2 pr-2 font-medium">Category</th>
-                <th className="text-left pb-2 pr-2 font-medium">Project</th>
+                <th className="text-left pb-2 pr-2 font-medium">Project Code</th>
                 <th className="text-left pb-2 pr-2 font-medium">Bank Account</th>
                 <th className="pb-2"></th>
               </tr>
@@ -129,7 +129,7 @@ export default function BatchTransactionDialog({ open, onOpenChange, bankAccount
                     <Input
                       value={row.project_name}
                       onChange={e => update(i, "project_name", e.target.value)}
-                      placeholder="Project"
+                      placeholder="Project Code"
                       className="w-32"
                     />
                   </td>

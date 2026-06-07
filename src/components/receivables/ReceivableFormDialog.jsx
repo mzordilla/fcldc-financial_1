@@ -35,6 +35,7 @@ export default function ReceivableFormDialog({ open, onOpenChange, title, fields
         cleanedData[field.name] = value;
       }
     });
+    // Use project_code instead of project_name
     cleanedData.project_name = formData.project_name;
     await onSubmit(cleanedData);
     setSaving(false);
@@ -86,11 +87,11 @@ export default function ReceivableFormDialog({ open, onOpenChange, title, fields
           ))}
           
           <div className="space-y-1.5">
-            <Label className="text-sm">Project <span className="text-destructive">*</span></Label>
+            <Label className="text-sm">Project Code <span className="text-destructive">*</span></Label>
             <Select
               value={formData.project_name || ""}
               onValueChange={(val) => {
-                const project = projects.find(p => p.project_name === val);
+                const project = projects.find(p => p.project_code === val);
                 setFormData(prev => ({
                   ...prev,
                   project_name: val,
@@ -101,7 +102,7 @@ export default function ReceivableFormDialog({ open, onOpenChange, title, fields
               <SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger>
               <SelectContent>
                 {projects.map(p => (
-                  <SelectItem key={p.id} value={p.project_name}>{p.project_name}</SelectItem>
+                  <SelectItem key={p.id} value={p.project_code}>{p.project_code} ({p.project_name})</SelectItem>
                 ))}
               </SelectContent>
             </Select>

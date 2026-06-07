@@ -86,7 +86,7 @@ export default function Transactions() {
   const handleExport = () => {
     exportToExcel(filtered.map(t => ({
       description: t.description, type: t.type, amount: t.amount,
-      category: t.category, project_name: t.project_name, date: t.date, status: t.status,
+      category: t.category, project_code: t.project_code, date: t.date, status: t.status,
     })), "transactions.xlsx", "Transactions");
   };
 
@@ -100,7 +100,7 @@ export default function Transactions() {
       type: t.type,
       amount: t.amount,
       category: t.category,
-      project_name: t.project_name || "",
+      project_code: t.project_code || "",
       bank_account_id: t.bank_account_id || "",
       date: t.date || "",
       status: t.status || "",

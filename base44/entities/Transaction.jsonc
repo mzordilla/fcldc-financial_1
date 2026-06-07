@@ -41,9 +41,9 @@
       "type": "string",
       "description": "Linked Chart of Account name"
     },
-    "project_name": {
+    "project_code": {
       "type": "string",
-      "description": "Associated project name"
+      "description": "Associated project code"
     },
     "bank_account_id": {
       "type": "string",

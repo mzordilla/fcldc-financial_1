@@ -21,7 +21,7 @@ export default function TransactionFormDialog({ open, onOpenChange, title, bankA
 
   const { data: projects = [] } = useQuery({
     queryKey: ["projects"],
-    queryFn: () => base44.entities.Project.list("project_name", 100),
+    queryFn: () => base44.entities.Project.list("project_code", 100),
     enabled: open,
   });
 
@@ -38,7 +38,9 @@ export default function TransactionFormDialog({ open, onOpenChange, title, bankA
     e.preventDefault();
     if (!formData.category) return;
     setSaving(true);
-    await onSubmit(formData);
+    // Use project_code instead of project_name
+    const submitData = { ...formData, project_code: formData.project_name, project_name: undefined };
+    await onSubmit(submitData);
     setSaving(false);
     setFormData({});
     setDescSearch("");
@@ -191,17 +193,17 @@ export default function TransactionFormDialog({ open, onOpenChange, title, bankA
           {/* Project & Date */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Project Name</Label>
+              <Label>Project Code</Label>
               <Select
                 value={formData.project_name || ""}
                 onValueChange={(v) => set("project_name", v === "none" ? "" : v)}
               >
-                <SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select project code" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— None —</SelectItem>
                   {projects.map(p => (
-                    <SelectItem key={p.id} value={p.project_name}>
-                      {p.project_name}
+                    <SelectItem key={p.id} value={p.project_code}>
+                      {p.project_code}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -30,6 +30,7 @@ const projectTypeLabels = {
 
 const fields = [
   { name: "project_name", label: "Project Name", required: true, placeholder: "e.g. Main Street Tower" },
+  { name: "project_code", label: "Project Code", required: true, placeholder: "PRJ-2026-001" },
   { name: "client_name", label: "Client Name", required: true, placeholder: "e.g. ABC Developers" },
   { name: "project_number", label: "Project #", placeholder: "PRJ-2026-001" },
   { name: "location", label: "Location", placeholder: "e.g. 123 Main St, City" },
@@ -74,9 +75,9 @@ export default function ProjectDetail() {
   });
 
   const { data: billingCycles = [] } = useQuery({
-    queryKey: ["billing_cycles_project", project?.project_name],
-    queryFn: () => base44.entities.BillingCycle.filter({ project_name: project.project_name }, "-period_start", 100),
-    enabled: !!project?.project_name,
+    queryKey: ["billing_cycles_project", project?.project_code],
+    queryFn: () => base44.entities.BillingCycle.filter({ project_name: project.project_code }, "-period_start", 100),
+    enabled: !!project?.project_code,
   });
 
   const { data: changeOrders = [] } = useQuery({
@@ -86,7 +87,7 @@ export default function ProjectDetail() {
   });
 
   const createCOMutation = useMutation({
-    mutationFn: (data) => base44.entities.ChangeOrder.create({ ...data, project_id: id, project_name: project?.project_name }),
+    mutationFn: (data) => base44.entities.ChangeOrder.create({ ...data, project_id: id, project_name: project?.project_code }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["change_orders", id] }),
   });
 
@@ -167,7 +168,8 @@ export default function ProjectDetail() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {project.project_code && <div><p className="text-xs text-muted-foreground">Project Code</p><p className="font-mono text-sm font-semibold text-primary">{project.project_code}</p></div>}
           {project.project_number && <div><p className="text-xs text-muted-foreground">Project #</p><p className="font-mono text-sm">{project.project_number}</p></div>}
           {project.location && <div><p className="text-xs text-muted-foreground">Location</p><p className="text-sm text-foreground">{project.location}</p></div>}
           {project.project_manager && <div><p className="text-xs text-muted-foreground">Project Manager</p><p className="text-sm text-foreground">{project.project_manager}</p></div>}

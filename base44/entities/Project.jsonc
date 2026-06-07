@@ -6,6 +6,10 @@
       "type": "string",
       "description": "Project name"
     },
+    "project_code": {
+      "type": "string",
+      "description": "Unique project code for transactions (e.g., PRJ-2026-001)"
+    },
     "client_name": {
       "type": "string",
       "description": "Client / owner name"
@@ -95,6 +99,7 @@
   },
   "required": [
     "project_name",
+    "project_code",
     "client_name",
     "contract_amount"
   ]

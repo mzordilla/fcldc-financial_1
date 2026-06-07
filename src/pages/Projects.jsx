@@ -35,6 +35,7 @@ const projectTypeLabels = {
 
 const fields = [
 { name: "project_name", label: "Project Name", required: true, placeholder: "e.g. Main Street Tower" },
+{ name: "project_code", label: "Project Code", required: true, placeholder: "PRJ-2026-001" },
 { name: "client_name", label: "Client Name", required: true, placeholder: "e.g. ABC Developers" },
 { name: "project_number", label: "Project #", placeholder: "PRJ-2026-001" },
 { name: "location", label: "Location", placeholder: "e.g. 123 Main St, City" },
@@ -75,7 +76,7 @@ export default function Projects() {
 
   const handleExport = (data) => {
     exportToExcel(data.map(p => ({
-      project_name: p.project_name, client_name: p.client_name, project_number: p.project_number,
+      project_name: p.project_name, project_code: p.project_code, client_name: p.client_name, project_number: p.project_number,
       location: p.location, project_type: p.project_type, contract_amount: p.contract_amount,
       completed_percentage: p.completed_percentage, retention_rate: p.retention_rate,
       contract_status: p.contract_status, contract_date: p.contract_date,
