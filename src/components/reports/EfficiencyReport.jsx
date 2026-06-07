@@ -28,6 +28,11 @@ export default function EfficiencyReport({ dateFrom, dateTo }) {
     queryFn: () => base44.entities.Transaction.list("-date", 500),
   });
 
+  const { data: billingCycles = [] } = useQuery({
+    queryKey: ["billing_cycles_efficiency"],
+    queryFn: () => base44.entities.BillingCycle.list("-created_date", 500),
+  });
+
   const filteredData = useMemo(() => {
     const from = dateFrom ? parseISO(dateFrom) : null;
     const to = dateTo ? parseISO(dateTo) : null;
@@ -48,8 +53,9 @@ export default function EfficiencyReport({ dateFrom, dateTo }) {
       receivables: filterByDate(receivables, "due_date"),
       purchaseOrders: filterByDate(purchaseOrders, "requested_date"),
       transactions: filterByDate(transactions, "date"),
+      billingCycles: filterByDate(billingCycles, "period_start"),
     };
-  }, [payables, receivables, purchaseOrders, transactions, dateFrom, dateTo]);
+  }, [payables, receivables, purchaseOrders, transactions, billingCycles, dateFrom, dateTo]);
 
   // Payables Efficiency (based on aging/overdue)
   const payablesMetrics = useMemo(() => {
@@ -94,10 +100,33 @@ export default function EfficiencyReport({ dateFrom, dateTo }) {
     return { income, expenses, net, transactionCount };
   }, [filteredData.transactions]);
 
+  // Reporting/Billing Efficiency
+  const reportingMetrics = useMemo(() => {
+    const totalBillings = filteredData.billingCycles.length;
+    const approvedBillings = filteredData.billingCycles.filter(b => b.approval_status === "approved").length;
+    const pendingBillings = filteredData.billingCycles.filter(b => b.approval_status === "pending").length;
+    const rejectedBillings = filteredData.billingCycles.filter(b => b.approval_status === "rejected").length;
+    const approvalRate = totalBillings > 0 ? (approvedBillings / totalBillings) * 100 : 0;
+    
+    // Calculate average days to approval for approved billings
+    const approvedWithDates = filteredData.billingCycles.filter(b => 
+      b.approval_status === "approved" && b.period_start && b.approved_by
+    );
+    const avgApprovalDays = approvedWithDates.length > 0 
+      ? approvedWithDates.reduce((sum, b) => {
+          const start = new Date(b.period_start);
+          const now = new Date();
+          return sum + Math.round((now - start) / 86400000);
+        }, 0) / approvedWithDates.length
+      : 0;
+    
+    return { totalBillings, approvedBillings, pendingBillings, rejectedBillings, approvalRate, avgApprovalDays };
+  }, [filteredData.billingCycles]);
+
   return (
     <div className="space-y-6">
       {/* Summary KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-muted-foreground">Payables Efficiency</p>
@@ -149,10 +178,23 @@ export default function EfficiencyReport({ dateFrom, dateTo }) {
             {bankingMetrics.transactionCount} transactions
           </p>
         </div>
+
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-muted-foreground">Reporting Efficiency</p>
+            {reportingMetrics.approvalRate >= 80 ? <TrendingUp className="w-4 h-4 text-primary" /> : reportingMetrics.approvalRate >= 50 ? <TrendingUp className="w-4 h-4 text-chart-3" /> : <TrendingDown className="w-4 h-4 text-destructive" />}
+          </div>
+          <p className={`text-2xl font-bold ${reportingMetrics.approvalRate >= 80 ? "text-primary" : reportingMetrics.approvalRate >= 50 ? "text-chart-3" : "text-destructive"}`}>
+            {reportingMetrics.approvalRate.toFixed(1)}%
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {reportingMetrics.approvedBillings}/{reportingMetrics.totalBillings} approved
+          </p>
+        </div>
       </div>
 
       {/* Detailed Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Payables Aging Analysis */}
         <div className="bg-card border border-border rounded-2xl p-5">
           <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -260,6 +302,42 @@ export default function EfficiencyReport({ dateFrom, dateTo }) {
                 {bankingMetrics.transactionCount} transactions
               </Badge>
             </div>
+          </div>
+        </div>
+
+        {/* Reporting/Billing Efficiency */}
+        <div className="bg-card border border-border rounded-2xl p-5">
+          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+            Reporting & Billing Efficiency
+          </h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center py-2 border-b border-border">
+              <span className="text-sm text-muted-foreground">Total Billing Cycles</span>
+              <span className="text-sm font-semibold text-foreground">{reportingMetrics.totalBillings}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-border">
+              <span className="text-sm text-muted-foreground">Approved Billings</span>
+              <span className="text-sm font-semibold text-primary">{reportingMetrics.approvedBillings}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-border">
+              <span className="text-sm text-muted-foreground">Pending Review</span>
+              <span className="text-sm font-semibold text-chart-3">{reportingMetrics.pendingBillings}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-border">
+              <span className="text-sm text-muted-foreground">Rejected</span>
+              <span className="text-sm font-semibold text-destructive">{reportingMetrics.rejectedBillings}</span>
+            </div>
+            <div className="flex justify-between items-center py-3 bg-muted/30 rounded-lg px-3 mt-2">
+              <span className="text-sm font-semibold text-foreground">Approval Rate</span>
+              <Badge variant="outline" className={`text-sm ${reportingMetrics.approvalRate >= 80 ? "bg-primary/10 text-primary border-primary/20" : reportingMetrics.approvalRate >= 50 ? "bg-chart-3/10 text-chart-3 border-chart-3/20" : "bg-destructive/10 text-destructive border-destructive/20"}`}>
+                {reportingMetrics.approvalRate.toFixed(1)}%
+              </Badge>
+            </div>
+            {reportingMetrics.avgApprovalDays > 0 && (
+              <div className="text-xs text-muted-foreground text-center pt-2">
+                Avg. processing time: {reportingMetrics.avgApprovalDays.toFixed(0)} days
+              </div>
+            )}
           </div>
         </div>
       </div>
