@@ -232,7 +232,7 @@ export default function BankAccounts() {
                         <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
                           <div 
                             className={`h-full rounded-full ${m.efficiency >= 50 ? "bg-primary" : m.efficiency >= 0 ? "bg-chart-3" : "bg-destructive"}`}
-                            style={{ width: `${Math.abs(m.efficiency)}%` }}
+                            style={{ width: `${m.efficiency >= 0 ? Math.min(m.efficiency, 100) : 0}%` }}
                           />
                         </div>
                         <span className={`text-xs font-bold ${m.efficiency >= 50 ? "text-primary" : m.efficiency >= 0 ? "text-chart-3" : "text-destructive"}`}>
