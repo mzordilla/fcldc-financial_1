@@ -3,14 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, Briefcase, CheckCircle2, Pencil, ExternalLink, FileUp, Download } from "lucide-react";
+import { Plus, Trash2, Briefcase, CheckCircle2, Pencil, ExternalLink, FileUp, Download, TrendingUp, TrendingDown, ChevronDown, ChevronRight } from "lucide-react";
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AddFormDialog from "../components/shared/AddFormDialog";
+import ProjectPnL from "./ProjectPnL";
 
 
 const contractStatusStyles = {
@@ -141,6 +143,13 @@ export default function Projects() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+      <Tabs defaultValue="projects" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="projects">Projects</TabsTrigger>
+          <TabsTrigger value="pnl">Project P&amp;L</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="projects" className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -373,7 +382,13 @@ export default function Projects() {
         fields={fields}
         initialData={editingProject || {}}
         onSubmit={(data) => updateMutation.mutateAsync({ id: editingProject.id, data })} />
-      
+
+        </TabsContent>
+
+        <TabsContent value="pnl">
+          <ProjectPnL embedded />
+        </TabsContent>
+      </Tabs>
     </div>);
 
 }

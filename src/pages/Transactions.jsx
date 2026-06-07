@@ -7,10 +7,13 @@ import { exportToExcel } from "@/utils/excelUtils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import TransactionFormDialog from "../components/transactions/TransactionFormDialog";
 import BatchTransactionDialog from "../components/transactions/BatchTransactionDialog";
 import SpendByCategoryChart from "../components/transactions/SpendByCategoryChart";
 import ExcelImportDialog from "../components/transactions/ExcelImportDialog";
+import ChartOfAccounts from "./ChartOfAccounts";
+import Payees from "./Payees";
 
 const CATEGORIES = [
   { value: "project_payment", label: "Project Payment" },
@@ -114,6 +117,14 @@ export default function Transactions() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+      <Tabs defaultValue="transactions" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          <TabsTrigger value="chart-of-accounts">Chart of Accounts</TabsTrigger>
+          <TabsTrigger value="suppliers">Supplier Masterlist</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="transactions" className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Transactions</h1>
@@ -268,6 +279,16 @@ export default function Transactions() {
         initialData={editingT || {}}
         onSubmit={(data) => updateMutation.mutateAsync({ id: editingT.id, data })}
       />
+        </TabsContent>
+
+        <TabsContent value="chart-of-accounts">
+          <ChartOfAccounts embedded />
+        </TabsContent>
+
+        <TabsContent value="suppliers">
+          <Payees embedded />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
