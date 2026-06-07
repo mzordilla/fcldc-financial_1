@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, startOfMonth, eachMonthOfInterval, subMonths, parseISO, startOfDay, endOfDay } from "date-fns";
-import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, FileSpreadsheet, FileText } from "lucide-react";
+import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, FileSpreadsheet, FileText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
@@ -11,6 +11,10 @@ import BankTransactionsReport from "../components/reports/BankTransactionsReport
 import IncomeTrendChart from "../components/reports/IncomeTrendChart";
 import BalanceSheetReport from "../components/reports/BalanceSheetReport";
 import IncomeStatementReport from "../components/reports/IncomeStatementReport";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import AddFormDialog from "../components/shared/AddFormDialog";
+import { Badge } from "@/components/ui/badge";
+import { Pencil, Trash2, BookOpen } from "lucide-react";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 const fmtSigned = (v) => (v < 0 ? `-₱${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : `₱${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`);
@@ -27,6 +31,64 @@ const CATEGORY_LABELS = {
   bank_reconciliation: "Bank Reconciliation",
   other: "Other",
 };
+
+const TYPE_COLORS = {
+  income:    "bg-primary/10 text-primary border-primary/20",
+  expense:   "bg-destructive/10 text-destructive border-destructive/20",
+  asset:     "bg-chart-2/10 text-chart-2 border-chart-2/20",
+  liability: "bg-chart-3/10 text-chart-3 border-chart-3/20",
+  equity:    "bg-chart-4/10 text-chart-4 border-chart-4/20",
+};
+
+const COA_CATEGORY_LABELS = {
+  project_payment: "Project Payment",
+  material_cost: "Material Cost",
+  labor: "Labor",
+  equipment: "Equipment",
+  subcontractor: "Subcontractor",
+  overhead: "Overhead",
+  permits: "Permits",
+  insurance: "Insurance",
+  bank_reconciliation: "Bank Reconciliation",
+  non_current_assets: "Non-Current Assets",
+  current_assets: "Current Assets",
+  current_liabilities: "Current Liabilities",
+  non_current_liabilities: "Non-Current Liabilities",
+  repair_and_maintenance: "Repair & Maintenance",
+  fixtures: "Fixtures",
+  other: "Other",
+};
+
+const coaFields = [
+  { name: "account_code", label: "Account Code", placeholder: "e.g. 4001" },
+  { name: "account_name", label: "Account Name", required: true, placeholder: "e.g. Project Revenue" },
+  { name: "account_type", label: "Account Type", type: "select", required: true, options: [
+    { value: "income", label: "Income" },
+    { value: "expense", label: "Expense" },
+    { value: "asset", label: "Asset" },
+    { value: "liability", label: "Liability" },
+    { value: "equity", label: "Equity" },
+  ]},
+  { name: "category", label: "Transaction Category", type: "select", options: [
+    { value: "project_payment", label: "Project Payment" },
+    { value: "material_cost", label: "Material Cost" },
+    { value: "labor", label: "Labor" },
+    { value: "equipment", label: "Equipment" },
+    { value: "subcontractor", label: "Subcontractor" },
+    { value: "overhead", label: "Overhead" },
+    { value: "permits", label: "Permits" },
+    { value: "insurance", label: "Insurance" },
+    { value: "bank_reconciliation", label: "Bank Reconciliation" },
+    { value: "non_current_assets", label: "Non-Current Assets" },
+    { value: "current_assets", label: "Current Assets" },
+    { value: "current_liabilities", label: "Current Liabilities" },
+    { value: "non_current_liabilities", label: "Non-Current Liabilities" },
+    { value: "repair_and_maintenance", label: "Repair & Maintenance" },
+    { value: "fixtures", label: "Fixtures" },
+    { value: "other", label: "Other" },
+  ]},
+  { name: "description", label: "Notes", placeholder: "Optional description" },
+];
 
 function SectionRow({ label, value, isTotal, isSub, colorClass }) {
   return (
@@ -308,6 +370,10 @@ export default function Reports() {
   const [activeTab, setActiveTab] = useState("trend");
   const [rangeMonths, setRangeMonths] = useState("6");
   const [expandedMonth, setExpandedMonth] = useState(null);
+  const [showAddCOA, setShowAddCOA] = useState(false);
+  const [editingCOA, setEditingCOA] = useState(null);
+  const [coaTypeFilter, setCoaTypeFilter] = useState("all");
+  const queryClient = useQueryClient();
 
   // Date range filter (shared across tabs)
   const defaultEnd = format(new Date(), "yyyy-MM-dd");
@@ -330,8 +396,34 @@ export default function Reports() {
     queryFn: () => base44.entities.WorkingCapitalLoan.list("-created_date", 50),
   });
 
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ["chartofaccounts"],
+    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 200),
+  });
+
+  const createCOAMutation = useMutation({
+    mutationFn: (data) => base44.entities.ChartOfAccount.create(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chartofaccounts"] }),
+  });
+
+  const updateCOAMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.ChartOfAccount.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chartofaccounts"] }),
+  });
+
+  const deleteCOAMutation = useMutation({
+    mutationFn: (id) => base44.entities.ChartOfAccount.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chartofaccounts"] }),
+  });
+
   const allLoans = [...loans, ...wcLoans];
   const activeLoans = allLoans.filter(l => l.status === "active");
+  
+  const filteredCOA = coaTypeFilter === "all" ? chartOfAccounts : chartOfAccounts.filter(a => a.account_type === coaTypeFilter);
+  const coaTypeCounts = chartOfAccounts.reduce((acc, a) => {
+    acc[a.account_type] = (acc[a.account_type] || 0) + 1;
+    return acc;
+  }, {});
 
   const months = useMemo(() => {
     const start = startOfMonth(parseISO(dateFrom));
@@ -419,6 +511,7 @@ export default function Reports() {
           { key: "bank_transactions", label: "Bank Transactions" },
           { key: "balance_sheet", label: "Balance Sheet" },
           { key: "income_statement", label: "Income Statement" },
+          { key: "chart_of_accounts", label: "Chart of Accounts" },
         ].map(tab => (
           <button
             key={tab.key}
@@ -452,6 +545,116 @@ export default function Reports() {
 
       {activeTab === "income_statement" && (
         <IncomeStatementReport dateFrom={dateFrom} dateTo={dateTo} />
+      )}
+
+      {activeTab === "chart_of_accounts" && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">{chartOfAccounts.length} accounts</h2>
+              <p className="text-sm text-muted-foreground">Used to classify transaction descriptions</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Select value={coaTypeFilter} onValueChange={setCoaTypeFilter}>
+                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="income">Income</SelectItem>
+                  <SelectItem value="expense">Expense</SelectItem>
+                  <SelectItem value="asset">Asset</SelectItem>
+                  <SelectItem value="liability">Liability</SelectItem>
+                  <SelectItem value="equity">Equity</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={() => setShowAddCOA(true)}>
+                <Plus className="w-4 h-4 mr-2" /> Add Account
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(coaTypeCounts).map(([type, count]) => (
+              <button
+                key={type}
+                onClick={() => setCoaTypeFilter(coaTypeFilter === type ? "all" : type)}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${TYPE_COLORS[type] || "bg-muted text-muted-foreground"}`}
+              >
+                {type.charAt(0).toUpperCase() + type.slice(1)} ({count})
+              </button>
+            ))}
+          </div>
+
+          <div className="bg-card rounded-2xl border border-border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Code</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Account Name</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Type</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">Category</th>
+                    <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">Notes</th>
+                    <th className="w-20"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCOA.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="text-center py-16">
+                        <BookOpen className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                        <p className="text-muted-foreground text-sm">No accounts yet. Add your first account.</p>
+                      </td>
+                    </tr>
+                  )}
+                  {filteredCOA.map((a) => (
+                    <tr key={a.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 font-mono text-sm text-muted-foreground">{a.account_code || "—"}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-foreground">{a.account_name}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant="outline" className={`text-xs ${TYPE_COLORS[a.account_type] || ""}`}>
+                          {a.account_type}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 hidden sm:table-cell">
+                        {a.category
+                          ? <Badge variant="secondary" className="text-xs">{COA_CATEGORY_LABELS[a.category] || a.category}</Badge>
+                          : <span className="text-xs text-muted-foreground">—</span>
+                        }
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground hidden md:table-cell max-w-xs truncate">{a.description || "—"}</td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button onClick={() => setEditingCOA(a)} className="text-muted-foreground hover:text-foreground transition-colors">
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => deleteCOAMutation.mutate(a.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <AddFormDialog
+            open={showAddCOA}
+            onOpenChange={setShowAddCOA}
+            title="Add Account"
+            fields={coaFields}
+            onSubmit={(data) => createCOAMutation.mutateAsync(data)}
+          />
+          <AddFormDialog
+            open={!!editingCOA}
+            onOpenChange={(v) => { if (!v) setEditingCOA(null); }}
+            title="Edit Account"
+            fields={coaFields}
+            initialData={editingCOA || {}}
+            onSubmit={(data) => updateCOAMutation.mutateAsync({ id: editingCOA.id, data })}
+          />
+        </div>
       )}
 
       {activeTab === "pnl" && <>
