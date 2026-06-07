@@ -30,6 +30,10 @@
           "quantity": {
             "type": "number"
           },
+          "unit_of_measure": {
+            "type": "string",
+            "description": "Unit of measure (e.g., pcs, kg, m, etc.)"
+          },
           "cost_per_item": {
             "type": "number"
           },

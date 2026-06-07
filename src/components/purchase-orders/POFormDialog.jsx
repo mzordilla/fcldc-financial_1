@@ -186,6 +186,7 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
                     <tr className="bg-muted/50 border-b border-border">
                       <th className="px-2 py-1 text-left font-semibold">Description</th>
                       <th className="px-2 py-1 text-right font-semibold w-8">Qty</th>
+                      <th className="px-2 py-1 text-left font-semibold w-16">UOM</th>
                       <th className="px-2 py-1 text-right font-semibold w-10">Cost/Item</th>
                       <th className="px-2 py-1 text-right font-semibold w-20">Total</th>
                       <th className="w-6"></th>
@@ -196,6 +197,7 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
                       <tr key={idx} className="border-b border-border/50 last:border-0">
                         <td className="px-2 py-1">{item.description}</td>
                         <td className="px-2 py-1 text-right text-xs">{item.quantity}</td>
+                        <td className="px-2 py-1 text-xs text-muted-foreground">{item.unit_of_measure || "pcs"}</td>
                         <td className="px-2 py-1 text-right text-xs">${(item.cost_per_item || 0).toLocaleString()}</td>
                         <td className="px-2 py-1 text-right text-xs font-semibold">${(item.total || 0).toLocaleString()}</td>
                         <td className="px-2 py-1">
