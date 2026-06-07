@@ -358,7 +358,7 @@ export default function PurchaseOrders() {
               <th className="px-2 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Actions</th>
+              <th className="px-2 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -420,7 +420,7 @@ export default function PurchaseOrders() {
                     <td className="px-4 py-3 text-right font-bold text-foreground whitespace-nowrap">
                       ₱{(po.amount || (po.line_items || []).reduce((s, i) => s + (i.total || (i.quantity * i.cost_per_item) || 0), 0)).toLocaleString()}
                     </td>
-                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                    <td className="px-2 py-3" onClick={e => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
                         {isAdmin && po.approval_status === "pending" && (
                           <Button size="sm" variant="outline" onClick={() => setReviewPO(po)}>Review</Button>
