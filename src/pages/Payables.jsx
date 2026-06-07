@@ -220,6 +220,26 @@ export default function Payables() {
 
   const totalUnpaid = unpaidPayables.reduce((s, p) => s + ((p.amount || 0) - (p.amount_paid || 0)), 0);
   const overdueCount = payables.filter(p => p.status === "overdue").length;
+  
+  // Monthly payment efficiency calculation
+  const monthlyPaymentData = payables.reduce((acc, p) => {
+    const monthKey = p.due_date ? p.due_date.substring(0, 7) : null;
+    if (!monthKey) return acc;
+    if (!acc[monthKey]) acc[monthKey] = { total: 0, paid: 0 };
+    acc[monthKey].total += p.amount || 0;
+    acc[monthKey].paid += p.amount_paid || 0;
+    return acc;
+  }, {});
+  
+  const monthlyEfficiency = Object.entries(monthlyPaymentData)
+    .map(([month, data]) => ({
+      month,
+      total: data.total,
+      paid: data.paid,
+      efficiency: data.total > 0 ? ((data.paid / data.total) * 100) : 0,
+    }))
+    .sort((a, b) => b.month.localeCompare(a.month))
+    .slice(0, 6);
 
   // Group unpaid payables by supplier
   const groupedBySupplier = unpaidPayables.reduce((acc, p) => {
@@ -290,6 +310,47 @@ export default function Payables() {
       </div>
 
       <AgingSummary items={payables} />
+
+      {/* Monthly Payment Efficiency */}
+      {monthlyEfficiency.length > 0 && (
+        <div className="bg-card rounded-2xl border border-border p-5">
+          <h3 className="text-sm font-semibold text-foreground mb-4">Monthly Payment Efficiency</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs text-muted-foreground border-b border-border">
+                  <th className="text-left pb-2 font-medium">Month</th>
+                  <th className="text-right pb-2 font-medium">Total Payables</th>
+                  <th className="text-right pb-2 font-medium">Amount Paid</th>
+                  <th className="text-right pb-2 font-medium">Efficiency</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {monthlyEfficiency.map(m => (
+                  <tr key={m.month} className="hover:bg-muted/40 transition-colors">
+                    <td className="py-2 font-medium text-foreground">{format(new Date(m.month + "-01"), "MMM yyyy")}</td>
+                    <td className="py-2 text-right text-foreground">₱{m.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td className="py-2 text-right text-primary">₱{m.paid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td className="py-2 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full ${m.efficiency >= 80 ? "bg-primary" : m.efficiency >= 50 ? "bg-chart-3" : "bg-destructive"}`}
+                            style={{ width: `${m.efficiency}%` }}
+                          />
+                        </div>
+                        <span className={`text-xs font-bold ${m.efficiency >= 80 ? "text-primary" : m.efficiency >= 50 ? "text-chart-3" : "text-destructive"}`}>
+                          {m.efficiency.toFixed(1)}%
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* From Approved Payment Requests */}
       {pendingPRs.length > 0 && (
