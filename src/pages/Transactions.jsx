@@ -14,6 +14,7 @@ import SpendByCategoryChart from "../components/transactions/SpendByCategoryChar
 import ExcelImportDialog from "../components/transactions/ExcelImportDialog";
 import ChartOfAccounts from "./ChartOfAccounts";
 import Payees from "./Payees";
+import ReceiptScanner from "./ReceiptScanner";
 
 const CATEGORIES = [
   { value: "project_payment", label: "Project Payment" },
@@ -120,6 +121,7 @@ export default function Transactions() {
       <Tabs defaultValue="transactions" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          <TabsTrigger value="receipt-scanner">Receipt Scanner</TabsTrigger>
           <TabsTrigger value="chart-of-accounts">Chart of Accounts</TabsTrigger>
           <TabsTrigger value="suppliers">Supplier Masterlist</TabsTrigger>
         </TabsList>
@@ -279,6 +281,10 @@ export default function Transactions() {
         initialData={editingT || {}}
         onSubmit={(data) => updateMutation.mutateAsync({ id: editingT.id, data })}
       />
+        </TabsContent>
+
+        <TabsContent value="receipt-scanner">
+          <ReceiptScanner />
         </TabsContent>
 
         <TabsContent value="chart-of-accounts">
