@@ -106,7 +106,19 @@ export default function PaymentApprovals() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.PaymentRequest.create(data),
+    mutationFn: (data) => {
+      // Check for duplicate payment request (same payee + invoice number)
+      const existingPR = requests.find(r => 
+        r.payee === data.payee && 
+        r.invoice_number === data.invoice_number &&
+        r.approval_status !== "rejected" &&
+        r.approval_status !== "cancelled"
+      );
+      if (existingPR) {
+        throw new Error(`A payment request already exists for ${data.payee} (Invoice: ${data.invoice_number}). Duplicate payment requests are not allowed.`);
+      }
+      return base44.entities.PaymentRequest.create(data);
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["payment_requests"] }),
   });
 
@@ -125,10 +137,38 @@ export default function PaymentApprovals() {
   };
 
   const bulkCreateRequests = async (items) => {
-    await Promise.all(items.map(data => createMutation.mutateAsync(data)));
+    // Check for duplicates before creating
+    for (const item of items) {
+      const existingPR = requests.find(r => 
+        r.payee === item.payee && 
+        r.invoice_number === item.invoice_number &&
+        r.approval_status !== "rejected" &&
+        r.approval_status !== "cancelled"
+      );
+      if (existingPR) {
+        alert(`A payment request already exists for ${item.payee} (Invoice: ${item.invoice_number}). Skipping duplicate.`);
+        items = items.filter(i => i !== item);
+      }
+    }
+    if (items.length > 0) {
+      await Promise.all(items.map(data => createMutation.mutateAsync(data)));
+    }
   };
 
   const convertPOtoPaymentRequest = (po) => {
+    // Check if a payment request already exists for this supplier + invoice
+    const existingPR = requests.find(r => 
+      r.payee === po.supplier_name && 
+      r.invoice_number === po.po_number &&
+      r.approval_status !== "rejected" &&
+      r.approval_status !== "cancelled"
+    );
+
+    if (existingPR) {
+      alert(`A payment request already exists for ${po.supplier_name} (Invoice: ${po.po_number}). Duplicate payment requests are not allowed.`);
+      return;
+    }
+
     const prData = {
       request_number: `PR-PO-${po.po_number || po.id.slice(-6).toUpperCase()}`,
       payee: po.supplier_name,
