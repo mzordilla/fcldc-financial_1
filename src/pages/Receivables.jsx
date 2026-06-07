@@ -40,7 +40,7 @@ function MonthlyTotals({ items }) {
 
   return (
     <div className="bg-card rounded-2xl border border-border p-5">
-      <h3 className="text-sm font-semibold text-foreground mb-4">Monthly Totals</h3>
+      <h3 className="text-sm font-semibold text-foreground mb-4">Monthly Collection Efficiency</h3>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -49,11 +49,13 @@ function MonthlyTotals({ items }) {
               <th className="text-right pb-2 font-medium">Billed</th>
               <th className="text-right pb-2 font-medium">Collected</th>
               <th className="text-right pb-2 font-medium">Outstanding</th>
+              <th className="text-right pb-2 font-medium">Efficiency</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {months.map(m => {
               const outstanding = m.billed - m.collected;
+              const efficiency = m.billed > 0 ? ((m.collected / m.billed) * 100) : 0;
               return (
                 <tr key={m.label} className="hover:bg-muted/40 transition-colors">
                   <td className="py-2 font-medium text-foreground">{m.label}</td>
@@ -61,6 +63,19 @@ function MonthlyTotals({ items }) {
                   <td className="py-2 text-right text-primary">₱{m.collected.toLocaleString()}</td>
                   <td className={`py-2 text-right font-semibold ${outstanding > 0 ? "text-destructive" : "text-primary"}`}>
                     ₱{outstanding.toLocaleString()}
+                  </td>
+                  <td className="py-2 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full ${efficiency >= 80 ? "bg-primary" : efficiency >= 50 ? "bg-chart-3" : "bg-destructive"}`}
+                          style={{ width: `${efficiency}%` }}
+                        />
+                      </div>
+                      <span className={`text-xs font-bold ${efficiency >= 80 ? "text-primary" : efficiency >= 50 ? "text-chart-3" : "text-destructive"}`}>
+                        {efficiency.toFixed(1)}%
+                      </span>
+                    </div>
                   </td>
                 </tr>
               );
