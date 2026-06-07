@@ -504,27 +504,27 @@ export default function Reports() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-border">
+      <div className="flex gap-2 flex-wrap">
         {[
-          { key: "efficiency", label: "Efficiency Dashboard" },
-          { key: "trend", label: "Trend Analysis" },
-          { key: "pnl", label: "P&L / Cash Flow" },
-          { key: "wc_loans", label: "Working Capital Loans" },
-          { key: "bank_transactions", label: "Bank Transactions" },
-          { key: "balance_sheet", label: "Balance Sheet" },
-          { key: "income_statement", label: "Income Statement" },
-          { key: "chart_of_accounts", label: "Chart of Accounts" },
+          { key: "efficiency", label: "Efficiency Dashboard", color: "from-emerald-500 to-teal-600", emoji: "📊" },
+          { key: "trend", label: "Trend Analysis", color: "from-blue-500 to-indigo-600", emoji: "📈" },
+          { key: "pnl", label: "P&L / Cash Flow", color: "from-orange-500 to-amber-600", emoji: "💰" },
+          { key: "wc_loans", label: "Working Capital Loans", color: "from-purple-500 to-pink-600", emoji: "🏦" },
+          { key: "bank_transactions", label: "Bank Transactions", color: "from-cyan-500 to-blue-600", emoji: "💳" },
+          { key: "balance_sheet", label: "Balance Sheet", color: "from-green-500 to-emerald-600", emoji: "⚖️" },
+          { key: "income_statement", label: "Income Statement", color: "from-rose-500 to-red-600", emoji: "📋" },
+          { key: "chart_of_accounts", label: "Chart of Accounts", color: "from-violet-500 to-purple-600", emoji: "📚" },
         ].map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
+            className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
               activeTab === tab.key
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
+                ? `bg-gradient-to-r ${tab.color} text-white shadow-md`
+                : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
             }`}
           >
-            {tab.label}
+            {tab.emoji} {tab.label}
           </button>
         ))}
       </div>
