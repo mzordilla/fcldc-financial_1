@@ -76,6 +76,20 @@ export default function PurchaseOrders() {
     queryFn: () => base44.entities.PaymentRequest.list("-created_date", 200),
   });
 
+  const { data: receivingRecords = [] } = useQuery({
+    queryKey: ["receiving_items"],
+    queryFn: () => base44.entities.ReceivingItem.list("-received_date", 500),
+  });
+
+  // Build a map of po_id -> { count, isComplete }
+  const receivingByPO = {};
+  for (const r of receivingRecords) {
+    if (!r.po_id) continue;
+    if (!receivingByPO[r.po_id]) receivingByPO[r.po_id] = { count: 0, isComplete: false };
+    receivingByPO[r.po_id].count += 1;
+    if (r.status === "complete") receivingByPO[r.po_id].isComplete = true;
+  }
+
   // Check which POs have been converted to payables
   const poIdsWithPayables = new Set(
     payables
@@ -320,6 +334,12 @@ export default function PurchaseOrders() {
                           <StatusIcon className="w-3 h-3 mr-1" />
                           {(po.approval_status || "pending").replace(/_/g, " ")}
                         </Badge>
+                        {receivingByPO[po.id] && (
+                          <Badge variant="outline" className={`text-xs ${receivingByPO[po.id].isComplete ? "bg-primary/10 text-primary border-primary/20" : "bg-amber-500/10 text-amber-700 border-amber-200"}`}>
+                            <Package className="w-3 h-3 mr-1" />
+                            {receivingByPO[po.id].isComplete ? "Received" : `${receivingByPO[po.id].count}x Partial`}
+                          </Badge>
+                        )}
                         {(poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number)) && (
                           <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
                             <CreditCard className="w-3 h-3 mr-1" /> Paid
