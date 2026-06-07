@@ -15,6 +15,7 @@ import POExcelImportDialog from "../components/purchase-orders/POExcelImportDial
 import POToPayableDialog from "../components/purchase-orders/POToPayableDialog";
 import ReceiptUploadDialog from "../components/purchase-orders/ReceiptUploadDialog";
 import NoticeOfDeliveryPDF from "../components/purchase-orders/NoticeOfDeliveryPDF";
+import PurchaseOrderPDF from "../components/purchase-orders/PurchaseOrderPDF";
 import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
 import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
 import ReceiveItemsDialog from "../components/purchase-orders/ReceiveItemsDialog";
@@ -453,6 +454,7 @@ export default function PurchaseOrders() {
                             </Button>
                           </div>
                         )}
+                        <PurchaseOrderPDF po={po} />
                         <Button variant="ghost" size="icon" onClick={() => window.print()} title="Print" className="text-muted-foreground hover:text-foreground">
                           <Printer className="w-4 h-4" />
                         </Button>
