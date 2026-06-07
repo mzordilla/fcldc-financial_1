@@ -353,10 +353,10 @@ export default function PurchaseOrders() {
               {isAdmin && <th className="px-3 py-3 w-8"></th>}
               <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">PO #</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Supplier</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Project</th>
+              <th className="px-2 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Project</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Description</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Category</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
+              <th className="px-2 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Actions</th>
@@ -392,12 +392,12 @@ export default function PurchaseOrders() {
                     )}
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{po.po_number || "—"}</td>
                     <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{po.supplier_name}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{po.project_name || "—"}</td>
+                    <td className="px-2 py-3 text-xs text-muted-foreground whitespace-nowrap">{po.project_name || "—"}</td>
                     <td className="px-4 py-3 text-xs text-foreground max-w-[200px] truncate">{po.description}</td>
                     <td className="px-4 py-3">
                       {po.category && <Badge variant="secondary" className="text-xs capitalize">{po.category.replace(/_/g, " ")}</Badge>}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-3">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className={`text-xs ${statusStyles[po.approval_status] || ""}`}>
                           <StatusIcon className="w-3 h-3 mr-1" />
