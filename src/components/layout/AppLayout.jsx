@@ -2,6 +2,7 @@ import { Outlet, useLocation, Navigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import MobileNav from "./MobileNav";
 import AccessDenied from "./AccessDenied";
+import ApprovalSidebar from "./ApprovalSidebar";
 import { useAuth } from "@/lib/AuthContext";
 import { canAccess, roleAccess } from "@/lib/access-control";
 
@@ -36,6 +37,7 @@ export default function AppLayout() {
       >
         {allowed ? <Outlet /> : <AccessDenied />}
       </main>
+      <ApprovalSidebar />
       <MobileNav />
     </div>);
 
