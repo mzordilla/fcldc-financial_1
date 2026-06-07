@@ -86,19 +86,35 @@ export default function MarkPayableAsPaidDialog({ open, onOpenChange, payable, o
       payment_notes: form.payment_notes,
     });
 
-    // Auto-create linked expense transaction
-    if (form.bank_account_id) {
-      await base44.entities.Transaction.create({
-        description: `Payable payment – ${payable.supplier_name}${payable.invoice_number ? ` (${payable.invoice_number})` : ""}`,
-        amount: thisPayment,
-        type: "expense",
-        category: payable.category || "other",
-        project_name: payable.project_name || "",
-        bank_account_id: form.bank_account_id,
-        date: form.payment_date,
-        status: "completed",
-      });
-    }
+    // Double-entry: Dr. Accounts Payable (reduce liability) + Cr. Cash in Bank (reduce asset)
+    const bankAccount = bankAccounts.find(a => a.id === form.bank_account_id);
+    const bankLabel = bankAccount ? `${bankAccount.account_name} – ${bankAccount.bank_name}` : "Cash in Bank";
+
+    // Dr. Accounts Payable (debit liability = reduce AP)
+    await base44.entities.Transaction.create({
+      description: `Accounts Payable Settlement – ${payable.supplier_name}${payable.invoice_number ? ` (${payable.invoice_number})` : ""}`,
+      amount: thisPayment,
+      type: "expense",
+      category: "other",
+      chart_of_account: "Accounts Payable",
+      project_name: payable.project_name || "",
+      bank_account_id: form.bank_account_id || "",
+      date: form.payment_date,
+      status: "completed",
+    });
+
+    // Cr. Cash in Bank (credit asset = cash outflow)
+    await base44.entities.Transaction.create({
+      description: `Cash Payment – ${payable.supplier_name}${payable.invoice_number ? ` (${payable.invoice_number})` : ""}${form.payment_reference ? ` [${form.payment_reference}]` : ""}`,
+      amount: thisPayment,
+      type: "expense",
+      category: payable.category || "other",
+      chart_of_account: bankLabel,
+      project_name: payable.project_name || "",
+      bank_account_id: form.bank_account_id || "",
+      date: form.payment_date,
+      status: "completed",
+    });
 
     setSaving(false);
     onOpenChange(false);
