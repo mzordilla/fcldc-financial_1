@@ -6,6 +6,7 @@ import { Plus, Building2, Pencil, Trash2, TrendingUp, TrendingDown, Wallet, Arro
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import AddFormDialog from "../components/shared/AddFormDialog";
+import BankReconciliationPage from "./BankReconciliation";
 
 const ACCOUNT_TYPES = [
 { value: "checking", label: "Checking" },
@@ -106,6 +107,7 @@ function AccountTransactions({ accountId, transactions }) {
 }
 
 export default function BankAccounts() {
+  const [activeTab, setActiveTab] = useState("accounts");
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState(null);
   const queryClient = useQueryClient();
@@ -148,11 +150,34 @@ export default function BankAccounts() {
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Bank Accounts</h1>
           <p className="text-muted-foreground mt-1">Track balances across all your bank accounts</p>
         </div>
-        <Button onClick={() => setShowAdd(true)}>
-          <Plus className="w-4 h-4 mr-2" /> Add Account
-        </Button>
+        {activeTab === "accounts" && (
+          <Button onClick={() => setShowAdd(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Add Account
+          </Button>
+        )}
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-border">
+        {[
+          { key: "accounts", label: "Bank Accounts" },
+          { key: "reconciliation", label: "Bank Reconciliation" },
+        ].map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
+              activeTab === tab.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "reconciliation" && <BankReconciliationPage />}
+
+      {activeTab === "accounts" && <>
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-card rounded-2xl border border-border p-5 flex items-center gap-4">
@@ -292,6 +317,7 @@ export default function BankAccounts() {
         fields={fields}
         initialData={editing || {}}
         onSubmit={(data) => updateMutation.mutateAsync({ id: editing.id, data })} />
+      </>}
       
     </div>);
 

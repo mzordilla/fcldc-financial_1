@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, Banknote, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, BookOpen, ScanLine, Users, RefreshCw, Receipt, PackageCheck, ClipboardList, Boxes, Package, Home, List, PieChart } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ScanLine, Users, Receipt, ClipboardList, Boxes, Home, List, PieChart } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { navItemsByRole } from "@/lib/access-control";
@@ -12,8 +12,8 @@ const allNavItems = [
 { label: "Listings", icon: List, path: "/re/listings", group: "Real Estate Portfolio" },
 { label: "Portfolio Reports", icon: PieChart, path: "/re/reports", group: "Real Estate Portfolio" },
 { label: "Projects", icon: Briefcase, path: "/projects" },
-{ label: "Project P&L", icon: FolderKanban, path: "/project-pnl" },
 { label: "Billing Cycles", icon: Receipt, path: "/billing-cycles" },
+
 { label: "Receivables", icon: FileText, path: "/receivables" },
 { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
 { label: "Payment Approvals", icon: CircleDollarSign, path: "/payment-approvals" },
@@ -21,11 +21,10 @@ const allNavItems = [
 { label: "Payables", icon: CreditCard, path: "/payables" },
 { label: "Supplier Masterlist", icon: Users, path: "/payees" },
 { label: "Bank Accounts", icon: Building2, path: "/bank-accounts" },
-{ label: "Bank Reconciliation", icon: RefreshCw, path: "/bank-reconciliation" },
 { label: "Working Capital Loans", icon: Landmark, path: "/working-capital-loans" },
 { label: "PPE Assets", icon: Boxes, path: "/ppe-assets" },
 { label: "Reports", icon: BarChart2, path: "/reports" },
-{ label: "Chart of Accounts", icon: BookOpen, path: "/chart-of-accounts" },
+
 { label: "Receipt Scanner", icon: ScanLine, path: "/receipt-scanner" },
 { label: "Audit Trail", icon: ClipboardList, path: "/audit-trail" }];
 
