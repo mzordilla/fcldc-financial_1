@@ -41,7 +41,7 @@ export default function Sidebar() {
   const navItems = allowed === "all" ? allNavItems : allNavItems.filter((item) => allowed.includes(item.path));
 
   return (
-    <aside className="h-screen w-64 bg-sidebar text-sidebar-foreground flex flex-col z-50 sticky top-0">
+    <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col z-50" style={{ minHeight: "100%" }}>
       <div className="p-6 border-b border-sidebar-border">
          <div className="flex items-center gap-3">
            <img src="https://media.base44.com/images/public/69f02f8501c3688565579a10/194dcac58_image.png" alt="FCLDC" className="w-10 h-10" />

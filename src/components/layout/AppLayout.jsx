@@ -21,11 +21,16 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex bg-background">
-      <div className="hidden md:block flex-shrink-0">
+    <div style={{ display: "flex", height: "100dvh", overflow: "hidden" }} className="bg-background">
+      {/* Sidebar — independently scrollable, never clipped */}
+      <div className="hidden md:flex flex-shrink-0" style={{ height: "100dvh", overflowY: "auto" }}>
         <Sidebar />
       </div>
-      <main className="flex-1 overflow-y-auto overflow-x-auto pb-20 md:pb-0 min-w-0">
+      {/* Main content — scrolls both axes independently */}
+      <main
+        style={{ flex: 1, minWidth: 0, overflowY: "auto", overflowX: "auto" }}
+        className="pb-20 md:pb-0"
+      >
         {allowed ? <Outlet /> : <AccessDenied />}
       </main>
       <MobileNav />
