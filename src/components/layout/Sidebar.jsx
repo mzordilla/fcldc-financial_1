@@ -17,8 +17,6 @@ const allNavItems = [
 { label: "Receivables", icon: FileText, path: "/receivables" },
 { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
 { label: "Payment Approvals", icon: CircleDollarSign, path: "/payment-approvals" },
-{ label: "Receiving Items", icon: PackageCheck, path: "/receiving-items" },
-{ label: "Materials History", icon: Package, path: "/materials-history" },
 { label: "Transactions", icon: ArrowLeftRight, path: "/transactions" },
 { label: "Payables", icon: CreditCard, path: "/payables" },
 { label: "Supplier Masterlist", icon: Users, path: "/payees" },
