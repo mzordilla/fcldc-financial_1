@@ -55,6 +55,7 @@ export default function PaymentApprovals() {
   const [expandedHistory, setExpandedHistory] = useState(null);
   const [expandedSuppliers, setExpandedSuppliers] = useState(new Set());
   const [expandedGroups, setExpandedGroups] = useState({ pending: true, approved: true, rejected: false, paid: false });
+  const [expandedPOs, setExpandedPOs] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkApproving, setBulkApproving] = useState(false);
@@ -414,41 +415,53 @@ export default function PaymentApprovals() {
         )}
       </div>
 
-      {/* Approved Purchase Orders */}
+      {/* Approved Purchase Orders — Ready to Pay */}
       {availablePOs.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <ShoppingCart className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Approved Purchase Orders — Ready to Pay</h2>
-          </div>
-          <div className="grid gap-3">
-            {availablePOs.map(po => (
-              <div key={po.id} className="bg-card border border-border rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="font-semibold text-foreground">{po.supplier_name}</span>
-                    {po.po_number && <span className="text-xs font-mono text-muted-foreground">{po.po_number}</span>}
-                    {po.priority && po.priority !== "normal" && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${po.priority === "urgent" ? "bg-destructive/10 text-destructive border-destructive/20" : "bg-chart-3/10 text-chart-3 border-chart-3/20"}`}>
-                        {po.priority}
-                      </span>
-                    )}
+          <button
+            onClick={() => setExpandedPOs(!expandedPOs)}
+            className="w-full flex items-center justify-between gap-2 p-3 bg-muted/30 hover:bg-muted/50 border border-border rounded-xl transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="w-4 h-4 text-muted-foreground" />
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Approved Purchase Orders — Ready to Pay</h2>
+              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">{availablePOs.length}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-muted-foreground">₱{availablePOs.reduce((s, po) => s + (po.amount || 0), 0).toLocaleString()}</p>
+              {expandedPOs ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </div>
+          </button>
+          {expandedPOs && (
+            <div className="grid gap-3">
+              {availablePOs.map(po => (
+                <div key={po.id} className="bg-card border border-border rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="font-semibold text-foreground">{po.supplier_name}</span>
+                      {po.po_number && <span className="text-xs font-mono text-muted-foreground">{po.po_number}</span>}
+                      {po.priority && po.priority !== "normal" && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${po.priority === "urgent" ? "bg-destructive/10 text-destructive border-destructive/20" : "bg-chart-3/10 text-chart-3 border-chart-3/20"}`}>
+                          {po.priority}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">{po.description}</p>
+                    <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
+                      {po.project_name && <span>Project: {po.project_name}</span>}
+                      {po.required_date && <span>Needed by: {format(new Date(po.required_date), "MMM d, yyyy")}</span>}
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">{po.description}</p>
-                  <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
-                    {po.project_name && <span>Project: {po.project_name}</span>}
-                    {po.required_date && <span>Needed by: {format(new Date(po.required_date), "MMM d, yyyy")}</span>}
+                  <div className="flex items-center gap-3 sm:flex-col sm:items-end">
+                    <p className="text-lg font-bold text-foreground">₱{(po.amount || 0).toLocaleString()}</p>
+                    <Button size="sm" variant="outline" onClick={() => convertPOtoPaymentRequest(po)}>
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Create Payment Request
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 sm:flex-col sm:items-end">
-                  <p className="text-lg font-bold text-foreground">₱{(po.amount || 0).toLocaleString()}</p>
-                  <Button size="sm" variant="outline" onClick={() => convertPOtoPaymentRequest(po)}>
-                    <Plus className="w-3.5 h-3.5 mr-1" /> Create Payment Request
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
