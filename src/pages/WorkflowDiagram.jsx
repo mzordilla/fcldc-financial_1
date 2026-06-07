@@ -316,7 +316,13 @@ export default function WorkflowDiagram() {
                     { name: "WorkingCapitalLoan", desc: "Short-term credit lines and working capital facilities" },
                     { name: "BankLoan", desc: "Long-term bank loans with amortization details" },
                     { name: "Debt", desc: "General debt / liability records" },
-                    { name: "PPEAsset", desc: "Fixed assets with depreciation tracking" },
+                  ]
+                },
+                {
+                  group: "Fixed Assets (PPE)",
+                  color: "amber",
+                  entities: [
+                    { name: "PPEAsset", desc: "Fixed assets with acquisition cost, useful life, depreciation method, and book value tracking" },
                   ]
                 },
                 {
@@ -365,6 +371,7 @@ export default function WorkflowDiagram() {
                   ["Project", "→", "ChangeOrder", "Projects can have multiple additive/deductive COs"],
                   ["PaymentRequest", "→", "Payable", "Approved payment requests link to payable records"],
                   ["CondoUnit", "→", "Tenant", "Unit occupancy tracked through tenant lease records"],
+                ["PPEAsset", "→", "Transaction", "Asset acquisition posts Dr Asset / Cr Bank; depreciation posts Dr Depreciation Expense / Cr Accumulated Depreciation"],
                 ].map(([from, arrow, to, desc], i) => (
                   <div key={i} className="flex items-start gap-2 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
                     <span className="font-mono text-blue-700 font-semibold whitespace-nowrap">{from}</span>
