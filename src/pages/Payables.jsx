@@ -221,13 +221,18 @@ export default function Payables() {
   const totalUnpaid = unpaidPayables.reduce((s, p) => s + ((p.amount || 0) - (p.amount_paid || 0)), 0);
   const overdueCount = payables.filter(p => p.status === "overdue").length;
   
-  // Monthly payment efficiency calculation
+  // Monthly payment efficiency based on aging analysis (payments made before becoming overdue)
   const monthlyPaymentData = payables.reduce((acc, p) => {
     const monthKey = p.due_date ? p.due_date.substring(0, 7) : null;
     if (!monthKey) return acc;
-    if (!acc[monthKey]) acc[monthKey] = { total: 0, paid: 0 };
+    if (!acc[monthKey]) acc[monthKey] = { total: 0, paid: 0, overdue: 0 };
     acc[monthKey].total += p.amount || 0;
     acc[monthKey].paid += p.amount_paid || 0;
+    // Consider overdue if status is overdue or days past due > 0
+    const daysOverdue = p.due_date ? differenceInDays(new Date(), new Date(p.due_date)) : 0;
+    if (p.status === "overdue" || (daysOverdue > 0 && p.status !== "paid")) {
+      acc[monthKey].overdue += (p.amount || 0) - (p.amount_paid || 0);
+    }
     return acc;
   }, {});
   
@@ -236,7 +241,9 @@ export default function Payables() {
       month,
       total: data.total,
       paid: data.paid,
-      efficiency: data.total > 0 ? ((data.paid / data.total) * 100) : 0,
+      overdue: data.overdue,
+      // Efficiency based on how much was paid before becoming overdue
+      efficiency: data.total > 0 ? ((data.total - data.overdue) / data.total) * 100 : 0,
     }))
     .sort((a, b) => b.month.localeCompare(a.month))
     .slice(0, 6);
@@ -322,6 +329,7 @@ export default function Payables() {
                   <th className="text-left pb-2 font-medium">Month</th>
                   <th className="text-right pb-2 font-medium">Total Payables</th>
                   <th className="text-right pb-2 font-medium">Amount Paid</th>
+                  <th className="text-right pb-2 font-medium">Overdue</th>
                   <th className="text-right pb-2 font-medium">Efficiency</th>
                 </tr>
               </thead>
@@ -331,6 +339,7 @@ export default function Payables() {
                     <td className="py-2 font-medium text-foreground">{format(new Date(m.month + "-01"), "MMM yyyy")}</td>
                     <td className="py-2 text-right text-foreground">₱{m.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     <td className="py-2 text-right text-primary">₱{m.paid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td className="py-2 text-right text-destructive">₱{m.overdue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     <td className="py-2 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
