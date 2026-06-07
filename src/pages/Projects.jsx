@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AddFormDialog from "../components/shared/AddFormDialog";
-import ProjectPnL from "./ProjectPnL";
 
 
 const contractStatusStyles = {
@@ -66,7 +65,6 @@ const fields = [
 
 export default function Projects() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("projects");
   const [showAdd, setShowAdd] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -151,7 +149,7 @@ export default function Projects() {
             {projects.length} total · {activeCount} active · {pendingCount} pending contract
           </p>
         </div>
-        {activeTab === "projects" && <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -174,30 +172,9 @@ export default function Projects() {
           <Button onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4 mr-2" /> New Project
           </Button>
-        </div>}
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-border">
-        {[
-          { key: "projects", label: "Projects" },
-          { key: "pnl", label: "Project P&L" },
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
-              activeTab === tab.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === "pnl" && <ProjectPnL />}
-
-      {activeTab === "projects" && <>
       {/* KPI Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-card border border-border rounded-2xl p-4">
@@ -396,7 +373,6 @@ export default function Projects() {
         fields={fields}
         initialData={editingProject || {}}
         onSubmit={(data) => updateMutation.mutateAsync({ id: editingProject.id, data })} />
-      </>}
       
     </div>);
 

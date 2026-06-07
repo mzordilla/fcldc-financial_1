@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, FolderKanban, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ScanLine, Users, Receipt, ClipboardList, Boxes, Home, List, PieChart } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ScanLine, Users, Receipt, ClipboardList, Boxes, Home, List, PieChart, BookOpen, RefreshCw, TrendingUp } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { navItemsByRole } from "@/lib/access-control";
@@ -12,14 +12,17 @@ const allNavItems = [
 { label: "Listings", icon: List, path: "/re/listings", group: "Real Estate Portfolio" },
 { label: "Portfolio Reports", icon: PieChart, path: "/re/reports", group: "Real Estate Portfolio" },
 { label: "Projects", icon: Briefcase, path: "/projects" },
-
+{ label: "Project P&L", icon: TrendingUp, path: "/project-pnl" },
+{ label: "Billing Cycles", icon: Receipt, path: "/billing-cycles" },
 { label: "Receivables", icon: FileText, path: "/receivables" },
 { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
 { label: "Payment Approvals", icon: CircleDollarSign, path: "/payment-approvals" },
 { label: "Transactions", icon: ArrowLeftRight, path: "/transactions" },
 { label: "Payables", icon: CreditCard, path: "/payables" },
 { label: "Supplier Masterlist", icon: Users, path: "/payees" },
+{ label: "Chart of Accounts", icon: BookOpen, path: "/chart-of-accounts" },
 { label: "Bank Accounts", icon: Building2, path: "/bank-accounts" },
+{ label: "Bank Reconciliation", icon: RefreshCw, path: "/bank-reconciliation" },
 { label: "Working Capital Loans", icon: Landmark, path: "/working-capital-loans" },
 { label: "PPE Assets", icon: Boxes, path: "/ppe-assets" },
 { label: "Reports", icon: BarChart2, path: "/reports" },

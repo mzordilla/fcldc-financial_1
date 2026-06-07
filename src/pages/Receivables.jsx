@@ -10,7 +10,6 @@ import { Progress } from "@/components/ui/progress";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import ReceivableFormDialog from "../components/receivables/ReceivableFormDialog";
 import MarkReceivableAsCollectedDialog from "../components/receivables/MarkReceivableAsCollectedDialog";
-import BillingCycles from "./BillingCycles";
 
 function getAgingBucket(dueDateStr, status) {
   if (status === "paid") return null;
@@ -84,7 +83,6 @@ const fields = [
 ];
 
 export default function Receivables() {
-  const [activeTab, setActiveTab] = useState("receivables");
   const [showAdd, setShowAdd] = useState(false);
   const [editingR, setEditingR] = useState(null);
   const [collectingR, setCollectingR] = useState(null);
@@ -143,48 +141,26 @@ export default function Receivables() {
             ₱{totalOutstanding.toLocaleString()} outstanding · {overdueCount} overdue
           </p>
         </div>
-        {activeTab === "receivables" && (
-          <div className="flex items-center gap-3">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="outstanding">Outstanding</SelectItem>
-                <SelectItem value="partially_paid">Partially Paid</SelectItem>
-                <SelectItem value="overdue">Overdue</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={() => setShowAdd(true)}>
-              <Plus className="w-4 h-4 mr-2" /> Add
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="outstanding">Outstanding</SelectItem>
+              <SelectItem value="partially_paid">Partially Paid</SelectItem>
+              <SelectItem value="overdue">Overdue</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={() => setShowAdd(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Add
+          </Button>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-border">
-        {[
-          { key: "receivables", label: "Receivables" },
-          { key: "billing", label: "Billing Cycles" },
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
-              activeTab === tab.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <AgingSummary items={receivables} />
 
-      {activeTab === "billing" && <BillingCycles />}
-
-      {activeTab === "receivables" && <AgingSummary items={receivables} />}
-
-      {activeTab === "receivables" && <div className="grid gap-4">
+      <div className="grid gap-4">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
         {!isLoading && filtered.length === 0 && <p className="text-center py-12 text-muted-foreground">No receivables yet</p>}
         {filtered.map((r) => {
@@ -272,7 +248,7 @@ export default function Receivables() {
             </div>
           );
         })}
-      </div>}
+      </div>
 
       <ReceivableFormDialog
         open={showAdd}
