@@ -3,7 +3,7 @@ import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, parse
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Printer, X } from "lucide-react";
+import { Printer, X, Trash2 } from "lucide-react";
 
 // Build list of last 12 months as options
 function getMonthOptions() {
@@ -25,7 +25,16 @@ function fmt(n) {
 export default function SupplierStatementDialog({ open, onOpenChange, supplier, payables }) {
   const monthOptions = getMonthOptions();
   const [selectedMonth, setSelectedMonth] = useState(monthOptions[0].value);
+  const [excludedInvoices, setExcludedInvoices] = useState(new Set());
   const printRef = useRef();
+
+  const toggleExclude = (id) => {
+    setExcludedInvoices(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   if (!supplier) return null;
 
@@ -39,8 +48,9 @@ export default function SupplierStatementDialog({ open, onOpenChange, supplier, 
     (p.supplier_name || "").toLowerCase().trim() === supplier.toLowerCase().trim()
   );
 
-  // Invoices created / due within selected month
+  // Invoices created / due within selected month (excluding removed ones)
   const monthInvoices = supplierPayables.filter(p => {
+    if (excludedInvoices.has(p.id)) return false;
     const ref = p.due_date || p.created_date;
     if (!ref) return false;
     const d = new Date(ref);
@@ -93,6 +103,7 @@ export default function SupplierStatementDialog({ open, onOpenChange, supplier, 
         .summary-item p { margin: 0; }
         .summary-item .label { color: #6b7280; font-size: 11px; }
         .summary-item .value { font-size: 15px; font-weight: bold; }
+        .no-print { display: none !important; }
         @media print { body { margin: 0; } }
       </style>
       </head><body>${content}</body></html>
@@ -173,10 +184,11 @@ export default function SupplierStatementDialog({ open, onOpenChange, supplier, 
                       <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
                       <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Paid</th>
                       <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Balance</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {monthInvoices.map(p => {
+                      <th className="px-4 py-2 w-8"></th>
+                      </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                      {monthInvoices.map(p => {
                       const balance = (p.amount || 0) - (p.amount_paid || 0);
                       return (
                         <tr key={p.id} className="hover:bg-muted/20">
@@ -195,9 +207,18 @@ export default function SupplierStatementDialog({ open, onOpenChange, supplier, 
                           <td className="px-4 py-2 text-right text-xs font-semibold text-foreground">₱{fmt(p.amount)}</td>
                           <td className="px-4 py-2 text-right text-xs text-primary">₱{fmt(p.amount_paid)}</td>
                           <td className="px-4 py-2 text-right text-xs font-bold text-foreground">₱{fmt(balance)}</td>
+                          <td className="px-4 py-2 text-center no-print">
+                            <button
+                              onClick={() => toggleExclude(p.id)}
+                              className="text-muted-foreground hover:text-destructive transition-colors"
+                              title="Remove from statement"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
                         </tr>
                       );
-                    })}
+                      })}
                   </tbody>
                   <tfoot className="bg-muted/20 border-t border-border">
                     <tr>
@@ -205,12 +226,38 @@ export default function SupplierStatementDialog({ open, onOpenChange, supplier, 
                       <td className="px-4 py-2 text-right text-xs font-bold text-foreground">₱{fmt(totalBilled)}</td>
                       <td className="px-4 py-2 text-right text-xs font-bold text-primary">₱{fmt(monthInvoices.reduce((s, p) => s + (p.amount_paid || 0), 0))}</td>
                       <td className="px-4 py-2 text-right text-xs font-bold text-foreground">₱{fmt(monthInvoices.reduce((s, p) => s + Math.max(0, (p.amount || 0) - (p.amount_paid || 0)), 0))}</td>
+                      <td />
                     </tr>
                   </tfoot>
                 </table>
               </div>
             )}
           </div>
+
+          {/* Removed invoices — restore option (hidden on print) */}
+          {excludedInvoices.size > 0 && (
+            <div className="no-print bg-muted/30 border border-dashed border-border rounded-xl p-3">
+              <p className="text-xs font-semibold text-muted-foreground mb-2">
+                {excludedInvoices.size} invoice{excludedInvoices.size > 1 ? "s" : ""} removed from statement
+                <button className="ml-3 text-primary underline" onClick={() => setExcludedInvoices(new Set())}>
+                  Restore all
+                </button>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {supplierPayables
+                  .filter(p => excludedInvoices.has(p.id))
+                  .map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => toggleExclude(p.id)}
+                      className="text-xs bg-card border border-border rounded-full px-3 py-1 text-muted-foreground hover:text-foreground flex items-center gap-1"
+                    >
+                      {p.invoice_number || p.description || "Invoice"} <X className="w-3 h-3" />
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
 
           {/* Payments this month */}
           <div>
