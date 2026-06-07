@@ -122,6 +122,22 @@ export default function BankAccounts() {
     queryFn: () => base44.entities.Transaction.list("-date", 500)
   });
 
+  const { data: receivables = [] } = useQuery({
+    queryKey: ["receivables_undeposited"],
+    queryFn: () => base44.entities.Receivable.list("-created_date", 500)
+  });
+
+  // Calculate undeposited collections (payments without bank_account_id)
+  const undepositedCollections = receivables.reduce((total, rec) => {
+    const undeposited = (rec.payment_history || []).reduce((sum, payment) => {
+      if (!payment.bank_account_id || payment.bank_account_id === "") {
+        return sum + (payment.amount || 0);
+      }
+      return sum;
+    }, 0);
+    return total + undeposited;
+  }, 0);
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.BankAccount.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bankaccounts"] })
@@ -180,7 +196,7 @@ export default function BankAccounts() {
       {activeTab === "accounts" && <>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-card rounded-2xl border border-border p-5 flex items-center gap-4">
           <div className="p-3 rounded-xl bg-primary/10">
             <Wallet className="w-5 h-5 text-primary" />
@@ -190,6 +206,16 @@ export default function BankAccounts() {
             <p className={`text-3xl font-bold ${totalBalance >= 0 ? "text-primary" : "text-destructive"}`}>
               {totalBalance < 0 ? "-" : ""}{fmt(totalBalance)}
             </p>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-2xl border border-border p-5 flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-chart-3/10">
+            <Building2 className="w-5 h-5 text-chart-3" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Undeposited Collections</p>
+            <p className="text-3xl font-bold text-chart-3">{fmt(undepositedCollections)}</p>
           </div>
         </div>
 
