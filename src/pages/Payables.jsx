@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays, addDays } from "date-fns";
-import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download, Banknote, ChevronDown, ChevronUp, CheckSquare, Square, Loader2, History } from "lucide-react";
+import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download, Banknote, ChevronDown, ChevronUp, CheckSquare, Square, Loader2, History, FileText } from "lucide-react";
 
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import MarkPayableAsPaidDialog from "../components/payables/MarkPayableAsPaidDialog";
 import PayableCard from "../components/payables/PayableCard";
+import SupplierStatementDialog from "../components/payables/SupplierStatementDialog";
 
 function getAgingBucket(dueDateStr, status) {
   if (status === "paid") return null;
@@ -70,6 +71,7 @@ const statusStyles = {
 
 export default function Payables() {
   const [markingPaid, setMarkingPaid] = useState(null);
+  const [statementSupplier, setStatementSupplier] = useState(null);
   const [showPaymentRequests, setShowPaymentRequests] = useState(true);
   const [showPaid, setShowPaid] = useState(false);
   const [selectedPRs, setSelectedPRs] = useState(new Set());
@@ -380,6 +382,14 @@ export default function Payables() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                        onClick={e => { e.stopPropagation(); setStatementSupplier(supplier); }}
+                      >
+                        <FileText className="w-3 h-3 mr-1" /> Statement
+                      </Button>
                       <div className="flex items-center gap-1 text-xs">
                         <span className="text-muted-foreground">Current:</span>
                         <span className="font-semibold text-primary">₱{buckets.current.toLocaleString()}</span>
@@ -539,6 +549,13 @@ export default function Payables() {
           )}
         </div>
       )}
+
+      <SupplierStatementDialog
+        open={!!statementSupplier}
+        onOpenChange={(v) => { if (!v) setStatementSupplier(null); }}
+        supplier={statementSupplier}
+        payables={payables}
+      />
 
       <MarkPayableAsPaidDialog
         open={!!markingPaid}
