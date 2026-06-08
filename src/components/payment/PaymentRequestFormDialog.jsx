@@ -20,6 +20,7 @@ const defaultForm = {
   due_date: "",
   requested_by: "",
   supporting_docs: "",
+  base_amount: "",
   withholding_tax_percentage: 0,
   withholding_tax_amount: 0,
   vat_percentage: 0,
@@ -45,8 +46,8 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
   useEffect(() => {
     if (open) {
       if (initialData) {
-        const { project_allocations, ...rest } = initialData;
-        setForm({ ...defaultForm, ...rest });
+        const { project_allocations, amount, ...rest } = initialData;
+        setForm({ ...defaultForm, ...rest, base_amount: amount || "" });
         setAllocations(
           project_allocations && project_allocations.length > 0
             ? project_allocations.map(a => ({ project_name: a.project_name || "", amount: a.amount || "", category: a.category || "" }))
@@ -59,7 +60,9 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
     }
   }, [open, initialData]);
 
-  const totalAmount = allocations.reduce((s, a) => s + (parseFloat(a.amount) || 0), 0);
+  const allocationsTotal = allocations.reduce((s, a) => s + (parseFloat(a.amount) || 0), 0);
+  // Use allocations total if any allocations have amounts, otherwise fall back to base_amount field
+  const totalAmount = allocationsTotal > 0 ? allocationsTotal : (parseFloat(form.base_amount) || 0);
   const withholdingTaxAmount = (totalAmount * (parseFloat(form.withholding_tax_percentage) || 0)) / 100;
   const vatAmount = (totalAmount * (parseFloat(form.vat_percentage) || 0)) / 100;
 
@@ -83,9 +86,10 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
         cleanedForm[key] = form[key];
       }
     });
+    const { base_amount, ...formWithoutBase } = cleanedForm;
     await onSubmit({
-    ...cleanedForm,
-    project_allocations: validAllocations.map(a => ({ project_name: a.project_name, amount: parseFloat(a.amount) || 0, category: a.category || "" })),
+      ...formWithoutBase,
+      project_allocations: validAllocations.map(a => ({ project_name: a.project_name, amount: parseFloat(a.amount) || 0, category: a.category || "" })),
       amount: totalAmount,
       withholding_tax_percentage: parseFloat(form.withholding_tax_percentage) || 0,
       withholding_tax_amount: withholdingTaxAmount,
@@ -120,6 +124,36 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
           <div className="space-y-1.5">
             <Label>Description / Reason *</Label>
             <Input required placeholder="What is this payment for?" value={form.description} onChange={e => setField("description", e.target.value)} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Amount *</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={form.base_amount}
+                onChange={e => setField("base_amount", e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Override if not using project allocations</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Category</Label>
+              <Select value={form.category} onValueChange={v => setField("category", v)}>
+                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="supplier_invoice">Supplier Invoice</SelectItem>
+                  <SelectItem value="subcontractor">Subcontractor</SelectItem>
+                  <SelectItem value="labor">Labor</SelectItem>
+                  <SelectItem value="equipment">Equipment</SelectItem>
+                  <SelectItem value="expense_reimbursement">Expense Reimbursement</SelectItem>
+                  <SelectItem value="utilities">Utilities</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Project Allocations */}
