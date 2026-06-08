@@ -73,6 +73,24 @@ export default function POToPayableDialog({ open, onOpenChange, po, onSuccess })
       status: "unpaid",
     });
 
+    // 1b. Create a Payment Request so it appears in Payment Approvals
+    await base44.entities.PaymentRequest.create({
+      request_number: `PR-PO-${po.po_number || po.id.slice(-6).toUpperCase()}`,
+      payee: po.supplier_name,
+      description: po.description,
+      amount: po.amount,
+      category: "supplier_invoice",
+      payment_method: "bank_transfer",
+      invoice_number: form.invoice_number || po.po_number || "",
+      invoice_date: po.requested_date || today,
+      due_date: form.due_date,
+      requested_by: po.requested_by || "",
+      supporting_docs: `PO: ${po.po_number || ""}`,
+      project_allocations: po.project_name ? [{ project_name: po.project_name, amount: po.amount }] : [],
+      approval_status: "pending",
+      approval_step: "submitted",
+    });
+
     // 2. Dr. Expense/Asset Account (recognize cost upon delivery)
     await base44.entities.Transaction.create({
       description: `${isAsset ? "Asset Capitalization" : "Expense Recognition"} – ${po.supplier_name}${po.po_number ? ` (${po.po_number})` : ""}${po.description ? `: ${po.description}` : ""}`,
