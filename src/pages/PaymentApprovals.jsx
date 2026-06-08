@@ -274,7 +274,7 @@ export default function PaymentApprovals() {
       const bankLabel = bankAccount ? `${bankAccount.account_name} – ${bankAccount.bank_name}` : "Cash in Bank";
       const projectName = pr.project_allocations?.[0]?.project_name || "";
 
-      // Dr. Accounts Payable (reduce liability)
+      // Dr. Accounts Payable (reduce liability — no bank movement)
       await base44.entities.Transaction.create({
         description: `Accounts Payable Settlement – ${pr.payee}${pr.invoice_number ? ` (${pr.invoice_number})` : ""}`,
         amount: pr.amount,
@@ -282,7 +282,6 @@ export default function PaymentApprovals() {
         category: "other",
         chart_of_account: "Accounts Payable",
         project_code: projectName,
-        bank_account_id: bankAccountId || "",
         date: disbursedDate,
         status: "completed",
       });
