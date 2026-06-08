@@ -77,7 +77,7 @@ export default function Payables() {
   const [selectedPRs, setSelectedPRs] = useState(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [removingDupes, setRemovingDupes] = useState(false);
-  const [groupBySupplier, setGroupBySupplier] = useState(true);
+  const [groupBySupplier, setGroupBySupplier] = useState(false);
   const [expandedSuppliers, setExpandedSuppliers] = useState(new Set());
   const queryClient = useQueryClient();
   const importRef = useRef();
