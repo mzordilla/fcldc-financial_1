@@ -51,9 +51,21 @@ function computeStatement(accounts, transactions, dateFrom, dateTo) {
   let totalExpenses = 0;
   expenseAccounts.forEach(acc => {
     const txs = txByAccount[acc.account_name] || [];
-    const amount = txs.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
+    const expenseTxs = txs.filter(t => t.type === "expense");
+    const amount = expenseTxs.reduce((s, t) => s + (t.amount || 0), 0);
     if (amount > 0) {
-      expenseLines.push({ label: `${acc.account_code ? acc.account_code + " · " : ""}${acc.account_name}`, amount, accountName: acc.account_name });
+      const breakdown = expenseTxs.map(t => ({
+        description: t.description || "Transaction",
+        amount: t.amount || 0,
+        date: t.date,
+        project_code: t.project_code,
+      })).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+      expenseLines.push({ 
+        label: `${acc.account_code ? acc.account_code + " · " : ""}${acc.account_name}`, 
+        amount, 
+        accountName: acc.account_name,
+        breakdown 
+      });
       totalExpenses += amount;
     }
   });
@@ -75,6 +87,12 @@ function StatCard({ label, value, sub, positive }) {
 
 function StatementCard({ stmt, periodLabel }) {
   const [expanded, setExpanded] = useState(true);
+  const [expandedExpenses, setExpandedExpenses] = useState({});
+
+  const toggleExpenseBreakdown = (index) => {
+    setExpandedExpenses(prev => ({ ...prev, [index]: !prev[index] }));
+  };
+
   return (
     <div className="bg-card border border-border rounded-2xl overflow-hidden">
       <button
@@ -113,9 +131,33 @@ function StatementCard({ stmt, periodLabel }) {
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-4 mb-1">Expenses</p>
           {stmt.expenseLines.length === 0 && <p className="text-sm text-muted-foreground pl-4 py-1">No expenses</p>}
           {stmt.expenseLines.map((l, i) => (
-            <div key={i} className="flex justify-between py-1.5 pl-4 border-b border-border/30">
-              <span className="text-sm text-muted-foreground">{l.label}</span>
-              <span className="text-sm font-medium text-destructive">{fmt(l.amount)}</span>
+            <div key={i}>
+              <button
+                onClick={() => toggleExpenseBreakdown(i)}
+                className="w-full flex justify-between py-1.5 pl-4 border-b border-border/30 hover:bg-muted/20 transition-colors"
+              >
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  {l.breakdown && l.breakdown.length > 0 && (
+                    expandedExpenses[i] ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
+                  )}
+                  {l.label}
+                </span>
+                <span className="text-sm font-medium text-destructive">{fmt(l.amount)}</span>
+              </button>
+              {expandedExpenses[i] && l.breakdown && l.breakdown.length > 0 && (
+                <div className="pl-8 pr-4 pb-2 space-y-1 bg-muted/10">
+                  {l.breakdown.map((item, idx) => (
+                    <div key={idx} className="flex justify-between text-xs py-1">
+                      <span className="text-muted-foreground">
+                        {item.description}
+                        {item.project_code && <span className="ml-2 text-xs text-muted-foreground">({item.project_code})</span>}
+                        {item.date && <span className="ml-2 text-xs text-muted-foreground">• {format(parseISO(item.date), "MMM d, yyyy")}</span>}
+                      </span>
+                      <span className="text-destructive/80">{fmt(item.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
           <div className="flex justify-between py-2 border-t border-border font-semibold">
