@@ -82,13 +82,13 @@ export default function PaymentApprovals() {
   });
 
   // Filter out POs that already have a payment request OR payable linked to them
-  const poIdsWithRequests = new Set(
+  const poRefsWithRequests = new Set(
     requests
       .map(r => r.supporting_docs)
       .filter(Boolean)
-      .map(doc => {
+      .flatMap(doc => {
         const match = doc.match(/PO:\s*(.+)/);
-        return match ? match[1].trim() : null;
+        return match ? [match[1].trim()] : [];
       })
       .filter(Boolean)
   );
@@ -96,15 +96,13 @@ export default function PaymentApprovals() {
   // Also check payables for linked POs
   const poIdsWithPayables = new Set(
     payables
-      .map(p => p.po_id || p.po_number)
-      .filter(Boolean)
+      .flatMap(p => [p.po_id, p.po_number].filter(Boolean))
   );
 
   const availablePOs = approvedPOs.filter(po => {
-    const poRef = po.po_number || "";
-    const hasPaymentRequest = poIdsWithRequests.has(poRef);
+    const hasPaymentRequest = poRefsWithRequests.has(po.po_number) || poRefsWithRequests.has(po.id);
     const hasPayableById = poIdsWithPayables.has(po.id);
-    const hasPayableByRef = poIdsWithPayables.has(poRef);
+    const hasPayableByRef = po.po_number && poIdsWithPayables.has(po.po_number);
     return !hasPaymentRequest && !hasPayableById && !hasPayableByRef;
   });
 
