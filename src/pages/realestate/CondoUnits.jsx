@@ -182,6 +182,7 @@ export default function CondoUnits() {
               <TableHead>Unit</TableHead>
               <TableHead>Building</TableHead>
               <TableHead>Type</TableHead>
+              <TableHead>Parking</TableHead>
               <TableHead>Area</TableHead>
               <TableHead>Price/sqm</TableHead>
               <TableHead>Selling Price</TableHead>
@@ -212,6 +213,16 @@ export default function CondoUnits() {
                   )}
                 </TableCell>
                 <TableCell>{u.unit_type ? typeLabels[u.unit_type] : "—"}</TableCell>
+                <TableCell>
+                  {u.parking_slots ? (
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold text-foreground">{u.parking_slots}</span>
+                      <span className="text-xs text-muted-foreground">slot{u.parking_slots > 1 ? "s" : ""}</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </TableCell>
                 <TableCell>{u.area_sqm ? `${u.area_sqm} sqm` : "—"}</TableCell>
                 <TableCell>{u.price_per_sqm ? fmt(u.price_per_sqm) : "—"}</TableCell>
                 <TableCell>
