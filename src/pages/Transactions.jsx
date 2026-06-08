@@ -2,10 +2,11 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, ArrowUpRight, ArrowDownRight, Trash2, Pencil, Building2, TableProperties, FileUp, Download, HardDriveDownload } from "lucide-react";
+import { Plus, ArrowUpRight, ArrowDownRight, Trash2, Pencil, Building2, TableProperties, FileUp, Download, HardDriveDownload, Search } from "lucide-react";
 import { exportToExcel } from "@/utils/excelUtils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import TransactionFormDialog from "../components/transactions/TransactionFormDialog";
@@ -44,6 +45,7 @@ export default function Transactions() {
   const [showImport, setShowImport] = useState(false);
   const [editingT, setEditingT] = useState(null);
   const [typeFilter, setTypeFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
 
   const { data: transactions = [], isLoading } = useQuery({
@@ -80,7 +82,18 @@ export default function Transactions() {
     },
   });
 
-  const filtered = typeFilter === "all" ? transactions : transactions.filter(t => t.type === typeFilter);
+  const filtered = transactions
+    .filter(t => typeFilter === "all" || t.type === typeFilter)
+    .filter(t => {
+      if (!search.trim()) return true;
+      const q = search.toLowerCase();
+      return (
+        (t.description || "").toLowerCase().includes(q) ||
+        (t.project_code || "").toLowerCase().includes(q) ||
+        (t.category || "").toLowerCase().includes(q) ||
+        (t.chart_of_account || "").toLowerCase().includes(q)
+      );
+    });
 
   const [isBackingUp, setIsBackingUp] = useState(false);
 
@@ -157,6 +170,16 @@ export default function Transactions() {
             <Plus className="w-4 h-4 mr-2" /> Add
           </Button>
         </div>
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          className="pl-9 w-full sm:w-80"
+          placeholder="Search description, project, category..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
       </div>
 
       <SpendByCategoryChart transactions={filtered} />
