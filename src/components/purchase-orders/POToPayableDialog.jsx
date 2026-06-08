@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,18 @@ export default function POToPayableDialog({ open, onOpenChange, po, onSuccess })
     chart_of_account: "General Expense",
   });
   const [saving, setSaving] = useState(false);
+
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ["chartofaccounts"],
+    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 200),
+  });
+
+  // Filter accounts by selected classification type
+  const filteredAccounts = chartOfAccounts.filter(a =>
+    form.account_classification === "asset"
+      ? a.account_type === "asset"
+      : a.account_type === "expense"
+  );
 
   // Reset form with CoA defaults whenever a new PO is loaded
   useEffect(() => {
@@ -144,11 +157,26 @@ export default function POToPayableDialog({ open, onOpenChange, po, onSuccess })
 
           <div className="space-y-1.5">
             <Label>Debit Account (Chart of Accounts)</Label>
-            <Input
+            <Select
               value={form.chart_of_account}
-              onChange={e => setForm(f => ({ ...f, chart_of_account: e.target.value }))}
-              placeholder="e.g. Raw Materials Inventory"
-            />
+              onValueChange={v => setForm(f => ({ ...f, chart_of_account: v }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select debit account..." />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredAccounts.map(a => (
+                  <SelectItem key={a.id} value={a.account_name}>
+                    {a.account_code ? `${a.account_code} · ${a.account_name}` : a.account_name}
+                  </SelectItem>
+                ))}
+                {filteredAccounts.length === 0 && (
+                  <SelectItem value={form.chart_of_account} disabled>
+                    No accounts found
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
             <p className="text-xs text-muted-foreground">Credit entry will be posted to: <strong>Accounts Payable</strong></p>
           </div>
         </div>
