@@ -20,7 +20,11 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
   const [step, setStep] = useState(0);
   const [actor, setActor] = useState("");
   const [notes, setNotes] = useState("");
+  const [bankAccountId, setBankAccountId] = useState("");
+  const [paymentReference, setPaymentReference] = useState("");
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split("T")[0]);
   const isFinal = FINAL_STATUSES.includes(currentStatus);
+  const isDisbursement = currentStatus === "approved";
   // For final statuses or non-admins, only show Details and History tabs
   const visibleSteps = (isFinal || !isAdmin) ? ["Details", "History"] : STEPS;
 
@@ -36,7 +40,13 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
     enabled: open,
   });
 
-  const reset = () => { setStep(0); setActor(""); setNotes(""); };
+  const { data: bankAccounts = [] } = useQuery({
+    queryKey: ["bankaccounts"],
+    queryFn: () => base44.entities.BankAccount.list("-created_date", 100),
+    enabled: open && isDisbursement,
+  });
+
+  const reset = () => { setStep(0); setActor(""); setNotes(""); setBankAccountId(""); setPaymentReference(""); setPaymentDate(new Date().toISOString().split("T")[0]); };
 
   const handleClose = (v) => {
     if (!v) reset();
@@ -44,7 +54,7 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
   };
 
   const handleDecide = (action) => {
-    onDecision({ action, actor, notes });
+    onDecision({ action, actor, notes, bankAccountId, paymentReference, paymentDate });
     handleClose(false);
   };
 
@@ -126,6 +136,39 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
                 className="h-24"
               />
             </div>
+            {/* Extra fields for Disbursement */}
+            {isDisbursement && (
+              <div className="space-y-3 border-t border-border pt-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Disbursement Details</p>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Payment Date</label>
+                  <Input
+                    type="date"
+                    value={paymentDate}
+                    onChange={e => setPaymentDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Bank Account <span className="text-muted-foreground font-normal">(for transaction)</span></label>
+                  <Select value={bankAccountId} onValueChange={setBankAccountId}>
+                    <SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger>
+                    <SelectContent>
+                      {bankAccounts.filter(a => a.status !== "closed").map(a => (
+                        <SelectItem key={a.id} value={a.id}>{a.account_name} – {a.bank_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Reference # <span className="text-muted-foreground font-normal">(check no., transfer ref., etc.)</span></label>
+                  <Input
+                    value={paymentReference}
+                    onChange={e => setPaymentReference(e.target.value)}
+                    placeholder="e.g. CHK-00123 or TRF-2026-0501"
+                  />
+                </div>
+              </div>
+            )}
             <div className="bg-muted/30 rounded-lg p-3 text-xs text-muted-foreground">
               Your name and notes will be permanently recorded in the approval history.
             </div>

@@ -188,7 +188,7 @@ export default function PaymentApprovals() {
     setPrefillData(prData);
   };
 
-  const handleDecision = async (pr, { action, actor, notes }) => {
+  const handleDecision = async (pr, { action, actor, notes, bankAccountId, paymentReference, paymentDate }) => {
     const newEntry = {
       step: action,
       action,
@@ -197,6 +197,7 @@ export default function PaymentApprovals() {
       timestamp: new Date().toISOString(),
     };
     const history = [...(pr.approval_history || []), newEntry];
+    const disbursedDate = paymentDate || new Date().toISOString().split("T")[0];
     await updateMutation.mutateAsync({
       id: pr.id,
       data: {
@@ -205,24 +206,62 @@ export default function PaymentApprovals() {
         approved_by: actor,
         approval_step: action,
         approval_history: history,
-        ...(action === "paid" ? { check_date: new Date().toISOString().split("T")[0] } : {}),
+        ...(action === "paid" ? { check_date: disbursedDate } : {}),
       },
     });
 
-    // When disbursed, auto-mark the linked Payable as paid
-    if (action === "paid" && pr.supporting_docs) {
-      const match = pr.supporting_docs.match(/PO:\s*(.+)/);
-      if (match) {
-        const poRef = match[1].trim();
-        const linkedPayable = payables.find(p => p.po_number === poRef || p.po_id === poRef);
-        if (linkedPayable && linkedPayable.status !== "paid") {
-          await base44.entities.Payable.update(linkedPayable.id, {
-            status: "paid",
-            amount_paid: linkedPayable.amount,
-            payment_date: new Date().toISOString().split("T")[0],
-            payment_notes: `Auto-paid via Payment Approval disbursement by ${actor}`,
-          });
-          queryClient.invalidateQueries({ queryKey: ["payables_for_po_check"] });
+    // When disbursed, create double-entry transactions + auto-mark linked Payable as paid
+    if (action === "paid") {
+      const bankAccounts = await base44.entities.BankAccount.list("-created_date", 100);
+      const bankAccount = bankAccounts.find(a => a.id === bankAccountId);
+      const bankLabel = bankAccount ? `${bankAccount.account_name} – ${bankAccount.bank_name}` : "Cash in Bank";
+      const projectName = pr.project_allocations?.[0]?.project_name || "";
+
+      // Dr. Accounts Payable (reduce liability)
+      await base44.entities.Transaction.create({
+        description: `Accounts Payable Settlement – ${pr.payee}${pr.invoice_number ? ` (${pr.invoice_number})` : ""}`,
+        amount: pr.amount,
+        type: "expense",
+        category: "other",
+        chart_of_account: "Accounts Payable",
+        project_code: projectName,
+        bank_account_id: bankAccountId || "",
+        date: disbursedDate,
+        status: "completed",
+      });
+
+      // Cr. Cash in Bank (cash outflow)
+      await base44.entities.Transaction.create({
+        description: `Cash Payment – ${pr.payee}${pr.invoice_number ? ` (${pr.invoice_number})` : ""}${paymentReference ? ` [${paymentReference}]` : ""}`,
+        amount: pr.amount,
+        type: "expense",
+        category: pr.category || "other",
+        chart_of_account: bankLabel,
+        project_code: projectName,
+        bank_account_id: bankAccountId || "",
+        date: disbursedDate,
+        status: "completed",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+
+      // Auto-mark linked Payable as paid
+      if (pr.supporting_docs) {
+        const match = pr.supporting_docs.match(/PO:\s*(.+)/);
+        if (match) {
+          const poRef = match[1].trim();
+          const linkedPayable = payables.find(p => p.po_number === poRef || p.po_id === poRef);
+          if (linkedPayable && linkedPayable.status !== "paid") {
+            await base44.entities.Payable.update(linkedPayable.id, {
+              status: "paid",
+              amount_paid: linkedPayable.amount,
+              payment_date: disbursedDate,
+              payment_method: pr.payment_method || "bank_transfer",
+              payment_reference: paymentReference || "",
+              payment_notes: `Auto-paid via Payment Approval disbursement by ${actor}`,
+            });
+            queryClient.invalidateQueries({ queryKey: ["payables_for_po_check"] });
+          }
         }
       }
     }
