@@ -188,7 +188,7 @@ export default function PaymentApprovals() {
     setPrefillData(prData);
   };
 
-  const handleDecision = (pr, { action, actor, notes }) => {
+  const handleDecision = async (pr, { action, actor, notes }) => {
     const newEntry = {
       step: action,
       action,
@@ -197,7 +197,7 @@ export default function PaymentApprovals() {
       timestamp: new Date().toISOString(),
     };
     const history = [...(pr.approval_history || []), newEntry];
-    updateMutation.mutate({
+    await updateMutation.mutateAsync({
       id: pr.id,
       data: {
         approval_status: action,
@@ -208,6 +208,24 @@ export default function PaymentApprovals() {
         ...(action === "paid" ? { check_date: new Date().toISOString().split("T")[0] } : {}),
       },
     });
+
+    // When disbursed, auto-mark the linked Payable as paid
+    if (action === "paid" && pr.supporting_docs) {
+      const match = pr.supporting_docs.match(/PO:\s*(.+)/);
+      if (match) {
+        const poRef = match[1].trim();
+        const linkedPayable = payables.find(p => p.po_number === poRef || p.po_id === poRef);
+        if (linkedPayable && linkedPayable.status !== "paid") {
+          await base44.entities.Payable.update(linkedPayable.id, {
+            status: "paid",
+            amount_paid: linkedPayable.amount,
+            payment_date: new Date().toISOString().split("T")[0],
+            payment_notes: `Auto-paid via Payment Approval disbursement by ${actor}`,
+          });
+          queryClient.invalidateQueries({ queryKey: ["payables_for_po_check"] });
+        }
+      }
+    }
   };
 
   const filtered = statusFilter === "all" ? requests : requests.filter(r => r.approval_status === statusFilter);
