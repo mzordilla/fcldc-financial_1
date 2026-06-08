@@ -106,8 +106,29 @@ export default function PaymentApprovals() {
     return !hasPaymentRequest && !hasPayableById && !hasPayableByRef;
   });
 
+  // Map PR category to a sensible expense CoA name
+  const PR_CATEGORY_COA = {
+    supplier_invoice: "Accounts Payable",
+    subcontractor: "Subcontractor Expense",
+    labor: "Direct Labor",
+    equipment: "Equipment Expense",
+    expense_reimbursement: "Operating Expense",
+    utilities: "Utilities Expense",
+    other: "General Expense",
+  };
+
+  const PR_CATEGORY_TX = {
+    supplier_invoice: "other",
+    subcontractor: "subcontractor",
+    labor: "direct_labor",
+    equipment: "equipment",
+    expense_reimbursement: "operating_expense",
+    utilities: "other",
+    other: "other",
+  };
+
   const createMutation = useMutation({
-    mutationFn: (data) => {
+    mutationFn: async (data) => {
       // Check for duplicate payment request (same payee + invoice number)
       const existingPR = requests.find(r => 
         r.payee === data.payee && 
@@ -118,9 +139,45 @@ export default function PaymentApprovals() {
       if (existingPR) {
         throw new Error(`A payment request already exists for ${data.payee} (Invoice: ${data.invoice_number}). Duplicate payment requests are not allowed.`);
       }
-      return base44.entities.PaymentRequest.create(data);
+
+      const pr = await base44.entities.PaymentRequest.create(data);
+
+      // Record double-entry accounting: Dr. Expense, Cr. Accounts Payable
+      const today = new Date().toISOString().split("T")[0];
+      const projectName = data.project_allocations?.[0]?.project_name || "";
+      const expenseCoA = PR_CATEGORY_COA[data.category] || "General Expense";
+      const txCategory = PR_CATEGORY_TX[data.category] || "other";
+
+      // Dr. Expense / Asset (recognize cost)
+      await base44.entities.Transaction.create({
+        description: `Expense Recognition – ${data.payee}${data.invoice_number ? ` (${data.invoice_number})` : ""}${data.description ? `: ${data.description}` : ""}`,
+        amount: data.amount,
+        type: "expense",
+        category: txCategory,
+        chart_of_account: expenseCoA,
+        project_code: projectName,
+        date: data.invoice_date || today,
+        status: "completed",
+      });
+
+      // Cr. Accounts Payable (record liability)
+      await base44.entities.Transaction.create({
+        description: `Accounts Payable – ${data.payee}${data.invoice_number ? ` (${data.invoice_number})` : ""}`,
+        amount: data.amount,
+        type: "income",
+        category: "other",
+        chart_of_account: "Accounts Payable",
+        project_code: projectName,
+        date: data.invoice_date || today,
+        status: "pending",
+      });
+
+      return pr;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["payment_requests"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["payment_requests"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
   });
 
   const updateMutation = useMutation({
