@@ -255,6 +255,14 @@ export default function Payables() {
     });
   };
 
+  const expandAllSuppliers = () => {
+    setExpandedSuppliers(new Set(supplierAging.map(s => s.supplier)));
+  };
+
+  const collapseAllSuppliers = () => {
+    setExpandedSuppliers(new Set());
+  };
+
   // Expand all suppliers by default on first load
   useEffect(() => {
     if (supplierAging.length > 0 && expandedSuppliers.size === 0) {
@@ -367,6 +375,19 @@ export default function Payables() {
         <div className="space-y-6">
           {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
           {!isLoading && supplierAging.length === 0 && <p className="text-center py-12 text-muted-foreground">No outstanding payables</p>}
+          {supplierAging.length > 0 && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-muted-foreground">{supplierAging.length} supplier{supplierAging.length !== 1 ? "s" : ""}</p>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={expandAllSuppliers} className="text-xs">
+                  <ChevronDown className="w-3 h-3 mr-1" /> Expand All
+                </Button>
+                <Button size="sm" variant="outline" onClick={collapseAllSuppliers} className="text-xs">
+                  <ChevronUp className="w-3 h-3 mr-1" /> Collapse All
+                </Button>
+              </div>
+            </div>
+          )}
           {supplierAging.map(({ supplier, items, buckets, total }) => {
             const isExpanded = expandedSuppliers.has(supplier);
             return (
