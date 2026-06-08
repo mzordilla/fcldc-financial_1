@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,9 +54,18 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
     onOpenChange(v);
   };
 
-  const handleDecide = (action) => {
-    onDecision({ action, actor, notes, bankAccountId, paymentReference, paymentDate });
-    handleClose(false);
+  const [deciding, setDeciding] = useState(false);
+
+  const handleDecide = async (action) => {
+    setDeciding(true);
+    try {
+      await onDecision({ action, actor, notes, bankAccountId, paymentReference, paymentDate });
+      handleClose(false);
+    } catch (err) {
+      toast.error(err?.message || "Something went wrong. Please try again.");
+    } finally {
+      setDeciding(false);
+    }
   };
 
   return (
@@ -195,17 +205,17 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
           {step === 1 && !isFinal && isAdmin && (
             <>
               {currentStatus !== "approved" && (
-                <Button variant="destructive" onClick={() => handleDecide("rejected")} disabled={!actor.trim()}>
-                  <XCircle className="w-4 h-4 mr-1" /> Reject
+                <Button variant="destructive" onClick={() => handleDecide("rejected")} disabled={!actor.trim() || deciding}>
+                  <XCircle className="w-4 h-4 mr-1" /> {deciding ? "Processing..." : "Reject"}
                 </Button>
               )}
               {currentStatus === "approved" ? (
-                <Button className="bg-chart-2 hover:bg-chart-2/90 text-white" onClick={() => handleDecide("paid")} disabled={!actor.trim()}>
-                  <Banknote className="w-4 h-4 mr-1" /> Confirm Disbursement
+                <Button className="bg-chart-2 hover:bg-chart-2/90 text-white" onClick={() => handleDecide("paid")} disabled={!actor.trim() || deciding}>
+                  <Banknote className="w-4 h-4 mr-1" /> {deciding ? "Processing..." : "Confirm Disbursement"}
                 </Button>
               ) : (
-                <Button onClick={() => handleDecide("approved")} disabled={!actor.trim()}>
-                  <CheckCircle className="w-4 h-4 mr-1" /> Approve
+                <Button onClick={() => handleDecide("approved")} disabled={!actor.trim() || deciding}>
+                  <CheckCircle className="w-4 h-4 mr-1" /> {deciding ? "Processing..." : "Approve"}
                 </Button>
               )}
             </>
