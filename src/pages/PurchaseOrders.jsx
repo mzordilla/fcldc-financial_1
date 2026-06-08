@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package, ClipboardList, Printer, Search } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -74,6 +75,16 @@ export default function PurchaseOrders() {
     const StatusIcon = statusIcons[po.approval_status] || Clock;
     const isExpanded = expandedHistory === po.id;
     const hasLineItems = po.line_items && po.line_items.length > 0;
+    
+    // Calculate delivery progress for approved POs
+    const deliveryProgress = po.approval_status === "approved" ? (() => {
+      const receivingInfo = receivingByPO[po.id];
+      if (!receivingInfo) return { received: 0, total: po.line_items?.length || 0, percentage: 0 };
+      const totalItems = po.line_items?.length || 0;
+      const receivedItems = receivingInfo.count;
+      const percentage = totalItems > 0 ? Math.min(100, (receivedItems / totalItems) * 100) : 0;
+      return { received: receivedItems, total: totalItems, percentage, isComplete: receivingInfo.isComplete };
+    })() : null;
     return (
       <>
         <tr
@@ -209,6 +220,22 @@ export default function PurchaseOrders() {
                 {po.approval_history?.length > 0 && (
                   <div className="p-3 bg-muted/30 rounded-xl border border-border">
                     <ApprovalHistoryLog history={po.approval_history} />
+                  </div>
+                )}
+                {po.approval_status === "approved" && deliveryProgress && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground font-medium">Delivery Progress</span>
+                      <span className={`font-semibold ${deliveryProgress.percentage === 100 ? "text-primary" : "text-chart-3"}`}>
+                        {deliveryProgress.received} / {deliveryProgress.total} items ({deliveryProgress.percentage.toFixed(0)}%)
+                      </span>
+                    </div>
+                    <Progress value={deliveryProgress.percentage} className="h-2" />
+                    {deliveryProgress.percentage === 100 && (
+                      <p className="text-xs text-primary flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" /> All items received
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
