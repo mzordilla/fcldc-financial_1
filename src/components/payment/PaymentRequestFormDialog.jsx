@@ -89,6 +89,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
     const { base_amount, ...formWithoutBase } = cleanedForm;
     await onSubmit({
       ...formWithoutBase,
+      category: form.category || "",
       project_allocations: validAllocations.map(a => ({ project_name: a.project_name, amount: parseFloat(a.amount) || 0, category: a.category || "" })),
       amount: totalAmount,
       withholding_tax_percentage: parseFloat(form.withholding_tax_percentage) || 0,
