@@ -2,14 +2,13 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays, addDays } from "date-fns";
-import { Plus, Trash2, CheckCircle, CreditCard, FileUp, Download, Banknote, ChevronDown, ChevronUp, CheckSquare, Square, Loader2, History, FileText } from "lucide-react";
+import { Plus, Trash2, CheckCircle, FileUp, Download, Banknote, ChevronDown, ChevronUp, CheckSquare, Square, Loader2, History, FileText } from "lucide-react";
 
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import MarkPayableAsPaidDialog from "../components/payables/MarkPayableAsPaidDialog";
 import PayableCard from "../components/payables/PayableCard";
 import SupplierStatementDialog from "../components/payables/SupplierStatementDialog";
 
@@ -70,7 +69,7 @@ const statusStyles = {
 };
 
 export default function Payables() {
-  const [markingPaid, setMarkingPaid] = useState(null);
+  const [markingPaid, setMarkingPaid] = useState(null); // kept for PayableCard compat but Pay button removed
   const [statementSupplier, setStatementSupplier] = useState(null);
   const [showPaymentRequests, setShowPaymentRequests] = useState(true);
   const [showPaid, setShowPaid] = useState(false);
@@ -474,9 +473,6 @@ export default function Payables() {
                               <td className="px-4 py-3 text-right text-xs font-bold text-foreground">₱{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                               <td className="px-4 py-3 text-right">
                                 <div className="flex items-center justify-end gap-2">
-                                  <Button size="sm" variant="outline" onClick={() => setMarkingPaid(p)} className="text-xs text-primary hover:text-primary">
-                                    <CreditCard className="w-3 h-3 mr-1" /> Pay
-                                  </Button>
                                   <Button size="sm" variant="outline" onClick={() => deleteMutation.mutate(p.id)} className="text-xs text-destructive hover:text-destructive">
                                     <Trash2 className="w-3 h-3" />
                                   </Button>
@@ -534,9 +530,6 @@ export default function Payables() {
                       <td className="px-4 py-3 text-right text-xs font-bold text-foreground">₱{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setMarkingPaid(p)} className="text-xs text-primary hover:text-primary">
-                            <CreditCard className="w-3 h-3 mr-1" /> Pay
-                          </Button>
                           <Button size="sm" variant="outline" onClick={() => deleteMutation.mutate(p.id)} className="text-xs text-destructive hover:text-destructive">
                             <Trash2 className="w-3 h-3" />
                           </Button>
@@ -580,12 +573,7 @@ export default function Payables() {
         payables={payables}
       />
 
-      <MarkPayableAsPaidDialog
-        open={!!markingPaid}
-        onOpenChange={(v) => { if (!v) setMarkingPaid(null); }}
-        payable={markingPaid}
-        onConfirm={(paymentData) => markPaid(markingPaid, paymentData)}
-      />
+
     </div>
   );
 }
