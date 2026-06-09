@@ -248,7 +248,7 @@ export default function PurchaseOrders() {
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["purchase_orders"],
-    queryFn: () => base44.entities.PurchaseOrder.list("-created_date", 100),
+    queryFn: () => base44.entities.PurchaseOrder.list("-created_date", 1000),
   });
 
   const { data: payables = [] } = useQuery({
@@ -395,7 +395,7 @@ export default function PurchaseOrders() {
   // ── Materials History tab state ──
   const { data: poForMaterials = [], isLoading: matLoading } = useQuery({
     queryKey: ["purchase_orders_materials"],
-    queryFn: () => base44.entities.PurchaseOrder.list("-requested_date", 500),
+    queryFn: () => base44.entities.PurchaseOrder.list("-requested_date", 1000),
   });
   const [matSearch, setMatSearch] = useState("");
   const [matFilterSupplier, setMatFilterSupplier] = useState("all");
