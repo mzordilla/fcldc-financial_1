@@ -17,6 +17,21 @@ function ExpandableRow({ label, amount, transactions = [], colorClass }) {
   const [open, setOpen] = useState(false);
   const hasDetail = transactions.length > 0;
 
+  // Group transactions by month
+  const monthlyBreakdown = useMemo(() => {
+    const map = {};
+    transactions.forEach(t => {
+      if (!t.date) return;
+      const key = format(parseISO(t.date), "yyyy-MM");
+      if (!map[key]) map[key] = { label: format(parseISO(t.date), "MMMM yyyy"), amount: 0, count: 0 };
+      map[key].amount += t.amount || 0;
+      map[key].count += 1;
+    });
+    return Object.entries(map)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([, v]) => v);
+  }, [transactions]);
+
   return (
     <>
       <div
@@ -36,21 +51,17 @@ function ExpandableRow({ label, amount, transactions = [], colorClass }) {
           <table className="w-full text-xs">
             <thead>
               <tr className="text-muted-foreground border-b border-border/30">
-                <th className="pl-10 pr-3 py-1.5 text-left font-medium">Date</th>
-                <th className="px-3 py-1.5 text-left font-medium">Description</th>
-                <th className="px-3 py-1.5 text-left font-medium">Project</th>
+                <th className="pl-10 pr-3 py-1.5 text-left font-medium">Month</th>
+                <th className="px-3 py-1.5 text-left font-medium"># Transactions</th>
                 <th className="px-3 py-1.5 text-right font-medium">Amount</th>
               </tr>
             </thead>
             <tbody>
-              {transactions.map((t, i) => (
+              {monthlyBreakdown.map((m, i) => (
                 <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
-                  <td className="pl-10 pr-3 py-1.5 text-muted-foreground whitespace-nowrap">
-                    {t.date ? format(parseISO(t.date), "MMM d, yyyy") : "—"}
-                  </td>
-                  <td className="px-3 py-1.5 text-foreground">{t.description || "—"}</td>
-                  <td className="px-3 py-1.5 text-muted-foreground">{t.project_code || "—"}</td>
-                  <td className="px-3 py-1.5 text-right font-medium">{fmt(t.amount)}</td>
+                  <td className="pl-10 pr-3 py-1.5 text-foreground font-medium whitespace-nowrap">{m.label}</td>
+                  <td className="px-3 py-1.5 text-muted-foreground">{m.count} txn{m.count !== 1 ? "s" : ""}</td>
+                  <td className={`px-3 py-1.5 text-right font-semibold ${colorClass || ""}`}>{fmt(m.amount)}</td>
                 </tr>
               ))}
             </tbody>
