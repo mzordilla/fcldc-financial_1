@@ -33,7 +33,7 @@ export default function AppLayout() {
       {/* Main content — flex:1 with min-height:0 and min-width:0 enables independent scroll */}
       <main
         style={{ flex: 1, minHeight: 0, minWidth: 0, overflowY: "auto", overflowX: "auto" }}
-        className="pb-20 md:pb-0"
+        className="pt-14 md:pt-0 pb-4 md:pb-0"
       >
         {allowed ? <Outlet /> : <AccessDenied />}
       </main>
