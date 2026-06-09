@@ -58,7 +58,7 @@ export default function PurchaseOrders() {
   const [receivingItems, setReceivingItems] = useState(null);
   const [expandedHistory, setExpandedHistory] = useState(null);
   const [expandedGroups, setExpandedGroups] = useState({ pending: true, approved: true, rejected: false, cancelled: false });
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("approved");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isAdmin, setIsAdmin] = useState(false);
   const queryClient = useQueryClient();
