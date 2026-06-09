@@ -1,12 +1,16 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+
+function SectionHeader({ label }) {
+  return <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-5 mb-1">{label}</p>;
+}
 
 function BSRow({ label, value, isTotal, isSub, colorClass }) {
   return (
@@ -17,9 +21,32 @@ function BSRow({ label, value, isTotal, isSub, colorClass }) {
   );
 }
 
-function SectionHeader({ label }) {
+function ExpandableBSRow({ label, value, items = [], renderItem, isSub, colorClass }) {
+  const [open, setOpen] = useState(false);
+  const hasDetail = items.length > 0;
+
   return (
-    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-5 mb-1">{label}</p>
+    <>
+      <div
+        className={`flex justify-between py-2 ${isSub ? "pl-6" : ""} border-b border-border/30 ${hasDetail ? "cursor-pointer hover:bg-muted/30" : ""}`}
+        onClick={() => hasDetail && setOpen(o => !o)}
+      >
+        <span className={`flex items-center gap-1 text-sm ${isSub ? "text-muted-foreground" : "text-foreground"}`}>
+          {hasDetail ? (
+            open ? <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" /> : <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
+          ) : <span className="w-3.5" />}
+          {label}
+        </span>
+        <span className={`text-sm font-medium ${colorClass || ""}`}>{fmt(value)}</span>
+      </div>
+      {open && (
+        <div className="bg-muted/20 border-b border-border/30">
+          <table className="w-full text-xs">
+            <tbody>{items.map((item, i) => renderItem(item, i))}</tbody>
+          </table>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -60,89 +87,60 @@ export default function BalanceSheetReport({ asOfDate }) {
   });
 
   const bs = useMemo(() => {
-    // --- ASSETS ---
-    // Current Assets
-    const cashAndBank = bankAccounts
-      .filter(a => a.status === "active")
-      .reduce((s, a) => s + (a.current_balance || 0), 0);
+    const activeBankAccounts = bankAccounts.filter(a => a.status === "active");
+    const cashAndBank = activeBankAccounts.reduce((s, a) => s + (a.current_balance || 0), 0);
 
-    const totalReceivables = receivables
-      .filter(r => r.status !== "paid")
-      .reduce((s, r) => s + ((r.amount || 0) - (r.amount_paid || 0)), 0);
+    const outstandingReceivables = receivables.filter(r => r.status !== "paid");
+    const totalReceivables = outstandingReceivables.reduce((s, r) => s + ((r.amount || 0) - (r.amount_paid || 0)), 0);
 
     const totalCurrentAssets = cashAndBank + totalReceivables;
 
-    // Non-Current Assets: transactions tagged as non_current_assets
-    const nonCurrentAssetTx = transactions
-      .filter(t => t.category === "non_current_assets" && t.type === "expense")
-      .reduce((s, t) => s + (t.amount || 0), 0);
+    const nonCurrentAssetTxList = transactions.filter(t => t.category === "non_current_assets" && t.type === "expense");
+    const nonCurrentAssetTx = nonCurrentAssetTxList.reduce((s, t) => s + (t.amount || 0), 0);
 
-    const equipmentTx = transactions
-      .filter(t => t.category === "equipment" && t.type === "expense")
-      .reduce((s, t) => s + (t.amount || 0), 0);
+    const equipmentTxList = transactions.filter(t => t.category === "equipment" && t.type === "expense");
+    const equipmentTx = equipmentTxList.reduce((s, t) => s + (t.amount || 0), 0);
 
-    // PPE Assets (book value = acquisition cost - accumulated depreciation)
-    const ppeNetBookValue = ppeAssets
-      .filter(a => a.status !== "disposed")
-      .reduce((s, a) => {
-        const cost = a.acquisition_cost || 0;
-        const accDep = a.accumulated_depreciation || 0;
-        return s + Math.max(0, cost - accDep);
-      }, 0);
+    const activePPE = ppeAssets.filter(a => a.status !== "disposed");
+    const ppeNetBookValue = activePPE.reduce((s, a) => {
+      return s + Math.max(0, (a.acquisition_cost || 0) - (a.accumulated_depreciation || 0));
+    }, 0);
 
     const totalNonCurrentAssets = nonCurrentAssetTx + equipmentTx + ppeNetBookValue;
     const totalAssets = totalCurrentAssets + totalNonCurrentAssets;
 
-    // --- LIABILITIES ---
-    // Current Liabilities
-    const unpaidPayables = payables
-      .filter(p => p.status !== "paid")
-      .reduce((s, p) => s + ((p.amount || 0) - (p.amount_paid || 0)), 0);
+    const unpaidPayablesList = payables.filter(p => p.status !== "paid");
+    const unpaidPayables = unpaidPayablesList.reduce((s, p) => s + ((p.amount || 0) - (p.amount_paid || 0)), 0);
 
-    const currentPortionLoans = [...loans, ...wcLoans]
-      .filter(l => l.status === "active")
-      .reduce((s, l) => s + ((l.monthly_payment || 0) * 12), 0);
+    const activeLoans = [...loans, ...wcLoans].filter(l => l.status === "active");
+    const currentPortionLoans = activeLoans.reduce((s, l) => s + ((l.monthly_payment || 0) * 12), 0);
 
     const totalCurrentLiabilities = unpaidPayables + currentPortionLoans;
 
-    // Non-Current Liabilities: outstanding loan balances minus current portion
-    const loanBalances = loans
-      .filter(l => l.status === "active")
-      .reduce((s, l) => s + (l.outstanding_balance || 0), 0);
-
-    const wcLoanBalances = wcLoans
-      .filter(l => l.status === "active")
-      .reduce((s, l) => s + ((l.total_amount || 0) - (l.amount_paid || 0)), 0);
-
+    const loanBalances = loans.filter(l => l.status === "active").reduce((s, l) => s + (l.outstanding_balance || 0), 0);
+    const wcLoanBalances = wcLoans.filter(l => l.status === "active").reduce((s, l) => s + ((l.total_amount || 0) - (l.amount_paid || 0)), 0);
     const totalNonCurrentLiabilities = Math.max(0, (loanBalances + wcLoanBalances) - currentPortionLoans);
     const totalLiabilities = totalCurrentLiabilities + totalNonCurrentLiabilities;
 
-    // --- EQUITY ---
-    const totalIncome = transactions
-      .filter(t => t.type === "income")
-      .reduce((s, t) => s + (t.amount || 0), 0);
-    const totalExpenses = transactions
-      .filter(t => t.type === "expense")
-      .reduce((s, t) => s + (t.amount || 0), 0);
+    const totalIncome = transactions.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
+    const totalExpenses = transactions.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
     const retainedEarnings = totalIncome - totalExpenses;
     const totalEquity = totalAssets - totalLiabilities;
 
     return {
-      cashAndBank,
-      totalReceivables,
+      cashAndBank, activeBankAccounts,
+      totalReceivables, outstandingReceivables,
       totalCurrentAssets,
-      nonCurrentAssetTx,
-      equipmentTx,
-      ppeNetBookValue,
-      totalNonCurrentAssets,
-      totalAssets,
-      unpaidPayables,
-      currentPortionLoans,
+      nonCurrentAssetTx, nonCurrentAssetTxList,
+      equipmentTx, equipmentTxList,
+      ppeNetBookValue, activePPE,
+      totalNonCurrentAssets, totalAssets,
+      unpaidPayables, unpaidPayablesList,
+      currentPortionLoans, activeLoans,
       totalCurrentLiabilities,
       totalNonCurrentLiabilities,
       totalLiabilities,
-      retainedEarnings,
-      totalEquity,
+      retainedEarnings, totalEquity,
     };
   }, [bankAccounts, receivables, payables, loans, wcLoans, transactions, ppeAssets]);
 
@@ -172,7 +170,6 @@ export default function BalanceSheetReport({ asOfDate }) {
       [],
       ["Non-Current Liabilities"],
       ["  Long-Term Loans", bs.totalNonCurrentLiabilities],
-      ["  Total Non-Current Liabilities", bs.totalNonCurrentLiabilities],
       [],
       ["TOTAL LIABILITIES", bs.totalLiabilities],
       [],
@@ -200,20 +197,72 @@ export default function BalanceSheetReport({ asOfDate }) {
         </Button>
       </div>
 
+      <p className="text-xs text-muted-foreground italic">Click any line item to see the underlying records</p>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Assets */}
         <div className="bg-card border border-border rounded-2xl p-5">
           <h3 className="text-base font-semibold text-foreground mb-2">Assets</h3>
 
           <SectionHeader label="Current Assets" />
-          <BSRow label="Cash & Bank Balances" value={bs.cashAndBank} isSub />
-          <BSRow label="Accounts Receivable" value={bs.totalReceivables} isSub />
+          <ExpandableBSRow
+            label="Cash & Bank Balances" value={bs.cashAndBank} isSub
+            items={bs.activeBankAccounts}
+            renderItem={(a, i) => (
+              <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
+                <td className="pl-10 pr-3 py-1.5 text-foreground">{a.account_name}</td>
+                <td className="px-3 py-1.5 text-muted-foreground">{a.bank_name}</td>
+                <td className="px-3 py-1.5 text-right font-medium">{fmt(a.current_balance)}</td>
+              </tr>
+            )}
+          />
+          <ExpandableBSRow
+            label="Accounts Receivable" value={bs.totalReceivables} isSub
+            items={bs.outstandingReceivables}
+            renderItem={(r, i) => (
+              <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
+                <td className="pl-10 pr-3 py-1.5 text-foreground">{r.client_name}</td>
+                <td className="px-3 py-1.5 text-muted-foreground">{r.project_name || r.invoice_number || "—"}</td>
+                <td className="px-3 py-1.5 text-right font-medium">{fmt((r.amount || 0) - (r.amount_paid || 0))}</td>
+              </tr>
+            )}
+          />
           <BSRow label="Total Current Assets" value={bs.totalCurrentAssets} isTotal colorClass="text-primary" />
 
           <SectionHeader label="Non-Current Assets" />
-          <BSRow label="PPE Assets (Net Book Value)" value={bs.ppeNetBookValue} isSub />
-          <BSRow label="Equipment (Transactions)" value={bs.equipmentTx} isSub />
-          <BSRow label="Other Non-Current Assets" value={bs.nonCurrentAssetTx} isSub />
+          <ExpandableBSRow
+            label="PPE Assets (Net Book Value)" value={bs.ppeNetBookValue} isSub
+            items={bs.activePPE}
+            renderItem={(a, i) => (
+              <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
+                <td className="pl-10 pr-3 py-1.5 text-foreground">{a.asset_name}</td>
+                <td className="px-3 py-1.5 text-muted-foreground">{a.asset_type?.replace(/_/g, " ")}</td>
+                <td className="px-3 py-1.5 text-right font-medium">{fmt(Math.max(0, (a.acquisition_cost || 0) - (a.accumulated_depreciation || 0)))}</td>
+              </tr>
+            )}
+          />
+          <ExpandableBSRow
+            label="Equipment (Transactions)" value={bs.equipmentTx} isSub
+            items={bs.equipmentTxList}
+            renderItem={(t, i) => (
+              <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
+                <td className="pl-10 pr-3 py-1.5 text-muted-foreground whitespace-nowrap">{t.date ? format(parseISO(t.date), "MMM d, yyyy") : "—"}</td>
+                <td className="px-3 py-1.5 text-foreground">{t.description || "—"}</td>
+                <td className="px-3 py-1.5 text-right font-medium">{fmt(t.amount)}</td>
+              </tr>
+            )}
+          />
+          <ExpandableBSRow
+            label="Other Non-Current Assets" value={bs.nonCurrentAssetTx} isSub
+            items={bs.nonCurrentAssetTxList}
+            renderItem={(t, i) => (
+              <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
+                <td className="pl-10 pr-3 py-1.5 text-muted-foreground whitespace-nowrap">{t.date ? format(parseISO(t.date), "MMM d, yyyy") : "—"}</td>
+                <td className="px-3 py-1.5 text-foreground">{t.description || "—"}</td>
+                <td className="px-3 py-1.5 text-right font-medium">{fmt(t.amount)}</td>
+              </tr>
+            )}
+          />
           <BSRow label="Total Non-Current Assets" value={bs.totalNonCurrentAssets} isTotal />
 
           <div className="flex justify-between items-center mt-4 pt-3 border-t-2 border-border">
@@ -227,8 +276,28 @@ export default function BalanceSheetReport({ asOfDate }) {
           <h3 className="text-base font-semibold text-foreground mb-2">Liabilities & Equity</h3>
 
           <SectionHeader label="Current Liabilities" />
-          <BSRow label="Accounts Payable" value={bs.unpaidPayables} isSub />
-          <BSRow label="Current Portion of Loans" value={bs.currentPortionLoans} isSub />
+          <ExpandableBSRow
+            label="Accounts Payable" value={bs.unpaidPayables} isSub
+            items={bs.unpaidPayablesList}
+            renderItem={(p, i) => (
+              <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
+                <td className="pl-10 pr-3 py-1.5 text-foreground">{p.supplier_name}</td>
+                <td className="px-3 py-1.5 text-muted-foreground">{p.invoice_number || p.project_name || "—"}</td>
+                <td className="px-3 py-1.5 text-right font-medium">{fmt((p.amount || 0) - (p.amount_paid || 0))}</td>
+              </tr>
+            )}
+          />
+          <ExpandableBSRow
+            label="Current Portion of Loans" value={bs.currentPortionLoans} isSub
+            items={bs.activeLoans}
+            renderItem={(l, i) => (
+              <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
+                <td className="pl-10 pr-3 py-1.5 text-foreground">{l.lender || l.creditor}</td>
+                <td className="px-3 py-1.5 text-muted-foreground">{l.loan_name || l.description || "—"}</td>
+                <td className="px-3 py-1.5 text-right font-medium">{fmt((l.monthly_payment || 0) * 12)}</td>
+              </tr>
+            )}
+          />
           <BSRow label="Total Current Liabilities" value={bs.totalCurrentLiabilities} isTotal colorClass="text-destructive" />
 
           <SectionHeader label="Non-Current Liabilities" />

@@ -1,7 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
 import { format, parseISO } from "date-fns";
@@ -9,17 +9,65 @@ import { format, parseISO } from "date-fns";
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 const fmtSigned = (v) => (v < 0 ? `-₱${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : `₱${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`);
 
-function Row({ label, value, isSub, isTotal, colorClass }) {
+function SectionHeader({ label }) {
+  return <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-5 mb-1">{label}</p>;
+}
+
+function ExpandableRow({ label, amount, transactions = [], colorClass }) {
+  const [open, setOpen] = useState(false);
+  const hasDetail = transactions.length > 0;
+
   return (
-    <div className={`flex justify-between py-2 ${isSub ? "pl-6" : ""} ${isTotal ? "border-t border-border font-semibold" : "border-b border-border/30"}`}>
-      <span className={`text-sm ${isSub ? "text-muted-foreground" : "text-foreground"}`}>{label}</span>
-      <span className={`text-sm font-medium ${colorClass || ""}`}>{fmt(value)}</span>
-    </div>
+    <>
+      <div
+        className={`flex justify-between py-2 pl-6 border-b border-border/30 ${hasDetail ? "cursor-pointer hover:bg-muted/30" : ""}`}
+        onClick={() => hasDetail && setOpen(o => !o)}
+      >
+        <span className="flex items-center gap-1 text-sm text-muted-foreground">
+          {hasDetail ? (
+            open ? <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" /> : <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
+          ) : <span className="w-3.5" />}
+          {label}
+        </span>
+        <span className={`text-sm font-medium ${colorClass || ""}`}>{fmt(amount)}</span>
+      </div>
+      {open && (
+        <div className="bg-muted/20 border-b border-border/30">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-muted-foreground border-b border-border/30">
+                <th className="pl-10 pr-3 py-1.5 text-left font-medium">Date</th>
+                <th className="px-3 py-1.5 text-left font-medium">Description</th>
+                <th className="px-3 py-1.5 text-left font-medium">Project</th>
+                <th className="px-3 py-1.5 text-right font-medium">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions.map((t, i) => (
+                <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
+                  <td className="pl-10 pr-3 py-1.5 text-muted-foreground whitespace-nowrap">
+                    {t.date ? format(parseISO(t.date), "MMM d, yyyy") : "—"}
+                  </td>
+                  <td className="px-3 py-1.5 text-foreground">{t.description || "—"}</td>
+                  <td className="px-3 py-1.5 text-muted-foreground">{t.project_code || "—"}</td>
+                  <td className="px-3 py-1.5 text-right font-medium">{fmt(t.amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
   );
 }
 
-function SectionHeader({ label }) {
-  return <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-5 mb-1">{label}</p>;
+function TotalRow({ label, value, colorClass }) {
+  return (
+    <div className="flex justify-between py-2 border-t border-border font-semibold">
+      <span className="text-sm text-foreground">{label}</span>
+      <span className={`text-sm font-medium ${colorClass || ""}`}>{fmt(value)}</span>
+    </div>
+  );
 }
 
 export default function IncomeStatementReport({ dateFrom, dateTo }) {
@@ -42,12 +90,10 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
     });
   }, [transactions, dateFrom, dateTo]);
 
-  // Build income statement grouped by COA
   const statement = useMemo(() => {
     const incomeAccounts = accounts.filter(a => a.account_type === "income");
     const expenseAccounts = accounts.filter(a => a.account_type === "expense");
 
-    // Map transactions to accounts by chart_of_account name or category fallback
     const txByAccount = {};
     filtered.forEach(t => {
       const key = t.chart_of_account || null;
@@ -56,34 +102,23 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
       txByAccount[key].push(t);
     });
 
-    // Also group by category for transactions without COA link
-    const txByCategory = {};
-    filtered.forEach(t => {
-      if (t.chart_of_account) return; // already handled
-      const key = t.category || "other";
-      if (!txByCategory[key]) txByCategory[key] = [];
-      txByCategory[key].push(t);
-    });
-
     // Income lines
     const incomeLines = [];
     let totalIncome = 0;
 
     incomeAccounts.forEach(acc => {
-      const txs = txByAccount[acc.account_name] || [];
-      const amount = txs.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
+      const txs = (txByAccount[acc.account_name] || []).filter(t => t.type === "income");
+      const amount = txs.reduce((s, t) => s + (t.amount || 0), 0);
       if (amount > 0) {
-        incomeLines.push({ label: `${acc.account_code ? acc.account_code + " · " : ""}${acc.account_name}`, amount });
+        incomeLines.push({ label: `${acc.account_code ? acc.account_code + " · " : ""}${acc.account_name}`, amount, transactions: txs });
         totalIncome += amount;
       }
     });
 
-    // Remaining income not mapped to COA
-    const unmappedIncome = filtered
-      .filter(t => t.type === "income" && !t.chart_of_account)
-      .reduce((s, t) => s + (t.amount || 0), 0);
+    const unmappedIncomeTxs = filtered.filter(t => t.type === "income" && !t.chart_of_account);
+    const unmappedIncome = unmappedIncomeTxs.reduce((s, t) => s + (t.amount || 0), 0);
     if (unmappedIncome > 0) {
-      incomeLines.push({ label: "Other Income (unclassified)", amount: unmappedIncome });
+      incomeLines.push({ label: "Other Income (unclassified)", amount: unmappedIncome, transactions: unmappedIncomeTxs });
       totalIncome += unmappedIncome;
     }
 
@@ -92,27 +127,23 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
     let totalExpenses = 0;
 
     expenseAccounts.forEach(acc => {
-      const txs = txByAccount[acc.account_name] || [];
-      const amount = txs.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
+      const txs = (txByAccount[acc.account_name] || []).filter(t => t.type === "expense");
+      const amount = txs.reduce((s, t) => s + (t.amount || 0), 0);
       if (amount > 0) {
-        expenseLines.push({ label: `${acc.account_code ? acc.account_code + " · " : ""}${acc.account_name}`, amount });
+        expenseLines.push({ label: `${acc.account_code ? acc.account_code + " · " : ""}${acc.account_name}`, amount, transactions: txs });
         totalExpenses += amount;
       }
     });
 
-    // Remaining expenses not mapped to COA
-    const unmappedExpenses = filtered
-      .filter(t => t.type === "expense" && !t.chart_of_account)
-      .reduce((s, t) => s + (t.amount || 0), 0);
+    const unmappedExpenseTxs = filtered.filter(t => t.type === "expense" && !t.chart_of_account);
+    const unmappedExpenses = unmappedExpenseTxs.reduce((s, t) => s + (t.amount || 0), 0);
     if (unmappedExpenses > 0) {
-      expenseLines.push({ label: "Other Expenses (unclassified)", amount: unmappedExpenses });
+      expenseLines.push({ label: "Other Expenses (unclassified)", amount: unmappedExpenses, transactions: unmappedExpenseTxs });
       totalExpenses += unmappedExpenses;
     }
 
-    const grossProfit = totalIncome - totalExpenses;
-    const netIncome = grossProfit;
-
-    return { incomeLines, expenseLines, totalIncome, totalExpenses, grossProfit, netIncome };
+    const netIncome = totalIncome - totalExpenses;
+    return { incomeLines, expenseLines, totalIncome, totalExpenses, netIncome };
   }, [accounts, filtered]);
 
   const periodLabel = dateFrom && dateTo
@@ -151,7 +182,6 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
         </Button>
       </div>
 
-      {/* KPI summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-card border border-primary/20 rounded-2xl p-4">
           <p className="text-xs text-muted-foreground mb-1">Total Revenue</p>
@@ -174,28 +204,27 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-5 max-w-2xl">
-        {/* Revenue */}
+      <div className="bg-card border border-border rounded-2xl p-5 max-w-3xl">
+        <p className="text-xs text-muted-foreground italic mb-3">Click any line item to see transaction details</p>
+
         <SectionHeader label="Revenue" />
         {statement.incomeLines.length === 0 && (
           <p className="text-sm text-muted-foreground pl-6 py-2">No revenue recorded for this period.</p>
         )}
         {statement.incomeLines.map((l, i) => (
-          <Row key={i} label={l.label} value={l.amount} isSub />
+          <ExpandableRow key={i} label={l.label} amount={l.amount} transactions={l.transactions} colorClass="text-primary" />
         ))}
-        <Row label="Total Revenue" value={statement.totalIncome} isTotal colorClass="text-primary" />
+        <TotalRow label="Total Revenue" value={statement.totalIncome} colorClass="text-primary" />
 
-        {/* Expenses */}
         <SectionHeader label="Expenses" />
         {statement.expenseLines.length === 0 && (
           <p className="text-sm text-muted-foreground pl-6 py-2">No expenses recorded for this period.</p>
         )}
         {statement.expenseLines.map((l, i) => (
-          <Row key={i} label={l.label} value={l.amount} isSub />
+          <ExpandableRow key={i} label={l.label} amount={l.amount} transactions={l.transactions} colorClass="text-destructive" />
         ))}
-        <Row label="Total Expenses" value={statement.totalExpenses} isTotal colorClass="text-destructive" />
+        <TotalRow label="Total Expenses" value={statement.totalExpenses} colorClass="text-destructive" />
 
-        {/* Net Income */}
         <div className="flex justify-between items-center mt-5 pt-4 border-t-2 border-border">
           <span className="font-bold text-foreground text-base">Net Income</span>
           <span className={`text-xl font-bold ${statement.netIncome >= 0 ? "text-primary" : "text-destructive"}`}>
