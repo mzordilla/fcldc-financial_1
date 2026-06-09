@@ -132,7 +132,7 @@ export default function Transactions() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <Tabs defaultValue="transactions" className="w-full">
-        <TabsList className="mb-4">
+        <TabsList className="mb-4 flex-wrap h-auto gap-1">
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
           <TabsTrigger value="receipt-scanner">Receipt Scanner</TabsTrigger>
           <TabsTrigger value="chart-of-accounts">Chart of Accounts</TabsTrigger>
@@ -140,12 +140,17 @@ export default function Transactions() {
         </TabsList>
 
         <TabsContent value="transactions" className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Transactions</h1>
-          <p className="text-muted-foreground mt-1">Track all income and expenses</p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Transactions</h1>
+            <p className="text-muted-foreground mt-1">Track all income and expenses</p>
+          </div>
+          <Button onClick={() => setShowAdd(true)} className="sm:ml-auto w-full sm:w-auto">
+            <Plus className="w-4 h-4 mr-2" /> Add
+          </Button>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -154,20 +159,17 @@ export default function Transactions() {
               <SelectItem value="expense">Expenses</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="w-4 h-4 mr-2" /> Export
+          <Button variant="outline" onClick={handleExport} size="sm">
+            <Download className="w-4 h-4 mr-1" /> Export
           </Button>
-          <Button variant="outline" onClick={handleBackupAll} disabled={isBackingUp}>
-            <HardDriveDownload className="w-4 h-4 mr-2" /> {isBackingUp ? "Backing up…" : "Backup All"}
+          <Button variant="outline" onClick={handleBackupAll} disabled={isBackingUp} size="sm">
+            <HardDriveDownload className="w-4 h-4 mr-1" /> {isBackingUp ? "Backing up…" : "Backup All"}
           </Button>
-          <Button variant="outline" onClick={() => setShowImport(true)}>
-            <FileUp className="w-4 h-4 mr-2" /> Import Excel
+          <Button variant="outline" onClick={() => setShowImport(true)} size="sm">
+            <FileUp className="w-4 h-4 mr-1" /> Import Excel
           </Button>
-          <Button variant="outline" onClick={() => setShowBatch(true)}>
-            <TableProperties className="w-4 h-4 mr-2" /> Batch Enter
-          </Button>
-          <Button onClick={() => setShowAdd(true)}>
-            <Plus className="w-4 h-4 mr-2" /> Add
+          <Button variant="outline" onClick={() => setShowBatch(true)} size="sm">
+            <TableProperties className="w-4 h-4 mr-1" /> Batch Enter
           </Button>
         </div>
       </div>
