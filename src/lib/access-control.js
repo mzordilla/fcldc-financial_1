@@ -5,7 +5,7 @@ export const roleAccess = {
   disbursement: ["/", "/bank-accounts", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/payables", "/chart-of-accounts", "/billing-cycles", "/receiving-items"],
   accounting: ["/", "/projects", "/project-pnl", "/billing-cycles", "/receivables", "/payables", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/chart-of-accounts", "/receiving-items"],
   procurement: ["/", "/purchase-orders", "/payment-approvals", "/payees", "/receiving-items", "/materials-history"],
-  marketing: ["/re/units", "/re/tenants", "/re/listings", "/re/reports"],
+  marketing: ["/re/portfolio", "/re/units", "/re/tenants", "/re/listings", "/re/reports"],
 };
 
 export const navItemsByRole = {
@@ -13,7 +13,7 @@ export const navItemsByRole = {
   disbursement: ["/", "/bank-accounts", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/payables", "/chart-of-accounts", "/billing-cycles", "/receiving-items"],
   accounting: ["/", "/projects", "/project-pnl", "/billing-cycles", "/receivables", "/payables", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/chart-of-accounts", "/receiving-items"],
   procurement: ["/", "/purchase-orders", "/payment-approvals", "/payees", "/receiving-items", "/materials-history"],
-  marketing: ["/re/units", "/re/tenants", "/re/listings", "/re/reports"],
+  marketing: ["/re/portfolio", "/re/units", "/re/tenants", "/re/listings", "/re/reports"],
 };
 
 export function canAccess(role, path) {
