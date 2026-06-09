@@ -13,19 +13,49 @@ function SectionHeader({ label }) {
   return <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-5 mb-1">{label}</p>;
 }
 
+function MonthGroup({ month, transactions, colorClass }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <tr
+        className="border-b border-border/20 hover:bg-muted/30 cursor-pointer"
+        onClick={() => setOpen(o => !o)}
+      >
+        <td className="pl-10 pr-3 py-1.5 font-medium whitespace-nowrap flex items-center gap-1">
+          {open ? <ChevronDown className="w-3 h-3 flex-shrink-0" /> : <ChevronRight className="w-3 h-3 flex-shrink-0" />}
+          {month.label}
+        </td>
+        <td className="px-3 py-1.5 text-muted-foreground">{month.count} txn{month.count !== 1 ? "s" : ""}</td>
+        <td className="px-3 py-1.5 text-muted-foreground"></td>
+        <td className="px-3 py-1.5 text-muted-foreground"></td>
+        <td className={`px-3 py-1.5 text-right font-semibold ${colorClass || ""}`}>{fmt(month.amount)}</td>
+      </tr>
+      {open && transactions.map((t, i) => (
+        <tr key={i} className="border-b border-border/10 bg-muted/10 hover:bg-muted/20">
+          <td className="pl-16 pr-3 py-1 text-muted-foreground whitespace-nowrap">{t.date ? format(parseISO(t.date), "MMM d, yyyy") : "—"}</td>
+          <td className="px-3 py-1 text-muted-foreground"></td>
+          <td className="px-3 py-1 text-foreground">{t.description || "—"}</td>
+          <td className="px-3 py-1 text-muted-foreground">{t.project_code || "—"}</td>
+          <td className="px-3 py-1 text-right">{fmt(t.amount)}</td>
+        </tr>
+      ))}
+    </>
+  );
+}
+
 function ExpandableRow({ label, amount, transactions = [], colorClass }) {
   const [open, setOpen] = useState(false);
   const hasDetail = transactions.length > 0;
 
-  // Group transactions by month
-  const monthlyBreakdown = useMemo(() => {
+  const monthlyGroups = useMemo(() => {
     const map = {};
     transactions.forEach(t => {
       if (!t.date) return;
       const key = format(parseISO(t.date), "yyyy-MM");
-      if (!map[key]) map[key] = { label: format(parseISO(t.date), "MMMM yyyy"), amount: 0, count: 0 };
+      if (!map[key]) map[key] = { label: format(parseISO(t.date), "MMMM yyyy"), amount: 0, count: 0, txs: [] };
       map[key].amount += t.amount || 0;
       map[key].count += 1;
+      map[key].txs.push(t);
     });
     return Object.entries(map)
       .sort((a, b) => b[0].localeCompare(a[0]))
@@ -51,18 +81,16 @@ function ExpandableRow({ label, amount, transactions = [], colorClass }) {
           <table className="w-full text-xs">
             <thead>
               <tr className="text-muted-foreground border-b border-border/30">
-                <th className="pl-10 pr-3 py-1.5 text-left font-medium">Month</th>
-                <th className="px-3 py-1.5 text-left font-medium"># Transactions</th>
+                <th className="pl-10 pr-3 py-1.5 text-left font-medium">Month / Date</th>
+                <th className="px-3 py-1.5 text-left font-medium"># Txns</th>
+                <th className="px-3 py-1.5 text-left font-medium">Description</th>
+                <th className="px-3 py-1.5 text-left font-medium">Project</th>
                 <th className="px-3 py-1.5 text-right font-medium">Amount</th>
               </tr>
             </thead>
             <tbody>
-              {monthlyBreakdown.map((m, i) => (
-                <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
-                  <td className="pl-10 pr-3 py-1.5 text-foreground font-medium whitespace-nowrap">{m.label}</td>
-                  <td className="px-3 py-1.5 text-muted-foreground">{m.count} txn{m.count !== 1 ? "s" : ""}</td>
-                  <td className={`px-3 py-1.5 text-right font-semibold ${colorClass || ""}`}>{fmt(m.amount)}</td>
-                </tr>
+              {monthlyGroups.map((m, i) => (
+                <MonthGroup key={i} month={m} transactions={m.txs} colorClass={colorClass} />
               ))}
             </tbody>
           </table>
