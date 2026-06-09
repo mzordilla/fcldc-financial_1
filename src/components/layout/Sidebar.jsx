@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ScanLine, ClipboardList, Boxes, Home, GitBranch, Users, List, PieChart } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ScanLine, ClipboardList, Boxes, Home, GitBranch } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { navItemsByRole } from "@/lib/access-control";
@@ -8,10 +8,6 @@ import { navItemsByRole } from "@/lib/access-control";
 const allNavItems = [
 { label: "Dashboard", icon: LayoutDashboard, path: "/" },
 { label: "Real Estate Portfolio", icon: Home, path: "/re/portfolio" },
-{ label: "Condo Units", icon: Building2, path: "/re/units" },
-{ label: "Tenants", icon: Users, path: "/re/tenants" },
-{ label: "Listings", icon: List, path: "/re/listings" },
-{ label: "Portfolio Reports", icon: PieChart, path: "/re/reports" },
 { label: "Projects", icon: Briefcase, path: "/projects" },
 { label: "Receivables", icon: FileText, path: "/receivables" },
 { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
