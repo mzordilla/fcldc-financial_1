@@ -190,7 +190,7 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
     : "All Periods";
 
   const handleExport = () => {
-    const rows = [
+    const summaryRows = [
       ["INCOME STATEMENT", periodLabel],
       [],
       ["REVENUE"],
@@ -203,7 +203,22 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
       [],
       ["NET INCOME", statement.netIncome],
     ];
-    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    const txHeaders = ["Account", "Type", "Date", "Description", "Project", "Amount"];
+    const txRows = [
+      [],
+      [],
+      ["ALL TRANSACTIONS"],
+      txHeaders,
+      ...statement.incomeLines.flatMap(l =>
+        l.transactions.map(t => [l.label, "Income", t.date || "", t.description || "", t.project_code || "", t.amount || 0])
+      ),
+      ...statement.expenseLines.flatMap(l =>
+        l.transactions.map(t => [l.label, "Expense", t.date || "", t.description || "", t.project_code || "", t.amount || 0])
+      ),
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet([...summaryRows, ...txRows]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Income Statement");
     XLSX.writeFile(wb, `Income_Statement_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
