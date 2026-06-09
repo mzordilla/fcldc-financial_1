@@ -68,17 +68,17 @@ export default function PaymentApprovals() {
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["payment_requests"],
-    queryFn: () => base44.entities.PaymentRequest.list("-created_date", 100),
+    queryFn: () => base44.entities.PaymentRequest.list("-created_date", 10000),
   });
 
   const { data: approvedPOs = [] } = useQuery({
     queryKey: ["approved_pos"],
-    queryFn: () => base44.entities.PurchaseOrder.filter({ approval_status: "approved" }, "-created_date", 100),
+    queryFn: () => base44.entities.PurchaseOrder.filter({ approval_status: "approved" }, "-created_date", 10000),
   });
 
   const { data: payables = [] } = useQuery({
     queryKey: ["payables_for_po_check"],
-    queryFn: () => base44.entities.Payable.list("-created_date", 500),
+    queryFn: () => base44.entities.Payable.list("-created_date", 10000),
   });
 
   // Filter out POs that already have a payment request OR payable linked to them
@@ -269,7 +269,7 @@ export default function PaymentApprovals() {
 
     // When disbursed, create double-entry transactions + auto-mark linked Payable as paid
     if (action === "paid") {
-      const bankAccounts = await base44.entities.BankAccount.list("-created_date", 100);
+      const bankAccounts = await base44.entities.BankAccount.list("-created_date", 10000);
       const bankAccount = bankAccounts.find(a => a.id === bankAccountId);
       const bankLabel = bankAccount ? `${bankAccount.account_name} – ${bankAccount.bank_name}` : "Cash in Bank";
       const projectName = pr.project_allocations?.[0]?.project_name || "";
