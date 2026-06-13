@@ -674,6 +674,7 @@ export default function PaymentApprovals() {
           onOpenChange={(v) => !v && setReviewPR(null)}
           title={`Review Payment — ${reviewPR.payee}`}
           history={reviewPR.approval_history || []}
+          paymentRequest={reviewPR}
           summary={
             <div className="space-y-1">
               {reviewPR.request_number && <p className="text-xs text-muted-foreground font-mono">{reviewPR.request_number}</p>}

@@ -8,15 +8,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, XCircle, ChevronRight, User, FileText, History, Banknote } from "lucide-react";
+import { CheckCircle, XCircle, ChevronRight, User, FileText, History, Banknote, Printer } from "lucide-react";
 import ApprovalHistoryLog from "./ApprovalHistoryLog";
+import CheckWriterDialog from "../payment/CheckWriterDialog";
 
 const STEPS = ["Details", "Decision", "History"];
 
 // Statuses where no further approval action is allowed
 const FINAL_STATUSES = ["rejected", "paid"];
 
-export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summary, history = [], onDecision, currentStatus }) {
+export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summary, history = [], onDecision, currentStatus, paymentRequest }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDisbursementRole, setIsDisbursementRole] = useState(false);
   const [step, setStep] = useState(0);
@@ -25,6 +26,7 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
   const [bankAccountId, setBankAccountId] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split("T")[0]);
+  const [showCheckWriter, setShowCheckWriter] = useState(false);
   const isFinal = FINAL_STATUSES.includes(currentStatus);
   const isDisbursement = currentStatus === "approved";
   // Disbursement role can only act on approved (disburse) — not approve/reject pending
@@ -53,7 +55,7 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
     enabled: open && isDisbursement,
   });
 
-  const reset = () => { setStep(0); setActor(""); setNotes(""); setBankAccountId(""); setPaymentReference(""); setPaymentDate(new Date().toISOString().split("T")[0]); };
+  const reset = () => { setStep(0); setActor(""); setNotes(""); setBankAccountId(""); setPaymentReference(""); setPaymentDate(new Date().toISOString().split("T")[0]); setShowCheckWriter(false); };
 
   const handleClose = (v) => {
     if (!v) reset();
@@ -183,6 +185,16 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
                     placeholder="e.g. CHK-00123 or TRF-2026-0501"
                   />
                 </div>
+                {paymentRequest && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={() => setShowCheckWriter(true)}
+                  >
+                    <Printer className="w-4 h-4" /> Preview & Print Check
+                  </Button>
+                )}
               </div>
             )}
             <div className="bg-muted/30 rounded-lg p-3 text-xs text-muted-foreground">
@@ -231,6 +243,16 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
           )}
         </DialogFooter>
       </DialogContent>
+      {showCheckWriter && (
+        <CheckWriterDialog
+          open={showCheckWriter}
+          onOpenChange={setShowCheckWriter}
+          paymentRequest={paymentRequest}
+          bankAccount={bankAccounts.find(a => a.id === bankAccountId)}
+          paymentDate={paymentDate}
+          paymentReference={paymentReference}
+        />
+      )}
     </Dialog>
   );
 }
