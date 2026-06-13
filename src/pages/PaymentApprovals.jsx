@@ -278,7 +278,11 @@ export default function PaymentApprovals() {
       const bankLabel = bankAccount ? `${bankAccount.account_name} – ${bankAccount.bank_name}` : "Cash in Bank";
       const projectName = pr.project_allocations?.[0]?.project_name || "";
 
-      // Dr. Accounts Payable (reduce liability — no bank movement)
+      const withholdingTax = pr.withholding_tax_amount || 0;
+      const vatAmt = pr.vat_amount || 0;
+      const netCashOut = (pr.amount || 0) - withholdingTax + vatAmt;
+
+      // Dr. Accounts Payable (reduce liability — full gross amount)
       await base44.entities.Transaction.create({
         description: `Accounts Payable Settlement – ${pr.payee}${pr.invoice_number ? ` (${pr.invoice_number})` : ""}`,
         amount: pr.amount,
@@ -290,10 +294,10 @@ export default function PaymentApprovals() {
         status: "completed",
       });
 
-      // Cr. Cash in Bank (cash outflow)
+      // Cr. Cash in Bank (net cash outflow after withholding tax deduction)
       await base44.entities.Transaction.create({
         description: `Cash Payment – ${pr.payee}${pr.invoice_number ? ` (${pr.invoice_number})` : ""}${paymentReference ? ` [${paymentReference}]` : ""}`,
-        amount: pr.amount,
+        amount: netCashOut,
         type: "expense",
         category: pr.category || "other",
         chart_of_account: bankLabel,
@@ -302,6 +306,20 @@ export default function PaymentApprovals() {
         date: disbursedDate,
         status: "completed",
       });
+
+      // Cr. Withholding Tax Payable (liability for tax withheld from supplier)
+      if (withholdingTax > 0) {
+        await base44.entities.Transaction.create({
+          description: `Withholding Tax Withheld – ${pr.payee}${pr.invoice_number ? ` (${pr.invoice_number})` : ""} @ ${pr.withholding_tax_percentage}%`,
+          amount: withholdingTax,
+          type: "income",
+          category: "other",
+          chart_of_account: "Withholding Tax Payable",
+          project_code: projectName,
+          date: disbursedDate,
+          status: "completed",
+        });
+      }
 
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
 
@@ -407,8 +425,13 @@ export default function PaymentApprovals() {
           <td className="px-3 py-2 text-xs whitespace-nowrap">
             {pr.due_date ? <span className={isOverdue ? "text-destructive font-medium" : "text-muted-foreground"}>{format(new Date(pr.due_date), "MMM d, yyyy")}</span> : "—"}
           </td>
-          <td className="px-3 py-2 text-right font-bold text-foreground whitespace-nowrap">
-            ₱{(pr.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          <td className="px-3 py-2 text-right whitespace-nowrap">
+            <div className="font-bold text-foreground">₱{(pr.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+            {(pr.withholding_tax_amount > 0 || pr.vat_amount > 0) && (
+              <div className="text-xs text-primary font-medium">
+                Net: ₱{((pr.amount || 0) - (pr.withholding_tax_amount || 0) + (pr.vat_amount || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </div>
+            )}
           </td>
           <td className="px-2 py-2" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-end gap-1">
@@ -649,7 +672,18 @@ export default function PaymentApprovals() {
                   ))}
                 </div>
               )}
-              <p className="text-2xl font-bold text-foreground mt-1">₱{(reviewPR.amount || 0).toLocaleString()}</p>
+              <div className="mt-1 space-y-0.5">
+                <p className="text-2xl font-bold text-foreground">₱{(reviewPR.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                {reviewPR.withholding_tax_amount > 0 && (
+                  <p className="text-sm text-destructive">Withholding Tax ({reviewPR.withholding_tax_percentage}%): -₱{(reviewPR.withholding_tax_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                )}
+                {reviewPR.vat_amount > 0 && (
+                  <p className="text-sm text-chart-2">VAT ({reviewPR.vat_percentage}%): +₱{(reviewPR.vat_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                )}
+                {(reviewPR.withholding_tax_amount > 0 || reviewPR.vat_amount > 0) && (
+                  <p className="text-lg font-bold text-primary">Net to Disburse: ₱{((reviewPR.amount || 0) - (reviewPR.withholding_tax_amount || 0) + (reviewPR.vat_amount || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                )}
+              </div>
               {reviewPR.due_date && <p className="text-xs text-destructive">Due: {format(new Date(reviewPR.due_date), "MMM d, yyyy")}</p>}
               <Badge variant="outline" className={`text-xs mt-1 ${statusStyles[reviewPR.approval_status] || ""}`}>
                 {(reviewPR.approval_status || "pending").replace(/_/g, " ")}
