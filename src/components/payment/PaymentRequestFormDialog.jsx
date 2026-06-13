@@ -42,14 +42,22 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
   });
 
   const prevOpenRef = useRef(false);
+  const initialDataRef = useRef(initialData);
+
+  // Keep ref current but ONLY use it when dialog first opens
+  useEffect(() => {
+    initialDataRef.current = initialData;
+  });
 
   useEffect(() => {
     const justOpened = open && !prevOpenRef.current;
     prevOpenRef.current = open;
     if (!justOpened) return;
 
-    if (initialData && Object.keys(initialData).length > 0) {
-      const { project_allocations, amount, ...rest } = initialData;
+    // Read from ref so changes to initialData prop after open don't re-trigger this
+    const data = initialDataRef.current;
+    if (data && Object.keys(data).length > 0) {
+      const { project_allocations, amount, ...rest } = data;
       setForm({ ...defaultForm, ...rest, category: rest.category || "", base_amount: amount || "" });
       setAllocations(
         project_allocations && project_allocations.length > 0
@@ -60,7 +68,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
       setForm(defaultForm);
       setAllocations([{ project_name: "", amount: "", category: "" }]);
     }
-  }, [open, initialData]);
+  }, [open]); // <-- open ONLY, not initialData
 
   const allocationsTotal = allocations.reduce((s, a) => s + (parseFloat(a.amount) || 0), 0);
   // Use allocations total if any allocations have amounts, otherwise fall back to base_amount field
