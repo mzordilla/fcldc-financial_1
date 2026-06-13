@@ -31,8 +31,6 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
   const [form, setForm] = useState(defaultForm);
   const [allocations, setAllocations] = useState([{ project_name: "", amount: "", category: "" }]);
   const [saving, setSaving] = useState(false);
-  const initializedRef = useRef(false);
-
   const { data: projects = [] } = useQuery({
     queryKey: ["projects"],
     queryFn: () => base44.entities.Project.list("-created_date", 200),
@@ -44,24 +42,28 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
     enabled: open,
   });
 
+  const initialDataIdRef = useRef(null);
+
   useEffect(() => {
-    if (open && !initializedRef.current) {
-      initializedRef.current = true;
-      if (initialData && Object.keys(initialData).length > 0) {
-        const { project_allocations, amount, ...rest } = initialData;
-        setForm({ ...defaultForm, ...rest, category: rest.category || "", base_amount: amount || "" });
-        setAllocations(
-          project_allocations && project_allocations.length > 0
-            ? project_allocations.map(a => ({ project_name: a.project_name || "", amount: a.amount || "", category: a.category || "" }))
-            : [{ project_name: "", amount: "", category: "" }]
-        );
-      } else {
-        setForm(defaultForm);
-        setAllocations([{ project_name: "", amount: "", category: "" }]);
-      }
-    }
     if (!open) {
-      initializedRef.current = false;
+      initialDataIdRef.current = null;
+      return;
+    }
+    const dataId = initialData?.id || (initialData && Object.keys(initialData).length > 0 ? "prefill" : "new");
+    if (dataId === initialDataIdRef.current) return;
+    initialDataIdRef.current = dataId;
+
+    if (initialData && Object.keys(initialData).length > 0) {
+      const { project_allocations, amount, ...rest } = initialData;
+      setForm({ ...defaultForm, ...rest, category: rest.category || "", base_amount: amount || "" });
+      setAllocations(
+        project_allocations && project_allocations.length > 0
+          ? project_allocations.map(a => ({ project_name: a.project_name || "", amount: a.amount || "", category: a.category || "" }))
+          : [{ project_name: "", amount: "", category: "" }]
+      );
+    } else {
+      setForm(defaultForm);
+      setAllocations([{ project_name: "", amount: "", category: "" }]);
     }
   }, [open, initialData]);
 

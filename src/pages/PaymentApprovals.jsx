@@ -423,7 +423,7 @@ export default function PaymentApprovals() {
               <Button variant="ghost" size="icon" onClick={() => setReviewPR(pr)} title="History" className="text-muted-foreground hover:text-foreground">
                 <History className="w-4 h-4" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => setEditingPR(pr)} title="Edit" className="text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" size="icon" onClick={() => setEditingPR({...pr})} title="Edit" className="text-muted-foreground hover:text-foreground">
                 <Pencil className="w-4 h-4" />
               </Button>
               <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(pr.id)} title="Delete" className="text-muted-foreground hover:text-destructive">
