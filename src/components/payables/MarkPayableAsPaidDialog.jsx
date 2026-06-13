@@ -47,7 +47,11 @@ export default function MarkPayableAsPaidDialog({ open, onOpenChange, payable, o
 
   if (!payable) return null;
 
-  const totalAmount = payable.amount || 0;
+  const grossAmount = payable.amount || 0;
+  const withholdingTax = payable.withholding_tax_amount || 0;
+  const vatAmt = payable.vat_amount || 0;
+  // Net amount = what actually needs to be paid in cash (withholding tax is deducted, VAT is added)
+  const totalAmount = grossAmount - withholdingTax + vatAmt;
   const alreadyPaid = payable.amount_paid || 0;
   const remaining = totalAmount - alreadyPaid;
   const thisPayment = parseFloat(form.amount) || 0;
@@ -133,9 +137,27 @@ export default function MarkPayableAsPaidDialog({ open, onOpenChange, payable, o
           {payable.description && <p className="text-muted-foreground">{payable.description}</p>}
           {payable.invoice_number && <p className="text-muted-foreground">Invoice: {payable.invoice_number}</p>}
           <div className="flex justify-between items-center mt-2">
-            <span className="text-muted-foreground">Total</span>
-            <span className="font-bold">₱{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            <span className="text-muted-foreground">{withholdingTax > 0 || vatAmt > 0 ? "Gross Amount" : "Total"}</span>
+            <span className="font-bold">₱{grossAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
+          {withholdingTax > 0 && (
+            <div className="flex justify-between items-center text-destructive">
+              <span>Withholding Tax ({payable.withholding_tax_percentage || 0}%)</span>
+              <span>-₱{withholdingTax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+          )}
+          {vatAmt > 0 && (
+            <div className="flex justify-between items-center text-chart-2">
+              <span>VAT ({payable.vat_percentage || 0}%)</span>
+              <span>+₱{vatAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+          )}
+          {(withholdingTax > 0 || vatAmt > 0) && (
+            <div className="flex justify-between items-center font-bold text-primary border-t border-border pt-1">
+              <span>Net Payable</span>
+              <span>₱{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+          )}
           <Progress value={paidPct} className="h-2" />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Paid: ₱{alreadyPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>

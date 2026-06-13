@@ -330,9 +330,10 @@ export default function PaymentApprovals() {
           const poRef = match[1].trim();
           const linkedPayable = payables.find(p => p.po_number === poRef || p.po_id === poRef);
           if (linkedPayable && linkedPayable.status !== "paid") {
+            const linkedNet = (linkedPayable.amount || 0) - (linkedPayable.withholding_tax_amount || 0) + (linkedPayable.vat_amount || 0);
             await base44.entities.Payable.update(linkedPayable.id, {
               status: "paid",
-              amount_paid: linkedPayable.amount,
+              amount_paid: linkedNet,
               payment_date: disbursedDate,
               payment_method: pr.payment_method || "bank_transfer",
               payment_reference: paymentReference || "",

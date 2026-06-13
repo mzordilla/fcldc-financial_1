@@ -24,12 +24,32 @@
     },
     "amount": {
       "type": "number",
-      "description": "Total amount owed"
+      "description": "Total gross amount owed (before withholding tax deduction)"
+    },
+    "withholding_tax_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "Withholding tax percentage (e.g. 2 for 2%)"
+    },
+    "withholding_tax_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Withholding tax amount deducted from gross \u2014 net payable = amount - withholding_tax_amount"
+    },
+    "vat_percentage": {
+      "type": "number",
+      "default": 0,
+      "description": "VAT percentage (e.g. 12 for 12%)"
+    },
+    "vat_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "VAT amount added"
     },
     "amount_paid": {
       "type": "number",
       "default": 0,
-      "description": "Amount already paid"
+      "description": "Net cash amount already paid (gross minus withholding tax)"
     },
     "due_date": {
       "type": "string",

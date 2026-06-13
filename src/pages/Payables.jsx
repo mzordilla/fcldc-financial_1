@@ -35,7 +35,8 @@ function AgingSummary({ items }) {
   items.filter(p => p.status !== "paid").forEach(p => {
     if (!p.due_date) return;
     const days = differenceInDays(today, new Date(p.due_date));
-    const rem = (p.amount || 0) - (p.amount_paid || 0);
+    const net = (p.amount || 0) - (p.withholding_tax_amount || 0) + (p.vat_amount || 0);
+    const rem = net - (p.amount_paid || 0);
     if (days <= 0) buckets[0].amount += rem;
     else if (days <= 30) buckets[1].amount += rem;
     else if (days <= 60) buckets[2].amount += rem;
@@ -162,6 +163,10 @@ export default function Payables() {
       description: pr.description,
       invoice_number: pr.invoice_number || pr.request_number || "",
       amount: pr.amount || 0,
+      withholding_tax_percentage: pr.withholding_tax_percentage || 0,
+      withholding_tax_amount: pr.withholding_tax_amount || 0,
+      vat_percentage: pr.vat_percentage || 0,
+      vat_amount: pr.vat_amount || 0,
       amount_paid: 0,
       due_date: pr.due_date || format(addDays(new Date(), 30), "yyyy-MM-dd"),
       project_name: pr.project_allocations?.[0]?.project_name || "",
@@ -217,7 +222,9 @@ export default function Payables() {
   const unpaidPayables = payables.filter(p => p.status !== "paid");
   const paidPayables = payables.filter(p => p.status === "paid");
 
-  const totalUnpaid = unpaidPayables.reduce((s, p) => s + ((p.amount || 0) - (p.amount_paid || 0)), 0);
+  // Net payable = gross amount - withholding tax + vat (the actual cash to be paid)
+  const netPayable = (p) => (p.amount || 0) - (p.withholding_tax_amount || 0) + (p.vat_amount || 0);
+  const totalUnpaid = unpaidPayables.reduce((s, p) => s + (netPayable(p) - (p.amount_paid || 0)), 0);
   const overdueCount = payables.filter(p => p.status === "overdue").length;
   
 
@@ -236,7 +243,8 @@ export default function Payables() {
     items.forEach(p => {
       if (!p.due_date) return;
       const days = differenceInDays(new Date(), new Date(p.due_date));
-      const rem = (p.amount || 0) - (p.amount_paid || 0);
+      const net = (p.amount || 0) - (p.withholding_tax_amount || 0) + (p.vat_amount || 0);
+      const rem = net - (p.amount_paid || 0);
       if (days <= 0) buckets.current += rem;
       else if (days <= 30) buckets.days30 += rem;
       else if (days <= 60) buckets.days60 += rem;
@@ -454,7 +462,8 @@ export default function Payables() {
                       <tbody className="divide-y divide-border">
                         {items.map((p) => {
                           const bucket = getAgingBucket(p.due_date, p.status);
-                          const balance = (p.amount || 0) - (p.amount_paid || 0);
+                          const netAmt = netPayable(p);
+                          const balance = netAmt - (p.amount_paid || 0);
                           return (
                             <tr key={p.id} className="hover:bg-muted/20 transition-colors">
                               <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{p.invoice_number || "—"}</td>
@@ -468,7 +477,12 @@ export default function Payables() {
                                   <span className="text-xs text-muted-foreground">—</span>
                                 )}
                               </td>
-                              <td className="px-4 py-3 text-right text-xs font-semibold text-foreground">₱{(p.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                              <td className="px-4 py-3 text-right text-xs font-semibold text-foreground">
+                                ₱{netAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                {p.withholding_tax_amount > 0 && (
+                                  <div className="text-muted-foreground font-normal">Gross: ₱{(p.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                )}
+                              </td>
                               <td className="px-4 py-3 text-right text-xs text-primary">₱{(p.amount_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                               <td className="px-4 py-3 text-right text-xs font-bold text-foreground">₱{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                               <td className="px-4 py-3 text-right">
@@ -510,7 +524,8 @@ export default function Payables() {
               <tbody className="divide-y divide-border">
                 {unpaidPayables.map((p) => {
                   const bucket = getAgingBucket(p.due_date, p.status);
-                  const balance = (p.amount || 0) - (p.amount_paid || 0);
+                  const netAmt = netPayable(p);
+                  const balance = netAmt - (p.amount_paid || 0);
                   return (
                     <tr key={p.id} className="hover:bg-muted/20 transition-colors">
                       <td className="px-4 py-3 text-xs font-medium text-foreground">{p.supplier_name}</td>
@@ -525,7 +540,12 @@ export default function Payables() {
                           <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right text-xs font-semibold text-foreground">₱{(p.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      <td className="px-4 py-3 text-right text-xs font-semibold text-foreground">
+                        ₱{netAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        {p.withholding_tax_amount > 0 && (
+                          <div className="text-muted-foreground font-normal">Gross: ₱{(p.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-right text-xs text-primary">₱{(p.amount_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                       <td className="px-4 py-3 text-right text-xs font-bold text-foreground">₱{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                       <td className="px-4 py-3 text-right">
