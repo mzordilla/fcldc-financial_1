@@ -110,12 +110,18 @@ export default function BalanceSheetReport({ asOfDate }) {
     const totalAssets = totalCurrentAssets + totalNonCurrentAssets;
 
     const unpaidPayablesList = payables.filter(p => p.status !== "paid");
-    const unpaidPayables = unpaidPayablesList.reduce((s, p) => s + ((p.amount || 0) - (p.amount_paid || 0)), 0);
+    // Net accounts payable = net payable amount (gross - WHT + VAT) less what's already paid
+    const netPayable = (p) => (p.amount || 0) - (p.withholding_tax_amount || 0) + (p.vat_amount || 0);
+    const unpaidPayables = unpaidPayablesList.reduce((s, p) => s + Math.max(0, netPayable(p) - (p.amount_paid || 0)), 0);
+
+    // Withholding Tax Payable — WHT withheld from unpaid invoices not yet remitted to BIR
+    const whtPayableList = unpaidPayablesList.filter(p => (p.withholding_tax_amount || 0) > 0);
+    const withholdingTaxPayable = whtPayableList.reduce((s, p) => s + (p.withholding_tax_amount || 0), 0);
 
     const activeLoans = [...loans, ...wcLoans].filter(l => l.status === "active");
     const currentPortionLoans = activeLoans.reduce((s, l) => s + ((l.monthly_payment || 0) * 12), 0);
 
-    const totalCurrentLiabilities = unpaidPayables + currentPortionLoans;
+    const totalCurrentLiabilities = unpaidPayables + withholdingTaxPayable + currentPortionLoans;
 
     const loanBalances = loans.filter(l => l.status === "active").reduce((s, l) => s + (l.outstanding_balance || 0), 0);
     const wcLoanBalances = wcLoans.filter(l => l.status === "active").reduce((s, l) => s + ((l.total_amount || 0) - (l.amount_paid || 0)), 0);
@@ -136,6 +142,7 @@ export default function BalanceSheetReport({ asOfDate }) {
       ppeNetBookValue, activePPE,
       totalNonCurrentAssets, totalAssets,
       unpaidPayables, unpaidPayablesList,
+      withholdingTaxPayable, whtPayableList,
       currentPortionLoans, activeLoans,
       totalCurrentLiabilities,
       totalNonCurrentLiabilities,
@@ -165,6 +172,7 @@ export default function BalanceSheetReport({ asOfDate }) {
       ["LIABILITIES"],
       ["Current Liabilities"],
       ["  Accounts Payable", bs.unpaidPayables],
+      ["  Withholding Tax Payable", bs.withholdingTaxPayable],
       ["  Current Portion of Loans", bs.currentPortionLoans],
       ["  Total Current Liabilities", bs.totalCurrentLiabilities],
       [],
@@ -284,6 +292,17 @@ export default function BalanceSheetReport({ asOfDate }) {
                 <td className="pl-10 pr-3 py-1.5 text-foreground">{p.supplier_name}</td>
                 <td className="px-3 py-1.5 text-muted-foreground">{p.invoice_number || p.project_name || "—"}</td>
                 <td className="px-3 py-1.5 text-right font-medium">{fmt((p.amount || 0) - (p.amount_paid || 0))}</td>
+              </tr>
+            )}
+          />
+          <ExpandableBSRow
+            label="Withholding Tax Payable" value={bs.withholdingTaxPayable} isSub
+            items={bs.whtPayableList}
+            renderItem={(p, i) => (
+              <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
+                <td className="pl-10 pr-3 py-1.5 text-foreground">{p.supplier_name}</td>
+                <td className="px-3 py-1.5 text-muted-foreground">{p.invoice_number || p.project_name || "—"} ({p.withholding_tax_percentage || 0}%)</td>
+                <td className="px-3 py-1.5 text-right font-medium">{fmt(p.withholding_tax_amount)}</td>
               </tr>
             )}
           />
