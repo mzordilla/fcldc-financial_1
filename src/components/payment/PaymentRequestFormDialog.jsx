@@ -47,7 +47,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
     if (open) {
       if (initialData) {
         const { project_allocations, amount, ...rest } = initialData;
-        setForm({ ...defaultForm, ...rest, base_amount: amount || "" });
+        setForm({ ...defaultForm, ...rest, category: rest.category || "", base_amount: amount || "" });
         setAllocations(
           project_allocations && project_allocations.length > 0
             ? project_allocations.map(a => ({ project_name: a.project_name || "", amount: a.amount || "", category: a.category || "" }))
@@ -89,7 +89,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
     const { base_amount, ...formWithoutBase } = cleanedForm;
     await onSubmit({
       ...formWithoutBase,
-      ...(form.category ? { category: form.category } : {}),
+      category: form.category || "",
       project_allocations: validAllocations.map(a => ({ project_name: a.project_name, amount: parseFloat(a.amount) || 0, category: a.category || "" })),
       amount: totalAmount,
       withholding_tax_percentage: parseFloat(form.withholding_tax_percentage) || 0,
