@@ -42,16 +42,12 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
     enabled: open,
   });
 
-  const initialDataIdRef = useRef(null);
+  const prevOpenRef = useRef(false);
 
   useEffect(() => {
-    if (!open) {
-      initialDataIdRef.current = null;
-      return;
-    }
-    const dataId = initialData?.id || (initialData && Object.keys(initialData).length > 0 ? "prefill" : "new");
-    if (dataId === initialDataIdRef.current) return;
-    initialDataIdRef.current = dataId;
+    const justOpened = open && !prevOpenRef.current;
+    prevOpenRef.current = open;
+    if (!justOpened) return;
 
     if (initialData && Object.keys(initialData).length > 0) {
       const { project_allocations, amount, ...rest } = initialData;
