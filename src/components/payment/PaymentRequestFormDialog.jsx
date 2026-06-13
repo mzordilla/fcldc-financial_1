@@ -58,7 +58,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
         setAllocations([{ project_name: "", amount: "", category: "" }]);
       }
     }
-  }, [open, initialData]);
+  }, [open]);
 
   const allocationsTotal = allocations.reduce((s, a) => s + (parseFloat(a.amount) || 0), 0);
   // Use allocations total if any allocations have amounts, otherwise fall back to base_amount field
