@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -31,6 +31,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
   const [form, setForm] = useState(defaultForm);
   const [allocations, setAllocations] = useState([{ project_name: "", amount: "", category: "" }]);
   const [saving, setSaving] = useState(false);
+  const initializedRef = useRef(false);
 
   const { data: projects = [] } = useQuery({
     queryKey: ["projects"],
@@ -44,8 +45,9 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
   });
 
   useEffect(() => {
-    if (open) {
-      if (initialData) {
+    if (open && !initializedRef.current) {
+      initializedRef.current = true;
+      if (initialData && Object.keys(initialData).length > 0) {
         const { project_allocations, amount, ...rest } = initialData;
         setForm({ ...defaultForm, ...rest, category: rest.category || "", base_amount: amount || "" });
         setAllocations(
@@ -58,7 +60,10 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
         setAllocations([{ project_name: "", amount: "", category: "" }]);
       }
     }
-  }, [open]);
+    if (!open) {
+      initializedRef.current = false;
+    }
+  }, [open, initialData]);
 
   const allocationsTotal = allocations.reduce((s, a) => s + (parseFloat(a.amount) || 0), 0);
   // Use allocations total if any allocations have amounts, otherwise fall back to base_amount field
