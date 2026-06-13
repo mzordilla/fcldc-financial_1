@@ -240,15 +240,25 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
               <Select value={form.category} onValueChange={v => set("category", v)}>
                 <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                 <SelectContent>
-                  {chartOfAccounts.filter(a => a.is_active !== false && a.category).map(a => (
-                    <SelectItem key={a.id} value={a.category}>
-                      {a.account_code ? `${a.account_code} — ` : ""}{a.account_name}
-                    </SelectItem>
-                  ))}
-                  {/* fallback defaults if COA not set up */}
-                  {chartOfAccounts.filter(a => a.is_active !== false && a.category).length === 0 && Object.entries(COA_CATEGORY_LABELS).map(([val, label]) => (
-                    <SelectItem key={val} value={val}>{label}</SelectItem>
-                  ))}
+                  {(() => {
+                    const activeAccounts = chartOfAccounts.filter(a => a.is_active !== false && a.category);
+                    if (activeAccounts.length === 0) {
+                      return Object.entries(COA_CATEGORY_LABELS).map(([val, label]) => (
+                        <SelectItem key={val} value={val}>{label}</SelectItem>
+                      ));
+                    }
+                    // Deduplicate by category value — keep first occurrence per unique category
+                    const seen = new Set();
+                    return activeAccounts.filter(a => {
+                      if (seen.has(a.category)) return false;
+                      seen.add(a.category);
+                      return true;
+                    }).map(a => (
+                      <SelectItem key={a.category} value={a.category}>
+                        {COA_CATEGORY_LABELS[a.category] || a.category.replace(/_/g, " ")}
+                      </SelectItem>
+                    ));
+                  })()}
                 </SelectContent>
               </Select>
             </div>
