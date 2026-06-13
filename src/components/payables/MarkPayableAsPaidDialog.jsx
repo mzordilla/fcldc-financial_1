@@ -33,7 +33,11 @@ export default function MarkPayableAsPaidDialog({ open, onOpenChange, payable, o
 
   useEffect(() => {
     if (payable) {
-      const remaining = (payable.amount || 0) - (payable.amount_paid || 0);
+      const gross = payable.amount || 0;
+      const wht = payable.withholding_tax_amount || 0;
+      const vat = payable.vat_amount || 0;
+      const net = gross - wht + vat;
+      const remaining = net - (payable.amount_paid || 0);
       setForm({
         payment_date: today,
         payment_method: "bank_transfer",

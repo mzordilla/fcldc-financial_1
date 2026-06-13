@@ -324,24 +324,37 @@ export default function PaymentApprovals() {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
 
       // Auto-mark linked Payable as paid
-      if (pr.supporting_docs) {
+      // Find payable linked by PR notes tag (PR:{id}) or by PO reference in supporting_docs
+      let linkedPayable = payables.find(p => p.notes && p.notes.includes(`PR:${pr.id}`));
+      if (!linkedPayable && pr.supporting_docs) {
         const match = pr.supporting_docs.match(/PO:\s*(.+)/);
         if (match) {
           const poRef = match[1].trim();
-          const linkedPayable = payables.find(p => p.po_number === poRef || p.po_id === poRef);
-          if (linkedPayable && linkedPayable.status !== "paid") {
-            const linkedNet = (linkedPayable.amount || 0) - (linkedPayable.withholding_tax_amount || 0) + (linkedPayable.vat_amount || 0);
-            await base44.entities.Payable.update(linkedPayable.id, {
-              status: "paid",
-              amount_paid: linkedNet,
-              payment_date: disbursedDate,
-              payment_method: pr.payment_method || "bank_transfer",
-              payment_reference: paymentReference || "",
-              payment_notes: `Auto-paid via Payment Approval disbursement by ${actor}`,
-            });
-            queryClient.invalidateQueries({ queryKey: ["payables_for_po_check"] });
-          }
+          linkedPayable = payables.find(p => p.po_number === poRef || p.po_id === poRef);
         }
+      }
+      if (linkedPayable && linkedPayable.status !== "paid") {
+        const linkedNet = (linkedPayable.amount || 0) - (linkedPayable.withholding_tax_amount || 0) + (linkedPayable.vat_amount || 0);
+        const currentPaid = linkedPayable.amount_paid || 0;
+        const newAmountPaid = Math.min(currentPaid + netCashOut, linkedNet);
+        const newStatus = newAmountPaid >= linkedNet ? "paid" : "partially_paid";
+        const newHistory = [...(linkedPayable.payment_history || []), {
+          payment_date: disbursedDate,
+          amount: netCashOut,
+          payment_method: pr.payment_method || "bank_transfer",
+          reference: paymentReference || "",
+          notes: `Auto-settled via Payment Approval disbursement by ${actor}`,
+        }];
+        await base44.entities.Payable.update(linkedPayable.id, {
+          status: newStatus,
+          amount_paid: newAmountPaid,
+          payment_date: disbursedDate,
+          payment_method: pr.payment_method || "bank_transfer",
+          payment_reference: paymentReference || "",
+          payment_notes: `Auto-settled via Payment Approval disbursement by ${actor}`,
+          payment_history: newHistory,
+        });
+        queryClient.invalidateQueries({ queryKey: ["payables"] });
       }
     }
   };
