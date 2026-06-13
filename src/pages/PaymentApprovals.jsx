@@ -60,10 +60,14 @@ export default function PaymentApprovals() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkApproving, setBulkApproving] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isDisbursementRole, setIsDisbursementRole] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    base44.auth.me().then(u => setIsAdmin(u?.role === "admin")).catch(() => {});
+    base44.auth.me().then(u => {
+      setIsAdmin(u?.role === "admin");
+      setIsDisbursementRole(u?.role === "disbursement");
+    }).catch(() => {});
   }, []);
 
   const { data: requests = [], isLoading } = useQuery({
@@ -411,7 +415,7 @@ export default function PaymentApprovals() {
               {isAdmin && pr.approval_status === "pending" && (
                 <Button size="sm" variant="outline" onClick={() => setReviewPR(pr)}>Review</Button>
               )}
-              {isAdmin && pr.approval_status === "approved" && (
+              {(isAdmin || isDisbursementRole) && pr.approval_status === "approved" && (
                 <Button size="sm" onClick={() => setReviewPR(pr)}>
                   <Banknote className="w-3.5 h-3.5 mr-1" /> Disburse
                 </Button>

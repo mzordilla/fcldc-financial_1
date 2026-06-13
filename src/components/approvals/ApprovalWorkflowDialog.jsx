@@ -18,6 +18,7 @@ const FINAL_STATUSES = ["rejected", "paid"];
 
 export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summary, history = [], onDecision, currentStatus }) {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isDisbursementRole, setIsDisbursementRole] = useState(false);
   const [step, setStep] = useState(0);
   const [actor, setActor] = useState("");
   const [notes, setNotes] = useState("");
@@ -26,12 +27,17 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split("T")[0]);
   const isFinal = FINAL_STATUSES.includes(currentStatus);
   const isDisbursement = currentStatus === "approved";
-  // For final statuses or non-admins, only show Details and History tabs
-  const visibleSteps = (isFinal || !isAdmin) ? ["Details", "History"] : STEPS;
+  // Disbursement role can only act on approved (disburse) — not approve/reject pending
+  const canAct = isAdmin || (isDisbursementRole && isDisbursement);
+  // Only show Decision tab if user can act and status is not final
+  const visibleSteps = (isFinal || !canAct) ? ["Details", "History"] : STEPS;
 
   useEffect(() => {
     if (open) {
-      base44.auth.me().then(u => setIsAdmin(u?.role === "admin")).catch(() => {});
+      base44.auth.me().then(u => {
+        setIsAdmin(u?.role === "admin");
+        setIsDisbursementRole(u?.role === "disbursement");
+      }).catch(() => {});
     }
   }, [open]);
 
@@ -109,8 +115,8 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
           </div>
         )}
 
-        {/* Step 1: Decision (only for non-final statuses, admin only) */}
-        {step === 1 && !isFinal && isAdmin && (
+        {/* Step 1: Decision (only for non-final statuses, authorized users only) */}
+        {step === 1 && !isFinal && canAct && (
           <div className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-sm font-medium flex items-center gap-1.5">
@@ -202,7 +208,7 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
               Next <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           )}
-          {step === 1 && !isFinal && isAdmin && (
+          {step === 1 && !isFinal && canAct && (
             <>
               {currentStatus !== "approved" && (
                 <Button variant="destructive" onClick={() => handleDecide("rejected")} disabled={!actor.trim() || deciding}>
