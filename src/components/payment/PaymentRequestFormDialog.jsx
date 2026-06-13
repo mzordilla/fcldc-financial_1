@@ -39,7 +39,6 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
   const { data: chartOfAccounts = [] } = useQuery({
     queryKey: ["chartofaccounts"],
     queryFn: () => base44.entities.ChartOfAccount.list("account_code", 200),
-    enabled: open,
   });
 
   const prevOpenRef = useRef(false);
@@ -182,22 +181,29 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
                    <Select value={alloc.category} onValueChange={v => updateAllocation(i, "category", v)}>
                      <SelectTrigger className="w-44"><SelectValue placeholder="Category" /></SelectTrigger>
                      <SelectContent>
-                       {chartOfAccounts.filter(a => a.is_active !== false).length > 0
-                         ? chartOfAccounts.filter(a => a.is_active !== false).map(a => (
+                       {(() => {
+                         const activeAccounts = chartOfAccounts.filter(a => a.is_active !== false);
+                         const options = activeAccounts.length > 0 ? activeAccounts : [
+                           { id: "si", account_name: "Supplier Invoice", account_code: "" },
+                           { id: "sc", account_name: "Subcontractor", account_code: "" },
+                           { id: "lb", account_name: "Labor", account_code: "" },
+                           { id: "eq", account_name: "Equipment", account_code: "" },
+                           { id: "er", account_name: "Expense Reimbursement", account_code: "" },
+                           { id: "ut", account_name: "Utilities", account_code: "" },
+                           { id: "ot", account_name: "Other", account_code: "" },
+                         ];
+                         const hasCurrentValue = alloc.category && options.some(o => o.account_name === alloc.category);
+                         return <>
+                           {!hasCurrentValue && alloc.category && (
+                             <SelectItem key="__current__" value={alloc.category}>{alloc.category}</SelectItem>
+                           )}
+                           {options.map(a => (
                              <SelectItem key={a.id} value={a.account_name}>
                                {a.account_code ? `${a.account_code} — ` : ""}{a.account_name}
                              </SelectItem>
-                           ))
-                         : <>
-                             <SelectItem value="Supplier Invoice">Supplier Invoice</SelectItem>
-                             <SelectItem value="Subcontractor">Subcontractor</SelectItem>
-                             <SelectItem value="Labor">Labor</SelectItem>
-                             <SelectItem value="Equipment">Equipment</SelectItem>
-                             <SelectItem value="Expense Reimbursement">Expense Reimbursement</SelectItem>
-                             <SelectItem value="Utilities">Utilities</SelectItem>
-                             <SelectItem value="Other">Other</SelectItem>
-                           </>
-                       }
+                           ))}
+                         </>;
+                       })()}
                      </SelectContent>
                    </Select>
                    <Input
