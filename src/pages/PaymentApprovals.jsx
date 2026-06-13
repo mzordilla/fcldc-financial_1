@@ -629,8 +629,8 @@ export default function PaymentApprovals() {
 
       <BillsPaymentSheet open={showBillsPayment} onOpenChange={setShowBillsPayment} />
       <BulkPaymentRequestDialog open={showBulk} onOpenChange={setShowBulk} onSubmit={bulkCreateRequests} />
-      <PaymentRequestFormDialog open={showAdd} onOpenChange={(v) => { setShowAdd(v); if (!v) setPrefillData(null); }} title="New Payment Request" initialData={prefillData} onSubmit={(data) => createMutation.mutateAsync(data)} />
-      <PaymentRequestFormDialog open={!!editingPR} onOpenChange={(v) => { if (!v) setEditingPR(null); }} title="Edit Payment Request" initialData={editingPR || {}} onSubmit={(data) => updateMutation.mutateAsync({ id: editingPR.id, data })} />
+      <PaymentRequestFormDialog key={`new-${showAdd}`} open={showAdd} onOpenChange={(v) => { setShowAdd(v); if (!v) setPrefillData(null); }} title="New Payment Request" initialData={prefillData} onSubmit={(data) => createMutation.mutateAsync(data)} />
+      <PaymentRequestFormDialog key={`edit-${editingPR?.id}`} open={!!editingPR} onOpenChange={(v) => { if (!v) setEditingPR(null); }} title="Edit Payment Request" initialData={editingPR || {}} onSubmit={(data) => updateMutation.mutateAsync({ id: editingPR.id, data })} />
       {reviewPR && (
         <ApprovalWorkflowDialog
           open={!!reviewPR}

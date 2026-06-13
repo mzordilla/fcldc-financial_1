@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -41,23 +41,10 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
     queryFn: () => base44.entities.ChartOfAccount.list("account_code", 200),
   });
 
-  const prevOpenRef = useRef(false);
-  const initialDataRef = useRef(initialData);
-
-  // Keep ref current but ONLY use it when dialog first opens
   useEffect(() => {
-    initialDataRef.current = initialData;
-  });
-
-  useEffect(() => {
-    const justOpened = open && !prevOpenRef.current;
-    prevOpenRef.current = open;
-    if (!justOpened) return;
-
-    // Read from ref so changes to initialData prop after open don't re-trigger this
-    const data = initialDataRef.current;
-    if (data && Object.keys(data).length > 0) {
-      const { project_allocations, amount, ...rest } = data;
+    if (!open) return;
+    if (initialData && Object.keys(initialData).length > 0) {
+      const { project_allocations, amount, ...rest } = initialData;
       setForm({ ...defaultForm, ...rest, category: rest.category || "", base_amount: amount || "" });
       setAllocations(
         project_allocations && project_allocations.length > 0
@@ -68,7 +55,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
       setForm(defaultForm);
       setAllocations([{ project_name: "", amount: "", category: "" }]);
     }
-  }, [open]); // <-- open ONLY, not initialData
+  }, [open]);
 
   const allocationsTotal = allocations.reduce((s, a) => s + (parseFloat(a.amount) || 0), 0);
   // Use allocations total if any allocations have amounts, otherwise fall back to base_amount field
