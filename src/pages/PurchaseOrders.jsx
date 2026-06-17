@@ -254,12 +254,12 @@ export default function PurchaseOrders() {
 
   const { data: payables = [] } = useQuery({
     queryKey: ["payables_for_po_check"],
-    queryFn: () => base44.entities.Payable.list("-created_date", 200),
+    queryFn: () => base44.entities.Payable.list("-created_date", 500),
   });
 
   const { data: paymentRequests = [] } = useQuery({
     queryKey: ["payment_requests_for_po_check"],
-    queryFn: () => base44.entities.PaymentRequest.list("-created_date", 200),
+    queryFn: () => base44.entities.PaymentRequest.list("-created_date", 500),
   });
 
   const { data: receivingRecords = [] } = useQuery({
