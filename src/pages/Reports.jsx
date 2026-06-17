@@ -14,6 +14,7 @@ import IncomeStatementReport from "../components/reports/IncomeStatementReport";
 import EfficiencyReport from "../components/reports/EfficiencyReport";
 import DailyTransactionsReport from "../components/reports/DailyTransactionsReport";
 import MonthlyTransactionsReport from "../components/reports/MonthlyTransactionsReport";
+import WithholdingTaxSync from "../components/reports/WithholdingTaxSync";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import { Badge } from "@/components/ui/badge";
@@ -518,6 +519,7 @@ export default function Reports() {
           { key: "daily_transactions", label: "Daily Transactions", color: "from-teal-500 to-cyan-600", emoji: "📅" },
           { key: "monthly_transactions", label: "Monthly Transactions", color: "from-indigo-500 to-blue-600", emoji: "🗓️" },
           { key: "chart_of_accounts", label: "Chart of Accounts", color: "from-violet-500 to-purple-600", emoji: "📚" },
+          { key: "wht_sync", label: "WHT Google Sheets Sync", color: "from-green-500 to-emerald-600", emoji: "📊" },
         ].map(tab => (
           <button
             key={tab.key}
@@ -673,6 +675,10 @@ export default function Reports() {
             onSubmit={(data) => updateCOAMutation.mutateAsync({ id: editingCOA.id, data })}
           />
         </div>
+      )}
+
+      {activeTab === "wht_sync" && (
+        <WithholdingTaxSync />
       )}
 
       {activeTab === "pnl" && <>
