@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package, ClipboardList, Printer, Search } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package, ClipboardList, Printer, Search, Users } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -20,6 +20,7 @@ import PurchaseOrderPDF from "../components/purchase-orders/PurchaseOrderPDF";
 import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
 import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
 import ReceiveItemsDialog from "../components/purchase-orders/ReceiveItemsDialog";
+import SupplierMasterlistDialog from "../components/purchase-orders/SupplierMasterlistDialog";
 import GroupedPurchaseOrders from "../components/purchase-orders/GroupedPurchaseOrders";
 
 const statusStyles = {
@@ -61,6 +62,7 @@ export default function PurchaseOrders() {
   const [statusFilter, setStatusFilter] = useState("approved");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showSupplierMasterlist, setShowSupplierMasterlist] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -458,6 +460,9 @@ export default function PurchaseOrders() {
           <Button variant="outline" onClick={() => window.print()}>
             <Printer className="w-4 h-4 mr-2" /> Print
           </Button>
+          <Button variant="outline" onClick={() => setShowSupplierMasterlist(true)}>
+            <Users className="w-4 h-4 mr-2" /> Suppliers
+          </Button>
           <Button variant="outline" onClick={() => setShowImport(true)}>
             <FileUp className="w-4 h-4 mr-2" /> Import Excel
           </Button>
@@ -835,6 +840,10 @@ export default function PurchaseOrders() {
         open={!!receivingItems}
         onOpenChange={(v) => { if (!v) setReceivingItems(null); }}
         po={receivingItems}
+      />
+      <SupplierMasterlistDialog
+        open={showSupplierMasterlist}
+        onOpenChange={setShowSupplierMasterlist}
       />
     </div>
   );
