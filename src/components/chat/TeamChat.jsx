@@ -2,13 +2,18 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
-import { MessageCircle, X, Send } from "lucide-react";
+import { MessageCircle, X, Send, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export default function TeamChat() {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
+  // Default position: bottom-24 right-6 (above the approval button area)
+  const [pos, setPos] = useState({ right: 24, bottom: 96 });
+  const dragging = useRef(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
+  const btnRef = useRef(null);
   const bottomRef = useRef(null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -19,7 +24,6 @@ export default function TeamChat() {
     refetchInterval: open ? 5000 : false,
   });
 
-  // Real-time subscription
   useEffect(() => {
     const unsub = base44.entities.ChatMessage.subscribe(() => {
       queryClient.invalidateQueries({ queryKey: ["chat-messages"] });
@@ -27,12 +31,62 @@ export default function TeamChat() {
     return unsub;
   }, [queryClient]);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
-    if (open) {
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
-    }
+    if (open) setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
   }, [messages, open]);
+
+  // Drag logic
+  const onMouseDown = (e) => {
+    e.preventDefault();
+    dragging.current = true;
+    const rect = btnRef.current.getBoundingClientRect();
+    dragOffset.current = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+  };
+
+  useEffect(() => {
+    const onMouseMove = (e) => {
+      if (!dragging.current) return;
+      const newRight = window.innerWidth - e.clientX - (56 - dragOffset.current.x);
+      const newBottom = window.innerHeight - e.clientY - (56 - dragOffset.current.y);
+      setPos({
+        right: Math.max(8, Math.min(newRight, window.innerWidth - 64)),
+        bottom: Math.max(8, Math.min(newBottom, window.innerHeight - 64)),
+      });
+    };
+    const onMouseUp = () => { dragging.current = false; };
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    // Touch support
+    const onTouchMove = (e) => {
+      if (!dragging.current) return;
+      const t = e.touches[0];
+      const newRight = window.innerWidth - t.clientX - (56 - dragOffset.current.x);
+      const newBottom = window.innerHeight - t.clientY - (56 - dragOffset.current.y);
+      setPos({
+        right: Math.max(8, Math.min(newRight, window.innerWidth - 64)),
+        bottom: Math.max(8, Math.min(newBottom, window.innerHeight - 64)),
+      });
+    };
+    const onTouchEnd = () => { dragging.current = false; };
+    window.addEventListener("touchmove", onTouchMove);
+    window.addEventListener("touchend", onTouchEnd);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
+  }, []);
+
+  const onTouchStart = (e) => {
+    dragging.current = true;
+    const t = e.touches[0];
+    const rect = btnRef.current.getBoundingClientRect();
+    dragOffset.current = { x: t.clientX - rect.left, y: t.clientY - rect.top };
+  };
 
   const sendMutation = useMutation({
     mutationFn: (msg) => base44.entities.ChatMessage.create(msg),
@@ -66,30 +120,30 @@ export default function TeamChat() {
     return colors[Math.abs(hash) % colors.length];
   };
 
+  // Panel position: open above the button
+  const panelStyle = {
+    position: "fixed",
+    right: pos.right,
+    bottom: pos.bottom + 64,
+    zIndex: 51,
+  };
+
   return (
     <>
-      {/* Floating button */}
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-all"
-        title="Team Chat"
-      >
-        {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
-      </button>
-
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 h-[480px] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-          {/* Header */}
+        <div style={panelStyle} className="w-80 sm:w-96 h-[480px] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           <div className="px-4 py-3 bg-primary text-primary-foreground flex items-center gap-2">
             <MessageCircle className="w-5 h-5" />
-            <div>
+            <div className="flex-1">
               <p className="font-semibold text-sm">Team Chat</p>
               <p className="text-xs opacity-75">Company-wide</p>
             </div>
+            <button onClick={() => setOpen(false)} className="opacity-75 hover:opacity-100">
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
-          {/* Messages */}
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
             {messages.length === 0 && (
               <p className="text-center text-muted-foreground text-sm mt-8">No messages yet. Say hello! 👋</p>
@@ -114,7 +168,6 @@ export default function TeamChat() {
             <div ref={bottomRef} />
           </div>
 
-          {/* Input */}
           <form onSubmit={handleSend} className="p-3 border-t border-border flex gap-2">
             <Input
               value={text}
@@ -129,6 +182,19 @@ export default function TeamChat() {
           </form>
         </div>
       )}
+
+      {/* Draggable floating button */}
+      <button
+        ref={btnRef}
+        onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
+        onClick={() => setOpen(v => !v)}
+        style={{ position: "fixed", right: pos.right, bottom: pos.bottom, zIndex: 52, cursor: "grab" }}
+        className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity select-none"
+        title="Team Chat (drag to move)"
+      >
+        {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
+      </button>
     </>
   );
 }
