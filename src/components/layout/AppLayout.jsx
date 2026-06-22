@@ -3,6 +3,7 @@ import Sidebar from "./Sidebar";
 import MobileNav from "./MobileNav";
 import AccessDenied from "./AccessDenied";
 import ApprovalSidebar from "./ApprovalSidebar";
+import TeamChat from "@/components/chat/TeamChat";
 import { useAuth } from "@/lib/AuthContext";
 import { canAccess, roleAccess } from "@/lib/access-control";
 
@@ -39,6 +40,7 @@ export default function AppLayout() {
       </main>
       <ApprovalSidebar />
       <MobileNav />
+      <TeamChat />
     </div>);
 
 }

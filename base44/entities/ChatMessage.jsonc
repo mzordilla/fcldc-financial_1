@@ -1,0 +1,22 @@
+{
+  "name": "ChatMessage",
+  "type": "object",
+  "properties": {
+    "sender_name": {
+      "type": "string",
+      "description": "Sender's full name"
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "Sender's email"
+    },
+    "message": {
+      "type": "string",
+      "description": "Message content"
+    }
+  },
+  "required": [
+    "sender_name",
+    "message"
+  ]
+}
