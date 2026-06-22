@@ -22,7 +22,8 @@
         "2br",
         "3br",
         "penthouse",
-        "commercial"
+        "commercial",
+        "parking"
       ],
       "description": "Unit type / bedroom count"
     },

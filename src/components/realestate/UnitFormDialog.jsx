@@ -106,6 +106,7 @@ export default function UnitFormDialog({ open, onOpenChange, initialData, onSubm
                   <SelectItem value="3br">3 Bedrooms</SelectItem>
                   <SelectItem value="penthouse">Penthouse</SelectItem>
                   <SelectItem value="commercial">Commercial</SelectItem>
+                  <SelectItem value="parking">Parking</SelectItem>
                 </SelectContent>
               </Select>
             </div>

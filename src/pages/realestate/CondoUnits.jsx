@@ -35,6 +35,7 @@ const typeLabels = {
   "3br": "3 Bedrooms",
   penthouse: "Penthouse",
   commercial: "Commercial",
+  parking: "Parking",
 };
 
 const fmt = (n) => n ? `₱${Number(n).toLocaleString()}` : "—";
