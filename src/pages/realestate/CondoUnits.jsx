@@ -90,6 +90,11 @@ export default function CondoUnits() {
 
   const filtered = statusFilter === "all" ? units : units.filter(u => u.status === statusFilter);
 
+  const totalArea = filtered.reduce((s, u) => s + (u.area_sqm || 0), 0);
+  const totalSellingPrice = filtered.reduce((s, u) => s + (u.selling_price || 0), 0);
+  const totalMonthlyRent = filtered.reduce((s, u) => s + (u.monthly_rent || 0), 0);
+  const totalParking = filtered.reduce((s, u) => s + (u.parking_slots || 0), 0);
+
   const forSale = units.filter(u => u.status === "available_for_sale").length;
   const forLease = units.filter(u => u.status === "available_for_lease").length;
   const sold = units.filter(u => u.status === "sold").length;
@@ -267,6 +272,22 @@ export default function CondoUnits() {
               </TableRow>
             ))}
           </TableBody>
+          {filtered.length > 0 && (
+            <tfoot>
+              <tr className="bg-muted/50 border-t-2 border-border font-semibold text-sm">
+                <td></td>
+                <td className="px-4 py-3 text-foreground">{filtered.length} units</td>
+                <td></td>
+                <td></td>
+                <td className="px-4 py-3 text-foreground">{totalParking} slots</td>
+                <td className="px-4 py-3 text-foreground">{totalArea.toLocaleString()} sqm</td>
+                <td></td>
+                <td className="px-4 py-3 text-emerald-700">{totalSellingPrice > 0 ? fmt(totalSellingPrice) : "—"}</td>
+                <td className="px-4 py-3 text-blue-700">{totalMonthlyRent > 0 ? `${fmt(totalMonthlyRent)}/mo` : "—"}</td>
+                <td colSpan={2}></td>
+              </tr>
+            </tfoot>
+          )}
         </Table>
       </div>
 
