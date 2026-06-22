@@ -113,12 +113,12 @@ export default function Payables() {
 
   const { data: payables = [], isLoading } = useQuery({
     queryKey: ["payables"],
-    queryFn: () => base44.entities.Payable.list("-due_date", 200),
+    queryFn: () => base44.entities.Payable.list("-due_date", 1000),
   });
 
   const { data: paymentRequests = [] } = useQuery({
     queryKey: ["payment_requests_for_payables"],
-    queryFn: () => base44.entities.PaymentRequest.filter({ approval_status: "approved" }, "-created_date", 200),
+    queryFn: () => base44.entities.PaymentRequest.list("-created_date", 1000),
   });
 
   const createMutation = useMutation({
@@ -154,7 +154,9 @@ export default function Payables() {
     `${(pr.payee || "").toLowerCase().trim()}|${pr.amount}|${(pr.invoice_number || pr.request_number || "").toLowerCase().trim()}`;
 
   const pendingPRs = paymentRequests.filter(pr =>
-    !linkedPRIds.has(pr.id) && !existingPayableKeys.has(prKey(pr))
+    pr.approval_status === "approved" &&
+    !linkedPRIds.has(pr.id) &&
+    !existingPayableKeys.has(prKey(pr))
   );
 
   const createFromPR = async (pr) => {
