@@ -137,9 +137,14 @@
       "default": 0,
       "description": "Down payment deducted this cycle"
     },
+    "recoupment": {
+      "type": "number",
+      "default": 0,
+      "description": "Recoupment amount deducted this billing cycle (e.g. advance recovery)"
+    },
     "net_billing_amount": {
       "type": "number",
-      "description": "Net amount after all additions, deductions, retention, and down payment"
+      "description": "Net amount after all additions, deductions, retention, down payment, and recoupment"
     },
     "due_date": {
       "type": "string",

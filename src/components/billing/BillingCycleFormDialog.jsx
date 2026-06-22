@@ -24,6 +24,7 @@ const defaultForm = {
   deductive_rows: [],
   retention_rate: "",
   down_payment: "",
+  recoupment: "",
   due_date: "",
   description: "",
   prepared_by: "",
@@ -139,6 +140,7 @@ function calcTotals(form) {
   const accomplishPct = parseFloat(form.accomplishment_percentage) || 0;
   const retentionRate = parseFloat(form.retention_rate) || 0;
   const downPayment = parseFloat(form.down_payment) || 0;
+  const recoupment = parseFloat(form.recoupment) || 0;
 
   // Change orders adjust contract amount
   const coNet = (form.change_orders || []).reduce((s, co) => {
@@ -154,7 +156,7 @@ function calcTotals(form) {
   const totalAdditives = (form.additive_rows || []).reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
   const totalDeductives = (form.deductive_rows || []).reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
 
-  const net = grossBilling - retentionAmt - dpDeduction + totalAdditives - totalDeductives;
+  const net = grossBilling - retentionAmt - dpDeduction + totalAdditives - totalDeductives - recoupment;
 
   return {
     adjustedContract,
@@ -164,6 +166,7 @@ function calcTotals(form) {
     dpDeduction,
     totalAdditives,
     totalDeductives,
+    recoupment,
     net,
   };
 }
@@ -186,6 +189,7 @@ export default function BillingCycleFormDialog({ open, onOpenChange, title, init
         change_orders: initialData?.change_orders || [],
         additive_rows: initialData?.additive_rows || [],
         deductive_rows: initialData?.deductive_rows || [],
+        recoupment: initialData?.recoupment?.toString() || "",
       });
     }
   }, [open, initialData]);
@@ -218,6 +222,7 @@ export default function BillingCycleFormDialog({ open, onOpenChange, title, init
       retention_amount: calc.retentionAmt,
       down_payment: parseFloat(form.down_payment) || 0,
       down_payment_deduction: calc.dpDeduction,
+      recoupment: calc.recoupment,
       total_additives: calc.totalAdditives,
       total_deductives: calc.totalDeductives,
       net_billing_amount: calc.net,
@@ -308,6 +313,12 @@ export default function BillingCycleFormDialog({ open, onOpenChange, title, init
             <p className="text-xs text-muted-foreground">A proportional deduction is applied each billing cycle based on accomplishment %.</p>
           </div>
 
+          <div className="space-y-1.5">
+            <Label>Recoupment (₱)</Label>
+            <Input type="number" step="0.01" min="0" placeholder="0.00 — leave blank if none" value={form.recoupment} onChange={e => set("recoupment", e.target.value)} />
+            <p className="text-xs text-muted-foreground">Direct deduction this cycle for advance recovery or other recoupments.</p>
+          </div>
+
           {/* Divider */}
           <hr className="border-border" />
 
@@ -395,6 +406,12 @@ export default function BillingCycleFormDialog({ open, onOpenChange, title, init
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">- Down Payment Deduction</span>
                   <span className="text-destructive font-medium">-₱{fmt(calc.dpDeduction)}</span>
+                </div>
+              )}
+              {calc.recoupment > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">- Recoupment</span>
+                  <span className="text-destructive font-medium">-₱{fmt(calc.recoupment)}</span>
                 </div>
               )}
               <div className="flex justify-between border-t border-border pt-2 mt-1">

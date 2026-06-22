@@ -185,6 +185,12 @@ export default function BillingCycles() {
                         <span className="font-semibold text-chart-3">-₱{(bc.retention_amount || 0).toLocaleString()}</span>
                       </div>
                     )}
+                    {bc.recoupment > 0 && (
+                      <div className="bg-destructive/10 rounded-lg px-3 py-1.5 text-xs">
+                        <span className="text-destructive">Recoupment: </span>
+                        <span className="font-semibold text-destructive">-₱{(bc.recoupment || 0).toLocaleString()}</span>
+                      </div>
+                    )}
                     <div className="bg-primary/10 rounded-lg px-3 py-1.5 text-xs">
                       <span className="text-primary">Net Billing: </span>
                       <span className="font-semibold text-primary">₱{(bc.net_billing_amount || bc.billing_amount || 0).toLocaleString()}</span>
