@@ -135,120 +135,108 @@ export default function BillingCycles() {
         </div>
       )}
 
-      <div className="grid gap-4">
+      <div className="bg-card rounded-2xl border border-border overflow-hidden">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
         {!isLoading && filtered.length === 0 && (
           <p className="text-center py-12 text-muted-foreground">No billing cycles yet</p>
         )}
-        {filtered.map((bc) => {
-          const StatusIcon = statusIcons[bc.approval_status] || Clock;
-          return (
-            <div key={bc.id} className="bg-card rounded-2xl border border-border p-5 hover:shadow-md transition-shadow">
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 flex-wrap mb-2">
-                    <h3 className="font-semibold text-foreground">{bc.project_name}</h3>
-                    {bc.billing_number && <span className="text-xs font-mono text-muted-foreground">{bc.billing_number}</span>}
-                    <Badge variant="outline" className={`text-xs ${statusStyles[bc.approval_status] || ""}`}>
-                      <StatusIcon className="w-3 h-3 mr-1" />
-                      {(bc.approval_status || "pending")}
-                    </Badge>
-                    {bc.receivable_id && (
-                      <Badge variant="outline" className="text-xs bg-primary/5 text-primary border-primary/20">
-                        <FileText className="w-3 h-3 mr-1" /> Receivable Created
-                      </Badge>
-                    )}
-                  </div>
-
-                  <p className="text-sm text-foreground">Client: <span className="font-medium">{bc.client_name}</span></p>
-                  {bc.period_label && <p className="text-sm text-muted-foreground">Period: {bc.period_label}</p>}
-                  {bc.description && <p className="text-sm text-muted-foreground mt-1">{bc.description}</p>}
-
-                  <div className="flex flex-wrap gap-4 mt-3 text-xs text-muted-foreground">
-                    <span>Accomplishment: <span className="font-semibold text-foreground">{bc.accomplishment_percentage}%</span></span>
-                    {bc.cumulative_percentage && <span>Cumulative: <span className="font-semibold">{bc.cumulative_percentage}%</span></span>}
-                    {bc.retention_rate > 0 && <span>Retention ({bc.retention_rate}%): <span className="text-chart-3 font-semibold">-₱{(bc.retention_amount || 0).toLocaleString()}</span></span>}
-                    {bc.due_date && <span>Due: {format(new Date(bc.due_date), "MMM d, yyyy")}</span>}
-                    {bc.prepared_by && <span>Prepared by: {bc.prepared_by}</span>}
-                    {bc.approved_by && <span>Approved by: {bc.approved_by}</span>}
-                  </div>
-
-                  {/* Billing breakdown */}
-                  <div className="mt-3 flex flex-wrap gap-3">
-                    <div className="bg-muted/40 rounded-lg px-3 py-1.5 text-xs">
-                      <span className="text-muted-foreground">Gross Billing: </span>
-                      <span className="font-semibold">₱{(bc.billing_amount || 0).toLocaleString()}</span>
-                    </div>
-                    {bc.retention_amount > 0 && (
-                      <div className="bg-chart-3/10 rounded-lg px-3 py-1.5 text-xs">
-                        <span className="text-chart-3">Retention: </span>
-                        <span className="font-semibold text-chart-3">-₱{(bc.retention_amount || 0).toLocaleString()}</span>
-                      </div>
-                    )}
-                    {bc.recoupment > 0 && (
-                      <div className="bg-destructive/10 rounded-lg px-3 py-1.5 text-xs">
-                        <span className="text-destructive">Recoupment: </span>
-                        <span className="font-semibold text-destructive">-₱{(bc.recoupment || 0).toLocaleString()}</span>
-                      </div>
-                    )}
-                    <div className="bg-primary/10 rounded-lg px-3 py-1.5 text-xs">
-                      <span className="text-primary">Net Billing: </span>
-                      <span className="font-semibold text-primary">₱{(bc.net_billing_amount || bc.billing_amount || 0).toLocaleString()}</span>
-                    </div>
-                  </div>
-
-                  {/* Approval notes */}
-                  {bc.approval_notes && (
-                    <p className="text-xs text-muted-foreground mt-2 italic border-l-2 border-border pl-2">{bc.approval_notes}</p>
-                  )}
-
-                  {/* History toggle */}
-                  {bc.approval_history?.length > 0 && (
-                    <button
-                      onClick={() => setExpandedHistory(expandedHistory === bc.id ? null : bc.id)}
-                      className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <History className="w-3.5 h-3.5" />
-                      {bc.approval_history.length} history record{bc.approval_history.length !== 1 ? "s" : ""}
-                      {expandedHistory === bc.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                    </button>
-                  )}
-                  {expandedHistory === bc.id && (
-                    <div className="mt-3 p-3 bg-muted/30 rounded-xl border border-border space-y-2">
-                      {bc.approval_history.map((h, i) => (
-                        <div key={i} className="flex items-start gap-2 text-xs">
-                          <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${h.action === "approved" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
-                            {h.action}
-                          </span>
-                          <span className="text-foreground font-medium">{h.actor}</span>
-                          {h.notes && <span className="text-muted-foreground">— {h.notes}</span>}
-                          <span className="ml-auto text-muted-foreground">{h.timestamp ? format(new Date(h.timestamp), "MMM d, HH:mm") : ""}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex sm:flex-col items-center sm:items-end gap-3">
-                  <p className="text-xl font-bold text-foreground">₱{(bc.net_billing_amount || bc.billing_amount || 0).toLocaleString()}</p>
-                  <div className="flex gap-1">
-                    {bc.approval_status === "pending" && (
-                      <Button size="sm" variant="outline" onClick={() => setReviewBC(bc)}>
-                        Review
-                      </Button>
-                    )}
-                    <Button variant="ghost" size="icon" onClick={() => setEditingBC(bc)} className="text-muted-foreground hover:text-foreground">
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(bc.id)} className="text-muted-foreground hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {!isLoading && filtered.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-muted/30 border-b border-border">
+                <tr>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Billing #</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Project</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Client</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Period</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Due Date</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Accmpl %</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Gross</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Retention</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Net Billing</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Status</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map((bc) => {
+                  const StatusIcon = statusIcons[bc.approval_status] || Clock;
+                  const netBilling = bc.net_billing_amount || bc.billing_amount || 0;
+                  return (
+                    <>
+                      <tr key={bc.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-3 py-2 text-xs font-mono text-muted-foreground">
+                          <div className="flex items-center gap-1.5">
+                            {bc.billing_number || "—"}
+                            {bc.receivable_id && <FileText className="w-3 h-3 text-primary" title="Receivable Created" />}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 text-sm font-medium text-foreground">{bc.project_name || "—"}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">{bc.client_name || "—"}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">{bc.period_label || "—"}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">
+                          {bc.due_date ? format(new Date(bc.due_date), "MMM d, yyyy") : "—"}
+                        </td>
+                        <td className="px-3 py-2 text-right text-xs font-semibold">{bc.accomplishment_percentage ?? "—"}%</td>
+                        <td className="px-3 py-2 text-right text-xs font-mono">₱{(bc.billing_amount || 0).toLocaleString()}</td>
+                        <td className="px-3 py-2 text-right text-xs font-mono text-chart-3">
+                          {bc.retention_amount > 0 ? `-₱${(bc.retention_amount || 0).toLocaleString()}` : "—"}
+                        </td>
+                        <td className="px-3 py-2 text-right text-sm font-mono font-bold text-primary">₱{netBilling.toLocaleString()}</td>
+                        <td className="px-3 py-2">
+                          <Badge variant="outline" className={`text-xs ${statusStyles[bc.approval_status] || ""}`}>
+                            <StatusIcon className="w-3 h-3 mr-1" />
+                            {bc.approval_status || "pending"}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center justify-end gap-1">
+                            {bc.approval_status === "pending" && (
+                              <button onClick={() => setReviewBC(bc)} className="text-xs text-chart-3 hover:text-chart-3/70 font-medium transition-colors">Review</button>
+                            )}
+                            {bc.approval_history?.length > 0 && (
+                              <button
+                                onClick={() => setExpandedHistory(expandedHistory === bc.id ? null : bc.id)}
+                                className="text-muted-foreground hover:text-foreground transition-colors"
+                                title="History"
+                              >
+                                <History className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            <button onClick={() => setEditingBC(bc)} className="text-muted-foreground hover:text-foreground transition-colors">
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => deleteMutation.mutate(bc.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {expandedHistory === bc.id && (
+                        <tr key={`${bc.id}-history`}>
+                          <td colSpan={11} className="px-6 py-3 bg-muted/20 border-b border-border">
+                            <div className="space-y-1.5">
+                              {bc.approval_history.map((h, i) => (
+                                <div key={i} className="flex items-center gap-2 text-xs">
+                                  <span className={`px-1.5 py-0.5 rounded font-medium ${h.action === "approved" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
+                                    {h.action}
+                                  </span>
+                                  <span className="text-foreground font-medium">{h.actor}</span>
+                                  {h.notes && <span className="text-muted-foreground">— {h.notes}</span>}
+                                  <span className="ml-auto text-muted-foreground">{h.timestamp ? format(new Date(h.timestamp), "MMM d, HH:mm") : ""}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <BillingCycleFormDialog
