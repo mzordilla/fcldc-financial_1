@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 export default function TeamChat() {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
+  const [unread, setUnread] = useState(0);
+  const lastSeenCount = useRef(0);
   // Default position: bottom-24 right-6 (above the approval button area)
   const [pos, setPos] = useState({ right: 24, bottom: 96 });
   const dragging = useRef(false);
@@ -30,6 +32,18 @@ export default function TeamChat() {
     });
     return unsub;
   }, [queryClient]);
+
+  // Track unread messages when chat is closed
+  useEffect(() => {
+    if (open) {
+      // Mark all as seen when opened
+      lastSeenCount.current = messages.length;
+      setUnread(0);
+    } else {
+      const newCount = messages.length - lastSeenCount.current;
+      if (newCount > 0) setUnread(newCount);
+    }
+  }, [messages, open]);
 
   useEffect(() => {
     if (open) setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
@@ -190,10 +204,15 @@ export default function TeamChat() {
         onTouchStart={onTouchStart}
         onClick={() => setOpen(v => !v)}
         style={{ position: "fixed", right: pos.right, bottom: pos.bottom, zIndex: 52, cursor: "grab" }}
-        className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity select-none"
+        className="relative w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity select-none"
         title="Team Chat (drag to move)"
       >
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
+        {!open && unread > 0 && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center animate-bounce shadow">
+            {unread > 9 ? "9+" : unread}
+          </span>
+        )}
       </button>
     </>
   );
