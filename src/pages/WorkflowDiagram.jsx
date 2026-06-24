@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import RoleAccessMatrix from "@/components/workflow/RoleAccessMatrix";
+import AccountingRulesEngine from "@/components/workflow/AccountingRulesEngine";
 
 const COLORS = {
   procurement: { bg: "bg-blue-50", border: "border-blue-300", text: "text-blue-800", dot: "bg-blue-500", header: "bg-blue-500" },
@@ -202,6 +203,12 @@ export default function WorkflowDiagram() {
             >
               Data Model
             </button>
+            <button
+              onClick={() => setActiveTab("accounting-rules")}
+              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === "accounting-rules" ? "bg-emerald-700 text-white shadow" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}
+            >
+              Accounting Rules
+            </button>
           </div>
         </div>
 
@@ -236,6 +243,9 @@ export default function WorkflowDiagram() {
             </div>
           </div>
         )}
+
+        {/* Accounting Rules Tab */}
+        {activeTab === "accounting-rules" && <AccountingRulesEngine />}
 
         {/* Data Model Tab */}
         {activeTab === "entities" && (
