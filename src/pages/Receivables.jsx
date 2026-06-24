@@ -6,7 +6,6 @@ import { Plus, Trash2, CheckCircle, Pencil, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import ReceivableFormDialog from "../components/receivables/ReceivableFormDialog";
@@ -176,94 +175,81 @@ export default function Receivables() {
 
       <AgingSummary items={receivables} />
 
-      <div className="grid gap-4">
+      <div className="bg-card rounded-2xl border border-border overflow-hidden">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
         {!isLoading && filtered.length === 0 && <p className="text-center py-12 text-muted-foreground">No receivables yet</p>}
-        {filtered.map((r) => {
-          const remaining = (r.amount || 0) - (r.amount_paid || 0);
-          const paidPct = r.amount ? Math.min(((r.amount_paid || 0) / r.amount) * 100, 100) : 0;
-          const aging = getAgingBucket(r.due_date, r.status);
-          return (
-            <div key={r.id} className="bg-card rounded-2xl border border-border p-5 hover:shadow-md transition-shadow">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-1 flex-wrap">
-                    <h3 className="font-semibold text-foreground">{r.client_name}</h3>
-                    <Badge variant="outline" className={`text-xs ${statusStyles[r.status] || ""}`}>
-                      {(r.status || "outstanding").replace(/_/g, " ")}
-                    </Badge>
-                    {aging && <Badge variant="outline" className={`text-xs ${aging.style}`}>{aging.label}</Badge>}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {r.project_name || ""}{r.invoice_number ? ` · ${r.invoice_number}` : ""}
-                    {r.due_date && ` · Due ${format(new Date(r.due_date), "MMM d, yyyy")}`}
-                  </p>
-                  <div className="mt-3 flex items-center gap-3">
-                    <Progress value={paidPct} className="h-2 flex-1" />
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      ₱{(r.amount_paid || 0).toLocaleString()} / ₱{(r.amount || 0).toLocaleString()}
-                    </span>
-                  </div>
-                  {/* Payment history breakdown */}
-                  {(r.payment_history || []).length > 0 && (
-                    <div className="mt-3 rounded-lg border border-border divide-y divide-border text-xs">
-                      {(r.payment_history || []).map((h, i) => (
-                        <div key={i} className="px-3 py-1.5 space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Banknote className="w-3 h-3" />
-                              {h.reference && <span className="font-medium">{h.reference}</span>}
-                              {h.collection_date && <span>· {format(new Date(h.collection_date), "MMM d, yyyy")}</span>}
-                              {h.notes && <span className="italic">· {h.notes}</span>}
-                            </div>
-                            <span className="font-semibold text-primary">₱{(h.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                          </div>
-                          {(h.receipt_url || h.check_image_url) && (
-                            <div className="grid grid-cols-2 gap-2">
-                              {h.receipt_url && (
-                                <a href={h.receipt_url} target="_blank" rel="noopener noreferrer" className="block">
-                                  <p className="text-muted-foreground mb-0.5">Receipt</p>
-                                  <img src={h.receipt_url} alt="Receipt" className="rounded border border-border max-h-20 object-contain bg-muted w-full hover:opacity-80 transition-opacity" />
-                                </a>
-                              )}
-                              {h.check_image_url && (
-                                <a href={h.check_image_url} target="_blank" rel="noopener noreferrer" className="block">
-                                  <p className="text-muted-foreground mb-0.5">Check</p>
-                                  <img src={h.check_image_url} alt="Check" className="rounded border border-border max-h-20 object-contain bg-muted w-full hover:opacity-80 transition-opacity" />
-                                </a>
-                              )}
-                            </div>
+        {!isLoading && filtered.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-muted/30 border-b border-border">
+                <tr>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Client</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Project</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Invoice #</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Due Date</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Status</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Aging</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Billed</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Collected</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Balance</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map((r) => {
+                  const remaining = (r.amount || 0) - (r.amount_paid || 0);
+                  const paidPct = r.amount ? Math.min(((r.amount_paid || 0) / r.amount) * 100, 100) : 0;
+                  const aging = getAgingBucket(r.due_date, r.status);
+                  return (
+                    <tr key={r.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-3 py-2 text-sm font-medium text-foreground">{r.client_name}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{r.project_name || "—"}</td>
+                      <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{r.invoice_number || "—"}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">
+                        {r.due_date ? format(new Date(r.due_date), "MMM d, yyyy") : "—"}
+                      </td>
+                      <td className="px-3 py-2">
+                        <Badge variant="outline" className={`text-xs ${statusStyles[r.status] || ""}`}>
+                          {(r.status || "outstanding").replace(/_/g, " ")}
+                        </Badge>
+                      </td>
+                      <td className="px-3 py-2">
+                        {aging ? (
+                          <span className={`text-xs px-1.5 py-0.5 rounded ${aging.style}`}>{aging.label}</span>
+                        ) : <span className="text-xs text-muted-foreground">—</span>}
+                      </td>
+                      <td className="px-3 py-2 text-right text-sm font-mono">₱{(r.amount || 0).toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right text-sm font-mono text-primary">₱{(r.amount_paid || 0).toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right text-sm font-mono font-semibold text-foreground">
+                        ₱{remaining.toLocaleString()}
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center justify-end gap-1">
+                          {r.status !== "paid" && (
+                            <button onClick={() => setCollectingR(r)} className="text-primary hover:opacity-70 transition-opacity" title="Record Collection">
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
                           )}
+                          {r.status === "paid" && (r.payment_history || []).length > 0 && (
+                            <button onClick={() => setCollectingR(r)} className="text-muted-foreground hover:text-primary transition-colors" title="View Collections">
+                              <Banknote className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button onClick={() => setEditingR(r)} className="text-muted-foreground hover:text-foreground transition-colors">
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => deleteMutation.mutate(r.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                  </div>
-                  <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-                  <p className="text-lg font-bold text-foreground">₱{remaining.toLocaleString()}</p>
-                  <div className="flex gap-1">
-                    {r.status !== "paid" && (
-                      <Button variant="ghost" size="icon" onClick={() => setCollectingR(r)} className="text-primary hover:text-primary" title="Record Collection">
-                        <CheckCircle className="w-4 h-4" />
-                      </Button>
-                    )}
-                    {r.status === "paid" && (r.payment_history || []).length > 0 && (
-                      <Button variant="ghost" size="icon" onClick={() => setCollectingR(r)} className="text-muted-foreground hover:text-primary" title="View Collections">
-                        <Banknote className="w-4 h-4" />
-                      </Button>
-                    )}
-                    <Button variant="ghost" size="icon" onClick={() => setEditingR(r)} className="text-muted-foreground hover:text-foreground">
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(r.id)} className="text-muted-foreground hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  </div>
-              </div>
-            </div>
-          );
-        })}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <ReceivableFormDialog
