@@ -21,6 +21,7 @@ import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDial
 import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
 import ReceiveItemsDialog from "../components/purchase-orders/ReceiveItemsDialog";
 import GroupedPurchaseOrders from "../components/purchase-orders/GroupedPurchaseOrders";
+import ProjectDeliverySummary from "../components/purchase-orders/ProjectDeliverySummary";
 import Payees from "./Payees";
 
 const statusStyles = {
@@ -473,6 +474,7 @@ export default function PurchaseOrders() {
           <TabsTrigger value="orders">Purchase Orders</TabsTrigger>
           <TabsTrigger value="receiving">Receiving Items</TabsTrigger>
           <TabsTrigger value="materials">Materials History</TabsTrigger>
+          <TabsTrigger value="project-summary">Project Summary</TabsTrigger>
           <TabsTrigger value="suppliers">Supplier Masterlist</TabsTrigger>
         </TabsList>
 
@@ -693,6 +695,10 @@ export default function PurchaseOrders() {
               </div>
             )}
           </div>
+        </TabsContent>
+
+        <TabsContent value="project-summary">
+          <ProjectDeliverySummary receivingRecords={receivingGroups} />
         </TabsContent>
 
         <TabsContent value="suppliers">
