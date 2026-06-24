@@ -95,7 +95,7 @@ export default function PurchaseOrders() {
           onClick={() => setExpandedHistory(isExpanded ? null : po.id)}
         >
           {isAdmin && (
-            <td className="px-2 py-1" onClick={e => e.stopPropagation()}>
+            <td className="px-0.5 py-px" onClick={e => e.stopPropagation()}>
               {po.approval_status === "pending" && (
                 <Checkbox
                   checked={selectedIds.has(po.id)}
@@ -104,19 +104,19 @@ export default function PurchaseOrders() {
               )}
             </td>
           )}
-          <td className="px-2 py-1 font-mono text-xs text-muted-foreground whitespace-nowrap">{po.po_number || "—"}</td>
-          <td className="px-2 py-1 text-xs font-medium text-foreground whitespace-nowrap">{po.supplier_name}</td>
-          <td className="px-2 py-1 text-xs text-muted-foreground whitespace-nowrap">{po.project_name || "—"}</td>
-          <td className="px-2 py-1">
-            {po.category && <Badge variant="secondary" className="text-xs capitalize">{po.category.replace(/_/g, " ")}</Badge>}
+          <td className="px-0.5 py-px font-mono text-xs text-muted-foreground whitespace-nowrap max-w-[64px] truncate">{po.po_number || "—"}</td>
+          <td className="px-0.5 py-px text-xs font-medium text-foreground max-w-[110px] truncate">{po.supplier_name}</td>
+          <td className="px-0.5 py-px text-xs text-muted-foreground max-w-[96px] truncate">{po.project_name || "—"}</td>
+          <td className="px-0.5 py-px max-w-[64px]">
+            {po.category && <span className="text-xs text-muted-foreground capitalize truncate">{po.category.replace(/_/g, " ")}</span>}
           </td>
-          <td className="px-2 py-1 text-xs text-muted-foreground whitespace-nowrap">
-            {po.requested_date ? format(new Date(po.requested_date), "MMM d, yyyy") : "—"}
+          <td className="px-0.5 py-px text-xs text-muted-foreground whitespace-nowrap">
+            {po.requested_date ? format(new Date(po.requested_date), "MMM d, yy") : "—"}
           </td>
-          <td className="px-2 py-1 text-right text-xs font-bold text-foreground whitespace-nowrap">
+          <td className="px-0.5 py-px text-right text-xs font-bold text-foreground whitespace-nowrap">
             ₱{(po.amount || (po.line_items || []).reduce((s, i) => s + (i.total || (i.quantity * i.cost_per_item) || 0), 0)).toLocaleString()}
           </td>
-          <td className="px-2 py-1" onClick={e => e.stopPropagation()}>
+          <td className="px-0.5 py-px" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-end gap-1">
               {isAdmin && po.approval_status === "pending" && (
                 <Button size="sm" variant="outline" onClick={() => setReviewPO(po)}>Review</Button>
