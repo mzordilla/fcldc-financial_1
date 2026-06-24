@@ -186,93 +186,100 @@ export default function Transactions() {
 
       <SpendByCategoryChart transactions={filtered} />
 
-      <div className="bg-card rounded-2xl border border-border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Description</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">Project</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">Category</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Chart of Account</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden xl:table-cell">Account Name</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Date</th>
-                <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">Amount</th>
-                <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3 w-20"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading && (
-                <tr><td colSpan={8} className="text-center py-12 text-muted-foreground">Loading...</td></tr>
-              )}
-              {!isLoading && filtered.length === 0 && (
-                <tr><td colSpan={8} className="text-center py-12 text-muted-foreground">No transactions yet</td></tr>
-              )}
-              {filtered.map((t) => {
-                const account = t.bank_account_id ? accountMap[t.bank_account_id] : null;
-                return (
-                  <tr key={t.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          t.type === "income" ? "bg-primary/10" : "bg-destructive/10"
-                        }`}>
-                          {t.type === "income"
-                            ? <ArrowUpRight className="w-3.5 h-3.5 text-primary" />
-                            : <ArrowDownRight className="w-3.5 h-3.5 text-destructive" />
-                          }
-                        </div>
-                        <span className="text-sm font-medium">{t.description}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">{t.project_name || "—"}</td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      {t.category && <Badge variant="secondary" className="text-xs">{t.category.replace(/_/g, " ")}</Badge>}
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      {t.chart_of_account
-                        ? <Badge variant="secondary" className="text-xs">{t.chart_of_account}</Badge>
-                        : <span className="text-xs text-muted-foreground">—</span>}
-                    </td>
-                    <td className="px-4 py-3 hidden xl:table-cell">
-                      {account ? (
-                        <div className="flex items-center gap-1.5">
-                          <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">{account.account_name}</span>
-                        </div>
-                      ) : <span className="text-xs text-muted-foreground">—</span>}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
-                      {t.date ? format(new Date(t.date), "MMM d, yyyy") : "—"}
-                    </td>
-                    <td className={`px-4 py-3 text-right text-sm font-semibold ${
-                      t.type === "income" ? "text-primary" : "text-destructive"
-                    }`}>
-                      {t.type === "income" ? "+" : "-"}₱{(t.amount || 0).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => setEditingT(t)}
-                          className="text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => deleteMutation.mutate(t.id)}
-                          className="text-muted-foreground hover:text-destructive transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
+      {!isLoading && filtered.length === 0 && <p className="text-center py-12 text-muted-foreground">No transactions yet</p>}
+      {!isLoading && (() => {
+        // Group by month key "YYYY-MM"
+        const monthMap = {};
+        filtered.forEach(t => {
+          const key = t.date ? t.date.slice(0, 7) : "0000-00";
+          if (!monthMap[key]) monthMap[key] = [];
+          monthMap[key].push(t);
+        });
+        const sortedMonths = Object.keys(monthMap).sort((a, b) => b.localeCompare(a));
+        return sortedMonths.map(monthKey => {
+          const group = monthMap[monthKey];
+          const monthIncome = group.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
+          const monthExpense = group.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
+          const monthLabel = monthKey === "0000-00" ? "No Date" : format(new Date(monthKey + "-01"), "MMMM yyyy");
+          return (
+            <div key={monthKey} className="bg-card rounded-2xl border border-border overflow-hidden">
+              {/* Month header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-5 py-3 bg-muted/40 border-b border-border">
+                <span className="font-semibold text-foreground">{monthLabel}</span>
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="text-primary font-medium">+₱{monthIncome.toLocaleString()}</span>
+                  <span className="text-destructive font-medium">-₱{monthExpense.toLocaleString()}</span>
+                  <span className={`font-bold ${monthIncome - monthExpense >= 0 ? "text-primary" : "text-destructive"}`}>
+                    Net: {monthIncome - monthExpense >= 0 ? "+" : ""}₱{(monthIncome - monthExpense).toLocaleString()}
+                  </span>
+                  <span className="text-muted-foreground text-xs">{group.length} txn{group.length !== 1 ? "s" : ""}</span>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/20">
+                      <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">Description</th>
+                      <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2 hidden sm:table-cell">Project</th>
+                      <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2 hidden md:table-cell">Category</th>
+                      <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2 hidden lg:table-cell">Chart of Account</th>
+                      <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2 hidden xl:table-cell">Bank Account</th>
+                      <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">Date</th>
+                      <th className="text-right text-xs font-medium text-muted-foreground px-4 py-2">Amount</th>
+                      <th className="w-16"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.map(t => {
+                      const account = t.bank_account_id ? accountMap[t.bank_account_id] : null;
+                      return (
+                        <tr key={t.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${t.type === "income" ? "bg-primary/10" : "bg-destructive/10"}`}>
+                                {t.type === "income" ? <ArrowUpRight className="w-3.5 h-3.5 text-primary" /> : <ArrowDownRight className="w-3.5 h-3.5 text-destructive" />}
+                              </div>
+                              <span className="text-sm font-medium">{t.description}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">{t.project_code || t.project_name || "—"}</td>
+                          <td className="px-4 py-3 hidden md:table-cell">
+                            {t.category && <Badge variant="secondary" className="text-xs">{t.category.replace(/_/g, " ")}</Badge>}
+                          </td>
+                          <td className="px-4 py-3 hidden lg:table-cell">
+                            {t.chart_of_account ? <Badge variant="secondary" className="text-xs">{t.chart_of_account}</Badge> : <span className="text-xs text-muted-foreground">—</span>}
+                          </td>
+                          <td className="px-4 py-3 hidden xl:table-cell">
+                            {account ? (
+                              <div className="flex items-center gap-1.5">
+                                <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground">{account.account_name}</span>
+                              </div>
+                            ) : <span className="text-xs text-muted-foreground">—</span>}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
+                            {t.date ? format(new Date(t.date), "MMM d, yyyy") : "—"}
+                          </td>
+                          <td className={`px-4 py-3 text-right text-sm font-semibold whitespace-nowrap ${t.type === "income" ? "text-primary" : "text-destructive"}`}>
+                            {t.type === "income" ? "+" : "-"}₱{(t.amount || 0).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <button onClick={() => setEditingT(t)} className="text-muted-foreground hover:text-foreground transition-colors"><Pencil className="w-4 h-4" /></button>
+                              <button onClick={() => deleteMutation.mutate(t.id)} className="text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="w-4 h-4" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        });
+      })()}
 
       <ExcelImportDialog
         open={showImport}
