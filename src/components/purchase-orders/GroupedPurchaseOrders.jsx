@@ -58,7 +58,7 @@ export default function GroupedPurchaseOrders({ orders, expandedGroups, toggleGr
                     <tr>
                       <th className="px-0.5 py-px w-4"></th>
                       <th className="px-0.5 py-px text-left text-xs font-semibold text-muted-foreground uppercase w-16">PO #</th>
-                      <th className="px-0.5 py-px text-left text-xs font-semibold text-muted-foreground uppercase w-28">Supplier</th>
+                      <th className="px-0.5 py-px text-left text-xs font-semibold text-muted-foreground uppercase w-44">Supplier</th>
                       <th className="px-0.5 py-px text-left text-xs font-semibold text-muted-foreground uppercase w-24">Project</th>
                       <th className="px-0.5 py-px text-left text-xs font-semibold text-muted-foreground uppercase w-16">Cat.</th>
                       <th className="px-0.5 py-px text-left text-xs font-semibold text-muted-foreground uppercase w-16">Date</th>
