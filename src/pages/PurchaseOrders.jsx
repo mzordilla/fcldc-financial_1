@@ -117,51 +117,34 @@ export default function PurchaseOrders() {
             ₱{(po.amount || (po.line_items || []).reduce((s, i) => s + (i.total || (i.quantity * i.cost_per_item) || 0), 0)).toLocaleString()}
           </td>
           <td className="px-0.5 py-px" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-end gap-1">
+            <div className="flex items-center justify-end gap-0.5">
               {isAdmin && po.approval_status === "pending" && (
-                <Button size="sm" variant="outline" onClick={() => setReviewPO(po)}>Review</Button>
+                <button onClick={() => setReviewPO(po)} className="text-[10px] text-chart-3 font-medium px-1 py-px rounded border border-chart-3/30 hover:bg-chart-3/10 transition-colors whitespace-nowrap">Review</button>
               )}
               {po.approval_status === "approved" && !po.receipt_url && (
-                <Button size="sm" variant="outline" onClick={() => setUploadingReceipt(po)} className="text-primary hover:text-primary">
-                  <Package className="w-3.5 h-3.5 mr-1" /> Receipt
-                </Button>
+                <button onClick={() => setUploadingReceipt(po)} className="text-[10px] text-primary font-medium px-1 py-px rounded border border-primary/30 hover:bg-primary/10 transition-colors whitespace-nowrap">Receipt</button>
               )}
               {po.approval_status === "approved" && (
-                <Button size="sm" variant="outline" onClick={() => setReceivingItems(po)} className="text-primary hover:text-primary">
-                  <Package className="w-3.5 h-3.5 mr-1" /> Receive
-                </Button>
+                <button onClick={() => setReceivingItems(po)} className="text-[10px] text-primary font-medium px-1 py-px rounded border border-primary/30 hover:bg-primary/10 transition-colors whitespace-nowrap">Receive</button>
               )}
-              {po.approval_status === "approved" && <NoticeOfDeliveryPDF po={po} />}
               {po.approval_status === "approved" && (
-                <div title={
-                  !po.receipt_url ? "Upload a receipt before converting to payable" :
-                  poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number) ? "Already paid" : ""
-                }>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => setConvertingPO(po)} 
-                    disabled={!po.receipt_url || poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number)} 
-                    className="text-primary hover:text-primary disabled:opacity-50"
-                  >
-                    <CreditCard className="w-3.5 h-3.5 mr-1" /> Payable
-                  </Button>
-                </div>
+                <button
+                  onClick={() => setConvertingPO(po)}
+                  disabled={!po.receipt_url || poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number)}
+                  title={!po.receipt_url ? "Upload a receipt first" : poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number) ? "Already paid" : ""}
+                  className="text-[10px] text-primary font-medium px-1 py-px rounded border border-primary/30 hover:bg-primary/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                >Payable</button>
               )}
-              <PurchaseOrderPDF po={po} />
-              <Button variant="ghost" size="icon" onClick={() => window.print()} title="Print" className="text-muted-foreground hover:text-foreground">
-                <Printer className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => setReviewPO(po)} className="text-muted-foreground hover:text-foreground">
-                <History className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => setEditingPO(po)} className="text-muted-foreground hover:text-foreground">
-                <Pencil className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(po.id)} className="text-muted-foreground hover:text-destructive">
-                <Trash2 className="w-4 h-4" />
-              </Button>
-              {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+              <button onClick={() => setReviewPO(po)} className="text-muted-foreground hover:text-foreground transition-colors p-px">
+                <History className="w-3 h-3" />
+              </button>
+              <button onClick={() => setEditingPO(po)} className="text-muted-foreground hover:text-foreground transition-colors p-px">
+                <Pencil className="w-3 h-3" />
+              </button>
+              <button onClick={() => deleteMutation.mutate(po.id)} className="text-muted-foreground hover:text-destructive transition-colors p-px">
+                <Trash2 className="w-3 h-3" />
+              </button>
+              {isExpanded ? <ChevronUp className="w-3 h-3 text-muted-foreground" /> : <ChevronDown className="w-3 h-3 text-muted-foreground" />}
             </div>
           </td>
         </tr>
