@@ -54,7 +54,7 @@ export default function GroupedPurchaseOrders({ orders, expandedGroups, toggleGr
             {isExpanded &&
             <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-muted/30 border-b border-border">
+                  <thead className="bg-muted/20 border-b border-border">
                     <tr>
                       <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">PO #</th>
                       <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Supplier</th>
