@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { useAuth } from "@/lib/AuthContext";
+
 import { Upload, Trash2, Download, FileText, Search, Plus, X, FolderOpen, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,8 +34,9 @@ function ExpiryBadge({ date }) {
 }
 
 export default function CorporateDocuments() {
-  const { user } = useAuth();
+  const [currentUser, setCurrentUser] = useState(null);
   const queryClient = useQueryClient();
+  useState(() => { base44.auth.me().then(setCurrentUser).catch(() => {}); });
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("all");
   const [showAdd, setShowAdd] = useState(false);
@@ -79,7 +80,9 @@ export default function CorporateDocuments() {
     let file_url = "";
     let file_name = "";
     if (selectedFile) {
-      const result = await base44.integrations.Core.UploadFile({ file: selectedFile });
+      const arrayBuffer = await selectedFile.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: selectedFile.type });
+      const result = await base44.integrations.Core.UploadFile({ file: blob });
       file_url = result.file_url;
       file_name = selectedFile.name;
     }
@@ -87,7 +90,7 @@ export default function CorporateDocuments() {
       ...form,
       file_url,
       file_name,
-      uploaded_by: user?.full_name || user?.email || "Unknown",
+      uploaded_by: currentUser?.full_name || currentUser?.email || "Unknown",
     });
     setUploading(false);
   };
