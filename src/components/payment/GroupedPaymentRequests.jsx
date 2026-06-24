@@ -107,12 +107,12 @@ export default function GroupedPaymentRequests({ requests, expandedGroups, toggl
                             <table className="w-full text-xs">
                               <thead className="bg-muted/20 border-b border-border">
                                 <tr>
-                                  {isAdmin && <th className="px-2 py-1 w-8"></th>}
-                                  <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">PR #</th>
-                                  <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">Invoice #</th>
-                                  <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">Due Date</th>
-                                  <th className="px-2 py-1 text-right font-semibold text-muted-foreground uppercase">Amount</th>
-                                  <th className="px-2 py-1 text-right font-semibold text-muted-foreground uppercase">Actions</th>
+                                  {isAdmin && <th className="px-1 py-0.5 w-8"></th>}
+                                  <th className="px-1 py-0.5 text-left font-semibold text-muted-foreground uppercase text-xs">PR #</th>
+                                  <th className="px-1 py-0.5 text-left font-semibold text-muted-foreground uppercase text-xs">Invoice #</th>
+                                  <th className="px-1 py-0.5 text-left font-semibold text-muted-foreground uppercase text-xs">Due Date</th>
+                                  <th className="px-1 py-0.5 text-right font-semibold text-muted-foreground uppercase text-xs">Amount</th>
+                                  <th className="px-1 py-0.5 text-right font-semibold text-muted-foreground uppercase text-xs">Actions</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-border">
@@ -158,13 +158,13 @@ export default function GroupedPaymentRequests({ requests, expandedGroups, toggl
                 <table className="w-full text-xs">
                   <thead className="bg-muted/30 border-b border-border">
                     <tr>
-                      {isAdmin && <th className="px-2 py-1 w-8"></th>}
-                      <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">PR #</th>
-                      <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">Payee</th>
-                      <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">Invoice #</th>
-                      <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">Due Date</th>
-                      <th className="px-2 py-1 text-right font-semibold text-muted-foreground uppercase">Amount</th>
-                      <th className="px-2 py-1 text-right font-semibold text-muted-foreground uppercase">Actions</th>
+                      {isAdmin && <th className="px-1 py-0.5 w-8"></th>}
+                      <th className="px-1 py-0.5 text-left font-semibold text-muted-foreground uppercase text-xs">PR #</th>
+                      <th className="px-1 py-0.5 text-left font-semibold text-muted-foreground uppercase text-xs">Payee</th>
+                      <th className="px-1 py-0.5 text-left font-semibold text-muted-foreground uppercase text-xs">Invoice #</th>
+                      <th className="px-1 py-0.5 text-left font-semibold text-muted-foreground uppercase text-xs">Due Date</th>
+                      <th className="px-1 py-0.5 text-right font-semibold text-muted-foreground uppercase text-xs">Amount</th>
+                      <th className="px-1 py-0.5 text-right font-semibold text-muted-foreground uppercase text-xs">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
