@@ -104,7 +104,7 @@ export default function PurchaseOrders() {
               )}
             </td>
           )}
-          <td className="px-0.5 py-px font-mono text-xs text-muted-foreground whitespace-nowrap max-w-[64px] truncate">{po.po_number || "—"}</td>
+          <td className="px-0.5 py-px font-mono text-[10px] text-muted-foreground whitespace-nowrap">{po.po_number || "—"}</td>
           <td className="px-0.5 py-px text-xs font-medium text-foreground max-w-[180px] truncate">{po.supplier_name}</td>
           <td className="px-0.5 py-px text-xs text-muted-foreground max-w-[96px] truncate">{po.project_name || "—"}</td>
           <td className="px-0.5 py-px max-w-[64px]">
