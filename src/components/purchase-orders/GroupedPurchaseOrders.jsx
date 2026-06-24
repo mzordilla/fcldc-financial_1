@@ -56,13 +56,13 @@ export default function GroupedPurchaseOrders({ orders, expandedGroups, toggleGr
                 <table className="w-full text-sm">
                   <thead className="bg-muted/35 border-b border-border">
                     <tr>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">PO #</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Supplier</th>
-                      <th className="text-left text-xs font-semibold text-muted-foreground uppercase">Project</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Category</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Date</th>
-                      <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Amount</th>
-                      <th className="px-2 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Actions</th>
+                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase">PO #</th>
+                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase">Supplier</th>
+                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase">Project</th>
+                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase">Category</th>
+                      <th className="px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase">Date</th>
+                      <th className="px-2 py-1.5 text-right text-xs font-semibold text-muted-foreground uppercase">Amount</th>
+                      <th className="px-2 py-1.5 text-right text-xs font-semibold text-muted-foreground uppercase">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">

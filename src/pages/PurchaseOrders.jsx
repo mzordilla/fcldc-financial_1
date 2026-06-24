@@ -95,7 +95,7 @@ export default function PurchaseOrders() {
           onClick={() => setExpandedHistory(isExpanded ? null : po.id)}
         >
           {isAdmin && (
-            <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
+            <td className="px-2 py-1.5" onClick={e => e.stopPropagation()}>
               {po.approval_status === "pending" && (
                 <Checkbox
                   checked={selectedIds.has(po.id)}
@@ -104,19 +104,19 @@ export default function PurchaseOrders() {
               )}
             </td>
           )}
-          <td className="px-4 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{po.po_number || "—"}</td>
-          <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">{po.supplier_name}</td>
-          <td className="px-2 py-3 text-xs text-muted-foreground whitespace-nowrap">{po.project_name || "—"}</td>
-          <td className="px-4 py-3">
+          <td className="px-2 py-1.5 font-mono text-xs text-muted-foreground whitespace-nowrap">{po.po_number || "—"}</td>
+          <td className="px-2 py-1.5 text-xs font-medium text-foreground whitespace-nowrap">{po.supplier_name}</td>
+          <td className="px-2 py-1.5 text-xs text-muted-foreground whitespace-nowrap">{po.project_name || "—"}</td>
+          <td className="px-2 py-1.5">
             {po.category && <Badge variant="secondary" className="text-xs capitalize">{po.category.replace(/_/g, " ")}</Badge>}
           </td>
-          <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+          <td className="px-2 py-1.5 text-xs text-muted-foreground whitespace-nowrap">
             {po.requested_date ? format(new Date(po.requested_date), "MMM d, yyyy") : "—"}
           </td>
-          <td className="px-4 py-3 text-right font-bold text-foreground whitespace-nowrap">
+          <td className="px-2 py-1.5 text-right text-xs font-bold text-foreground whitespace-nowrap">
             ₱{(po.amount || (po.line_items || []).reduce((s, i) => s + (i.total || (i.quantity * i.cost_per_item) || 0), 0)).toLocaleString()}
           </td>
-          <td className="px-2 py-3" onClick={e => e.stopPropagation()}>
+          <td className="px-2 py-1.5" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-end gap-1">
               {isAdmin && po.approval_status === "pending" && (
                 <Button size="sm" variant="outline" onClick={() => setReviewPO(po)}>Review</Button>
