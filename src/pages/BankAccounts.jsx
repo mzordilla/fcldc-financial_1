@@ -119,7 +119,7 @@ export default function BankAccounts() {
 
   const { data: transactions = [] } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 500)
+    queryFn: () => base44.entities.Transaction.list("-date", 1000)
   });
 
   const { data: receivables = [] } = useQuery({
