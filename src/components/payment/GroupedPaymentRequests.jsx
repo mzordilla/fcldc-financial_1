@@ -98,16 +98,10 @@ export default function GroupedPaymentRequests({ requests, expandedGroups, toggl
                       const supplierTotal = supplierPRs.reduce((sum, pr) => sum + (pr.amount || 0), 0);
                       return (
                         <div key={supplier} className="border border-border rounded-xl overflow-hidden">
-                          <div className="bg-muted/30 px-4 py-3 border-b border-border">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-semibold text-foreground">{supplier}</p>
-                                <p className="text-xs text-muted-foreground">{supplierPRs.length} invoice{supplierPRs.length !== 1 ? "s" : ""}</p>
-                              </div>
-                              <Badge variant="outline" className="text-xs">
-                                ₱{supplierTotal.toLocaleString()}
-                              </Badge>
-                            </div>
+                          <div className="bg-muted/20 px-3 py-1 border-b border-border flex items-center gap-2">
+                            <span className="text-xs font-bold uppercase tracking-wide text-foreground">{supplier}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{supplierPRs.length} invoice{supplierPRs.length !== 1 ? "s" : ""}</span>
+                            <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-muted text-foreground font-mono font-semibold">₱{supplierTotal.toLocaleString()}</span>
                           </div>
                           <div className="overflow-x-auto">
                             <table className="w-full text-xs">
