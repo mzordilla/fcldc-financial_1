@@ -101,15 +101,17 @@ export default function Receivables() {
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const receivable = await base44.entities.Receivable.create(data);
-      // Record income at creation time for P&L
+      // Revenue recognition — record income when receivable is created (accrual basis)
+      // DR Accounts Receivable (tracked on the Receivable record) / CR Revenue
       await base44.entities.Transaction.create({
-        description: `Receivable: ${data.client_name}${data.invoice_number ? ` (${data.invoice_number})` : ""}${data.project_name ? ` — ${data.project_name}` : ""}`,
+        description: `Revenue: ${data.client_name}${data.invoice_number ? ` (${data.invoice_number})` : ""}${data.project_name ? ` — ${data.project_name}` : ""}`,
         amount: data.amount,
         type: "income",
         category: "project_payment",
-        project_name: data.project_name || "",
+        chart_of_account: "Revenue",
+        project_code: data.project_code || "",
         date: data.due_date || new Date().toISOString().split("T")[0],
-        status: "pending",
+        status: "completed",
       });
       return receivable;
     },

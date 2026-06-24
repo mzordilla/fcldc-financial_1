@@ -100,34 +100,21 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
       payment_history: updatedHistory,
     });
 
-    // Double-entry on collection:
-    // DR Bank Account (income) — cash received into bank
-    // CR Receivables (expense/contra) — reduces the outstanding AR balance
+    // Collection entry: DR Bank (cash in) — reduces AR balance tracked on the receivable record itself
+    // No separate CR revenue entry — revenue was already recognized when the receivable was created
     if (form.bank_account_id && !isUndeposited) {
-      const desc = `AR collection — ${receivable.client_name}${receivable.invoice_number ? ` (${receivable.invoice_number})` : ""}${form.reference ? ` · ${form.reference}` : ""}`;
-      await Promise.all([
-        // Debit Bank Account
-        base44.entities.Transaction.create({
-          description: `DR Bank: ${desc}`,
-          amount: thisCollection,
-          type: "income",
-          category: "bank_reconciliation",
-          project_name: receivable.project_name || "",
-          bank_account_id: form.bank_account_id,
-          date: form.collection_date,
-          status: "completed",
-        }),
-        // Credit Receivables (contra-entry)
-        base44.entities.Transaction.create({
-          description: `CR Receivables: ${desc}`,
-          amount: thisCollection,
-          type: "expense",
-          category: "bank_reconciliation",
-          project_name: receivable.project_name || "",
-          date: form.collection_date,
-          status: "completed",
-        }),
-      ]);
+      const desc = `Collection — ${receivable.client_name}${receivable.invoice_number ? ` (${receivable.invoice_number})` : ""}${form.reference ? ` · ${form.reference}` : ""}`;
+      await base44.entities.Transaction.create({
+        description: desc,
+        amount: thisCollection,
+        type: "income",
+        category: "project_payment",
+        project_code: receivable.project_code || "",
+        chart_of_account: "Cash and Cash Equivalents",
+        bank_account_id: form.bank_account_id,
+        date: form.collection_date,
+        status: "completed",
+      });
     }
 
     setSaving(false);
