@@ -117,34 +117,34 @@ export default function PurchaseOrders() {
             ₱{(po.amount || (po.line_items || []).reduce((s, i) => s + (i.total || (i.quantity * i.cost_per_item) || 0), 0)).toLocaleString()}
           </td>
           <td className="px-0.5 py-px" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-end gap-0.5">
+            <div className="flex items-center justify-end gap-px">
               {isAdmin && po.approval_status === "pending" && (
-                <button onClick={() => setReviewPO(po)} className="text-[10px] text-chart-3 font-medium px-1 py-px rounded border border-chart-3/30 hover:bg-chart-3/10 transition-colors whitespace-nowrap">Review</button>
+                <button onClick={() => setReviewPO(po)} className="text-[8px] text-chart-3 font-medium px-0.5 py-px rounded border border-chart-3/30 hover:bg-chart-3/10 transition-colors whitespace-nowrap leading-tight">Rev</button>
               )}
               {po.approval_status === "approved" && !po.receipt_url && (
-                <button onClick={() => setUploadingReceipt(po)} className="text-[10px] text-primary font-medium px-1 py-px rounded border border-primary/30 hover:bg-primary/10 transition-colors whitespace-nowrap">Receipt</button>
+                <button onClick={() => setUploadingReceipt(po)} className="text-[8px] text-primary font-medium px-0.5 py-px rounded border border-primary/30 hover:bg-primary/10 transition-colors whitespace-nowrap leading-tight">Rcpt</button>
               )}
               {po.approval_status === "approved" && (
-                <button onClick={() => setReceivingItems(po)} className="text-[10px] text-primary font-medium px-1 py-px rounded border border-primary/30 hover:bg-primary/10 transition-colors whitespace-nowrap">Receive</button>
+                <button onClick={() => setReceivingItems(po)} className="text-[8px] text-primary font-medium px-0.5 py-px rounded border border-primary/30 hover:bg-primary/10 transition-colors whitespace-nowrap leading-tight">Recv</button>
               )}
               {po.approval_status === "approved" && (
                 <button
                   onClick={() => setConvertingPO(po)}
                   disabled={!po.receipt_url || poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number)}
                   title={!po.receipt_url ? "Upload a receipt first" : poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number) ? "Already paid" : ""}
-                  className="text-[10px] text-primary font-medium px-1 py-px rounded border border-primary/30 hover:bg-primary/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
-                >Payable</button>
+                  className="text-[8px] text-primary font-medium px-0.5 py-px rounded border border-primary/30 hover:bg-primary/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap leading-tight"
+                >Pay</button>
               )}
-              <button onClick={() => setReviewPO(po)} className="text-muted-foreground hover:text-foreground transition-colors p-px">
-                <History className="w-3 h-3" />
+              <button onClick={() => setReviewPO(po)} className="text-muted-foreground hover:text-foreground transition-colors" title="History">
+                <History className="w-2.5 h-2.5" />
               </button>
-              <button onClick={() => setEditingPO(po)} className="text-muted-foreground hover:text-foreground transition-colors p-px">
-                <Pencil className="w-3 h-3" />
+              <button onClick={() => setEditingPO(po)} className="text-muted-foreground hover:text-foreground transition-colors" title="Edit">
+                <Pencil className="w-2.5 h-2.5" />
               </button>
-              <button onClick={() => deleteMutation.mutate(po.id)} className="text-muted-foreground hover:text-destructive transition-colors p-px">
-                <Trash2 className="w-3 h-3" />
+              <button onClick={() => deleteMutation.mutate(po.id)} className="text-muted-foreground hover:text-destructive transition-colors" title="Delete">
+                <Trash2 className="w-2.5 h-2.5" />
               </button>
-              {isExpanded ? <ChevronUp className="w-3 h-3 text-muted-foreground" /> : <ChevronDown className="w-3 h-3 text-muted-foreground" />}
+              {isExpanded ? <ChevronUp className="w-2.5 h-2.5 text-muted-foreground" /> : <ChevronDown className="w-2.5 h-2.5 text-muted-foreground" />}
             </div>
           </td>
         </tr>
