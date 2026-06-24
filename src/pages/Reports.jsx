@@ -15,6 +15,7 @@ import EfficiencyReport from "../components/reports/EfficiencyReport";
 import DailyTransactionsReport from "../components/reports/DailyTransactionsReport";
 import MonthlyTransactionsReport from "../components/reports/MonthlyTransactionsReport";
 import WithholdingTaxSync from "../components/reports/WithholdingTaxSync";
+import CorporateDocuments from "../components/reports/CorporateDocuments";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import { Badge } from "@/components/ui/badge";
@@ -520,6 +521,7 @@ export default function Reports() {
           { key: "monthly_transactions", label: "Monthly Transactions", color: "from-indigo-500 to-blue-600", emoji: "🗓️" },
           { key: "chart_of_accounts", label: "Chart of Accounts", color: "from-violet-500 to-purple-600", emoji: "📚" },
           { key: "wht_sync", label: "WHT Google Sheets Sync", color: "from-green-500 to-emerald-600", emoji: "📊" },
+          { key: "corporate_docs", label: "Corporate Documents", color: "from-slate-500 to-gray-600", emoji: "🗂️" },
         ].map(tab => (
           <button
             key={tab.key}
@@ -679,6 +681,10 @@ export default function Reports() {
 
       {activeTab === "wht_sync" && (
         <WithholdingTaxSync />
+      )}
+
+      {activeTab === "corporate_docs" && (
+        <CorporateDocuments />
       )}
 
       {activeTab === "pnl" && <>

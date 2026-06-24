@@ -1,0 +1,56 @@
+{
+  "name": "CorporateDocument",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Document name / title"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "permits",
+        "licenses",
+        "contracts",
+        "financial",
+        "legal",
+        "hr",
+        "other"
+      ],
+      "description": "Document category"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the document"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL of uploaded file"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "Original file name"
+    },
+    "expiry_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expiry date (for permits, licenses, contracts)"
+    },
+    "issued_by": {
+      "type": "string",
+      "description": "Issuing authority or party"
+    },
+    "uploaded_by": {
+      "type": "string",
+      "description": "Name of person who uploaded"
+    },
+    "tags": {
+      "type": "string",
+      "description": "Comma-separated tags for search"
+    }
+  },
+  "required": [
+    "name",
+    "category"
+  ]
+}
