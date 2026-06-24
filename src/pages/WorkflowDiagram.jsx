@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import RoleAccessMatrix from "@/components/workflow/RoleAccessMatrix";
 
 const COLORS = {
   procurement: { bg: "bg-blue-50", border: "border-blue-300", text: "text-blue-800", dot: "bg-blue-500", header: "bg-blue-500" },
@@ -214,32 +215,7 @@ export default function WorkflowDiagram() {
         {/* Roles Tab */}
         {activeTab === "roles" && (
           <div className="space-y-4">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="bg-slate-800 text-white px-6 py-4">
-                <h2 className="font-bold text-lg">Role-Based Access Control</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Each role sees only the modules relevant to their function</p>
-              </div>
-              <div className="divide-y divide-slate-100">
-                {roleMatrix.map((r, i) => (
-                  <div key={i} className="flex gap-4 px-6 py-4 items-start">
-                    <div className="w-32 flex-shrink-0">
-                      <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${
-                        r.role === "Admin" ? "bg-slate-800 text-white" :
-                        r.role === "Accounting" ? "bg-emerald-100 text-emerald-700" :
-                        r.role === "Disbursement" ? "bg-purple-100 text-purple-700" :
-                        r.role === "Procurement" ? "bg-blue-100 text-blue-700" :
-                        "bg-orange-100 text-orange-700"
-                      }`}>{r.role}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {r.modules.map((m, j) => (
-                        <span key={j} className="text-xs bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-2.5 py-1">{m}</span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <RoleAccessMatrix />
 
             {/* Legend */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
