@@ -585,33 +585,42 @@ export default function PaymentApprovals() {
             </div>
           </button>
           {expandedPOs && (
-            <div className="grid gap-3">
-              {availablePOs.map(po => (
-                <div key={po.id} className="bg-card border border-border rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="font-semibold text-foreground">{po.supplier_name}</span>
-                      {po.po_number && <span className="text-xs font-mono text-muted-foreground">{po.po_number}</span>}
-                      {po.priority && po.priority !== "normal" && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${po.priority === "urgent" ? "bg-destructive/10 text-destructive border-destructive/20" : "bg-chart-3/10 text-chart-3 border-chart-3/20"}`}>
-                          {po.priority}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">{po.description}</p>
-                    <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
-                      {po.project_name && <span>Project: {po.project_name}</span>}
-                      {po.required_date && <span>Needed by: {format(new Date(po.required_date), "MMM d, yyyy")}</span>}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 sm:flex-col sm:items-end">
-                    <p className="text-lg font-bold text-foreground">₱{(po.amount || 0).toLocaleString()}</p>
-                    <Button size="sm" variant="outline" onClick={() => convertPOtoPaymentRequest(po)}>
-                      <Plus className="w-3.5 h-3.5 mr-1" /> Create Payment Request
-                    </Button>
-                  </div>
-                </div>
-              ))}
+            <div className="border border-border rounded-xl overflow-hidden">
+              <table className="w-full text-xs">
+                <thead className="bg-muted/30 border-b border-border">
+                  <tr>
+                    <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">PO #</th>
+                    <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">Supplier</th>
+                    <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">Project</th>
+                    <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">Description</th>
+                    <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">Needed By</th>
+                    <th className="px-2 py-1 text-right font-semibold text-muted-foreground uppercase">Amount</th>
+                    <th className="px-2 py-1 text-right font-semibold text-muted-foreground uppercase">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {availablePOs.map(po => (
+                    <tr key={po.id} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-2 py-1 font-mono text-muted-foreground whitespace-nowrap">{po.po_number || "—"}</td>
+                      <td className="px-2 py-1 font-medium text-foreground whitespace-nowrap">
+                        {po.supplier_name}
+                        {po.priority && po.priority !== "normal" && (
+                          <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full border font-medium ${po.priority === "urgent" ? "bg-destructive/10 text-destructive border-destructive/20" : "bg-chart-3/10 text-chart-3 border-chart-3/20"}`}>{po.priority}</span>
+                        )}
+                      </td>
+                      <td className="px-2 py-1 text-muted-foreground whitespace-nowrap">{po.project_name || "—"}</td>
+                      <td className="px-2 py-1 text-muted-foreground max-w-xs"><span className="line-clamp-1">{po.description || "—"}</span></td>
+                      <td className="px-2 py-1 text-muted-foreground whitespace-nowrap">{po.required_date ? format(new Date(po.required_date), "MMM d, yyyy") : "—"}</td>
+                      <td className="px-2 py-1 text-right font-bold text-foreground whitespace-nowrap">₱{(po.amount || 0).toLocaleString()}</td>
+                      <td className="px-2 py-1 text-right">
+                        <Button size="sm" variant="outline" onClick={() => convertPOtoPaymentRequest(po)}>
+                          <Plus className="w-3 h-3 mr-1" /> Create PR
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
