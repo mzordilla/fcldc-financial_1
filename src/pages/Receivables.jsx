@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays } from "date-fns";
-import { Plus, Trash2, CheckCircle, Pencil, Banknote } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Pencil, Banknote, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -90,7 +90,10 @@ export default function Receivables() {
   const [editingR, setEditingR] = useState(null);
   const [collectingR, setCollectingR] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [expandedClients, setExpandedClients] = useState({});
   const queryClient = useQueryClient();
+
+  const toggleClient = (client) => setExpandedClients(prev => ({ ...prev, [client]: !prev[client] }));
 
   const { data: receivables = [], isLoading } = useQuery({
     queryKey: ["receivables"],
@@ -178,78 +181,122 @@ export default function Receivables() {
       <div className="bg-card rounded-2xl border border-border overflow-hidden">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
         {!isLoading && filtered.length === 0 && <p className="text-center py-12 text-muted-foreground">No receivables yet</p>}
-        {!isLoading && filtered.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-muted/30 border-b border-border">
-                <tr>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Client</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Project</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Invoice #</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Due Date</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Status</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Aging</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Billed</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Collected</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Balance</th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filtered.map((r) => {
-                  const remaining = (r.amount || 0) - (r.amount_paid || 0);
-                  const paidPct = r.amount ? Math.min(((r.amount_paid || 0) / r.amount) * 100, 100) : 0;
-                  const aging = getAgingBucket(r.due_date, r.status);
-                  return (
-                    <tr key={r.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-3 py-2 text-sm font-medium text-foreground">{r.client_name}</td>
-                      <td className="px-3 py-2 text-xs text-muted-foreground">{r.project_name || "—"}</td>
-                      <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{r.invoice_number || "—"}</td>
-                      <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">
-                        {r.due_date ? format(new Date(r.due_date), "MMM d, yyyy") : "—"}
-                      </td>
-                      <td className="px-3 py-2">
-                        <Badge variant="outline" className={`text-xs ${statusStyles[r.status] || ""}`}>
-                          {(r.status || "outstanding").replace(/_/g, " ")}
-                        </Badge>
-                      </td>
-                      <td className="px-3 py-2">
-                        {aging ? (
-                          <span className={`text-xs px-1.5 py-0.5 rounded ${aging.style}`}>{aging.label}</span>
-                        ) : <span className="text-xs text-muted-foreground">—</span>}
-                      </td>
-                      <td className="px-3 py-2 text-right text-sm font-mono">₱{(r.amount || 0).toLocaleString()}</td>
-                      <td className="px-3 py-2 text-right text-sm font-mono text-primary">₱{(r.amount_paid || 0).toLocaleString()}</td>
-                      <td className="px-3 py-2 text-right text-sm font-mono font-semibold text-foreground">
-                        ₱{remaining.toLocaleString()}
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center justify-end gap-1">
-                          {r.status !== "paid" && (
-                            <button onClick={() => setCollectingR(r)} className="text-primary hover:opacity-70 transition-opacity" title="Record Collection">
-                              <CheckCircle className="w-4 h-4" />
-                            </button>
-                          )}
-                          {r.status === "paid" && (r.payment_history || []).length > 0 && (
-                            <button onClick={() => setCollectingR(r)} className="text-muted-foreground hover:text-primary transition-colors" title="View Collections">
-                              <Banknote className="w-4 h-4" />
-                            </button>
-                          )}
-                          <button onClick={() => setEditingR(r)} className="text-muted-foreground hover:text-foreground transition-colors">
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => deleteMutation.mutate(r.id)} className="text-muted-foreground hover:text-destructive transition-colors">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        {!isLoading && filtered.length > 0 && (() => {
+          // Group by client
+          const clientMap = {};
+          filtered.forEach(r => {
+            const key = r.client_name || "Unknown";
+            if (!clientMap[key]) clientMap[key] = [];
+            clientMap[key].push(r);
+          });
+          const clients = Object.keys(clientMap).sort();
+
+          return (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-muted/30 border-b border-border">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase w-6"></th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Client / Invoice</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Project</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Due Date</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Status</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Aging</th>
+                    <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Billed</th>
+                    <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Collected</th>
+                    <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Balance</th>
+                    <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clients.map(clientName => {
+                    const rows = clientMap[clientName];
+                    const totalBilled = rows.reduce((s, r) => s + (r.amount || 0), 0);
+                    const totalCollected = rows.reduce((s, r) => s + (r.amount_paid || 0), 0);
+                    const totalBalance = totalBilled - totalCollected;
+                    const isExpanded = expandedClients[clientName] !== false; // default expanded
+                    const hasOverdue = rows.some(r => r.status === "overdue");
+
+                    return (
+                      <>
+                        {/* Client summary row */}
+                        <tr
+                          key={`client-${clientName}`}
+                          className="bg-muted/40 border-t border-border cursor-pointer hover:bg-muted/60 transition-colors"
+                          onClick={() => toggleClient(clientName)}
+                        >
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                          </td>
+                          <td className="px-3 py-2 font-semibold text-sm text-foreground" colSpan={2}>
+                            {clientName}
+                            <span className="ml-2 text-xs text-muted-foreground font-normal">{rows.length} invoice{rows.length !== 1 ? "s" : ""}</span>
+                            {hasOverdue && <span className="ml-2 text-xs text-destructive font-medium">· overdue</span>}
+                          </td>
+                          <td className="px-3 py-2" colSpan={3}></td>
+                          <td className="px-3 py-2 text-right text-sm font-mono font-semibold">₱{totalBilled.toLocaleString()}</td>
+                          <td className="px-3 py-2 text-right text-sm font-mono font-semibold text-primary">₱{totalCollected.toLocaleString()}</td>
+                          <td className="px-3 py-2 text-right text-sm font-mono font-bold text-foreground">₱{totalBalance.toLocaleString()}</td>
+                          <td></td>
+                        </tr>
+                        {/* Invoice breakdown rows */}
+                        {isExpanded && rows.map(r => {
+                          const remaining = (r.amount || 0) - (r.amount_paid || 0);
+                          const aging = getAgingBucket(r.due_date, r.status);
+                          return (
+                            <tr key={r.id} className="border-t border-border/50 hover:bg-muted/20 transition-colors">
+                              <td className="px-3 py-1.5"></td>
+                              <td className="px-3 py-1.5 text-xs text-muted-foreground font-mono pl-6">
+                                {r.invoice_number || "—"}
+                              </td>
+                              <td className="px-3 py-1.5 text-xs text-muted-foreground">{r.project_name || "—"}</td>
+                              <td className="px-3 py-1.5 text-xs text-muted-foreground whitespace-nowrap">
+                                {r.due_date ? format(new Date(r.due_date), "MMM d, yyyy") : "—"}
+                              </td>
+                              <td className="px-3 py-1.5">
+                                <Badge variant="outline" className={`text-xs ${statusStyles[r.status] || ""}`}>
+                                  {(r.status || "outstanding").replace(/_/g, " ")}
+                                </Badge>
+                              </td>
+                              <td className="px-3 py-1.5">
+                                {aging ? (
+                                  <span className={`text-xs px-1.5 py-0.5 rounded ${aging.style}`}>{aging.label}</span>
+                                ) : <span className="text-xs text-muted-foreground">—</span>}
+                              </td>
+                              <td className="px-3 py-1.5 text-right text-xs font-mono">₱{(r.amount || 0).toLocaleString()}</td>
+                              <td className="px-3 py-1.5 text-right text-xs font-mono text-primary">₱{(r.amount_paid || 0).toLocaleString()}</td>
+                              <td className="px-3 py-1.5 text-right text-xs font-mono font-semibold">₱{remaining.toLocaleString()}</td>
+                              <td className="px-3 py-1.5">
+                                <div className="flex items-center justify-end gap-1">
+                                  {r.status !== "paid" && (
+                                    <button onClick={() => setCollectingR(r)} className="text-primary hover:opacity-70 transition-opacity" title="Record Collection">
+                                      <CheckCircle className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  {r.status === "paid" && (r.payment_history || []).length > 0 && (
+                                    <button onClick={() => setCollectingR(r)} className="text-muted-foreground hover:text-primary transition-colors" title="View Collections">
+                                      <Banknote className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  <button onClick={() => setEditingR(r)} className="text-muted-foreground hover:text-foreground transition-colors">
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button onClick={() => deleteMutation.mutate(r.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          );
+        })()}
       </div>
 
       <ReceivableFormDialog
