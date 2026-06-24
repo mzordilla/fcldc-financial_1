@@ -113,12 +113,12 @@ export default function GroupedPaymentRequests({ requests, expandedGroups, toggl
                             <table className="w-full text-xs">
                               <thead className="bg-muted/20 border-b border-border">
                                 <tr>
-                                  {isAdmin && <th className="px-2 py-2 w-8"></th>}
-                                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase">PR #</th>
-                                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase">Invoice #</th>
-                                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase">Due Date</th>
-                                  <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase">Amount</th>
-                                  <th className="px-2 py-2 text-right font-semibold text-muted-foreground uppercase">Actions</th>
+                                  {isAdmin && <th className="px-2 py-1 w-8"></th>}
+                                  <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">PR #</th>
+                                  <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">Invoice #</th>
+                                  <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">Due Date</th>
+                                  <th className="px-2 py-1 text-right font-semibold text-muted-foreground uppercase">Amount</th>
+                                  <th className="px-2 py-1 text-right font-semibold text-muted-foreground uppercase">Actions</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-border">
@@ -164,13 +164,13 @@ export default function GroupedPaymentRequests({ requests, expandedGroups, toggl
                 <table className="w-full text-xs">
                   <thead className="bg-muted/30 border-b border-border">
                     <tr>
-                      {isAdmin && <th className="px-2 py-2 w-8"></th>}
-                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase">PR #</th>
-                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase">Payee</th>
-                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase">Invoice #</th>
-                      <th className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase">Due Date</th>
-                      <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase">Amount</th>
-                      <th className="px-2 py-2 text-right font-semibold text-muted-foreground uppercase">Actions</th>
+                      {isAdmin && <th className="px-2 py-1 w-8"></th>}
+                      <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">PR #</th>
+                      <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">Payee</th>
+                      <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">Invoice #</th>
+                      <th className="px-2 py-1 text-left font-semibold text-muted-foreground uppercase">Due Date</th>
+                      <th className="px-2 py-1 text-right font-semibold text-muted-foreground uppercase">Amount</th>
+                      <th className="px-2 py-1 text-right font-semibold text-muted-foreground uppercase">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">

@@ -427,27 +427,27 @@ export default function PaymentApprovals() {
           onClick={() => setExpandedHistory(isExpanded ? null : pr.id)}
         >
           {isAdmin && (
-            <td className="px-2 py-2" onClick={e => e.stopPropagation()}>
+            <td className="px-2 py-1" onClick={e => e.stopPropagation()}>
               {pr.approval_status === "pending" && (
                 <Checkbox checked={selectedIds.has(pr.id)} onCheckedChange={() => toggleSelect(pr.id)} />
               )}
             </td>
           )}
-          <td className="px-3 py-2 font-mono text-xs text-muted-foreground whitespace-nowrap">{pr.request_number || "—"}</td>
-          <td className="px-3 py-2 font-medium text-foreground whitespace-nowrap">{pr.payee}</td>
-          <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">{pr.invoice_number || "—"}</td>
-          <td className="px-3 py-2 text-xs whitespace-nowrap">
+          <td className="px-2 py-1 font-mono text-xs text-muted-foreground whitespace-nowrap">{pr.request_number || "—"}</td>
+          <td className="px-2 py-1 text-xs font-medium text-foreground whitespace-nowrap">{pr.payee}</td>
+          <td className="px-2 py-1 text-xs text-muted-foreground whitespace-nowrap">{pr.invoice_number || "—"}</td>
+          <td className="px-2 py-1 text-xs whitespace-nowrap">
             {pr.due_date ? <span className={isOverdue ? "text-destructive font-medium" : "text-muted-foreground"}>{format(new Date(pr.due_date), "MMM d, yyyy")}</span> : "—"}
           </td>
-          <td className="px-3 py-2 text-right whitespace-nowrap">
-            <div className="font-bold text-foreground">₱{(pr.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+          <td className="px-2 py-1 text-right whitespace-nowrap">
+            <div className="text-xs font-bold text-foreground">₱{(pr.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
             {(pr.withholding_tax_amount > 0 || pr.vat_amount > 0) && (
               <div className="text-xs text-primary font-medium">
                 Net: ₱{((pr.amount || 0) - (pr.withholding_tax_amount || 0) + (pr.vat_amount || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </div>
             )}
           </td>
-          <td className="px-2 py-2" onClick={e => e.stopPropagation()}>
+          <td className="px-2 py-1" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-end gap-1">
               {isAdmin && pr.approval_status === "pending" && (
                 <Button size="sm" variant="outline" onClick={() => setReviewPR(pr)}>Review</Button>
