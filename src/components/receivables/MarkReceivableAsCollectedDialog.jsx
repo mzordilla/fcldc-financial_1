@@ -100,18 +100,34 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
       payment_history: updatedHistory,
     });
 
-    // Record cash deposit to bank only (income was already recognized when billing was forwarded to AR — do NOT record income again)
+    // Double-entry on collection:
+    // DR Bank Account (income) — cash received into bank
+    // CR Receivables (expense/contra) — reduces the outstanding AR balance
     if (form.bank_account_id && !isUndeposited) {
-      await base44.entities.Transaction.create({
-        description: `AR collection — ${receivable.client_name}${receivable.invoice_number ? ` (${receivable.invoice_number})` : ""}${form.reference ? ` · ${form.reference}` : ""}`,
-        amount: thisCollection,
-        type: "income",
-        category: "bank_reconciliation",
-        project_name: receivable.project_name || "",
-        bank_account_id: form.bank_account_id,
-        date: form.collection_date,
-        status: "completed",
-      });
+      const desc = `AR collection — ${receivable.client_name}${receivable.invoice_number ? ` (${receivable.invoice_number})` : ""}${form.reference ? ` · ${form.reference}` : ""}`;
+      await Promise.all([
+        // Debit Bank Account
+        base44.entities.Transaction.create({
+          description: `DR Bank: ${desc}`,
+          amount: thisCollection,
+          type: "income",
+          category: "bank_reconciliation",
+          project_name: receivable.project_name || "",
+          bank_account_id: form.bank_account_id,
+          date: form.collection_date,
+          status: "completed",
+        }),
+        // Credit Receivables (contra-entry)
+        base44.entities.Transaction.create({
+          description: `CR Receivables: ${desc}`,
+          amount: thisCollection,
+          type: "expense",
+          category: "bank_reconciliation",
+          project_name: receivable.project_name || "",
+          date: form.collection_date,
+          status: "completed",
+        }),
+      ]);
     }
 
     setSaving(false);
