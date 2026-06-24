@@ -184,6 +184,7 @@ export default function PurchaseOrders() {
                         <tr className="bg-muted/50 border-b border-border">
                           <th className="px-2 py-1.5 text-left font-semibold">Item</th>
                           <th className="px-2 py-1.5 text-right font-semibold">Qty</th>
+                          <th className="px-2 py-1.5 text-right font-semibold">Unit</th>
                           <th className="px-2 py-1.5 text-right font-semibold">Cost/Item</th>
                           <th className="px-2 py-1.5 text-right font-semibold">Total</th>
                         </tr>
@@ -193,6 +194,7 @@ export default function PurchaseOrders() {
                           <tr key={idx} className="border-b border-border/50 last:border-0">
                             <td className="px-2 py-1.5">{item.description}</td>
                             <td className="px-2 py-1.5 text-right">{item.quantity}</td>
+                            <td className="px-2 py-1.5 text-right text-muted-foreground">{item.unit_of_measure || "—"}</td>
                             <td className="px-2 py-1.5 text-right">₱{(item.cost_per_item || 0).toLocaleString()}</td>
                             <td className="px-2 py-1.5 text-right font-semibold">₱{(item.total || 0).toLocaleString()}</td>
                           </tr>
