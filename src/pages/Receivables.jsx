@@ -90,10 +90,10 @@ export default function Receivables() {
   const [editingR, setEditingR] = useState(null);
   const [collectingR, setCollectingR] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [expandedClients, setExpandedClients] = useState({});
+  const [expandedGroups, setExpandedGroups] = useState({});
   const queryClient = useQueryClient();
 
-  const toggleClient = (client) => setExpandedClients(prev => ({ ...prev, [client]: !prev[client] }));
+  const toggleGroup = (key) => setExpandedGroups(prev => ({ ...prev, [key]: !prev[key] }));
 
   const { data: receivables = [], isLoading } = useQuery({
     queryKey: ["receivables"],
@@ -182,14 +182,18 @@ export default function Receivables() {
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
         {!isLoading && filtered.length === 0 && <p className="text-center py-12 text-muted-foreground">No receivables yet</p>}
         {!isLoading && filtered.length > 0 && (() => {
-          // Group by client
-          const clientMap = {};
+          // Group by project
+          const projectMap = {};
           filtered.forEach(r => {
-            const key = r.client_name || "Unknown";
-            if (!clientMap[key]) clientMap[key] = [];
-            clientMap[key].push(r);
+            const key = r.project_name || "No Project";
+            if (!projectMap[key]) projectMap[key] = [];
+            projectMap[key].push(r);
           });
-          const clients = Object.keys(clientMap).sort();
+          const projectKeys = Object.keys(projectMap).sort((a, b) => {
+            if (a === "No Project") return 1;
+            if (b === "No Project") return -1;
+            return a.localeCompare(b);
+          });
 
           return (
             <div className="overflow-x-auto">
@@ -197,8 +201,8 @@ export default function Receivables() {
                 <thead className="bg-muted/30 border-b border-border">
                   <tr>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase w-6"></th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Client / Invoice</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Project</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Invoice #</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Client</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Due Date</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Status</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Aging</th>
@@ -209,34 +213,34 @@ export default function Receivables() {
                   </tr>
                 </thead>
                 <tbody>
-                  {clients.map(clientName => {
-                    const rows = clientMap[clientName];
-                    const totalBilled = rows.reduce((s, r) => s + (r.amount || 0), 0);
-                    const totalCollected = rows.reduce((s, r) => s + (r.amount_paid || 0), 0);
-                    const totalBalance = totalBilled - totalCollected;
-                    const isExpanded = expandedClients[clientName] !== false; // default expanded
+                  {projectKeys.map(projectName => {
+                    const rows = projectMap[projectName];
+                    const grpBilled = rows.reduce((s, r) => s + (r.amount || 0), 0);
+                    const grpCollected = rows.reduce((s, r) => s + (r.amount_paid || 0), 0);
+                    const grpBalance = grpBilled - grpCollected;
+                    const isExpanded = expandedGroups[projectName] !== false; // default expanded
                     const hasOverdue = rows.some(r => r.status === "overdue");
 
                     return (
                       <>
-                        {/* Client summary row */}
+                        {/* Project summary row */}
                         <tr
-                          key={`client-${clientName}`}
+                          key={`project-${projectName}`}
                           className="bg-muted/40 border-t border-border cursor-pointer hover:bg-muted/60 transition-colors"
-                          onClick={() => toggleClient(clientName)}
+                          onClick={() => toggleGroup(projectName)}
                         >
                           <td className="px-3 py-2 text-muted-foreground">
                             {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                           </td>
                           <td className="px-3 py-2 font-semibold text-sm text-foreground" colSpan={2}>
-                            {clientName}
+                            {projectName}
                             <span className="ml-2 text-xs text-muted-foreground font-normal">{rows.length} invoice{rows.length !== 1 ? "s" : ""}</span>
                             {hasOverdue && <span className="ml-2 text-xs text-destructive font-medium">· overdue</span>}
                           </td>
                           <td className="px-3 py-2" colSpan={3}></td>
-                          <td className="px-3 py-2 text-right text-sm font-mono font-semibold">₱{totalBilled.toLocaleString()}</td>
-                          <td className="px-3 py-2 text-right text-sm font-mono font-semibold text-primary">₱{totalCollected.toLocaleString()}</td>
-                          <td className="px-3 py-2 text-right text-sm font-mono font-bold text-foreground">₱{totalBalance.toLocaleString()}</td>
+                          <td className="px-3 py-2 text-right text-sm font-mono font-semibold">₱{grpBilled.toLocaleString()}</td>
+                          <td className="px-3 py-2 text-right text-sm font-mono font-semibold text-primary">₱{grpCollected.toLocaleString()}</td>
+                          <td className="px-3 py-2 text-right text-sm font-mono font-bold text-foreground">₱{grpBalance.toLocaleString()}</td>
                           <td></td>
                         </tr>
                         {/* Invoice breakdown rows */}
@@ -249,7 +253,7 @@ export default function Receivables() {
                               <td className="px-3 py-1.5 text-xs text-muted-foreground font-mono pl-6">
                                 {r.invoice_number || "—"}
                               </td>
-                              <td className="px-3 py-1.5 text-xs text-muted-foreground">{r.project_name || "—"}</td>
+                              <td className="px-3 py-1.5 text-xs text-muted-foreground">{r.client_name || "—"}</td>
                               <td className="px-3 py-1.5 text-xs text-muted-foreground whitespace-nowrap">
                                 {r.due_date ? format(new Date(r.due_date), "MMM d, yyyy") : "—"}
                               </td>
