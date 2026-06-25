@@ -35,7 +35,7 @@ const CLASSIFICATION_LABELS = {
   external_construction: "External Construction",
 };
 
-function buildProjectData(transactions, receivables = [], billingCycles = [], projectsData = []) {
+function buildProjectData(transactions, receivables = [], billingCycles = [], projectsData = [], payables = [], paymentRequests = []) {
   const projects = {};
 
   // Build a lookup of project classification by name
@@ -52,9 +52,13 @@ function buildProjectData(transactions, receivables = [], billingCycles = [], pr
     }
   };
 
+  // Track transaction-linked payable/PR IDs to avoid double-counting
+  const transactionLinkedPayableIds = new Set();
+  const transactionLinkedPRIds = new Set();
+
   transactions.forEach((t) => {
-    if (t.category === "fund_transfer") return; // exclude fund transfers from P&L
-    if (t.category === "bank_reconciliation") return; // exclude bank-only entries from P&L
+    if (t.category === "fund_transfer") return;
+    if (t.category === "bank_reconciliation") return;
     const key = t.project_name || "Unassigned";
     ensure(key);
     if (t.type === "income") {
@@ -63,6 +67,45 @@ function buildProjectData(transactions, receivables = [], billingCycles = [], pr
       projects[key].expenses += t.amount || 0;
       const cat = t.category || "other";
       projects[key].categories[cat] = (projects[key].categories[cat] || 0) + (t.amount || 0);
+    }
+  });
+
+  // Include payables (from POs) that have a project and aren't already in transactions
+  // Use net amount (gross - withholding tax) to match what was actually paid
+  payables.forEach((p) => {
+    if (!p.project_name) return;
+    const key = p.project_name;
+    ensure(key);
+    // Amount to count: use amount_paid if partially/fully paid, else full amount for unpaid
+    const amt = p.amount_paid > 0 ? p.amount_paid : (p.status === "paid" ? (p.amount - (p.withholding_tax_amount || 0)) : 0);
+    if (amt <= 0) return;
+    const cat = p.category || "other";
+    projects[key].expenses += amt;
+    projects[key].categories[cat] = (projects[key].categories[cat] || 0) + amt;
+  });
+
+  // Include paid/approved payment requests that have project allocations
+  paymentRequests.forEach((pr) => {
+    if (pr.approval_status !== "paid" && pr.approval_status !== "approved") return;
+    const allocations = pr.project_allocations || [];
+    if (allocations.length === 0 && pr.project_name) {
+      // fallback: single project
+      const key = pr.project_name;
+      ensure(key);
+      const amt = pr.amount - (pr.withholding_tax_amount || 0);
+      if (amt <= 0) return;
+      const cat = pr.category || "other";
+      projects[key].expenses += amt;
+      projects[key].categories[cat] = (projects[key].categories[cat] || 0) + amt;
+    } else {
+      allocations.forEach((alloc) => {
+        if (!alloc.project_name || !alloc.amount) return;
+        const key = alloc.project_name;
+        ensure(key);
+        projects[key].expenses += alloc.amount;
+        const cat = pr.category || "other";
+        projects[key].categories[cat] = (projects[key].categories[cat] || 0) + alloc.amount;
+      });
     }
   });
 
@@ -249,9 +292,19 @@ export default function ProjectPnL() {
     queryFn: () => base44.entities.Project.list("project_name", 200),
   });
 
+  const { data: payables = [] } = useQuery({
+    queryKey: ["payables_pnl"],
+    queryFn: () => base44.entities.Payable.list("-created_date", 500),
+  });
+
+  const { data: paymentRequests = [] } = useQuery({
+    queryKey: ["payment_requests_pnl"],
+    queryFn: () => base44.entities.PaymentRequest.filter({ approval_status: "paid" }, "-created_date", 500),
+  });
+
   const [classFilter, setClassFilter] = useState("all");
 
-  const allProjects = buildProjectData(transactions, receivables, billingCycles, projectsData);
+  const allProjects = buildProjectData(transactions, receivables, billingCycles, projectsData, payables, paymentRequests);
   const projects = classFilter === "all" ? allProjects : allProjects.filter(p => p.classification === classFilter);
 
   const totalIncome = projects.reduce((s, p) => s + p.income, 0);
