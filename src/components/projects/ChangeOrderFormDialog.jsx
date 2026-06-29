@@ -47,18 +47,19 @@ export default function ChangeOrderFormDialog({ open, onOpenChange, initialData,
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+
           {contracts.length > 0 && (
             <div className="space-y-1.5">
               <Label>Linked Contract</Label>
-              <Select value={form.contract_id} onValueChange={v => set("contract_id", v)}>
+              <Select value={form.contract_id || ""} onValueChange={v => set("contract_id", v === "none" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Select contract (optional)" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={null}>None</SelectItem>
+                  <SelectItem value="none">— None —</SelectItem>
                   {contracts.map(c => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.contract_number || "Contract"}{c.description ? ` — ${c.description}` : ""}
@@ -79,16 +80,11 @@ export default function ChangeOrderFormDialog({ open, onOpenChange, initialData,
               <Select value={form.co_type} onValueChange={v => set("co_type", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="additive">Additive (increases contract)</SelectItem>
-                  <SelectItem value="deductive">Deductive (decreases contract)</SelectItem>
+                  <SelectItem value="additive">Additive (+)</SelectItem>
+                  <SelectItem value="deductive">Deductive (−)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Amount (₱) <span className="text-destructive">*</span></Label>
-            <Input required type="number" step="0.01" placeholder="0.00" value={form.amount} onChange={e => set("amount", e.target.value)} />
           </div>
 
           <div className="space-y-1.5">
@@ -97,19 +93,8 @@ export default function ChangeOrderFormDialog({ open, onOpenChange, initialData,
           </div>
 
           <div className="space-y-1.5">
-            <Label>Scope of Change</Label>
-            <Textarea rows={3} placeholder="Detailed description of what is being changed in scope, cost, or timeline..." value={form.scope_change} onChange={e => set("scope_change", e.target.value)} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>Quantity Adjustment</Label>
-              <Input placeholder="e.g. +50 pcs steel bars" value={form.quantity_adjustment} onChange={e => set("quantity_adjustment", e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Pricing Adjustment</Label>
-              <Input placeholder="e.g. Unit rate increased to ₱150/m²" value={form.pricing_adjustment} onChange={e => set("pricing_adjustment", e.target.value)} />
-            </div>
+            <Label>Amount (₱) <span className="text-destructive">*</span></Label>
+            <Input required type="number" step="0.01" min="0" placeholder="0.00" value={form.amount} onChange={e => set("amount", e.target.value)} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -117,14 +102,6 @@ export default function ChangeOrderFormDialog({ open, onOpenChange, initialData,
               <Label>Date Issued</Label>
               <Input type="date" value={form.date_issued} onChange={e => set("date_issued", e.target.value)} />
             </div>
-            <div className="space-y-1.5">
-              <Label>Timeline Impact (days)</Label>
-              <Input type="number" placeholder="0" value={form.timeline_impact_days} onChange={e => set("timeline_impact_days", e.target.value)} />
-              <p className="text-xs text-muted-foreground">Positive = extension, negative = reduction</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Status</Label>
               <Select value={form.status} onValueChange={v => set("status", v)}>
@@ -137,15 +114,6 @@ export default function ChangeOrderFormDialog({ open, onOpenChange, initialData,
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label>Date Approved</Label>
-              <Input type="date" value={form.date_approved} onChange={e => set("date_approved", e.target.value)} />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Approved By</Label>
-            <Input placeholder="Name of approver" value={form.approved_by} onChange={e => set("approved_by", e.target.value)} />
           </div>
 
           <div className="space-y-1.5">
