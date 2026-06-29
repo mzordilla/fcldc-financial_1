@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { ArrowLeft, Pencil, Trash2, Receipt, Plus, TrendingUp, TrendingDown, AlertCircle, FileText, FilePlus, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Receipt, Plus, TrendingUp, TrendingDown, AlertCircle, FileText, FilePlus, ChevronDown, ChevronRight, Building2, Phone, Mail, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -99,6 +99,12 @@ export default function ProjectDetail() {
     enabled: !!id,
   });
 
+  const { data: clientRecord } = useQuery({
+    queryKey: ["client", project?.client_id],
+    queryFn: () => base44.entities.Client.filter({ id: project.client_id }, "client_name", 1).then(r => r[0]),
+    enabled: !!project?.client_id,
+  });
+
   const createContractMutation = useMutation({
     mutationFn: (data) => base44.entities.Contract.create({ ...data, project_id: id, project_name: project?.project_name, client_name: project?.client_name, client_id: project?.client_id }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["contracts", id] }),
@@ -190,6 +196,7 @@ export default function ProjectDetail() {
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="mb-4 flex w-full overflow-x-auto">
           <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
+          <TabsTrigger value="client" className="flex-1">Client</TabsTrigger>
           <TabsTrigger value="contracts" className="flex-1">Contracts ({contracts.length})</TabsTrigger>
           <TabsTrigger value="billings" className="flex-1">Progress Billings ({billingCycles.length})</TabsTrigger>
           <TabsTrigger value="change_orders" className="flex-1">Change Orders ({changeOrders.length})</TabsTrigger>
@@ -282,6 +289,70 @@ export default function ProjectDetail() {
         </div>
       </div>
 
+        </TabsContent>
+
+        {/* CLIENT TAB */}
+        <TabsContent value="client">
+          <div className="bg-card rounded-2xl border border-border p-6 space-y-5">
+            <div className="flex items-center gap-2 mb-2">
+              <Building2 className="w-4 h-4 text-primary" />
+              <h2 className="font-semibold text-foreground">Client Information</h2>
+            </div>
+            {!clientRecord ? (
+              <div className="text-center py-10 text-sm text-muted-foreground">
+                <Building2 className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
+                <p>No linked client record found.</p>
+                <p className="text-xs mt-1 font-mono text-muted-foreground">{project.client_name}</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-foreground">{clientRecord.client_name}</h3>
+                    {clientRecord.client_code && <p className="text-xs font-mono text-primary mt-0.5">{clientRecord.client_code}</p>}
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    {clientRecord.client_type && (
+                      <span className="text-xs bg-secondary text-secondary-foreground border border-border rounded-md px-2.5 py-0.5 font-semibold capitalize">{clientRecord.client_type.replace(/_/g, " ")}</span>
+                    )}
+                    <span className={`text-xs border rounded-md px-2.5 py-0.5 font-semibold ${clientRecord.status === "active" ? "bg-primary/10 text-primary border-primary/20" : "bg-muted text-muted-foreground border-border"}`}>{clientRecord.status}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-border pt-4">
+                  {clientRecord.contact_person && (
+                    <div className="flex items-start gap-3">
+                      <Building2 className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div><p className="text-xs text-muted-foreground">Contact Person</p><p className="text-sm text-foreground font-medium">{clientRecord.contact_person}</p></div>
+                    </div>
+                  )}
+                  {clientRecord.email && (
+                    <div className="flex items-start gap-3">
+                      <Mail className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div><p className="text-xs text-muted-foreground">Email</p><a href={`mailto:${clientRecord.email}`} className="text-sm text-primary hover:underline">{clientRecord.email}</a></div>
+                    </div>
+                  )}
+                  {clientRecord.phone && (
+                    <div className="flex items-start gap-3">
+                      <Phone className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div><p className="text-xs text-muted-foreground">Phone</p><p className="text-sm text-foreground">{clientRecord.phone}</p></div>
+                    </div>
+                  )}
+                  {clientRecord.address && (
+                    <div className="flex items-start gap-3">
+                      <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div><p className="text-xs text-muted-foreground">Address</p><p className="text-sm text-foreground">{clientRecord.address}</p></div>
+                    </div>
+                  )}
+                </div>
+                {clientRecord.notes && (
+                  <div className="bg-muted/40 rounded-lg p-4 border border-border">
+                    <p className="text-xs font-semibold text-muted-foreground mb-1">Notes</p>
+                    <p className="text-sm text-foreground">{clientRecord.notes}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </TabsContent>
 
         {/* CONTRACTS TAB */}
