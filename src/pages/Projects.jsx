@@ -33,10 +33,10 @@ const projectTypeLabels = {
   other: "Other"
 };
 
-const fields = [
+const fields = (clients) => [
 { name: "project_name", label: "Project Name", required: true, placeholder: "e.g. Main Street Tower" },
 { name: "project_code", label: "Project Code", required: true, placeholder: "PRJ-2026-001" },
-{ name: "client_name", label: "Client Name", required: true, placeholder: "e.g. ABC Developers" },
+{ name: "client_id", label: "Client", required: true, type: "select", options: clients.map(c => ({ value: c.id, label: c.client_name })) },
 { name: "project_number", label: "Project #", placeholder: "PRJ-2026-001" },
 { name: "location", label: "Location", placeholder: "e.g. 123 Main St, City" },
 { name: "project_type", label: "Project Type", type: "select", options: [
@@ -112,6 +112,11 @@ export default function Projects() {
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: () => base44.entities.Project.list("-created_date", 200)
+  });
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients"],
+    queryFn: () => base44.entities.Client.list()
   });
 
 
@@ -373,16 +378,22 @@ export default function Projects() {
         open={showAdd}
         onOpenChange={setShowAdd}
         title="New Project"
-        fields={fields}
-        onSubmit={(data) => createMutation.mutateAsync(data)} />
+        fields={fields(clients)}
+        onSubmit={(data) => {
+          const client = clients.find(c => c.id === data.client_id);
+          return createMutation.mutateAsync({ ...data, client_name: client?.client_name || "" });
+        }} />
 
       <AddFormDialog
         open={!!editingProject}
         onOpenChange={(open) => {if (!open) setEditingProject(null);}}
         title="Edit Project"
-        fields={fields}
+        fields={fields(clients)}
         initialData={editingProject || {}}
-        onSubmit={(data) => updateMutation.mutateAsync({ id: editingProject.id, data })} />
+        onSubmit={(data) => {
+          const client = clients.find(c => c.id === data.client_id);
+          return updateMutation.mutateAsync({ id: editingProject.id, data: { ...data, client_name: client?.client_name || data.client_name || "" } });
+        }} />
 
         </TabsContent>
 
