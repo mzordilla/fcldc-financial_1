@@ -29,7 +29,7 @@ const defaultForm = {
 
 export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit, initialData, title }) {
   const [form, setForm] = useState(defaultForm);
-  const [allocations, setAllocations] = useState([{ project_name: "", amount: "", category: "" }]);
+  const [allocations, setAllocations] = useState([{ project_name: "", project_code: "", amount: "", category: "" }]);
   const [saving, setSaving] = useState(false);
   const { data: projects = [] } = useQuery({
     queryKey: ["projects"],
@@ -48,12 +48,12 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
       setForm({ ...defaultForm, ...rest, category: rest.category || "", base_amount: amount || "" });
       setAllocations(
         project_allocations && project_allocations.length > 0
-          ? project_allocations.map(a => ({ project_name: a.project_name || "", amount: a.amount || "", category: a.category || "" }))
-          : [{ project_name: "", amount: "", category: "" }]
+          ? project_allocations.map(a => ({ project_name: a.project_name || "", project_code: a.project_code || "", amount: a.amount || "", category: a.category || "" }))
+          : [{ project_name: "", project_code: "", amount: "", category: "" }]
       );
     } else {
       setForm(defaultForm);
-      setAllocations([{ project_name: "", amount: "", category: "" }]);
+      setAllocations([{ project_name: "", project_code: "", amount: "", category: "" }]);
     }
   }, [open]);
 
@@ -67,7 +67,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
     setAllocations(prev => prev.map((a, i) => i === index ? { ...a, [field]: value } : a));
   };
 
-  const addAllocation = () => setAllocations(prev => [...prev, { project_name: "", amount: "", category: "" }]);
+  const addAllocation = () => setAllocations(prev => [...prev, { project_name: "", project_code: "", amount: "", category: "" }]);
   const removeAllocation = (index) => {
     if (allocations.length === 1) return;
     setAllocations(prev => prev.filter((_, i) => i !== index));
@@ -87,7 +87,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
     await onSubmit({
       ...formWithoutBase,
       category: form.category || "",
-      project_allocations: validAllocations.map(a => ({ project_name: a.project_name, amount: parseFloat(a.amount) || 0, category: a.category || "" })),
+      project_allocations: validAllocations.map(a => ({ project_name: a.project_name, project_code: a.project_code || "", amount: parseFloat(a.amount) || 0, category: a.category || "" })),
       amount: totalAmount,
       withholding_tax_percentage: parseFloat(form.withholding_tax_percentage) || 0,
       withholding_tax_amount: withholdingTaxAmount,
@@ -165,11 +165,22 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
             <div className="space-y-2">
                {allocations.map((alloc, i) => (
                  <div key={i} className="flex gap-2 items-center">
-                   <Select value={alloc.project_name} onValueChange={v => updateAllocation(i, "project_name", v)}>
+                   <Select
+                     value={alloc.project_name}
+                     onValueChange={v => {
+                       const proj = projects.find(p => p.project_name === v);
+                       setAllocations(prev => prev.map((a, idx) => idx === i
+                         ? { ...a, project_name: v, project_code: proj?.project_code || "" }
+                         : a
+                       ));
+                     }}
+                   >
                      <SelectTrigger className="flex-1"><SelectValue placeholder="Select project" /></SelectTrigger>
                      <SelectContent>
                        {projects.map(p => (
-                         <SelectItem key={p.id} value={p.project_name || p.id}>{p.project_name}</SelectItem>
+                         <SelectItem key={p.id} value={p.project_name}>
+                           {p.project_name}{p.project_code ? ` (${p.project_code})` : ""}
+                         </SelectItem>
                        ))}
                      </SelectContent>
                    </Select>

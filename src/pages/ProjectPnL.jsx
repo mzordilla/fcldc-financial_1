@@ -38,13 +38,21 @@ const CLASSIFICATION_LABELS = {
 function buildProjectData(transactions, receivables = [], billingCycles = [], projectsData = [], payables = [], paymentRequests = []) {
   const projects = {};
 
-  // Build a lookup of project classification by name
+  // Build lookups by project_name and project_code
   const classificationMap = {};
+  const codeToName = {}; // project_code → canonical project_name
   projectsData.forEach(p => {
-    if (p.project_name && p.project_classification) {
-      classificationMap[p.project_name] = p.project_classification;
+    if (p.project_name) {
+      if (p.project_classification) classificationMap[p.project_name] = p.project_classification;
+      if (p.project_code) codeToName[p.project_code] = p.project_name;
     }
   });
+
+  // Resolve a record to a canonical project name key
+  const resolveKey = (project_name, project_code) => {
+    if (project_code && codeToName[project_code]) return codeToName[project_code];
+    return project_name || "Unassigned";
+  };
 
   const ensure = (key) => {
     if (!projects[key]) {
@@ -73,8 +81,8 @@ function buildProjectData(transactions, receivables = [], billingCycles = [], pr
   // Include payables (from POs) that have a project and aren't already in transactions
   // Use net amount (gross - withholding tax) to match what was actually paid
   payables.forEach((p) => {
-    if (!p.project_name) return;
-    const key = p.project_name;
+    if (!p.project_name && !p.project_code) return;
+    const key = resolveKey(p.project_name, p.project_code);
     ensure(key);
     // Amount to count: use amount_paid if partially/fully paid, else full amount for unpaid
     const amt = p.amount_paid > 0 ? p.amount_paid : (p.status === "paid" ? (p.amount - (p.withholding_tax_amount || 0)) : 0);
@@ -88,9 +96,9 @@ function buildProjectData(transactions, receivables = [], billingCycles = [], pr
   paymentRequests.forEach((pr) => {
     if (pr.approval_status !== "paid" && pr.approval_status !== "approved") return;
     const allocations = pr.project_allocations || [];
-    if (allocations.length === 0 && pr.project_name) {
+    if (allocations.length === 0 && (pr.project_name || pr.project_code)) {
       // fallback: single project
-      const key = pr.project_name;
+      const key = resolveKey(pr.project_name, pr.project_code);
       ensure(key);
       const amt = pr.amount - (pr.withholding_tax_amount || 0);
       if (amt <= 0) return;
@@ -99,11 +107,11 @@ function buildProjectData(transactions, receivables = [], billingCycles = [], pr
       projects[key].categories[cat] = (projects[key].categories[cat] || 0) + amt;
     } else {
       allocations.forEach((alloc) => {
-        if (!alloc.project_name || !alloc.amount) return;
-        const key = alloc.project_name;
+        if ((!alloc.project_name && !alloc.project_code) || !alloc.amount) return;
+        const key = resolveKey(alloc.project_name, alloc.project_code);
         ensure(key);
         projects[key].expenses += alloc.amount;
-        const cat = pr.category || "other";
+        const cat = alloc.category || pr.category || "other";
         projects[key].categories[cat] = (projects[key].categories[cat] || 0) + alloc.amount;
       });
     }

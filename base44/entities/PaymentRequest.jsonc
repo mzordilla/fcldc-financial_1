@@ -19,8 +19,15 @@
           "project_name": {
             "type": "string"
           },
+          "project_code": {
+            "type": "string",
+            "description": "Project code for expense mapping"
+          },
           "amount": {
             "type": "number"
+          },
+          "category": {
+            "type": "string"
           }
         }
       }

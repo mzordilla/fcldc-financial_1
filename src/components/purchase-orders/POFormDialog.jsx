@@ -23,6 +23,7 @@ const defaultForm = {
   po_number: "",
   supplier_name: "",
   project_name: "",
+  project_code: "",
   description: "",
   items: "",
   line_items: [],
@@ -160,16 +161,28 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
 
           <div className="space-y-1.5">
             <Label>Project Name</Label>
-            <Select value={form.project_name} onValueChange={v => set("project_name", v)}>
+            <Select
+              value={form.project_name}
+              onValueChange={v => {
+                const proj = projects.find(p => p.project_name === v);
+                set("project_name", v);
+                set("project_code", proj?.project_code || "");
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a project..." />
               </SelectTrigger>
               <SelectContent>
                 {projects.map(p => (
-                  <SelectItem key={p.id} value={p.project_name}>{p.project_name}</SelectItem>
+                  <SelectItem key={p.id} value={p.project_name}>
+                    {p.project_name}{p.project_code ? ` (${p.project_code})` : ""}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {form.project_code && (
+              <p className="text-xs text-muted-foreground">Project Code: <span className="font-mono font-semibold">{form.project_code}</span></p>
+            )}
           </div>
 
           <div className="space-y-1.5">

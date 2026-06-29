@@ -14,6 +14,10 @@
       "type": "string",
       "description": "Associated project"
     },
+    "project_code": {
+      "type": "string",
+      "description": "Associated project code (e.g. PRJ-2026-001)"
+    },
     "description": {
       "type": "string",
       "description": "What is being purchased"
