@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import ProjectPnL from "./ProjectPnL";
+import ClientMasterlist from "../components/projects/ClientMasterlist";
 
 
 const contractStatusStyles = {
@@ -152,6 +153,7 @@ export default function Projects() {
       <Tabs defaultValue="projects" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="projects">Projects</TabsTrigger>
+          <TabsTrigger value="clients">Client Masterlist</TabsTrigger>
           <TabsTrigger value="pnl">Project P&amp;L</TabsTrigger>
         </TabsList>
 
@@ -395,6 +397,10 @@ export default function Projects() {
           return updateMutation.mutateAsync({ id: editingProject.id, data: { ...data, client_name: client?.client_name || data.client_name || "" } });
         }} />
 
+        </TabsContent>
+
+        <TabsContent value="clients">
+          <ClientMasterlist />
         </TabsContent>
 
         <TabsContent value="pnl">
