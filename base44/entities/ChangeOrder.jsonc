@@ -6,6 +6,10 @@
       "type": "string",
       "description": "Change Order reference number (e.g. CO-001)"
     },
+    "contract_id": {
+      "type": "string",
+      "description": "Linked Contract ID (parent contract)"
+    },
     "project_id": {
       "type": "string",
       "description": "Linked Project ID"
@@ -33,6 +37,14 @@
     "scope_change": {
       "type": "string",
       "description": "Detailed description of what scope is being changed"
+    },
+    "quantity_adjustment": {
+      "type": "string",
+      "description": "Notes on quantity changes (e.g. +50 pcs steel bars)"
+    },
+    "pricing_adjustment": {
+      "type": "string",
+      "description": "Notes on unit price changes"
     },
     "date_issued": {
       "type": "string",
@@ -63,6 +75,33 @@
     "approved_by": {
       "type": "string",
       "description": "Name of the person who approved the CO"
+    },
+    "revision_history": {
+      "type": "array",
+      "description": "Log of all revisions made to this Change Order",
+      "items": {
+        "type": "object",
+        "properties": {
+          "revision_number": {
+            "type": "string"
+          },
+          "revised_by": {
+            "type": "string"
+          },
+          "revised_at": {
+            "type": "string"
+          },
+          "previous_amount": {
+            "type": "number"
+          },
+          "new_amount": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
     },
     "notes": {
       "type": "string",

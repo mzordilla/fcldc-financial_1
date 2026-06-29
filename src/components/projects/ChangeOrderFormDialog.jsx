@@ -11,10 +11,13 @@ const today = format(new Date(), "yyyy-MM-dd");
 
 const defaultForm = {
   co_number: "",
+  contract_id: "",
   co_type: "additive",
   amount: "",
   description: "",
   scope_change: "",
+  quantity_adjustment: "",
+  pricing_adjustment: "",
   date_issued: today,
   date_approved: "",
   timeline_impact_days: "",
@@ -23,7 +26,8 @@ const defaultForm = {
   notes: "",
 };
 
-export default function ChangeOrderFormDialog({ open, onOpenChange, initialData, onSubmit, title = "New Change Order" }) {
+// contracts prop: array of { id, contract_number, description } for the parent project
+export default function ChangeOrderFormDialog({ open, onOpenChange, initialData, onSubmit, title = "New Change Order", contracts = [] }) {
   const [form, setForm] = useState(defaultForm);
   const [saving, setSaving] = useState(false);
 
@@ -48,6 +52,23 @@ export default function ChangeOrderFormDialog({ open, onOpenChange, initialData,
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {contracts.length > 0 && (
+            <div className="space-y-1.5">
+              <Label>Linked Contract</Label>
+              <Select value={form.contract_id} onValueChange={v => set("contract_id", v)}>
+                <SelectTrigger><SelectValue placeholder="Select contract (optional)" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>None</SelectItem>
+                  {contracts.map(c => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.contract_number || "Contract"}{c.description ? ` — ${c.description}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>CO Number</Label>
@@ -78,6 +99,17 @@ export default function ChangeOrderFormDialog({ open, onOpenChange, initialData,
           <div className="space-y-1.5">
             <Label>Scope of Change</Label>
             <Textarea rows={3} placeholder="Detailed description of what is being changed in scope, cost, or timeline..." value={form.scope_change} onChange={e => set("scope_change", e.target.value)} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Quantity Adjustment</Label>
+              <Input placeholder="e.g. +50 pcs steel bars" value={form.quantity_adjustment} onChange={e => set("quantity_adjustment", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Pricing Adjustment</Label>
+              <Input placeholder="e.g. Unit rate increased to ₱150/m²" value={form.pricing_adjustment} onChange={e => set("pricing_adjustment", e.target.value)} />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

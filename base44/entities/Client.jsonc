@@ -1,0 +1,55 @@
+{
+  "name": "Client",
+  "type": "object",
+  "properties": {
+    "client_name": {
+      "type": "string",
+      "description": "Client or company name"
+    },
+    "client_code": {
+      "type": "string",
+      "description": "Short internal code (e.g. ABC, XYZ)"
+    },
+    "contact_person": {
+      "type": "string",
+      "description": "Primary contact person"
+    },
+    "email": {
+      "type": "string",
+      "description": "Contact email"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact phone number"
+    },
+    "address": {
+      "type": "string",
+      "description": "Business address"
+    },
+    "client_type": {
+      "type": "string",
+      "enum": [
+        "government",
+        "private_corporation",
+        "individual",
+        "ngo",
+        "other"
+      ],
+      "description": "Type of client"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_name"
+  ]
+}

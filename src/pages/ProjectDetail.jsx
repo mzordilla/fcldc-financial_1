@@ -2,12 +2,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { ArrowLeft, Pencil, Trash2, Receipt, Plus, TrendingUp, TrendingDown, AlertCircle, FileText } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Receipt, Plus, TrendingUp, TrendingDown, AlertCircle, FileText, FilePlus, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import ChangeOrderFormDialog from "../components/projects/ChangeOrderFormDialog";
+import ContractFormDialog from "../components/projects/ContractFormDialog";
 import { useState } from "react";
 
 const contractStatusStyles = {
@@ -67,7 +69,12 @@ export default function ProjectDetail() {
   const [editingProject, setEditingProject] = useState(null);
   const [showAddCO, setShowAddCO] = useState(false);
   const [editingCO, setEditingCO] = useState(null);
+  const [showAddContract, setShowAddContract] = useState(false);
+  const [editingContract, setEditingContract] = useState(null);
+  const [expandedContracts, setExpandedContracts] = useState({});
   const queryClient = useQueryClient();
+
+  const toggleContract = (id) => setExpandedContracts(p => ({ ...p, [id]: !p[id] }));
 
   const { data: project, isLoading } = useQuery({
     queryKey: ["project", id],
@@ -84,6 +91,27 @@ export default function ProjectDetail() {
     queryKey: ["change_orders", id],
     queryFn: () => base44.entities.ChangeOrder.filter({ project_id: id }, "-date_issued", 100),
     enabled: !!id,
+  });
+
+  const { data: contracts = [] } = useQuery({
+    queryKey: ["contracts", id],
+    queryFn: () => base44.entities.Contract.filter({ project_id: id }, "-contract_date", 50),
+    enabled: !!id,
+  });
+
+  const createContractMutation = useMutation({
+    mutationFn: (data) => base44.entities.Contract.create({ ...data, project_id: id, project_name: project?.project_name, client_name: project?.client_name, client_id: project?.client_id }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["contracts", id] }),
+  });
+
+  const updateContractMutation = useMutation({
+    mutationFn: ({ contractId, data }) => base44.entities.Contract.update(contractId, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["contracts", id] }),
+  });
+
+  const deleteContractMutation = useMutation({
+    mutationFn: (contractId) => base44.entities.Contract.delete(contractId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["contracts", id] }),
   });
 
   const createCOMutation = useMutation({
@@ -140,8 +168,18 @@ export default function ProjectDetail() {
     cancelled: "bg-muted text-muted-foreground border-border",
   };
 
+  // Compute Current Contract Value across ALL contracts: original + approved COs per contract
+  const contractsWithCCV = contracts.map(contract => {
+    const contractCOs = changeOrders.filter(co => co.contract_id === contract.id);
+    const approvedContractCOs = contractCOs.filter(co => co.status === "approved");
+    const adds = approvedContractCOs.filter(co => co.co_type === "additive").reduce((s, co) => s + (co.amount || 0), 0);
+    const deds = approvedContractCOs.filter(co => co.co_type === "deductive").reduce((s, co) => s + (co.amount || 0), 0);
+    const currentContractValue = (contract.original_contract_amount || 0) + adds - deds;
+    return { ...contract, _contractCOs: contractCOs, _approvedCOs: approvedContractCOs, _adds: adds, _deds: deds, _ccv: currentContractValue };
+  });
+
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-3 mb-6">
         <Button variant="ghost" size="icon" onClick={() => navigate("/projects")} className="text-muted-foreground">
           <ArrowLeft className="w-4 h-4" />
@@ -149,6 +187,16 @@ export default function ProjectDetail() {
         <h1 className="text-3xl font-bold text-foreground">{project.project_name}</h1>
       </div>
 
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="contracts">Contracts ({contracts.length})</TabsTrigger>
+          <TabsTrigger value="billings">Progress Billings ({billingCycles.length})</TabsTrigger>
+          <TabsTrigger value="change_orders">Change Orders ({changeOrders.length})</TabsTrigger>
+        </TabsList>
+
+        {/* OVERVIEW TAB */}
+        <TabsContent value="overview" className="space-y-6">
       <div className="bg-card rounded-2xl border border-border p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -234,6 +282,152 @@ export default function ProjectDetail() {
         </div>
       </div>
 
+        </TabsContent>
+
+        {/* CONTRACTS TAB */}
+        <TabsContent value="contracts" className="space-y-4">
+          <div className="bg-card rounded-2xl border border-border overflow-hidden">
+            <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
+              <FilePlus className="w-4 h-4 text-primary" />
+              <h2 className="font-semibold text-foreground">Contracts</h2>
+              <span className="text-xs text-muted-foreground ml-1">({contracts.length})</span>
+              <div className="ml-auto flex items-center gap-3">
+                {contracts.length > 0 && (
+                  <div className="text-xs text-muted-foreground">
+                    Total CCV: <span className="font-semibold text-primary">₱{contractsWithCCV.reduce((s, c) => s + c._ccv, 0).toLocaleString()}</span>
+                  </div>
+                )}
+                <Button size="sm" onClick={() => setShowAddContract(true)}>
+                  <Plus className="w-4 h-4 mr-1" /> Add Contract
+                </Button>
+              </div>
+            </div>
+
+            {contractsWithCCV.length === 0 ? (
+              <div className="py-10 text-center text-sm text-muted-foreground">
+                <FilePlus className="w-6 h-6 mx-auto mb-2 text-muted-foreground/30" />
+                <p>No contracts yet. Add the first contract for this project.</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="px-3 py-2 w-6"></th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Contract #</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden sm:table-cell">Description</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Status</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Original Amount</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">CO Adjustment</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Current Contract Value</th>
+                    <th className="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contractsWithCCV.map((contract, ci) => {
+                    const isExpanded = expandedContracts[contract.id] !== false;
+                    const netAdj = contract._adds - contract._deds;
+                    const contractStatusStyles2 = {
+                      pending: "bg-muted text-muted-foreground border-border",
+                      approved: "bg-primary/10 text-primary border-primary/20",
+                      active: "bg-chart-2/10 text-chart-2 border-chart-2/20",
+                      completed: "bg-muted text-muted-foreground border-border",
+                      on_hold: "bg-chart-3/10 text-chart-3 border-chart-3/20",
+                      cancelled: "bg-destructive/10 text-destructive border-destructive/20",
+                    };
+                    const coStatusStyles2 = {
+                      pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
+                      approved: "bg-primary/10 text-primary border-primary/20",
+                      rejected: "bg-destructive/10 text-destructive border-destructive/20",
+                      cancelled: "bg-muted text-muted-foreground border-border",
+                    };
+                    return (
+                      <>
+                        <tr key={contract.id} className={`border-t border-border cursor-pointer hover:bg-muted/20 transition-colors ${ci % 2 === 0 ? "" : "bg-muted/5"}`} onClick={() => toggleContract(contract.id)}>
+                          <td className="px-3 py-3 text-muted-foreground">
+                            {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                          </td>
+                          <td className="px-4 py-3 font-mono text-xs text-primary font-semibold">
+                            {contract.contract_number || `CTR-${String(ci + 1).padStart(3, "0")}`}
+                          </td>
+                          <td className="px-4 py-3 hidden sm:table-cell text-sm text-foreground">
+                            {contract.description || "—"}
+                            {contract.contract_date && <p className="text-xs text-muted-foreground">{format(new Date(contract.contract_date), "MMM d, yyyy")}</p>}
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge variant="outline" className={`text-xs ${contractStatusStyles2[contract.contract_status] || ""}`}>
+                              {(contract.contract_status || "pending").replace(/_/g, " ")}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-sm text-foreground">
+                            ₱{(contract.original_contract_amount || 0).toLocaleString()}
+                            <p className="text-xs text-muted-foreground">(baseline)</p>
+                          </td>
+                          <td className={`px-4 py-3 text-right font-mono text-sm font-semibold ${netAdj >= 0 ? "text-primary" : "text-destructive"}`}>
+                            {netAdj !== 0 ? `${netAdj >= 0 ? "+" : ""}₱${netAdj.toLocaleString()}` : "—"}
+                            {contract._approvedCOs.length > 0 && <p className="text-xs text-muted-foreground font-normal">{contract._approvedCOs.length} approved CO{contract._approvedCOs.length !== 1 ? "s" : ""}</p>}
+                          </td>
+                          <td className="px-4 py-3 text-right font-bold text-primary text-base">
+                            ₱{contract._ccv.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-1">
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => setEditingContract(contract)}>
+                                <Pencil className="w-3 h-3" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteContractMutation.mutate(contract.id)}>
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                        {/* Expanded: Change Orders under this contract */}
+                        {isExpanded && contract._contractCOs.length === 0 && (
+                          <tr className="border-t border-border/30">
+                            <td colSpan={8} className="px-8 py-2 text-xs text-muted-foreground italic">No change orders linked to this contract. When adding a CO, select this contract.</td>
+                          </tr>
+                        )}
+                        {isExpanded && contract._contractCOs.map((co, ci2) => (
+                          <tr key={co.id} className="border-t border-border/20 bg-muted/5 hover:bg-muted/10 transition-colors">
+                            <td></td>
+                            <td className="px-4 py-2 pl-10 font-mono text-xs text-muted-foreground">{co.co_number || `CO-${String(ci2 + 1).padStart(3, "0")}`}</td>
+                            <td className="px-4 py-2 text-xs text-foreground hidden sm:table-cell">{co.description}</td>
+                            <td className="px-4 py-2">
+                              <Badge variant="outline" className={`text-xs ${coStatusStyles2[co.status] || ""}`}>{co.status}</Badge>
+                            </td>
+                            <td className="px-4 py-2 text-right text-xs text-muted-foreground">original</td>
+                            <td className={`px-4 py-2 text-right text-xs font-semibold font-mono ${co.co_type === "additive" ? "text-primary" : "text-destructive"}`}>
+                              {co.co_type === "additive" ? "+" : "-"}₱{(co.amount || 0).toLocaleString()}
+                            </td>
+                            <td colSpan={2} className="px-4 py-2 text-right text-xs text-muted-foreground">
+                              {co.timeline_impact_days ? `${co.timeline_impact_days > 0 ? "+" : ""}${co.timeline_impact_days} day(s)` : ""}
+                            </td>
+                          </tr>
+                        ))}
+                        {isExpanded && (
+                          <tr className="border-t border-border/20 bg-primary/5">
+                            <td colSpan={6} className="px-4 py-2 text-xs font-semibold text-foreground pl-10">Current Contract Value</td>
+                            <td className="px-4 py-2 text-right font-bold text-primary text-sm">₱{contract._ccv.toLocaleString()}</td>
+                            <td></td>
+                          </tr>
+                        )}
+                      </>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-border bg-muted/30">
+                    <td colSpan={6} className="px-4 py-3 text-sm font-bold text-foreground">Total Current Contract Value (All Contracts)</td>
+                    <td className="px-4 py-3 text-right font-bold text-primary text-base">₱{contractsWithCCV.reduce((s, c) => s + c._ccv, 0).toLocaleString()}</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* PROGRESS BILLINGS TAB */}
+        <TabsContent value="billings">
       {/* Billing Cycles / Progress Billings */}
       <div className="bg-card rounded-2xl border border-border overflow-hidden">
         <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
@@ -319,7 +513,10 @@ export default function ProjectDetail() {
         )}
       </div>
 
-      {/* Change Orders Section */}
+        </TabsContent>
+
+        {/* CHANGE ORDERS TAB */}
+        <TabsContent value="change_orders">
       <div className="bg-card rounded-2xl border border-border overflow-hidden">
         <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
           <FileText className="w-4 h-4 text-primary" />
@@ -424,6 +621,9 @@ export default function ProjectDetail() {
         )}
       </div>
 
+        </TabsContent>
+      </Tabs>
+
       <AddFormDialog
         open={!!editingProject}
         onOpenChange={(open) => {if (!open) setEditingProject(null);}}
@@ -437,6 +637,7 @@ export default function ProjectDetail() {
         open={showAddCO}
         onOpenChange={setShowAddCO}
         title="New Change Order"
+        contracts={contracts}
         onSubmit={(data) => createCOMutation.mutateAsync(data)}
       />
       <ChangeOrderFormDialog
@@ -444,7 +645,22 @@ export default function ProjectDetail() {
         onOpenChange={(v) => { if (!v) setEditingCO(null); }}
         title="Edit Change Order"
         initialData={editingCO || {}}
+        contracts={contracts}
         onSubmit={(data) => updateCOMutation.mutateAsync({ coId: editingCO.id, data })}
+      />
+
+      <ContractFormDialog
+        open={showAddContract}
+        onOpenChange={setShowAddContract}
+        title="New Contract"
+        onSubmit={(data) => createContractMutation.mutateAsync(data)}
+      />
+      <ContractFormDialog
+        open={!!editingContract}
+        onOpenChange={(v) => { if (!v) setEditingContract(null); }}
+        title="Edit Contract"
+        initialData={editingContract || {}}
+        onSubmit={(data) => updateContractMutation.mutateAsync({ contractId: editingContract.id, data })}
       />
     </div>
   );

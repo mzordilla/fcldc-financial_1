@@ -10,9 +10,13 @@
       "type": "string",
       "description": "Unique project code for transactions (e.g., PRJ-2026-001)"
     },
+    "client_id": {
+      "type": "string",
+      "description": "Linked Client ID"
+    },
     "client_name": {
       "type": "string",
-      "description": "Client / owner name"
+      "description": "Client / owner name (denormalized for display)"
     },
     "project_number": {
       "type": "string",
@@ -43,7 +47,7 @@
     },
     "contract_amount": {
       "type": "number",
-      "description": "Approved contract value"
+      "description": "Primary/original contract value (baseline \u2014 do not modify after signing)"
     },
     "completed_percentage": {
       "type": "number",

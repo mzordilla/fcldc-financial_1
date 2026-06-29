@@ -1,0 +1,83 @@
+{
+  "name": "Contract",
+  "type": "object",
+  "properties": {
+    "contract_number": {
+      "type": "string",
+      "description": "Contract reference number (e.g. CTR-2026-001)"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Linked Project ID"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Project name (denormalized)"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "Linked Client ID"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client name (denormalized)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Scope / description of this contract"
+    },
+    "original_contract_amount": {
+      "type": "number",
+      "description": "Original signed contract amount (immutable baseline)"
+    },
+    "retention_rate": {
+      "type": "number",
+      "default": 0,
+      "description": "Retention percentage withheld by client (e.g. 5 for 5%)"
+    },
+    "contract_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "active",
+        "completed",
+        "on_hold",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "contract_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Contract signing date"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Contracted completion date"
+    },
+    "completed_percentage": {
+      "type": "number",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Percentage of work completed under this contract"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Name of approver"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "original_contract_amount"
+  ]
+}
