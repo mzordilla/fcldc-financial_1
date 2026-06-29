@@ -82,9 +82,9 @@ export default function ProjectDetail() {
   });
 
   const { data: billingCycles = [] } = useQuery({
-    queryKey: ["billing_cycles_project", project?.project_code],
-    queryFn: () => base44.entities.BillingCycle.filter({ project_name: project.project_code }, "-period_start", 100),
-    enabled: !!project?.project_code,
+    queryKey: ["billing_cycles_project", project?.project_name],
+    queryFn: () => base44.entities.BillingCycle.filter({ project_name: project.project_name }, "-period_start", 100),
+    enabled: !!project?.project_name,
   });
 
   const { data: changeOrders = [] } = useQuery({
@@ -188,11 +188,11 @@ export default function ProjectDetail() {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="contracts">Contracts ({contracts.length})</TabsTrigger>
-          <TabsTrigger value="billings">Progress Billings ({billingCycles.length})</TabsTrigger>
-          <TabsTrigger value="change_orders">Change Orders ({changeOrders.length})</TabsTrigger>
+        <TabsList className="mb-4 flex w-full overflow-x-auto">
+          <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
+          <TabsTrigger value="contracts" className="flex-1">Contracts ({contracts.length})</TabsTrigger>
+          <TabsTrigger value="billings" className="flex-1">Progress Billings ({billingCycles.length})</TabsTrigger>
+          <TabsTrigger value="change_orders" className="flex-1">Change Orders ({changeOrders.length})</TabsTrigger>
         </TabsList>
 
         {/* OVERVIEW TAB */}
