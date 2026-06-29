@@ -8,8 +8,8 @@ import { navItemsByRole } from "@/lib/access-control";
 const allNavItems = [
 { label: "Dashboard", icon: LayoutDashboard, path: "/" },
 { label: "Real Estate Portfolio", icon: Home, path: "/re/portfolio" },
-{ label: "Clients", icon: Users, path: "/clients" },
 { label: "Projects", icon: Briefcase, path: "/projects" },
+{ label: "Clients", icon: Users, path: "/clients" },
 { label: "Receivables", icon: FileText, path: "/receivables" },
 { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
 { label: "Payment Approvals", icon: CircleDollarSign, path: "/payment-approvals" },
