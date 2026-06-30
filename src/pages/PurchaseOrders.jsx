@@ -479,7 +479,7 @@ export default function PurchaseOrders() {
             </div>
           </div>
           {Object.keys(approvedByCategory).length > 0 &&
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mx-auto py-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mx-auto">
               {Object.entries(approvedByCategory).sort((a, b) => b[1] - a[1]).map(([cat, val]) =>
               <div key={cat} className="bg-card border border-border rounded-xl p-3">
                   <p className="text-xs text-muted-foreground capitalize">{cat.replace(/_/g, " ")}</p>
