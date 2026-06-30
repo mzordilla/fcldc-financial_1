@@ -68,6 +68,7 @@ export default function ProjectDetail() {
   const navigate = useNavigate();
   const [editingProject, setEditingProject] = useState(null);
   const [showAddCO, setShowAddCO] = useState(false);
+  const [addCOForContract, setAddCOForContract] = useState(null); // contract object to pre-link
   const [editingCO, setEditingCO] = useState(null);
   const [showAddContract, setShowAddContract] = useState(false);
   const [editingContract, setEditingContract] = useState(null);
@@ -442,6 +443,9 @@ export default function ProjectDetail() {
                           </td>
                           <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-1">
+                              <Button variant="outline" size="sm" className="h-7 text-xs px-2 text-primary border-primary/30 hover:bg-primary/5" onClick={() => setAddCOForContract(contract)}>
+                                <Plus className="w-3 h-3 mr-1" /> Add CO
+                              </Button>
                               <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => setEditingContract(contract)}>
                                 <Pencil className="w-3 h-3" />
                               </Button>
@@ -710,6 +714,14 @@ export default function ProjectDetail() {
         title="New Change Order"
         contracts={contracts}
         onSubmit={(data) => createCOMutation.mutateAsync(data)}
+      />
+      <ChangeOrderFormDialog
+        open={!!addCOForContract}
+        onOpenChange={(v) => { if (!v) setAddCOForContract(null); }}
+        title={`Add Change Order — ${addCOForContract?.contract_number || "Contract"}`}
+        contracts={contracts}
+        initialData={{ contract_id: addCOForContract?.id || "" }}
+        onSubmit={(data) => createCOMutation.mutateAsync(data).then(() => setAddCOForContract(null))}
       />
       <ChangeOrderFormDialog
         open={!!editingCO}
