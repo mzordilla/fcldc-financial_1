@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import BankReconciliationPage from "./BankReconciliation";
+import DepositUndepositedDialog from "../components/bank-accounts/DepositUndepositedDialog";
 
 const ACCOUNT_TYPES = [
 { value: "checking", label: "Checking" },
@@ -110,6 +111,7 @@ export default function BankAccounts() {
   const [activeTab, setActiveTab] = useState("accounts");
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [showDeposit, setShowDeposit] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: accounts = [], isLoading } = useQuery({
@@ -213,10 +215,13 @@ export default function BankAccounts() {
           <div className="p-3 rounded-xl bg-chart-3/10">
             <Building2 className="w-5 h-5 text-chart-3" />
           </div>
-          <div>
+          <div className="flex-1">
             <p className="text-xs text-muted-foreground">Undeposited Collections</p>
             <p className="text-3xl font-bold text-chart-3">{fmt(undepositedCollections)}</p>
           </div>
+          {undepositedCollections > 0 && (
+            <Button size="sm" variant="outline" onClick={() => setShowDeposit(true)}>Deposit</Button>
+          )}
         </div>
 
         <div className="bg-card rounded-2xl border border-border p-5 flex items-center gap-4">
@@ -344,6 +349,18 @@ export default function BankAccounts() {
         fields={fields}
         initialData={editing || {}}
         onSubmit={(data) => updateMutation.mutateAsync({ id: editing.id, data })} />
+
+      <DepositUndepositedDialog
+        open={showDeposit}
+        onOpenChange={setShowDeposit}
+        receivables={receivables}
+        bankAccounts={accounts}
+        onDone={() => {
+          setShowDeposit(false);
+          queryClient.invalidateQueries({ queryKey: ["receivables_undeposited"] });
+          queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        }}
+      />
       </>}
       
     </div>);
