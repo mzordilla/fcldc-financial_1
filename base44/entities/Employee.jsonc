@@ -1,0 +1,90 @@
+{
+  "name": "Employee",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Employee full name"
+    },
+    "employee_code": {
+      "type": "string",
+      "description": "Internal employee ID/code"
+    },
+    "department": {
+      "type": "string",
+      "description": "Department or cost center"
+    },
+    "position": {
+      "type": "string",
+      "description": "Job title / position"
+    },
+    "employment_type": {
+      "type": "string",
+      "enum": [
+        "regular",
+        "contractual",
+        "project_based"
+      ],
+      "default": "regular"
+    },
+    "salary_type": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "daily",
+        "hourly"
+      ],
+      "default": "monthly"
+    },
+    "basic_rate": {
+      "type": "number",
+      "description": "Base salary/rate depending on salary_type"
+    },
+    "default_project_code": {
+      "type": "string",
+      "description": "Default project code used to allocate this employee's labor cost"
+    },
+    "default_project_name": {
+      "type": "string",
+      "description": "Default project name (denormalized)"
+    },
+    "bank_account_number": {
+      "type": "string"
+    },
+    "tin_number": {
+      "type": "string",
+      "description": "Tax Identification Number"
+    },
+    "sss_number": {
+      "type": "string",
+      "description": "Social Security System number"
+    },
+    "philhealth_number": {
+      "type": "string",
+      "description": "PhilHealth number"
+    },
+    "pagibig_number": {
+      "type": "string",
+      "description": "Pag-IBIG (HDMF) number"
+    },
+    "date_hired": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "terminated"
+      ],
+      "default": "active"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "full_name"
+  ]
+}

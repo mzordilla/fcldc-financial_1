@@ -1,0 +1,141 @@
+{
+  "name": "PayrollEntry",
+  "type": "object",
+  "properties": {
+    "payroll_period_id": {
+      "type": "string",
+      "description": "Linked PayrollPeriod ID"
+    },
+    "payroll_period_label": {
+      "type": "string",
+      "description": "Payroll period label (denormalized)"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "Linked Employee ID"
+    },
+    "employee_name": {
+      "type": "string",
+      "description": "Employee name (denormalized)"
+    },
+    "employee_code": {
+      "type": "string",
+      "description": "Employee code (denormalized)"
+    },
+    "project_code": {
+      "type": "string",
+      "description": "Project this labor cost is allocated to"
+    },
+    "project_name": {
+      "type": "string"
+    },
+    "department": {
+      "type": "string"
+    },
+    "regular_wage": {
+      "type": "number",
+      "default": 0
+    },
+    "overtime_pay": {
+      "type": "number",
+      "default": 0
+    },
+    "allowances": {
+      "type": "number",
+      "default": 0
+    },
+    "incentives": {
+      "type": "number",
+      "default": 0
+    },
+    "bonuses": {
+      "type": "number",
+      "default": 0
+    },
+    "gross_pay": {
+      "type": "number",
+      "default": 0,
+      "description": "Sum of wages, overtime, allowances, incentives, bonuses"
+    },
+    "sss_contribution": {
+      "type": "number",
+      "default": 0,
+      "description": "Employee SSS contribution"
+    },
+    "philhealth_contribution": {
+      "type": "number",
+      "default": 0,
+      "description": "Employee PhilHealth contribution"
+    },
+    "pagibig_contribution": {
+      "type": "number",
+      "default": 0,
+      "description": "Employee Pag-IBIG (HDMF) contribution"
+    },
+    "withholding_tax": {
+      "type": "number",
+      "default": 0,
+      "description": "Withholding tax on compensation"
+    },
+    "loan_deduction": {
+      "type": "number",
+      "default": 0,
+      "description": "Loan repayment deduction"
+    },
+    "other_deductions": {
+      "type": "number",
+      "default": 0
+    },
+    "total_deductions": {
+      "type": "number",
+      "default": 0
+    },
+    "net_pay": {
+      "type": "number",
+      "default": 0,
+      "description": "Gross pay minus total deductions"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "processed"
+      ],
+      "default": "pending"
+    },
+    "approval_notes": {
+      "type": "string"
+    },
+    "approval_history": {
+      "type": "array",
+      "description": "Audit log of all approval actions",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "payroll_period_id",
+    "employee_id",
+    "employee_name"
+  ]
+}
