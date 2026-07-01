@@ -388,7 +388,7 @@ export default function Reports() {
 
   const { data: transactions = [] } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 500),
+    queryFn: () => base44.entities.Transaction.list("-date", 50000),
   });
 
   const { data: loans = [] } = useQuery({
