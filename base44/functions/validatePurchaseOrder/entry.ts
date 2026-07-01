@@ -1,7 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const VALID_CATEGORIES = [
-  "materials", "equipment", "subcontractor", "services", "utilities", "other"
+  "materials", "equipment", "subcontractor", "services", "utilities", "other",
+  "project_payment", "material_cost", "labor", "overhead", "permits", "insurance",
+  "bank_reconciliation", "non_current_assets", "current_assets", "current_liabilities",
+  "non_current_liabilities", "repair_and_maintenance", "fixtures"
 ];
 
 Deno.serve(async (req) => {

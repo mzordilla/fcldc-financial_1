@@ -157,6 +157,7 @@ export default function PurchaseOrders() {
                   <p className="text-sm text-foreground mt-1">{po.description}</p>
                 </div>
                 <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+                  {po.chart_of_account && <span>Chart of Account: <span className="text-foreground font-medium">{po.chart_of_account}</span></span>}
                   {po.requested_by && <span>Requested by: <span className="text-foreground font-medium">{po.requested_by}</span></span>}
                   {po.required_date && <span>Required by: <span className="text-foreground font-medium">{format(new Date(po.required_date), "MMM d, yyyy")}</span></span>}
                   {po.approved_by && <span>Reviewed by: <span className="text-foreground font-medium">{po.approved_by}</span></span>}
