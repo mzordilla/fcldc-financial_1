@@ -61,6 +61,9 @@ export default function PurchaseOrders() {
   const [expandedHistory, setExpandedHistory] = useState(null);
   const [expandedGroups, setExpandedGroups] = useState({ pending: true, approved: true, rejected: false, cancelled: false });
   const [statusFilter, setStatusFilter] = useState("approved");
+  const [supplierFilter, setSupplierFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isAdmin, setIsAdmin] = useState(false);
   const queryClient = useQueryClient();
@@ -317,7 +320,15 @@ export default function PurchaseOrders() {
     });
   };
 
-  const filtered = statusFilter === "all" ? orders : orders.filter((o) => o.approval_status === statusFilter);
+  const poSuppliers = useMemo(() => [...new Set(orders.map((o) => o.supplier_name).filter(Boolean))].sort(), [orders]);
+
+  const filtered = orders.filter((o) => {
+    if (statusFilter !== "all" && o.approval_status !== statusFilter) return false;
+    if (supplierFilter !== "all" && o.supplier_name !== supplierFilter) return false;
+    if (dateFrom && (!o.requested_date || o.requested_date < dateFrom)) return false;
+    if (dateTo && (!o.requested_date || o.requested_date > dateTo)) return false;
+    return true;
+  });
   const pending = orders.filter((o) => o.approval_status === "pending");
   const totalPendingValue = pending.reduce((s, o) => s + (o.amount || 0), 0);
   const approved = orders.filter((o) => o.approval_status === "approved");
@@ -438,6 +449,15 @@ export default function PurchaseOrders() {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+            <SelectTrigger className="w-44"><SelectValue placeholder="All Suppliers" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Suppliers</SelectItem>
+              {poSuppliers.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Input type="date" className="w-36" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} title="From date" />
+          <Input type="date" className="w-36" value={dateTo} onChange={(e) => setDateTo(e.target.value)} title="To date" />
           {approved.length > 0 &&
           <Button variant="outline" onClick={() => setShowApprovedSummary(true)}>
               <ClipboardList className="w-4 h-4 mr-2" /> Approved Summary
