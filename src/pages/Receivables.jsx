@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import ReceivableFormDialog from "../components/receivables/ReceivableFormDialog";
 import MarkReceivableAsCollectedDialog from "../components/receivables/MarkReceivableAsCollectedDialog";
+import StatementOfAccountPDF from "../components/receivables/StatementOfAccountPDF";
 import BillingCycles from "./BillingCycles";
 
 function getAgingBucket(dueDateStr, status) {
@@ -241,7 +242,13 @@ export default function Receivables() {
                           <td className="px-3 py-2 text-right text-sm font-mono font-semibold">₱{grpBilled.toLocaleString()}</td>
                           <td className="px-3 py-2 text-right text-sm font-mono font-semibold text-primary">₱{grpCollected.toLocaleString()}</td>
                           <td className="px-3 py-2 text-right text-sm font-mono font-bold text-foreground">₱{grpBalance.toLocaleString()}</td>
-                          <td></td>
+                          <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
+                            <StatementOfAccountPDF
+                              projectName={projectName}
+                              clientName={rows[0]?.client_name}
+                              rows={rows}
+                            />
+                          </td>
                         </tr>
                         {/* Invoice breakdown rows */}
                         {isExpanded && rows.map(r => {
