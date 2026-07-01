@@ -49,121 +49,136 @@ export default function ReceivingItems() {
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="bg-card rounded-2xl border border-border overflow-hidden">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
         {!isLoading && groups.length === 0 && (
           <p className="text-center py-12 text-muted-foreground">No receiving records yet. Deliveries confirmed from Purchase Orders will appear here.</p>
         )}
-        {groups.map((group) => {
-          const key = group.po_id || group.po_number || "unknown";
-          const expanded = expandedPO === key;
-          const complete = isComplete(group.receipts);
-          return (
-            <div key={key} className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-md transition-shadow">
-              {/* PO Master Header */}
-              <div
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 cursor-pointer"
-                onClick={() => setExpandedPO(expanded ? null : key)}
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 flex-wrap mb-1">
-                    <Package className="w-4 h-4 text-primary" />
-                    <h3 className="font-semibold text-foreground">{group.supplier_name}</h3>
-                    {group.po_number && (
-                      <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded text-muted-foreground">
-                        PO: {group.po_number}
-                      </span>
-                    )}
-                    <Badge
-                      variant="outline"
-                      className={`text-xs ${complete ? "bg-primary/10 text-primary border-primary/20" : "bg-amber-500/10 text-amber-700 border-amber-200"}`}
+        {!isLoading && groups.length > 0 && (
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 border-b border-border">
+              <tr>
+                <th className="px-3 py-2 text-left font-semibold w-8"></th>
+                <th className="px-3 py-2 text-left font-semibold">Supplier</th>
+                <th className="px-3 py-2 text-left font-semibold">PO Number</th>
+                <th className="px-3 py-2 text-left font-semibold">Project</th>
+                <th className="px-3 py-2 text-left font-semibold">Status</th>
+                <th className="px-3 py-2 text-right font-semibold">Receipts</th>
+                <th className="px-3 py-2 text-right font-semibold">Total Received</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {groups.map((group) => {
+                const key = group.po_id || group.po_number || "unknown";
+                const expanded = expandedPO === key;
+                const complete = isComplete(group.receipts);
+                return (
+                  <>
+                    <tr
+                      key={key}
+                      className="cursor-pointer hover:bg-muted/20"
+                      onClick={() => setExpandedPO(expanded ? null : key)}
                     >
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      {complete ? "Fully Received" : "Partially Received"}
-                    </Badge>
-                  </div>
-                  <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                    {group.project_name && (
-                      <span>Project: <span className="text-foreground font-medium">{group.project_name}</span></span>
+                      <td className="px-3 py-2.5">
+                        {expanded
+                          ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                          : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div className="flex items-center gap-2">
+                          <Package className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                          <span className="font-medium text-foreground">{group.supplier_name}</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded text-muted-foreground">
+                          {group.po_number || "—"}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 text-xs">{group.project_name || "—"}</td>
+                      <td className="px-3 py-2.5">
+                        <Badge
+                          variant="outline"
+                          className={`text-xs ${complete ? "bg-primary/10 text-primary border-primary/20" : "bg-amber-500/10 text-amber-700 border-amber-200"}`}
+                        >
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          {complete ? "Fully Received" : "Partially Received"}
+                        </Badge>
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-xs text-muted-foreground">{group.receipts.length}</td>
+                      <td className="px-3 py-2.5 text-right font-bold text-foreground">₱{group.total_received.toLocaleString()}</td>
+                    </tr>
+
+                    {expanded && (
+                      <tr key={`${key}-detail`}>
+                        <td colSpan={7} className="p-0 bg-muted/10 border-t border-border">
+                          <div className="divide-y divide-border">
+                            {group.receipts.map((receipt) => (
+                              <div key={receipt.id} className="px-5 py-4">
+                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
+                                  <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                                    <span>
+                                      Received:{" "}
+                                      <span className="text-foreground font-medium">
+                                        {receipt.received_date ? format(new Date(receipt.received_date), "MMM d, yyyy") : "—"}
+                                      </span>
+                                    </span>
+                                    {receipt.received_by && <span>By: <span className="text-foreground">{receipt.received_by}</span></span>}
+                                    <Badge
+                                      variant="outline"
+                                      className={`text-xs ${receipt.status === "complete" ? "bg-primary/10 text-primary border-primary/20" : "bg-amber-500/10 text-amber-700 border-amber-200"}`}
+                                    >
+                                      {receipt.status === "complete" ? "Complete" : "Partial"}
+                                    </Badge>
+                                  </div>
+                                  <span className="text-sm font-bold text-foreground">₱{(receipt.total_amount || 0).toLocaleString()}</span>
+                                </div>
+
+                                {receipt.line_items?.length > 0 && (
+                                  <div className="border border-border rounded-lg overflow-hidden">
+                                    <table className="w-full text-xs">
+                                      <thead>
+                                        <tr className="bg-muted/50 border-b border-border">
+                                          <th className="px-3 py-2 text-left font-semibold">Item</th>
+                                          <th className="px-3 py-2 text-right font-semibold">Ordered</th>
+                                          <th className="px-3 py-2 text-right font-semibold">Received</th>
+                                          <th className="px-3 py-2 text-right font-semibold">Total</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {receipt.line_items.map((li, idx) => (
+                                          <tr key={idx} className="border-b border-border/50 last:border-0">
+                                            <td className="px-3 py-2">{li.description}</td>
+                                            <td className="px-3 py-2 text-right">{li.quantity_ordered}</td>
+                                            <td className="px-3 py-2 text-right">{li.quantity_received}</td>
+                                            <td className="px-3 py-2 text-right font-semibold">₱{(li.total || 0).toLocaleString()}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
+
+                                {receipt.notes && (
+                                  <p className="text-xs text-muted-foreground mt-2 italic border-l-2 border-border pl-2">{receipt.notes}</p>
+                                )}
+                                {receipt.receipt_url && (
+                                  <a href={receipt.receipt_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary underline">
+                                    View receipt document
+                                  </a>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
                     )}
-                    <span>{group.receipts.length} receipt transaction{group.receipts.length !== 1 ? "s" : ""}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="sm:text-right">
-                    <p className="text-xl font-bold text-foreground">₱{group.total_received.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">Total Received Value</p>
-                  </div>
-                  {expanded
-                    ? <ChevronUp className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    : <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
-                </div>
-              </div>
-
-              {/* Expanded: individual receipt transactions */}
-              {expanded && (
-                <div className="border-t border-border divide-y divide-border">
-                  {group.receipts.map((receipt) => (
-                    <div key={receipt.id} className="px-5 py-4 bg-muted/20">
-                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
-                        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                          <span>
-                            Received:{" "}
-                            <span className="text-foreground font-medium">
-                              {receipt.received_date ? format(new Date(receipt.received_date), "MMM d, yyyy") : "—"}
-                            </span>
-                          </span>
-                          {receipt.received_by && <span>By: <span className="text-foreground">{receipt.received_by}</span></span>}
-                          <Badge
-                            variant="outline"
-                            className={`text-xs ${receipt.status === "complete" ? "bg-primary/10 text-primary border-primary/20" : "bg-amber-500/10 text-amber-700 border-amber-200"}`}
-                          >
-                            {receipt.status === "complete" ? "Complete" : "Partial"}
-                          </Badge>
-                        </div>
-                        <span className="text-sm font-bold text-foreground">₱{(receipt.total_amount || 0).toLocaleString()}</span>
-                      </div>
-
-                      {receipt.line_items?.length > 0 && (
-                        <div className="border border-border rounded-lg overflow-hidden">
-                          <table className="w-full text-xs">
-                            <thead>
-                              <tr className="bg-muted/50 border-b border-border">
-                                <th className="px-3 py-2 text-left font-semibold">Item</th>
-                                <th className="px-3 py-2 text-right font-semibold">Ordered</th>
-                                <th className="px-3 py-2 text-right font-semibold">Received</th>
-                                <th className="px-3 py-2 text-right font-semibold">Total</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {receipt.line_items.map((li, idx) => (
-                                <tr key={idx} className="border-b border-border/50 last:border-0">
-                                  <td className="px-3 py-2">{li.description}</td>
-                                  <td className="px-3 py-2 text-right">{li.quantity_ordered}</td>
-                                  <td className="px-3 py-2 text-right">{li.quantity_received}</td>
-                                  <td className="px-3 py-2 text-right font-semibold">₱{(li.total || 0).toLocaleString()}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-
-                      {receipt.notes && (
-                        <p className="text-xs text-muted-foreground mt-2 italic border-l-2 border-border pl-2">{receipt.notes}</p>
-                      )}
-                      {receipt.receipt_url && (
-                        <a href={receipt.receipt_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary underline">
-                          View receipt document
-                        </a>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+                  </>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
