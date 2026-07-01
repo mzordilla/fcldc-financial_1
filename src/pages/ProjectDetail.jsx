@@ -81,7 +81,7 @@ export default function ProjectDetail() {
 
   const { data: project, isLoading } = useQuery({
     queryKey: ["project", id],
-    queryFn: () => base44.entities.Project.list("id", 1).then(items => items.find(p => p.id === id))
+    queryFn: () => base44.entities.Project.get(id)
   });
 
   const { data: billingCycles = [] } = useQuery({
