@@ -21,7 +21,7 @@ export default function MonthlyTransactionsReport({ dateFrom, dateTo }) {
   const [expandedTx, setExpandedTx] = useState(null);
 
   const { data: allTransactions = [] } = useQuery({
-    queryKey: ["transactions"],
+    queryKey: ["transactions_monthly_report"],
     queryFn: () => base44.entities.Transaction.list("-date", 1000),
   });
 
