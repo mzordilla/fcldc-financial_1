@@ -80,9 +80,7 @@ export default function CorporateDocuments() {
     let file_url = "";
     let file_name = "";
     if (selectedFile) {
-      const arrayBuffer = await selectedFile.arrayBuffer();
-      const blob = new Blob([arrayBuffer], { type: selectedFile.type });
-      const result = await base44.integrations.Core.UploadFile({ file: blob });
+      const result = await base44.integrations.Core.UploadFile({ file: selectedFile });
       file_url = result.file_url;
       file_name = selectedFile.name;
     }
