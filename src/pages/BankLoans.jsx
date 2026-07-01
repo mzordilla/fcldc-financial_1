@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, Landmark, CalendarClock, Percent, Pencil } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Landmark, CalendarClock, Percent, Pencil, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -56,6 +56,7 @@ const fields = [
     { value: "in_default", label: "In Default" },
     { value: "deferred", label: "Deferred" },
   ]},
+  { name: "contract_attachment_url", label: "Loan Contract", type: "file" },
 ];
 
 export default function BankLoans() {
@@ -187,6 +188,11 @@ export default function BankLoans() {
                       </span>
                     )}
                     {loan.maturity_date && <span>Matures: {format(new Date(loan.maturity_date), "MMM yyyy")}</span>}
+                    {loan.contract_attachment_url && (
+                      <a href={loan.contract_attachment_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-primary hover:underline">
+                        <Paperclip className="w-3 h-3" /> Contract
+                      </a>
+                    )}
                   </div>
                   {loan.purpose && <p className="text-xs text-muted-foreground mt-1">Purpose: {loan.purpose}</p>}
                 </div>

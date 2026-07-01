@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, Pencil, ChevronDown, ChevronUp, RotateCcw, List, LayoutGrid } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Pencil, ChevronDown, ChevronUp, RotateCcw, List, LayoutGrid, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -59,6 +59,7 @@ const fields = [
     { value: "paid_off", label: "Paid Off" },
     { value: "defaulted", label: "Defaulted" },
   ]},
+  { name: "contract_attachment_url", label: "Loan Contract", type: "file" },
 ];
 
 export default function WorkingCapitalLoans() {
@@ -202,13 +203,14 @@ export default function WorkingCapitalLoans() {
                     <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Interest Rate</th>
                     <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Monthly Payment</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Status</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-foreground">Contract</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="px-6 py-8 text-center text-muted-foreground">No working capital loans recorded</td>
+                      <td colSpan="9" className="px-6 py-8 text-center text-muted-foreground">No working capital loans recorded</td>
                     </tr>
                   ) : (
                     filtered.map(loan => (
@@ -223,6 +225,15 @@ export default function WorkingCapitalLoans() {
                           <Badge variant="outline" className={statusStyles[loan.status] || ""}>
                             {(loan.status || "active").replace(/_/g, " ")}
                           </Badge>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {loan.contract_attachment_url ? (
+                            <a href={loan.contract_attachment_url} target="_blank" rel="noreferrer" className="inline-flex text-primary hover:underline" title="View Contract">
+                              <Paperclip className="w-4 h-4" />
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex items-center justify-center gap-1">

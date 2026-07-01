@@ -76,6 +76,10 @@
         "deferred"
       ],
       "default": "active"
+    },
+    "contract_attachment_url": {
+      "type": "string",
+      "description": "URL of the uploaded loan contract document"
     }
   },
   "required": [

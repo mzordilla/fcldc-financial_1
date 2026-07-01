@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Pencil, Trash2, CheckCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, Pencil, Trash2, CheckCircle, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -44,14 +44,15 @@ export default function CreditorLoansTable({
               <TableHead className="text-right">Rate</TableHead>
               <TableHead className="text-right">Due</TableHead>
               <TableHead className="text-right">Status</TableHead>
+              <TableHead className="text-center">Contract</TableHead>
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ?
             <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">Loading...</TableCell>
-              </TableRow> :
+              <TableCell colSpan={9} className="text-center py-8">Loading...</TableCell>
+            </TableRow> :
 
             loans.map((loan) =>
             <div key={loan.id}>
@@ -79,6 +80,15 @@ export default function CreditorLoansTable({
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
+                      {loan.contract_attachment_url ? (
+                        <a href={loan.contract_attachment_url} target="_blank" rel="noreferrer" className="inline-flex text-primary hover:underline" title="View Contract">
+                          <Paperclip className="w-4 h-4" />
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
                       <div className="flex gap-1 justify-center">
                         {loan.status === "active" &&
                     <Button size="icon" variant="ghost" onClick={() => onMarkPaidOff(loan)} title="Mark Paid Off">
@@ -96,7 +106,7 @@ export default function CreditorLoansTable({
                   </TableRow>
                   {expandedId === loan.id &&
               <TableRow>
-                      <TableCell colSpan={8} className="bg-muted/50 p-4">
+                      <TableCell colSpan={9} className="bg-muted/50 p-4">
                         <MonthlyLoanMonitoring loan={loan} />
                       </TableCell>
                     </TableRow>

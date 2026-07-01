@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, Pencil } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Pencil, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,6 +45,7 @@ const fields = [
     { value: "paid_off", label: "Paid Off" },
     { value: "defaulted", label: "Defaulted" },
   ]},
+  { name: "contract_attachment_url", label: "Loan Contract", type: "file" },
 ];
 
 export default function Debts() {
@@ -130,6 +131,11 @@ export default function Debts() {
                     {d.monthly_payment ? ` · ₱${d.monthly_payment.toLocaleString()}/mo` : ""}
                     {d.due_date && ` · Due ${format(new Date(d.due_date), "MMM yyyy")}`}
                   </p>
+                  {d.contract_attachment_url && (
+                    <a href={d.contract_attachment_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline mt-1">
+                      <Paperclip className="w-3 h-3" /> Contract
+                    </a>
+                  )}
                   <div className="mt-3 flex items-center gap-3">
                     <Progress value={paidPct} className="h-2 flex-1" />
                     <span className="text-xs text-muted-foreground whitespace-nowrap">
