@@ -14,6 +14,11 @@ const statusStyles = {
   sold: "bg-slate-100 text-slate-500 border-slate-200",
   leased: "bg-purple-50 text-purple-700 border-purple-200",
   cancelled: "bg-red-50 text-red-700 border-red-200",
+  online: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  inquiry: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  rejected: "bg-red-50 text-red-700 border-red-200",
+  declined: "bg-orange-50 text-orange-700 border-orange-200",
+  impasse: "bg-yellow-50 text-yellow-700 border-yellow-200",
 };
 
 const fmt = (n) => n ? `₱${Number(n).toLocaleString()}` : "—";
@@ -127,6 +132,11 @@ export default function Listings() {
             <SelectItem value="sold">Sold</SelectItem>
             <SelectItem value="leased">Leased</SelectItem>
             <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectItem value="online">Online</SelectItem>
+            <SelectItem value="inquiry">Inquiry</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="declined">Declined</SelectItem>
+            <SelectItem value="impasse">Impasse</SelectItem>
           </SelectContent>
         </Select>
       </div>

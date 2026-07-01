@@ -33,7 +33,12 @@
         "under_negotiation",
         "sold",
         "leased",
-        "cancelled"
+        "cancelled",
+        "online",
+        "inquiry",
+        "rejected",
+        "declined",
+        "impasse"
       ],
       "default": "active",
       "description": "Listing status"

@@ -85,6 +85,11 @@ export default function ListingFormDialog({ open, onOpenChange, initialData, uni
                   <SelectItem value="sold">Sold</SelectItem>
                   <SelectItem value="leased">Leased</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="online">Online</SelectItem>
+                  <SelectItem value="inquiry">Inquiry</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="declined">Declined</SelectItem>
+                  <SelectItem value="impasse">Impasse</SelectItem>
                 </SelectContent>
               </Select>
             </div>
