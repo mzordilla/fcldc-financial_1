@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays, addDays } from "date-fns";
-import { Plus, Trash2, CheckCircle, FileUp, Download, Banknote, ChevronDown, ChevronUp, CheckSquare, Square, Loader2, History, FileText } from "lucide-react";
+import { Plus, Trash2, CheckCircle, FileUp, Download, Banknote, ChevronDown, ChevronUp, CheckSquare, Square, Loader2, History, FileText, Search } from "lucide-react";
 
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import PayableCard from "../components/payables/PayableCard";
@@ -79,6 +80,7 @@ export default function Payables() {
   const [removingDupes, setRemovingDupes] = useState(false);
   const [groupBySupplier, setGroupBySupplier] = useState(true);
   const [expandedSuppliers, setExpandedSuppliers] = useState(new Set());
+  const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
   const importRef = useRef();
 
@@ -221,8 +223,18 @@ export default function Payables() {
   // Count how many payables are duplicates (extras beyond the first)
   const duplicatePayablesCount = Object.values(payableKeyCount).reduce((sum, cnt) => sum + (cnt > 1 ? cnt - 1 : 0), 0);
 
-  const unpaidPayables = payables.filter(p => p.status !== "paid");
-  const paidPayables = payables.filter(p => p.status === "paid");
+  const searchTerm = search.trim().toLowerCase();
+  const filteredPayables = searchTerm
+    ? payables.filter(p =>
+        (p.invoice_number || "").toLowerCase().includes(searchTerm) ||
+        (p.po_number || "").toLowerCase().includes(searchTerm) ||
+        (p.supplier_name || "").toLowerCase().includes(searchTerm) ||
+        (p.project_name || "").toLowerCase().includes(searchTerm)
+      )
+    : payables;
+
+  const unpaidPayables = filteredPayables.filter(p => p.status !== "paid");
+  const paidPayables = filteredPayables.filter(p => p.status === "paid");
 
   // Net payable = gross amount - withholding tax + vat (the actual cash to be paid)
   const netPayable = (p) => (p.amount || 0) - (p.withholding_tax_amount || 0) + (p.vat_amount || 0);
@@ -306,6 +318,16 @@ export default function Payables() {
           </Button>
           <input ref={importRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportFile} />
         </div>
+      </div>
+
+      <div className="relative max-w-md">
+        <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+        <Input
+          placeholder="Search by invoice #, P.O. #, supplier, or project..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
       </div>
 
       <AgingSummary items={payables} />
