@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, Briefcase, CheckCircle2, Pencil, ExternalLink, FileUp, Download, TrendingUp, TrendingDown, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Briefcase, CheckCircle2, Pencil, ExternalLink, FileUp, Download, TrendingUp, TrendingDown, ChevronDown, ChevronRight, FileText } from "lucide-react";
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
 import { Progress } from "@/components/ui/progress";
@@ -362,6 +362,9 @@ export default function Projects() {
                         Approve
                       </Button>
                     }
+                    <Button size="sm" variant="outline" onClick={() => navigate(`/projects/${p.id}?tab=change_orders`)}>
+                      <FileText className="w-4 h-4 mr-1" /> Change Orders
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => setEditingProject(p)} className="text-muted-foreground hover:text-foreground">
                       <Pencil className="w-4 h-4" />
                     </Button>

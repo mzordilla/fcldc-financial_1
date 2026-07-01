@@ -66,6 +66,8 @@ const fields = [
 export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTab = urlParams.get("tab") || "overview";
   const [editingProject, setEditingProject] = useState(null);
   const [showAddCO, setShowAddCO] = useState(false);
   const [addCOForContract, setAddCOForContract] = useState(null); // contract object to pre-link
@@ -194,7 +196,7 @@ export default function ProjectDetail() {
         <h1 className="text-3xl font-bold text-foreground">{project.project_name}</h1>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs defaultValue={initialTab} className="w-full">
         <TabsList className="mb-4 flex w-full overflow-x-auto">
           <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
           <TabsTrigger value="client" className="flex-1">Client</TabsTrigger>
