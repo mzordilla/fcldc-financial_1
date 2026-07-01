@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ScanLine, ClipboardList, Boxes, Home, GitBranch, Wallet } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ScanLine, ClipboardList, Boxes, Home, GitBranch, Wallet, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { navItemsByRole } from "@/lib/access-control";
@@ -29,20 +30,42 @@ const allNavItems = [
 export default function Sidebar() {
   const location = useLocation();
   const { user } = useAuth();
+  const [collapsed, setCollapsed] = useState(false);
 
   const role = user?.role?.toLowerCase();
   const allowed = navItemsByRole[role];
   const navItems = allowed === "all" ? allNavItems : allNavItems.filter((item) => allowed.includes(item.path));
+
+  if (collapsed) {
+    return (
+      <aside className="w-12 bg-sidebar text-sidebar-foreground flex flex-col items-center z-50 py-4" style={{ minHeight: 0, height: "100%" }}>
+        <button
+          onClick={() => setCollapsed(false)}
+          className="p-2 rounded-lg text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all"
+          title="Show sidebar"
+        >
+          <PanelLeftOpen className="w-5 h-5" />
+        </button>
+      </aside>
+    );
+  }
 
   return (
     <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col z-50" style={{ minHeight: 0, height: "100%" }}>
       <div className="p-6 border-b border-sidebar-border">
          <div className="flex items-center gap-3">
            <img src="https://media.base44.com/images/public/69f02f8501c3688565579a10/194dcac58_image.png" alt="FCLDC" className="w-10 h-10" />
-           <div>
+           <div className="flex-1">
              <h1 className="font-bold text-lg leading-tight">FCLDC</h1>
              <p className="text-xs text-sidebar-foreground/50">FINANCE</p>
            </div>
+           <button
+             onClick={() => setCollapsed(true)}
+             className="p-1.5 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all"
+             title="Hide sidebar"
+           >
+             <PanelLeftClose className="w-4 h-4" />
+           </button>
          </div>
        </div>
 
