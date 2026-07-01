@@ -3,6 +3,7 @@ import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2,
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { navItemsByRole } from "@/lib/access-control";
+import GlobalSearch from "./GlobalSearch";
 
 // Groups define sidebar sections. Items without a group go ungrouped at the top.
 const allNavItems = [
@@ -43,6 +44,10 @@ export default function Sidebar() {
            </div>
          </div>
        </div>
+
+      <div className="px-4 pt-4">
+        <GlobalSearch />
+      </div>
 
       <nav className="flex-1 p-4 overflow-y-auto">
         {(() => {

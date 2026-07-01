@@ -8,6 +8,7 @@ import {
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { navItemsByRole, canAccess } from "@/lib/access-control";
+import GlobalSearch from "./GlobalSearch";
 
 const allNavItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
@@ -70,6 +71,10 @@ export default function MobileNav() {
           <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors">
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        <div className="p-4 pb-0">
+          <GlobalSearch />
         </div>
 
         <nav className="flex-1 p-4 overflow-y-auto space-y-1">
