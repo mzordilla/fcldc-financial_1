@@ -211,17 +211,19 @@ export default function BankAccounts() {
           </div>
         </div>
 
-        <div className="bg-card rounded-2xl border border-border p-5 flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-chart-3/10">
-            <Building2 className="w-5 h-5 text-chart-3" />
+        <div className="bg-card rounded-2xl border border-border p-5 space-y-3 sm:col-span-2">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-chart-3/10">
+              <Building2 className="w-5 h-5 text-chart-3" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-muted-foreground">Undeposited Collections</p>
+              <p className="text-3xl font-bold text-chart-3">{fmt(undepositedCollections)}</p>
+            </div>
           </div>
-          <div className="flex-1">
-            <p className="text-xs text-muted-foreground">Undeposited Collections</p>
-            <p className="text-3xl font-bold text-chart-3">{fmt(undepositedCollections)}</p>
-          </div>
-          {undepositedCollections > 0 && (
-            <Button size="sm" variant="outline" onClick={() => setShowDeposit(true)}>Deposit</Button>
-          )}
+          <Button size="sm" variant="outline" disabled={undepositedCollections <= 0} onClick={() => setShowDeposit(true)}>
+            Deposit Collections
+          </Button>
         </div>
 
         <div className="bg-card rounded-2xl border border-border p-5 flex items-center gap-4">
