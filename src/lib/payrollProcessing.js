@@ -5,34 +5,41 @@ import { base44 } from "@/api/base44Client";
 export async function processPayroll(period, approvedEntries) {
   const payDate = period.pay_date || period.period_end;
 
+  const projectGroups = {};
+  approvedEntries.forEach((entry) => {
+    const key = entry.project_code || "unassigned";
+    if (!projectGroups[key]) {
+      projectGroups[key] = { project_code: entry.project_code, project_name: entry.project_name, chart_of_account: entry.chart_of_account, total: 0 };
+    }
+    projectGroups[key].total += entry.gross_pay || 0;
+  });
+
   await Promise.all(
-    approvedEntries.map((entry) =>
+    Object.values(projectGroups).map((group) =>
       base44.entities.Transaction.create({
-        description: `Payroll - ${entry.employee_name} (${period.period_label})`,
-        amount: entry.gross_pay || 0,
+        description: `Payroll - ${group.project_name || group.project_code || "Unassigned"} (${period.period_label})`,
+        amount: group.total,
         type: "expense",
         category: "direct_labor",
-        chart_of_account: entry.chart_of_account || undefined,
-        project_code: entry.project_code || undefined,
+        chart_of_account: group.chart_of_account || undefined,
+        project_code: group.project_code || undefined,
         date: payDate,
         status: "completed",
       })
     )
   );
 
-  await Promise.all(
-    approvedEntries.map((entry) =>
-      base44.entities.Payable.create({
-        supplier_name: entry.employee_name,
-        description: `Net salary - ${period.period_label}`,
-        amount: entry.net_pay || 0,
-        due_date: payDate,
-        project_name: entry.project_name || undefined,
-        category: "payroll",
-        status: "unpaid",
-      })
-    )
-  );
+  const totalNetPay = approvedEntries.reduce((s, e) => s + (e.net_pay || 0), 0);
+  if (totalNetPay > 0) {
+    await base44.entities.Payable.create({
+      supplier_name: `Employees - ${period.period_label}`,
+      description: `Net salaries for ${period.period_label} (${approvedEntries.length} employee${approvedEntries.length !== 1 ? "s" : ""})`,
+      amount: totalNetPay,
+      due_date: payDate,
+      category: "payroll",
+      status: "unpaid",
+    });
+  }
 
   const statutoryTotals = {
     "SSS": approvedEntries.reduce((s, e) => s + (e.sss_contribution || 0), 0),
