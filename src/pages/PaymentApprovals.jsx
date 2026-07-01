@@ -2,13 +2,15 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart, History, ChevronDown, ChevronUp, Square, CheckSquare, Upload, Layers, CreditCard } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart, History, ChevronDown, ChevronUp, Square, CheckSquare, Upload, Layers, CreditCard, Search, Download } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import BillsPaymentSheet from "../components/payables/BillsPaymentSheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { exportToExcel } from "@/utils/excelUtils";
 import PaymentRequestFormDialog from "../components/payment/PaymentRequestFormDialog";
 import BulkPaymentRequestDialog from "../components/payment/BulkPaymentRequestDialog";
 import MarkPaidDialog from "../components/payment/MarkPaidDialog";
@@ -57,6 +59,7 @@ export default function PaymentApprovals() {
   const [expandedGroups, setExpandedGroups] = useState({ pending: true, approved: true, rejected: false, paid: false });
   const [expandedPOs, setExpandedPOs] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkApproving, setBulkApproving] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -359,7 +362,27 @@ export default function PaymentApprovals() {
     }
   };
 
-  const filtered = statusFilter === "all" ? requests : requests.filter(r => r.approval_status === statusFilter);
+  const statusFiltered = statusFilter === "all" ? requests : requests.filter(r => r.approval_status === statusFilter);
+  const searchTerm = search.trim().toLowerCase();
+  const filtered = searchTerm
+    ? statusFiltered.filter(r =>
+        (r.request_number || "").toLowerCase().includes(searchTerm) ||
+        (r.payee || "").toLowerCase().includes(searchTerm) ||
+        (r.invoice_number || "").toLowerCase().includes(searchTerm) ||
+        (r.description || "").toLowerCase().includes(searchTerm) ||
+        (r.project_allocations || []).some(a => (a.project_name || "").toLowerCase().includes(searchTerm))
+      )
+    : statusFiltered;
+
+  const handleExport = () => {
+    exportToExcel(filtered.map(r => ({
+      request_number: r.request_number, payee: r.payee, invoice_number: r.invoice_number,
+      description: r.description, amount: r.amount, due_date: r.due_date,
+      category: r.category, approval_status: r.approval_status,
+      projects: (r.project_allocations || []).map(a => a.project_name).join(", "),
+      requested_by: r.requested_by, approved_by: r.approved_by,
+    })), "payment_requests.xlsx", "Payment Requests");
+  };
   const pending = requests.filter(r => r.approval_status === "pending");
   const approved = requests.filter(r => r.approval_status === "approved");
   const totalPending = pending.reduce((s, r) => s + (r.amount || 0), 0);
@@ -511,7 +534,16 @@ export default function PaymentApprovals() {
             {pending.length} pending · {approved.length} approved awaiting payment
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative">
+            <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+            <Input
+              placeholder="Search request #, payee, invoice, project..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 w-64"
+            />
+          </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -522,6 +554,9 @@ export default function PaymentApprovals() {
               <SelectItem value="rejected">Rejected</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" onClick={handleExport}>
+            <Download className="w-4 h-4 mr-2" /> Export
+          </Button>
           <Button variant="outline" onClick={() => setShowBulk(true)}>
             <Upload className="w-4 h-4 mr-2" /> Bulk Create
           </Button>
