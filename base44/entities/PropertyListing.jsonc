@@ -2,17 +2,23 @@
   "name": "PropertyListing",
   "type": "object",
   "properties": {
-    "unit_id": {
-      "type": "string",
-      "description": "Linked CondoUnit ID"
-    },
-    "unit_number": {
-      "type": "string",
-      "description": "Unit number (denormalized)"
-    },
-    "building": {
-      "type": "string",
-      "description": "Building name"
+    "units": {
+      "type": "array",
+      "description": "Condo units linked to this listing (one client/listing can cover multiple units)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "unit_id": {
+            "type": "string"
+          },
+          "unit_number": {
+            "type": "string"
+          },
+          "building": {
+            "type": "string"
+          }
+        }
+      }
     },
     "listing_type": {
       "type": "string",
@@ -74,7 +80,7 @@
     }
   },
   "required": [
-    "unit_id",
+    "units",
     "listing_type",
     "asking_price"
   ]

@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const defaults = {
-  unit_id: "", unit_number: "", building: "", listing_type: "for_sale",
+  units: [], listing_type: "for_sale",
   asking_price: "", status: "active", buyer_tenant_name: "",
   buyer_tenant_contact: "", date_listed: "", date_closed: "",
   final_price: "", agent: "", notes: "",
@@ -18,18 +19,19 @@ export default function ListingFormDialog({ open, onOpenChange, initialData, uni
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setForm(initialData ? { ...defaults, ...initialData } : defaults);
+    setForm(initialData ? { ...defaults, ...initialData, units: initialData.units || [] } : defaults);
   }, [initialData, open]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const handleUnitSelect = (unitId) => {
-    const unit = units.find(u => u.id === unitId);
-    set("unit_id", unitId);
-    if (unit) {
-      set("unit_number", unit.unit_number || "");
-      set("building", unit.building || "");
-    }
+  const toggleUnit = (unit) => {
+    setForm(f => {
+      const exists = f.units.some(u => u.unit_id === unit.id);
+      const nextUnits = exists
+        ? f.units.filter(u => u.unit_id !== unit.id)
+        : [...f.units, { unit_id: unit.id, unit_number: unit.unit_number || "", building: unit.building || "" }];
+      return { ...f, units: nextUnits };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -53,17 +55,21 @@ export default function ListingFormDialog({ open, onOpenChange, initialData, uni
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 space-y-1">
-              <Label>Unit *</Label>
-              <Select value={form.unit_id} onValueChange={handleUnitSelect}>
-                <SelectTrigger><SelectValue placeholder="Select unit" /></SelectTrigger>
-                <SelectContent>
-                  {units.map(u => (
-                    <SelectItem key={u.id} value={u.id}>
+              <Label>Units * (select one or more)</Label>
+              <div className="border border-input rounded-md max-h-40 overflow-y-auto p-2 space-y-1">
+                {units.map(u => {
+                  const checked = form.units.some(x => x.unit_id === u.id);
+                  return (
+                    <label key={u.id} className="flex items-center gap-2 text-sm py-1 px-1 rounded hover:bg-muted/40 cursor-pointer">
+                      <Checkbox checked={checked} onCheckedChange={() => toggleUnit(u)} />
                       Unit {u.unit_number}{u.building ? ` — ${u.building}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </label>
+                  );
+                })}
+              </div>
+              {form.units.length === 0 && (
+                <p className="text-xs text-destructive">Select at least one unit</p>
+              )}
             </div>
             <div className="space-y-1">
               <Label>Listing Type *</Label>
@@ -128,7 +134,7 @@ export default function ListingFormDialog({ open, onOpenChange, initialData, uni
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Listing"}</Button>
+            <Button type="submit" disabled={saving || form.units.length === 0}>{saving ? "Saving..." : "Save Listing"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -40,14 +40,11 @@ export default function Listings() {
     queryFn: () => base44.entities.CondoUnit.list("-created_date", 200),
   });
 
-  // When a listing is marked sold/leased, auto-update the linked CondoUnit status
+  // When a listing is marked sold/leased, auto-update all linked CondoUnit statuses
   const cascadeUnitStatus = async (data) => {
-    if (!data.unit_id) return;
-    if (data.status === "sold") {
-      await base44.entities.CondoUnit.update(data.unit_id, { status: "sold" });
-      queryClient.invalidateQueries({ queryKey: ["condo-units"] });
-    } else if (data.status === "leased") {
-      await base44.entities.CondoUnit.update(data.unit_id, { status: "leased" });
+    if (!data.units?.length) return;
+    if (data.status === "sold" || data.status === "leased") {
+      await Promise.all(data.units.map(u => base44.entities.CondoUnit.update(u.unit_id, { status: data.status })));
       queryClient.invalidateQueries({ queryKey: ["condo-units"] });
     }
   };
@@ -163,8 +160,14 @@ export default function Listings() {
               {filtered.map(l => (
                 <tr key={l.id} className="hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3">
-                    <p className="font-medium">Unit {l.unit_number || "—"}</p>
-                    {l.building && <p className="text-xs text-muted-foreground">{l.building}</p>}
+                    {l.units?.length ? (
+                      <>
+                        <p className="font-medium">{l.units.map(u => `Unit ${u.unit_number}`).join(", ")}</p>
+                        {l.units[0]?.building && <p className="text-xs text-muted-foreground">{l.units[0].building}</p>}
+                      </>
+                    ) : (
+                      <p className="font-medium">—</p>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <Badge variant="outline" className={`text-xs ${l.listing_type === "for_sale" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-blue-50 text-blue-700 border-blue-200"}`}>
