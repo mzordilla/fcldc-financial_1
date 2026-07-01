@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,11 +16,16 @@ const DEDUCTION_FIELDS = [
   ["withholding_tax", "Withholding Tax"], ["loan_deduction", "Loan"], ["other_deductions", "Other Deductions"],
 ];
 
-const emptyForm = { employee_id: "", project_code: "", project_name: "", department: "", regular_wage: 0, overtime_pay: 0, allowances: 0, incentives: 0, bonuses: 0, sss_contribution: 0, philhealth_contribution: 0, pagibig_contribution: 0, withholding_tax: 0, loan_deduction: 0, other_deductions: 0, notes: "" };
+const emptyForm = { employee_id: "", project_code: "", project_name: "", department: "", chart_of_account: "", regular_wage: 0, overtime_pay: 0, allowances: 0, incentives: 0, bonuses: 0, sss_contribution: 0, philhealth_contribution: 0, pagibig_contribution: 0, withholding_tax: 0, loan_deduction: 0, other_deductions: 0, notes: "" };
 
 export default function PayrollEntryFormDialog({ open, onOpenChange, employees, onSubmit }) {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+
+  const { data: accounts = [] } = useQuery({
+    queryKey: ["chart-of-accounts"],
+    queryFn: () => base44.entities.ChartOfAccount.filter({ is_active: true }, "account_name", 500),
+  });
 
   useEffect(() => { if (open) setForm(emptyForm); }, [open]);
 
@@ -81,6 +88,16 @@ export default function PayrollEntryFormDialog({ open, onOpenChange, employees, 
               <Label className="text-sm">Project Name</Label>
               <Input value={form.project_name} onChange={(e) => setForm((p) => ({ ...p, project_name: e.target.value }))} />
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-sm">Chart of Account</Label>
+            <Select value={form.chart_of_account} onValueChange={(val) => setForm((p) => ({ ...p, chart_of_account: val }))}>
+              <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
+              <SelectContent>
+                {accounts.map((a) => <SelectItem key={a.id} value={a.account_name}>{a.account_name}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
 
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Earnings</p>

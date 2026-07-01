@@ -12,6 +12,7 @@ export async function processPayroll(period, approvedEntries) {
         amount: entry.gross_pay || 0,
         type: "expense",
         category: "direct_labor",
+        chart_of_account: entry.chart_of_account || undefined,
         project_code: entry.project_code || undefined,
         date: payDate,
         status: "completed",

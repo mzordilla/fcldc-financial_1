@@ -41,7 +41,10 @@ export default function PayrollEntryTable({ entries, onApprove, onReject, onDele
                   <p className="text-sm font-medium text-foreground">{entry.employee_name}</p>
                   {entry.department && <p className="text-xs text-muted-foreground">{entry.department}</p>}
                 </td>
-                <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">{entry.project_name || entry.project_code || "—"}</td>
+                <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">
+                  {entry.project_name || entry.project_code || "—"}
+                  {entry.chart_of_account && <span className="block text-xs text-muted-foreground/70">{entry.chart_of_account}</span>}
+                </td>
                 <td className="px-4 py-3 text-sm text-foreground">{fmt(entry.gross_pay)}</td>
                 <td className="px-4 py-3 text-sm text-destructive">{fmt(entry.total_deductions)}</td>
                 <td className="px-4 py-3 text-sm font-semibold text-primary">{fmt(entry.net_pay)}</td>

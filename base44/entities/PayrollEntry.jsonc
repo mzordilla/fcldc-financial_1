@@ -32,6 +32,10 @@
     "department": {
       "type": "string"
     },
+    "chart_of_account": {
+      "type": "string",
+      "description": "Linked Chart of Account name for this labor cost entry"
+    },
     "regular_wage": {
       "type": "number",
       "default": 0
