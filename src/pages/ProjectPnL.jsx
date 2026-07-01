@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend,
 } from "recharts";
+import ProjectMonthlyTransactions from "@/components/projects/ProjectMonthlyTransactions";
 
 const EXPENSE_CATEGORIES = [
   "material_cost", "labor", "equipment", "subcontractor", "overhead", "permits", "insurance", "other",
@@ -56,7 +57,7 @@ function buildProjectData(transactions, receivables = [], billingCycles = [], pr
 
   const ensure = (key) => {
     if (!projects[key]) {
-      projects[key] = { name: key, income: 0, expenses: 0, billed: 0, collected: 0, categories: {}, classification: classificationMap[key] || null };
+      projects[key] = { name: key, income: 0, expenses: 0, billed: 0, collected: 0, categories: {}, classification: classificationMap[key] || null, transactions: [] };
     }
   };
 
@@ -76,6 +77,7 @@ function buildProjectData(transactions, receivables = [], billingCycles = [], pr
       const cat = t.category || "other";
       projects[key].categories[cat] = (projects[key].categories[cat] || 0) + (t.amount || 0);
     }
+    projects[key].transactions.push(t);
   });
 
   // Include payables (from POs) that have a project and aren't already in transactions
@@ -272,6 +274,10 @@ function ProjectRow({ project }) {
                 </ResponsiveContainer>
               </div>
             </div>
+          </div>
+
+          <div className="border-t border-border pt-4">
+            <ProjectMonthlyTransactions transactions={project.transactions || []} />
           </div>
         </div>
       )}
