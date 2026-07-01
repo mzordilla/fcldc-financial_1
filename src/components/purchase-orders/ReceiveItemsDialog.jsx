@@ -204,14 +204,14 @@ export default function ReceiveItemsDialog({ open, onOpenChange, po }) {
               </div>
 
               <div className="border border-border rounded-lg overflow-hidden">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs">
                   <thead className="bg-muted/50 border-b border-border">
                     <tr>
-                      <th className="px-3 py-2 text-left font-semibold">Item</th>
-                      <th className="px-3 py-2 text-right font-semibold">Ordered</th>
-                      <th className="px-3 py-2 text-right font-semibold">Previously Received</th>
-                      <th className="px-3 py-2 text-right font-semibold">Receive Now</th>
-                      <th className="px-3 py-2 text-right font-semibold">After This</th>
+                      <th className="px-2 py-1.5 text-left font-semibold">Item</th>
+                      <th className="px-2 py-1.5 text-right font-semibold">Ordered</th>
+                      <th className="px-2 py-1.5 text-right font-semibold">Prev. Received</th>
+                      <th className="px-2 py-1.5 text-right font-semibold">Receive Now</th>
+                      <th className="px-2 py-1.5 text-right font-semibold">After This</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -220,10 +220,10 @@ export default function ReceiveItemsDialog({ open, onOpenChange, po }) {
                       const isFulfilled = afterThis >= li.quantity;
                       return (
                         <tr key={idx} className={`hover:bg-muted/20 ${li.remaining_before === 0 ? "opacity-50" : ""}`}>
-                          <td className="px-3 py-3">{li.description}</td>
-                          <td className="px-3 py-3 text-right font-medium">{li.quantity}</td>
-                          <td className="px-3 py-3 text-right text-muted-foreground">{li.already_received}</td>
-                          <td className="px-3 py-3 text-right">
+                          <td className="px-2 py-1.5">{li.description}</td>
+                          <td className="px-2 py-1.5 text-right font-medium">{li.quantity}</td>
+                          <td className="px-2 py-1.5 text-right text-muted-foreground">{li.already_received}</td>
+                          <td className="px-2 py-1.5 text-right">
                             {li.remaining_before === 0 ? (
                               <span className="text-xs text-primary font-medium">✓ Done</span>
                             ) : (
@@ -233,11 +233,11 @@ export default function ReceiveItemsDialog({ open, onOpenChange, po }) {
                                 max={li.remaining_before}
                                 value={li.quantity_received}
                                 onChange={(e) => handleQuantityChange(idx, e.target.value)}
-                                className="w-24 text-right"
+                                className="w-16 h-7 text-xs text-right px-1.5"
                               />
                             )}
                           </td>
-                          <td className="px-3 py-3 text-right">
+                          <td className="px-2 py-1.5 text-right">
                             <span className={`font-semibold text-xs ${isFulfilled ? "text-primary" : "text-chart-3"}`}>
                               {afterThis}/{li.quantity}
                             </span>
