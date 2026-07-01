@@ -29,6 +29,7 @@ const defaultForm = {
   line_items: [],
   amount: "",
   category: "",
+  chart_of_account: "",
   priority: "normal",
   requested_by: "",
   requested_date: "",
@@ -287,6 +288,20 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Chart of Account</Label>
+            <Select value={form.chart_of_account} onValueChange={v => set("chart_of_account", v)}>
+              <SelectTrigger><SelectValue placeholder="Select an account..." /></SelectTrigger>
+              <SelectContent>
+                {chartOfAccounts.filter(a => a.is_active !== false).map(a => (
+                  <SelectItem key={a.id} value={a.account_name}>
+                    {a.account_code ? `${a.account_code} — ` : ""}{a.account_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5">

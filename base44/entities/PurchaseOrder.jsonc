@@ -66,6 +66,10 @@
         "other"
       ]
     },
+    "chart_of_account": {
+      "type": "string",
+      "description": "Linked Chart of Account name"
+    },
     "requested_by": {
       "type": "string",
       "description": "Person requesting the purchase"
