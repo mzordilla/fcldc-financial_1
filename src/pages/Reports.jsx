@@ -11,6 +11,7 @@ import BankTransactionsReport from "../components/reports/BankTransactionsReport
 import IncomeTrendChart from "../components/reports/IncomeTrendChart";
 import BalanceSheetReport from "../components/reports/BalanceSheetReport";
 import IncomeStatementReport from "../components/reports/IncomeStatementReport";
+import ComparativeIncomeStatement from "../components/reports/ComparativeIncomeStatement";
 import EfficiencyReport from "../components/reports/EfficiencyReport";
 import DailyTransactionsReport from "../components/reports/DailyTransactionsReport";
 import MonthlyTransactionsReport from "../components/reports/MonthlyTransactionsReport";
@@ -517,6 +518,7 @@ export default function Reports() {
           { key: "bank_transactions", label: "Bank Transactions", color: "from-cyan-500 to-blue-600", emoji: "💳" },
           { key: "balance_sheet", label: "Balance Sheet", color: "from-green-500 to-emerald-600", emoji: "⚖️" },
           { key: "income_statement", label: "Income Statement", color: "from-rose-500 to-red-600", emoji: "📋" },
+          { key: "comparative_income_statement", label: "Comparative Income Statement", color: "from-fuchsia-500 to-pink-600", emoji: "🗂️" },
           { key: "daily_transactions", label: "Daily Transactions", color: "from-teal-500 to-cyan-600", emoji: "📅" },
           { key: "monthly_transactions", label: "Monthly Transactions", color: "from-indigo-500 to-blue-600", emoji: "🗓️" },
           { key: "chart_of_accounts", label: "Chart of Accounts", color: "from-violet-500 to-purple-600", emoji: "📚" },
@@ -559,6 +561,10 @@ export default function Reports() {
 
       {activeTab === "income_statement" && (
         <IncomeStatementReport dateFrom={dateFrom} dateTo={dateTo} />
+      )}
+
+      {activeTab === "comparative_income_statement" && (
+        <ComparativeIncomeStatement />
       )}
 
       {activeTab === "daily_transactions" && (
