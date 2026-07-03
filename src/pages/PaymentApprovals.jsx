@@ -14,6 +14,7 @@ import { exportToExcel } from "@/utils/excelUtils";
 import PaymentRequestFormDialog from "../components/payment/PaymentRequestFormDialog";
 import BulkPaymentRequestDialog from "../components/payment/BulkPaymentRequestDialog";
 import MarkPaidDialog from "../components/payment/MarkPaidDialog";
+import BulkDisburseDialog from "../components/payment/BulkDisburseDialog";
 import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
 import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
 import GroupedPaymentRequests from "../components/payment/GroupedPaymentRequests";
@@ -64,12 +65,15 @@ export default function PaymentApprovals() {
   const [bulkApproving, setBulkApproving] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDisbursementRole, setIsDisbursementRole] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showBulkDisburse, setShowBulkDisburse] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
     base44.auth.me().then(u => {
       setIsAdmin(u?.role === "admin");
       setIsDisbursementRole(u?.role === "disbursement");
+      setCurrentUser(u);
     }).catch(() => {});
   }, []);
 
@@ -438,6 +442,25 @@ export default function PaymentApprovals() {
     setBulkApproving(false);
   };
 
+  const selectedApproved = requests.filter(r => selectedIds.has(r.id) && r.approval_status === "approved");
+  const selectedApprovedSamePayee = selectedApproved.length > 1 && selectedApproved.every(r => r.payee === selectedApproved[0].payee);
+
+  const bulkDisburseSelected = async ({ bankAccountId, paymentReference, paymentDate }) => {
+    const actor = currentUser?.full_name || currentUser?.email || "Bulk Disbursement";
+    for (const pr of selectedApproved) {
+      await handleDecision(pr, {
+        action: "paid",
+        actor,
+        notes: `Combined check payment${paymentReference ? ` – ${paymentReference}` : ""}`,
+        bankAccountId,
+        paymentReference,
+        paymentDate,
+      });
+    }
+    setSelectedIds(new Set());
+    setShowBulkDisburse(false);
+  };
+
   const renderPRRow = (pr) => {
     const StatusIcon = statusIcons[pr.approval_status] || Clock;
     const isOverdue = pr.due_date && new Date(pr.due_date) < new Date() && pr.approval_status !== "paid";
@@ -451,7 +474,7 @@ export default function PaymentApprovals() {
         >
           {isAdmin && (
             <td className="px-1 py-0.5" onClick={e => e.stopPropagation()}>
-              {pr.approval_status === "pending" && (
+              {(pr.approval_status === "pending" || pr.approval_status === "approved") && (
                 <Checkbox checked={selectedIds.has(pr.id)} onCheckedChange={() => toggleSelect(pr.id)} />
               )}
             </td>
@@ -689,6 +712,22 @@ export default function PaymentApprovals() {
         </div>
       )}
 
+      {/* Bulk disbursement toolbar — combine multiple approved requests for the same supplier into one check */}
+      {isAdmin && selectedApproved.length > 0 && (
+        <div className="flex items-center justify-between bg-chart-2/10 border border-chart-2/20 rounded-xl px-4 py-2.5">
+          <span className="text-sm text-chart-2">
+            {selectedApproved.length} approved request{selectedApproved.length !== 1 ? "s" : ""} selected
+            {!selectedApprovedSamePayee && " — select requests from the same supplier to combine into one check"}
+          </span>
+          {selectedApprovedSamePayee && (
+            <Button size="sm" onClick={() => setShowBulkDisburse(true)} className="bg-chart-2 hover:bg-chart-2/90 text-white gap-2">
+              <Banknote className="w-4 h-4" />
+              Disburse {selectedApproved.length} as One Check
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Grouped Payment Requests Table */}
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">Loading...</div>
@@ -751,6 +790,12 @@ export default function PaymentApprovals() {
           onDecision={(decision) => handleDecision(reviewPR, decision)}
         />
       )}
+      <BulkDisburseDialog
+        open={showBulkDisburse}
+        onOpenChange={setShowBulkDisburse}
+        requests={selectedApproved}
+        onConfirm={bulkDisburseSelected}
+      />
       {markingPaidPR && (
         <MarkPaidDialog
           pr={markingPaidPR}
