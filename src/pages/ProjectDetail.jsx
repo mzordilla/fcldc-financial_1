@@ -30,6 +30,12 @@ const projectTypeLabels = {
   other: "Other"
 };
 
+const classificationLabels = {
+  owned_project: "Project Owned Project",
+  client_project: "Client Project",
+  monitoring_project: "Monitoring Project"
+};
+
 const fields = [
   { name: "project_name", label: "Project Name", required: true, placeholder: "e.g. Main Street Tower" },
   { name: "project_code", label: "Project Code", required: true, placeholder: "PRJ-2026-001" },
@@ -43,6 +49,11 @@ const fields = [
     { value: "infrastructure", label: "Infrastructure" },
     { value: "renovation", label: "Renovation" },
     { value: "other", label: "Other" }]
+  },
+  { name: "project_classification", label: "Classification", type: "select", options: [
+    { value: "owned_project", label: "Project Owned Project" },
+    { value: "client_project", label: "Client Project" },
+    { value: "monitoring_project", label: "Monitoring Project" }]
   },
   { name: "contract_amount", label: "Contract Amount ($)", type: "number", required: true, placeholder: "0.00" },
   { name: "completed_percentage", label: "Completed (%)", type: "number", placeholder: "e.g. 45" },
@@ -214,6 +225,7 @@ export default function ProjectDetail() {
               {(project.contract_status || "pending").replace(/_/g, " ")}
             </Badge>
             {project.project_type && <Badge variant="secondary" className="text-xs ml-2">{projectTypeLabels[project.project_type]}</Badge>}
+            {project.project_classification && <Badge variant="outline" className="text-xs ml-2">{classificationLabels[project.project_classification]}</Badge>}
             <p className="text-muted-foreground mt-2">Client: <span className="text-foreground font-medium">{project.client_name}</span></p>
           </div>
           <div className="flex gap-2">

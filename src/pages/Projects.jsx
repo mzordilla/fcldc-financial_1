@@ -34,6 +34,12 @@ const projectTypeLabels = {
   other: "Other"
 };
 
+const classificationLabels = {
+  owned_project: "Project Owned Project",
+  client_project: "Client Project",
+  monitoring_project: "Monitoring Project"
+};
+
 const fields = (clients) => [
 { name: "project_name", label: "Project Name", required: true, placeholder: "e.g. Main Street Tower" },
 { name: "project_code", label: "Project Code", required: true, placeholder: "PRJ-2026-001" },
@@ -47,6 +53,11 @@ const fields = (clients) => [
   { value: "infrastructure", label: "Infrastructure" },
   { value: "renovation", label: "Renovation" },
   { value: "other", label: "Other" }]
+},
+{ name: "project_classification", label: "Classification", type: "select", options: [
+  { value: "owned_project", label: "Project Owned Project" },
+  { value: "client_project", label: "Client Project" },
+  { value: "monitoring_project", label: "Monitoring Project" }]
 },
 { name: "contract_amount", label: "Contract Amount ($)", type: "number", required: true, placeholder: "0.00" },
 { name: "completed_percentage", label: "Completed (%)", type: "number", placeholder: "e.g. 45" },
@@ -72,6 +83,7 @@ export default function Projects() {
   const [showAdd, setShowAdd] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [classificationFilter, setClassificationFilter] = useState("all");
   const queryClient = useQueryClient();
   const importRef = useRef();
 
@@ -139,7 +151,10 @@ export default function Projects() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects"] })
   });
 
-  const filtered = statusFilter === "all" ? projects : projects.filter((p) => p.contract_status === statusFilter);
+  const filtered = projects.filter((p) =>
+    (statusFilter === "all" || p.contract_status === statusFilter) &&
+    (classificationFilter === "all" || p.project_classification === classificationFilter)
+  );
 
 
 
@@ -177,6 +192,15 @@ export default function Projects() {
               <SelectItem value="completed">Completed</SelectItem>
               <SelectItem value="on_hold">On Hold</SelectItem>
               <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={classificationFilter} onValueChange={setClassificationFilter}>
+            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Classifications</SelectItem>
+              <SelectItem value="owned_project">Project Owned Project</SelectItem>
+              <SelectItem value="client_project">Client Project</SelectItem>
+              <SelectItem value="monitoring_project">Monitoring Project</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="sm" onClick={() => handleExport(projects)}>
@@ -303,6 +327,7 @@ export default function Projects() {
                       {(p.contract_status || "pending").replace(/_/g, " ")}
                     </Badge>
                     {p.project_type && <Badge variant="secondary" className="text-xs">{projectTypeLabels[p.project_type]}</Badge>}
+                    {p.project_classification && <Badge variant="outline" className="text-xs">{classificationLabels[p.project_classification]}</Badge>}
                   </div>
                   <p className="text-sm text-muted-foreground">{p.client_name}</p>
                   <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">

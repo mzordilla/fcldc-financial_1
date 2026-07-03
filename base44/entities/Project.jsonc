@@ -40,10 +40,11 @@
     "project_classification": {
       "type": "string",
       "enum": [
-        "company_development",
-        "external_construction"
+        "owned_project",
+        "client_project",
+        "monitoring_project"
       ],
-      "description": "Whether this is an internal company development project or an external construction contract"
+      "description": "Classification of the project: Project Owned Project, Client Project, or Monitoring Project"
     },
     "contract_amount": {
       "type": "number",
