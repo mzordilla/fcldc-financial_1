@@ -17,6 +17,7 @@ import DailyTransactionsReport from "../components/reports/DailyTransactionsRepo
 import MonthlyTransactionsReport from "../components/reports/MonthlyTransactionsReport";
 import WithholdingTaxSync from "../components/reports/WithholdingTaxSync";
 import CorporateDocuments from "../components/reports/CorporateDocuments";
+import WeeklyCollatedReport from "../components/reports/WeeklyCollatedReport";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import { Badge } from "@/components/ui/badge";
@@ -511,6 +512,7 @@ export default function Reports() {
       {/* Tabs */}
       <div className="flex gap-2 flex-wrap">
         {[
+          { key: "weekly_collated", label: "Weekly Collated Report", color: "from-amber-500 to-orange-600", emoji: "🗞️" },
           { key: "efficiency", label: "Efficiency Dashboard", color: "from-emerald-500 to-teal-600", emoji: "📊" },
           { key: "trend", label: "Trend Analysis", color: "from-blue-500 to-indigo-600", emoji: "📈" },
           { key: "pnl", label: "P&L / Cash Flow", color: "from-orange-500 to-amber-600", emoji: "💰" },
@@ -538,6 +540,10 @@ export default function Reports() {
           </button>
         ))}
       </div>
+
+      {activeTab === "weekly_collated" && (
+        <WeeklyCollatedReport />
+      )}
 
       {activeTab === "efficiency" && (
         <EfficiencyReport dateFrom={dateFrom} dateTo={dateTo} />
