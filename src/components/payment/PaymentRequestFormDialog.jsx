@@ -143,6 +143,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
                 <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="supplier_invoice">Supplier Invoice</SelectItem>
+                  <SelectItem value="material_cost">Material Cost</SelectItem>
                   <SelectItem value="subcontractor">Subcontractor</SelectItem>
                   <SelectItem value="labor">Labor</SelectItem>
                   <SelectItem value="equipment">Equipment</SelectItem>

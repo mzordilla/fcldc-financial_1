@@ -44,6 +44,7 @@
       "type": "string",
       "enum": [
         "supplier_invoice",
+        "material_cost",
         "subcontractor",
         "labor",
         "equipment",
