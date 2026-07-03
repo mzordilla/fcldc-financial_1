@@ -5,17 +5,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { base44 } from "@/api/base44Client";
+import { Paperclip, Loader2 } from "lucide-react";
 
 const defaults = {
   full_name: "", email: "", contact_number: "", unit_id: "", unit_number: "",
   building: "", area_sqm: "", lease_start: "", lease_end: "", monthly_rent: "",
-  deposit_amount: "", association_dues_per_sqm: "", association_dues: "", status: "active", notes: "",
+  deposit_amount: "", association_dues_per_sqm: "", association_dues: "", status: "active",
+  contract_attachment_url: "", notes: "",
 };
 
 export default function TenantFormDialog({ open, onOpenChange, initialData, units = [], onSubmit }) {
   const [form, setForm] = useState(defaults);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const isEdit = !!initialData;
+
+  useEffect(() => {
+    setForm(initialData ? { ...defaults, ...initialData } : defaults);
+  }, [initialData, open]);
+
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+    setUploading(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    set("contract_attachment_url", file_url);
+    setUploading(false);
+  };
 
   // Auto-calculate association dues when area or rate changes
   useEffect(() => {
@@ -137,6 +153,18 @@ export default function TenantFormDialog({ open, onOpenChange, initialData, unit
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="space-y-1">
+            <Label>Lease Contract</Label>
+            {form.contract_attachment_url && (
+              <a href={form.contract_attachment_url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-sm text-primary hover:underline">
+                <Paperclip className="w-3.5 h-3.5" /> View current contract
+              </a>
+            )}
+            <Input type="file" onChange={e => handleFileUpload(e.target.files?.[0])} disabled={uploading} />
+            {uploading && (
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Loader2 className="w-3 h-3 animate-spin" /> Uploading...</p>
+            )}
           </div>
           <div className="space-y-1">
             <Label>Notes</Label>

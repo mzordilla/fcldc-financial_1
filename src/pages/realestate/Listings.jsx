@@ -186,7 +186,12 @@ export default function Listings() {
                       {l.status?.replace(/_/g, " ")}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 font-semibold text-primary">{l.final_price ? fmt(l.final_price) : "—"}</td>
+                  <td className="px-4 py-3 font-semibold text-primary">
+                    {l.final_price ? fmt(l.final_price) : "—"}
+                    {l.contract_attachment_url && (
+                      <a href={l.contract_attachment_url} target="_blank" rel="noreferrer" className="block text-xs text-primary hover:underline mt-0.5 font-normal">View contract</a>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-8 w-8" onClick={() => { setEditing(l); setShowForm(true); }}>

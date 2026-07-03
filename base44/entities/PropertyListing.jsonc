@@ -75,6 +75,10 @@
       "type": "string",
       "description": "Handling agent or broker"
     },
+    "contract_attachment_url": {
+      "type": "string",
+      "description": "URL of the uploaded sale/lease contract document"
+    },
     "notes": {
       "type": "string"
     }

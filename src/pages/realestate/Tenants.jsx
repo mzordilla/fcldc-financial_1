@@ -149,7 +149,12 @@ export default function Tenants() {
                       )}
                     </td>
                     <td className="px-4 py-3 font-semibold text-primary">{fmt(t.monthly_rent)}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{fmt(t.deposit_amount)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {fmt(t.deposit_amount)}
+                      {t.contract_attachment_url && (
+                        <a href={t.contract_attachment_url} target="_blank" rel="noreferrer" className="block text-xs text-primary hover:underline mt-0.5">View contract</a>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <Badge variant="outline" className={`text-xs ${statusStyles[t.status]}`}>
                         {t.status}

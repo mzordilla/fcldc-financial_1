@@ -6,17 +6,28 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { base44 } from "@/api/base44Client";
+import { Paperclip, Loader2 } from "lucide-react";
 
 const defaults = {
   units: [], listing_type: "for_sale",
   asking_price: "", status: "active", buyer_tenant_name: "",
   buyer_tenant_contact: "", date_listed: "", date_closed: "",
-  final_price: "", agent: "", notes: "",
+  final_price: "", agent: "", contract_attachment_url: "", notes: "",
 };
 
 export default function ListingFormDialog({ open, onOpenChange, initialData, units = [], onSubmit }) {
   const [form, setForm] = useState(defaults);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+    setUploading(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    set("contract_attachment_url", file_url);
+    setUploading(false);
+  };
 
   useEffect(() => {
     setForm(initialData ? { ...defaults, ...initialData, units: initialData.units || [] } : defaults);
@@ -127,6 +138,18 @@ export default function ListingFormDialog({ open, onOpenChange, initialData, uni
               <Label>Date Closed</Label>
               <Input type="date" value={form.date_closed} onChange={e => set("date_closed", e.target.value)} />
             </div>
+          </div>
+          <div className="space-y-1">
+            <Label>Contract</Label>
+            {form.contract_attachment_url && (
+              <a href={form.contract_attachment_url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-sm text-primary hover:underline">
+                <Paperclip className="w-3.5 h-3.5" /> View current contract
+              </a>
+            )}
+            <Input type="file" onChange={e => handleFileUpload(e.target.files?.[0])} disabled={uploading} />
+            {uploading && (
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Loader2 className="w-3 h-3 animate-spin" /> Uploading...</p>
+            )}
           </div>
           <div className="space-y-1">
             <Label>Notes</Label>

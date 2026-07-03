@@ -63,6 +63,10 @@
       "default": "active",
       "description": "Lease status"
     },
+    "contract_attachment_url": {
+      "type": "string",
+      "description": "URL of the uploaded lease contract document"
+    },
     "notes": {
       "type": "string"
     }
