@@ -23,6 +23,18 @@ import ReceiveItemsDialog from "../components/purchase-orders/ReceiveItemsDialog
 import GroupedPurchaseOrders from "../components/purchase-orders/GroupedPurchaseOrders";
 import ProjectDeliverySummary from "../components/purchase-orders/ProjectDeliverySummary";
 import Payees from "./Payees";
+import InlineCategorySelect from "../components/transactions/InlineCategorySelect";
+import InlineChartOfAccountSelect from "../components/transactions/InlineChartOfAccountSelect";
+
+const COA_CATEGORY_LABELS = {
+  project_payment: "Project Payment", material_cost: "Material Cost", labor: "Labor",
+  equipment: "Equipment", subcontractor: "Subcontractor", overhead: "Overhead",
+  permits: "Permits", insurance: "Insurance", bank_reconciliation: "Bank Reconciliation",
+  non_current_assets: "Non-Current Assets", current_assets: "Current Assets",
+  current_liabilities: "Current Liabilities", non_current_liabilities: "Non-Current Liabilities",
+  repair_and_maintenance: "Repair & Maintenance", fixtures: "Fixtures", other: "Other",
+};
+const PO_CATEGORY_OPTIONS = Object.entries(COA_CATEGORY_LABELS).map(([value, label]) => ({ value, label }));
 
 const statusStyles = {
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
@@ -110,8 +122,19 @@ export default function PurchaseOrders() {
           <td className="px-0.5 py-px font-mono text-[10px] text-muted-foreground whitespace-nowrap">{po.po_number || "—"}</td>
           <td className="px-0.5 py-px text-xs font-medium text-foreground max-w-[180px] truncate">{po.supplier_name}</td>
           <td className="px-0.5 py-px text-xs text-muted-foreground max-w-[96px] truncate">{po.project_name || "—"}</td>
-          <td className="px-0.5 py-px max-w-[64px]">
-            {po.category && <span className="text-xs text-muted-foreground capitalize truncate">{po.category.replace(/_/g, " ")}</span>}
+          <td className="px-0.5 py-px max-w-[110px]" onClick={(e) => e.stopPropagation()}>
+            <InlineCategorySelect
+              value={po.category}
+              categories={PO_CATEGORY_OPTIONS}
+              onChange={(v) => updateMutation.mutate({ id: po.id, data: { category: v } })}
+            />
+          </td>
+          <td className="px-0.5 py-px max-w-[130px]" onClick={(e) => e.stopPropagation()}>
+            <InlineChartOfAccountSelect
+              value={po.chart_of_account}
+              accounts={chartOfAccounts}
+              onChange={(v) => updateMutation.mutate({ id: po.id, data: { chart_of_account: v } })}
+            />
           </td>
           <td className="px-0.5 py-px text-xs text-muted-foreground whitespace-nowrap">
             {po.requested_date ? format(new Date(po.requested_date), "MMM d, yy") : "—"}
@@ -255,6 +278,11 @@ export default function PurchaseOrders() {
   const { data: receivingRecords = [] } = useQuery({
     queryKey: ["receiving_items"],
     queryFn: () => base44.entities.ReceivingItem.list("-received_date", 500)
+  });
+
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ["chartofaccounts"],
+    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 200)
   });
 
   // Build a map of po_id -> { count, isComplete }
