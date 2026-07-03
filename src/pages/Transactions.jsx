@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import TransactionFormDialog from "../components/transactions/TransactionFormDialog";
 import InlineCategorySelect from "../components/transactions/InlineCategorySelect";
 import InlineChartOfAccountSelect from "../components/transactions/InlineChartOfAccountSelect";
+import InlineProjectSelect from "../components/transactions/InlineProjectSelect";
 import BatchTransactionDialog from "../components/transactions/BatchTransactionDialog";
 import SpendByCategoryChart from "../components/transactions/SpendByCategoryChart";
 import ExcelImportDialog from "../components/transactions/ExcelImportDialog";
@@ -63,6 +64,11 @@ export default function Transactions() {
   const { data: chartOfAccounts = [] } = useQuery({
     queryKey: ["chartofaccounts"],
     queryFn: () => base44.entities.ChartOfAccount.list("account_code", 200),
+  });
+
+  const { data: projects = [] } = useQuery({
+    queryKey: ["projects"],
+    queryFn: () => base44.entities.Project.list("project_code", 100),
   });
 
   const createMutation = useMutation({
@@ -250,7 +256,13 @@ export default function Transactions() {
                               <span className="text-sm font-medium truncate" title={t.description}>{t.description}</span>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">{t.project_code || t.project_name || "—"}</td>
+                          <td className="px-2 py-1 hidden sm:table-cell">
+                            <InlineProjectSelect
+                              value={t.project_code || t.project_name}
+                              projects={projects}
+                              onChange={(v) => updateMutation.mutate({ id: t.id, data: { project_code: v } })}
+                            />
+                          </td>
                           <td className="px-2 py-1 hidden md:table-cell">
                             <InlineCategorySelect
                               value={t.category}
