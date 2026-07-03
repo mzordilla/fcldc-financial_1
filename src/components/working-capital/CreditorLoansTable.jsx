@@ -37,7 +37,7 @@ export default function CreditorLoansTable({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-12 hidden"></TableHead>
+              <TableHead className="w-12"></TableHead>
               <TableHead className="pr-1 pl-1">Description</TableHead>
               <TableHead className="text-right">Amount</TableHead>
               <TableHead className="text-right">Outstanding</TableHead>
@@ -55,8 +55,8 @@ export default function CreditorLoansTable({
             </TableRow> :
 
             loans.map((loan) =>
-            <div key={loan.id}>
-                  <TableRow className="hover:bg-muted/50">
+            <>
+                  <TableRow key={loan.id} className="hover:bg-muted/50">
                     <TableCell>
                       <button
                     onClick={() => setExpandedId(expandedId === loan.id ? null : loan.id)}
@@ -105,13 +105,13 @@ export default function CreditorLoansTable({
                     </TableCell>
                   </TableRow>
                   {expandedId === loan.id &&
-              <TableRow>
+              <TableRow key={`${loan.id}-expanded`}>
                       <TableCell colSpan={9} className="bg-muted/50 p-4">
                         <MonthlyLoanMonitoring loan={loan} />
                       </TableCell>
                     </TableRow>
               }
-                </div>
+                </>
             )
             }
           </TableBody>
