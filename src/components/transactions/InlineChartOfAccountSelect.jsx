@@ -1,28 +1,17 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
 export default function InlineChartOfAccountSelect({ value, accounts, onChange }) {
   const activeAccounts = accounts.filter(a => a.is_active !== false);
-  const selected = activeAccounts.find(a => a.account_name === value);
   return (
-    <Select
-      value={selected?.id || "none"}
-      onValueChange={(v) => {
-        if (v === "none") { onChange(""); return; }
-        const account = activeAccounts.find(a => a.id === v);
-        onChange(account?.account_name || "");
-      }}
+    <select
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-7 text-xs bg-transparent hover:bg-muted rounded px-2 border-none focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer max-w-[170px]"
     >
-      <SelectTrigger className="h-7 w-auto min-w-[130px] text-xs border-none shadow-none bg-transparent hover:bg-muted px-2 gap-1">
-        <SelectValue placeholder="Set account" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="none">— None —</SelectItem>
-        {activeAccounts.map(a => (
-          <SelectItem key={a.id} value={a.id}>
-            {a.account_code ? `${a.account_code} — ` : ""}{a.account_name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      <option value="">— None —</option>
+      {activeAccounts.map(a => (
+        <option key={a.id} value={a.account_name}>
+          {a.account_code ? `${a.account_code} — ` : ""}{a.account_name}
+        </option>
+      ))}
+    </select>
   );
 }
