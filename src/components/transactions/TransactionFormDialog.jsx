@@ -144,68 +144,66 @@ export default function TransactionFormDialog({ open, onOpenChange, title, bankA
             </div>
           </div>
 
-          {/* Category */}
-          <div className="space-y-1.5">
-            <Label>Category *</Label>
-            <Select required value={formData.category || ""} onValueChange={(v) => set("category", v)}>
-              <SelectTrigger className={!formData.category ? "border-destructive/50" : ""}><SelectValue placeholder="Select category (required)" /></SelectTrigger>
-              <SelectContent>
-                {categories.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Chart of Account */}
-          <div className="space-y-1.5">
-            <Label>Chart of Account</Label>
-            <Select
-              value={activeAccounts.find(a => a.account_name === formData.chart_of_account)?.id || "none"}
-              onValueChange={(v) => {
-                if (v === "none") { set("chart_of_account", ""); return; }
-                const account = activeAccounts.find(a => a.id === v);
-                set("chart_of_account", account?.account_name || "");
-              }}
-            >
-              <SelectTrigger><SelectValue placeholder="Link to chart of account..." /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">— None —</SelectItem>
-                {activeAccounts.map(a => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.account_code ? `${a.account_code} — ` : ""}{a.account_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Bank Account */}
-          <div className="space-y-1.5">
-            <Label>Account Name</Label>
-            <Select
-              value={formData.bank_account_id || "none"}
-              onValueChange={(v) => set("bank_account_id", v === "none" ? "" : v)}
-            >
-              <SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">— None —</SelectItem>
-                {bankAccounts.filter(a => a.status !== "closed").map(a => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.account_name} ({a.bank_name})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Project & Date */}
+          {/* Category & Chart of Account */}
           <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Category *</Label>
+              <Select required value={formData.category || ""} onValueChange={(v) => set("category", v)}>
+                <SelectTrigger className={!formData.category ? "border-destructive/50" : ""}><SelectValue placeholder="Required" /></SelectTrigger>
+                <SelectContent>
+                  {categories.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Chart of Account</Label>
+              <Select
+                value={activeAccounts.find(a => a.account_name === formData.chart_of_account)?.id || "none"}
+                onValueChange={(v) => {
+                  if (v === "none") { set("chart_of_account", ""); return; }
+                  const account = activeAccounts.find(a => a.id === v);
+                  set("chart_of_account", account?.account_name || "");
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— None —</SelectItem>
+                  {activeAccounts.map(a => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.account_code ? `${a.account_code} — ` : ""}{a.account_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Bank Account & Project */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Account Name</Label>
+              <Select
+                value={formData.bank_account_id || "none"}
+                onValueChange={(v) => set("bank_account_id", v === "none" ? "" : v)}
+              >
+                <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— None —</SelectItem>
+                  {bankAccounts.filter(a => a.status !== "closed").map(a => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.account_name} ({a.bank_name})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-1.5">
               <Label>Project Code</Label>
               <Select
                 value={formData.project_name || ""}
                 onValueChange={(v) => set("project_name", v === "none" ? "" : v)}
               >
-                <SelectTrigger><SelectValue placeholder="Select project code" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— None —</SelectItem>
                   {projects.map(p => (
@@ -216,15 +214,17 @@ export default function TransactionFormDialog({ open, onOpenChange, title, bankA
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label>Date *</Label>
-              <Input
-                type="date"
-                required
-                value={formData.date || ""}
-                onChange={(e) => set("date", e.target.value)}
-              />
-            </div>
+          </div>
+
+          {/* Date */}
+          <div className="space-y-1.5">
+            <Label>Date *</Label>
+            <Input
+              type="date"
+              required
+              value={formData.date || ""}
+              onChange={(e) => set("date", e.target.value)}
+            />
           </div>
 
           <DialogFooter>
