@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import TransactionFormDialog from "../components/transactions/TransactionFormDialog";
+import InlineCategorySelect from "../components/transactions/InlineCategorySelect";
+import InlineChartOfAccountSelect from "../components/transactions/InlineChartOfAccountSelect";
 import BatchTransactionDialog from "../components/transactions/BatchTransactionDialog";
 import SpendByCategoryChart from "../components/transactions/SpendByCategoryChart";
 import ExcelImportDialog from "../components/transactions/ExcelImportDialog";
@@ -56,6 +58,11 @@ export default function Transactions() {
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ["bankaccounts"],
     queryFn: () => base44.entities.BankAccount.list("-created_date", 100),
+  });
+
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ["chartofaccounts"],
+    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 200),
   });
 
   const createMutation = useMutation({
@@ -244,11 +251,19 @@ export default function Transactions() {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">{t.project_code || t.project_name || "—"}</td>
-                          <td className="px-4 py-3 hidden md:table-cell">
-                            {t.category && <Badge variant="secondary" className="text-xs">{t.category.replace(/_/g, " ")}</Badge>}
+                          <td className="px-2 py-1 hidden md:table-cell">
+                            <InlineCategorySelect
+                              value={t.category}
+                              categories={CATEGORIES}
+                              onChange={(v) => updateMutation.mutate({ id: t.id, data: { category: v } })}
+                            />
                           </td>
-                          <td className="px-4 py-3 hidden lg:table-cell">
-                            {t.chart_of_account ? <Badge variant="secondary" className="text-xs">{t.chart_of_account}</Badge> : <span className="text-xs text-muted-foreground">—</span>}
+                          <td className="px-2 py-1 hidden lg:table-cell">
+                            <InlineChartOfAccountSelect
+                              value={t.chart_of_account}
+                              accounts={chartOfAccounts}
+                              onChange={(v) => updateMutation.mutate({ id: t.id, data: { chart_of_account: v } })}
+                            />
                           </td>
                           <td className="px-4 py-3 hidden xl:table-cell">
                             {account ? (
