@@ -224,10 +224,10 @@ export default function Transactions() {
                 </div>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full table-fixed">
                   <thead>
                     <tr className="border-b border-border bg-muted/20">
-                      <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2">Description</th>
+                      <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2 w-48">Description</th>
                       <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2 hidden sm:table-cell">Project</th>
                       <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2 hidden md:table-cell">Category</th>
                       <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2 hidden lg:table-cell">Chart of Account</th>
@@ -243,11 +243,11 @@ export default function Transactions() {
                       return (
                         <tr key={t.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                           <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
                               <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${t.type === "income" ? "bg-primary/10" : "bg-destructive/10"}`}>
                                 {t.type === "income" ? <ArrowUpRight className="w-3.5 h-3.5 text-primary" /> : <ArrowDownRight className="w-3.5 h-3.5 text-destructive" />}
                               </div>
-                              <span className="text-sm font-medium">{t.description}</span>
+                              <span className="text-sm font-medium truncate" title={t.description}>{t.description}</span>
                             </div>
                           </td>
                           <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">{t.project_code || t.project_name || "—"}</td>
