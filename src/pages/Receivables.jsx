@@ -171,6 +171,11 @@ export default function Receivables() {
               <SelectItem value="paid">Paid</SelectItem>
             </SelectContent>
           </Select>
+          <StatementOfAccountPDF
+            projectName="All Projects"
+            clientName="All Clients"
+            rows={receivables}
+          />
           <Button onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4 mr-2" /> Add
           </Button>
