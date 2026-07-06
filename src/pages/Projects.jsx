@@ -300,8 +300,8 @@ export default function Projects() {
         </div>
       }
 
-      {/* All Projects List */}
-      <div className="grid gap-4">
+      {/* All Projects List, grouped by classification with subtotals */}
+      <div className="space-y-8">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
         {!isLoading && filtered.length === 0 &&
         <div className="text-center py-16">
@@ -309,7 +309,31 @@ export default function Projects() {
             <p className="text-muted-foreground">No projects found</p>
           </div>
         }
-        {filtered.map((p) => {
+        {!isLoading && filtered.length > 0 && Object.entries(
+          filtered.reduce((acc, p) => {
+            const key = p.project_classification || "unclassified";
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(p);
+            return acc;
+          }, {})
+        ).map(([classification, groupProjects]) => {
+          const groupTotal = groupProjects.reduce((s, p) => s + (p.contract_amount || 0), 0);
+          const groupCompleted = groupProjects.reduce((s, p) => s + (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100), 0);
+          return (
+            <div key={classification} className="space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-2">
+                <h3 className="text-sm font-semibold text-foreground">
+                  {classificationLabels[classification] || "Unclassified"}
+                  <span className="text-muted-foreground font-normal ml-2">({groupProjects.length})</span>
+                </h3>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Subtotal Contract Amt</p>
+                  <p className="text-sm font-bold text-primary">₱{groupTotal.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Completed: ₱{groupCompleted.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                </div>
+              </div>
+              <div className="grid gap-4">
+              {groupProjects.map((p) => {
           const completedPct = p.completed_percentage || 0;
           const retentionRate = p.retention_rate || 0;
           const completedAmt = (p.contract_amount || 0) * (completedPct / 100);
@@ -401,6 +425,10 @@ export default function Projects() {
               </div>
             </div>);
 
+              })}
+              </div>
+            </div>
+          );
         })}
       </div>
 
