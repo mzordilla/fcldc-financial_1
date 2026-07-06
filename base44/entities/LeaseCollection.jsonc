@@ -1,0 +1,45 @@
+{
+  "name": "LeaseCollection",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "Linked Tenant ID"
+    },
+    "tenant_name": {
+      "type": "string",
+      "description": "Tenant name (denormalized)"
+    },
+    "unit_number": {
+      "type": "string",
+      "description": "Unit number (denormalized)"
+    },
+    "building": {
+      "type": "string",
+      "description": "Building name (denormalized)"
+    },
+    "month": {
+      "type": "string",
+      "description": "Month this lease payment covers, format YYYY-MM"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Expected monthly rent amount"
+    },
+    "collected": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this month's lease payment was collected"
+    },
+    "collected_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the payment was collected"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "month",
+    "amount"
+  ]
+}

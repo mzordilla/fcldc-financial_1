@@ -3,6 +3,7 @@ import CondoUnits from "./CondoUnits";
 import Tenants from "./Tenants";
 import Listings from "./Listings";
 import PortfolioReports from "./PortfolioReports";
+import LeaseCollectionTracker from "../../components/realestate/LeaseCollectionTracker";
 
 export default function RealEstatePortfolio() {
   return (
@@ -25,6 +26,9 @@ export default function RealEstatePortfolio() {
           <TabsTrigger value="reports" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-600 data-[state=active]:text-white transition-all">
             📊 Portfolio Reports
           </TabsTrigger>
+          <TabsTrigger value="lease-collections" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-600 data-[state=active]:text-white transition-all">
+            💰 Lease Collections
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="units">
           <CondoUnits embedded />
@@ -37,6 +41,9 @@ export default function RealEstatePortfolio() {
         </TabsContent>
         <TabsContent value="reports">
           <PortfolioReports embedded />
+        </TabsContent>
+        <TabsContent value="lease-collections">
+          <LeaseCollectionTracker />
         </TabsContent>
       </Tabs>
     </div>
