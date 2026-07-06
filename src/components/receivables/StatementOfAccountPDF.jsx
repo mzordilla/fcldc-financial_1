@@ -57,9 +57,10 @@ export default function StatementOfAccountPDF({ projectName, clientName, rows })
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.text("Invoice #", margin + 3, y);
-    doc.text("Due Date", margin + 55, y);
-    doc.text("Billed", pageW - margin - 70, y, { align: "right" });
-    doc.text("Collected", pageW - margin - 38, y, { align: "right" });
+    doc.text("Client", margin + 35, y);
+    doc.text("Project", margin + 75, y);
+    doc.text("Due Date", margin + 115, y);
+    doc.text("Billed", pageW - margin - 55, y, { align: "right" });
     doc.text("Balance", pageW - margin - 3, y, { align: "right" });
     doc.setDrawColor(220, 220, 220);
     doc.line(margin, y + 1, pageW - margin, y + 1);
@@ -77,14 +78,17 @@ export default function StatementOfAccountPDF({ projectName, clientName, rows })
         y = 20;
       }
       const balance = (r.amount || 0) - (r.amount_paid || 0);
+      doc.setFontSize(8);
       doc.setTextColor(30, 30, 30);
       doc.text(r.invoice_number || "—", margin + 3, y);
-      doc.text(r.due_date ? format(new Date(r.due_date), "MMM d, yyyy") : "—", margin + 55, y);
-      doc.text(`₱${(r.amount || 0).toLocaleString()}`, pageW - margin - 70, y, { align: "right" });
-      doc.text(`₱${(r.amount_paid || 0).toLocaleString()}`, pageW - margin - 38, y, { align: "right" });
+      doc.text(r.client_name || "—", margin + 35, y);
+      doc.text(r.project_name || "—", margin + 75, y);
+      doc.text(r.due_date ? format(new Date(r.due_date), "MMM d, yyyy") : "—", margin + 115, y);
+      doc.text(`₱${(r.amount || 0).toLocaleString()}`, pageW - margin - 55, y, { align: "right" });
       doc.setFont("helvetica", "bold");
       doc.text(`₱${balance.toLocaleString()}`, pageW - margin - 3, y, { align: "right" });
       doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
       doc.setDrawColor(240, 240, 240);
       doc.line(margin, y + 2, pageW - margin, y + 2);
       y += 8;
