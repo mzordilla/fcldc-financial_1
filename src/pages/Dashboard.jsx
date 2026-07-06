@@ -13,6 +13,7 @@ import DebtSummary from "../components/dashboard/DebtSummary";
 
 import DebtSummarySectionTop from "../components/dashboard/DebtSummarySectionTop";
 import AvailableForRelease from "../components/dashboard/AvailableForRelease";
+import ActivityNotes from "../components/dashboard/ActivityNotes";
 
 export default function Dashboard() {
   const { data: transactions = [] } = useQuery({
@@ -105,6 +106,8 @@ export default function Dashboard() {
         <IncomeByCategory transactions={transactions} />
         <RecentActivity transactions={transactions} />
       </div>
+
+      <ActivityNotes />
 
       <DebtSummary debts={debts} loans={loans} />
 

@@ -1,0 +1,23 @@
+{
+  "name": "ActivityNote",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Short title of the highlighted activity"
+    },
+    "note_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date this activity/note is for"
+    },
+    "details": {
+      "type": "string",
+      "description": "Additional details about the activity"
+    }
+  },
+  "required": [
+    "title",
+    "note_date"
+  ]
+}
