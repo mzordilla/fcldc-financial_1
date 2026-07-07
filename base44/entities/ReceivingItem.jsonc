@@ -27,6 +27,10 @@
       "type": "string",
       "description": "Person who received the items"
     },
+    "invoice_number": {
+      "type": "string",
+      "description": "Supplier invoice number for this delivery"
+    },
     "line_items": {
       "type": "array",
       "description": "Items received",

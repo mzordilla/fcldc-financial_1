@@ -21,6 +21,7 @@ export default function ReceiveItemsDialog({ open, onOpenChange, po }) {
   const [receivedDate, setReceivedDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [receivedBy, setReceivedBy] = useState("");
   const [receiptUrl, setReceiptUrl] = useState("");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
   const [notes, setNotes] = useState("");
 
   // Fetch existing receiving history for this PO
@@ -65,6 +66,7 @@ export default function ReceiveItemsDialog({ open, onOpenChange, po }) {
     setReceivedDate(format(new Date(), "yyyy-MM-dd"));
     setReceivedBy("");
     setReceiptUrl("");
+    setInvoiceNumber("");
     setNotes("");
   }
 
@@ -109,6 +111,7 @@ export default function ReceiveItemsDialog({ open, onOpenChange, po }) {
       project_name: po.project_name,
       received_date: receivedDate,
       received_by: receivedBy,
+      invoice_number: invoiceNumber,
       line_items: itemsToRecord.map(li => ({
         description: li.description,
         quantity_ordered: li.quantity,
@@ -192,6 +195,15 @@ export default function ReceiveItemsDialog({ open, onOpenChange, po }) {
                     onChange={(e) => setReceivedBy(e.target.value)}
                   />
                 </div>
+              </div>
+
+              <div>
+                <Label>Invoice Number</Label>
+                <Input
+                  placeholder="e.g. INV-00123"
+                  value={invoiceNumber}
+                  onChange={(e) => setInvoiceNumber(e.target.value)}
+                />
               </div>
 
               <div>
