@@ -40,6 +40,14 @@ const UNIT_OPTIONS = [
   { value: "cu.m", label: "Cubic Meters (cu.m)" },
   { value: "cu.ft", label: "Cubic Feet (cu.ft)" },
   { value: "unit", label: "Unit" },
+  { value: "pack", label: "Pack" },
+  { value: "can", label: "Can" },
+  { value: "quart", label: "Quart" },
+  { value: "bottle", label: "Bottle" },
+  { value: "tube", label: "Tube" },
+  { value: "linear_meter", label: "Linear Meter" },
+  { value: "cylinder", label: "Cylinder" },
+  { value: "ream", label: "Ream" },
   { value: "other", label: "Other" },
 ];
 
