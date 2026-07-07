@@ -12,6 +12,7 @@ export default function ReceiptUploadDialog({ open, onOpenChange, po, onSuccess 
   const [fileName, setFileName] = useState("");
   const [deliveryDate, setDeliveryDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [deliveryNotes, setDeliveryNotes] = useState("");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
   const [receivedQtys, setReceivedQtys] = useState({});
   const [uploading, setUploading] = useState(false);
 
@@ -22,6 +23,7 @@ export default function ReceiptUploadDialog({ open, onOpenChange, po, onSuccess 
       setFileName("");
       setDeliveryDate(format(new Date(), "yyyy-MM-dd"));
       setDeliveryNotes("");
+      setInvoiceNumber("");
       // Default received qty = ordered qty
       const qtys = {};
       (po.line_items || []).forEach((item, idx) => {
@@ -89,6 +91,7 @@ export default function ReceiptUploadDialog({ open, onOpenChange, po, onSuccess 
       supplier_name: po.supplier_name,
       project_name: po.project_name || "",
       received_date: deliveryDate,
+      invoice_number: invoiceNumber,
       line_items: lineItems,
       total_amount: totalReceived,
       receipt_url: receiptUrl,
@@ -216,13 +219,21 @@ export default function ReceiptUploadDialog({ open, onOpenChange, po, onSuccess 
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Notes <span className="text-muted-foreground font-normal">(optional)</span></Label>
+            <Label>Invoice Number</Label>
             <Input
-              value={deliveryNotes}
-              onChange={e => setDeliveryNotes(e.target.value)}
-              placeholder="Condition, remarks…"
+              value={invoiceNumber}
+              onChange={e => setInvoiceNumber(e.target.value)}
+              placeholder="e.g. INV-00123"
             />
           </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Notes <span className="text-muted-foreground font-normal">(optional)</span></Label>
+          <Input
+            value={deliveryNotes}
+            onChange={e => setDeliveryNotes(e.target.value)}
+            placeholder="Condition, remarks…"
+          />
         </div>
 
         <DialogFooter>
