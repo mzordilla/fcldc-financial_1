@@ -214,9 +214,10 @@ export default function Payables() {
   const allSuppliers = summary?.suppliers || [];
 
   const searchTerm = search.trim().toLowerCase();
-  const supplierList = searchTerm
+  const supplierList = (searchTerm
     ? allSuppliers.filter((s) => s.supplier.toLowerCase().includes(searchTerm))
-    : allSuppliers;
+    : allSuppliers
+  ).slice().sort((a, b) => a.supplier.localeCompare(b.supplier));
 
   const toggleSupplier = (supplier) => {
     setExpandedSuppliers((prev) => {
@@ -363,6 +364,17 @@ export default function Payables() {
             </div>
           </div>
         )}
+        {supplierList.length > 0 && (
+          <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            <span>Supplier</span>
+            <span className="text-right">Current</span>
+            <span className="text-right">1-30</span>
+            <span className="text-right">31-60</span>
+            <span className="text-right">61-90</span>
+            <span className="text-right">90+</span>
+            <span></span>
+          </div>
+        )}
         {supplierList.map(({ supplier, count, buckets, total }) => {
           const isExpanded = expandedSuppliers.has(supplier);
           return (
@@ -371,44 +383,27 @@ export default function Payables() {
                 className="w-full px-5 py-3 bg-muted/50 border-b border-border hover:bg-muted/70 transition-colors"
                 onClick={() => toggleSupplier(supplier)}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "" : "-rotate-90"}`} />
-                    <div className="text-left">
-                      <h3 className="text-base font-semibold text-foreground">{supplier}</h3>
+                <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 items-center">
+                  <div className="flex items-center gap-2 text-left min-w-0">
+                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />
+                    <div className="min-w-0">
+                      <h3 className="text-base font-semibold text-foreground truncate">{supplier}</h3>
                       <p className="text-xs text-muted-foreground mt-0.5">{count} invoice{count > 1 ? "s" : ""} · ₱{total.toLocaleString(undefined, { minimumFractionDigits: 2 })} outstanding</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs"
-                      onClick={e => { e.stopPropagation(); setStatementSupplier(supplier); }}
-                    >
-                      <FileText className="w-3 h-3 mr-1" /> Statement
-                    </Button>
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-muted-foreground">Current:</span>
-                      <span className="font-semibold text-primary">₱{buckets.current.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-muted-foreground">30:</span>
-                      <span className="font-semibold text-chart-3">₱{buckets.days30.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-muted-foreground">60:</span>
-                      <span className="font-semibold text-orange-500">₱{buckets.days60.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-muted-foreground">90:</span>
-                      <span className="font-semibold text-destructive">₱{buckets.days90.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className="text-muted-foreground">90+:</span>
-                      <span className="font-semibold text-destructive">₱{buckets.days90plus.toLocaleString()}</span>
-                    </div>
-                  </div>
+                  <span className="text-right text-xs font-semibold text-primary">₱{buckets.current.toLocaleString()}</span>
+                  <span className="text-right text-xs font-semibold text-chart-3">₱{buckets.days30.toLocaleString()}</span>
+                  <span className="text-right text-xs font-semibold text-orange-500">₱{buckets.days60.toLocaleString()}</span>
+                  <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90.toLocaleString()}</span>
+                  <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90plus.toLocaleString()}</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs ml-3"
+                    onClick={e => { e.stopPropagation(); setStatementSupplier(supplier); }}
+                  >
+                    <FileText className="w-3 h-3 mr-1" /> Statement
+                  </Button>
                 </div>
               </button>
               <SupplierInvoiceDetails supplier={supplier} isExpanded={isExpanded} onDelete={handleDeleteInvoice} />
