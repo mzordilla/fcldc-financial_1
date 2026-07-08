@@ -113,10 +113,9 @@ export default function PaymentApprovals() {
   );
 
   const availablePOs = approvedPOs.filter(po => {
-    const hasPaymentRequest = poRefsWithRequests.has(po.po_number) || poRefsWithRequests.has(po.id);
     const hasPayableById = poIdsWithPayables.has(po.id);
     const hasPayableByRef = po.po_number && poIdsWithPayables.has(po.po_number);
-    return !hasPaymentRequest && !hasPayableById && !hasPayableByRef;
+    return !hasPayableById && !hasPayableByRef;
   });
 
   // Map PR category to a sensible expense CoA name
@@ -633,7 +632,7 @@ export default function PaymentApprovals() {
               </div>
             </div>
           )}
-          <SupplierGroupedPOs ref={posGroupRef} pos={availablePOs} onConvert={convertPOtoPaymentRequest} />
+          <SupplierGroupedPOs ref={posGroupRef} pos={availablePOs} onConvert={convertPOtoPaymentRequest} poIdsWithRequest={poRefsWithRequests} />
         </TabsContent>
 
         {/* Pending */}

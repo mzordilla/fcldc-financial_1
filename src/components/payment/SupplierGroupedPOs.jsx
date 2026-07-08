@@ -1,9 +1,9 @@
 import { useState, forwardRef, useImperativeHandle } from "react";
-import { ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 
-const SupplierGroupedPOs = forwardRef(function SupplierGroupedPOs({ pos, onConvert }, ref) {
+const SupplierGroupedPOs = forwardRef(function SupplierGroupedPOs({ pos, onConvert, poIdsWithRequest }, ref) {
   const [expandedSuppliers, setExpandedSuppliers] = useState(new Set());
 
   const bySupplier = {};
@@ -61,7 +61,9 @@ const SupplierGroupedPOs = forwardRef(function SupplierGroupedPOs({ pos, onConve
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {supplierPOs.map((po) => (
+                    {supplierPOs.map((po) => {
+                      const hasRequest = poIdsWithRequest && (poIdsWithRequest.has(po.po_number) || poIdsWithRequest.has(po.id));
+                      return (
                       <tr key={po.id} className="hover:bg-muted/20 transition-colors">
                         <td className="px-2 py-0.5 font-mono text-muted-foreground whitespace-nowrap">
                           {po.po_number || "—"}
@@ -74,12 +76,19 @@ const SupplierGroupedPOs = forwardRef(function SupplierGroupedPOs({ pos, onConve
                         <td className="px-2 py-0.5 text-muted-foreground whitespace-nowrap">{po.required_date ? format(new Date(po.required_date), "MMM d, yyyy") : "—"}</td>
                         <td className="px-2 py-0.5 text-right font-bold text-foreground whitespace-nowrap">₱{(po.amount || 0).toLocaleString()}</td>
                         <td className="px-2 py-0.5 text-right">
-                          <Button size="sm" variant="outline" onClick={() => onConvert(po)} className="h-6 px-2 text-xs">
-                            <Plus className="w-3 h-3 mr-1" /> Create PR
-                          </Button>
+                          {hasRequest ? (
+                            <span className="inline-flex items-center gap-1 text-xs text-primary font-medium">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> PR Created
+                            </span>
+                          ) : (
+                            <Button size="sm" variant="outline" onClick={() => onConvert(po)} className="h-6 px-2 text-xs">
+                              <Plus className="w-3 h-3 mr-1" /> Create PR
+                            </Button>
+                          )}
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
