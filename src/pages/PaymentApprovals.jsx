@@ -549,7 +549,7 @@ export default function PaymentApprovals() {
 
   return (
 
-    <div className="p-4 md:p-8 w-full mx-auto space-y-6">
+    <div className="p-4 md:p-6 w-full mx-auto space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Payment Approvals</h1>
@@ -602,22 +602,22 @@ export default function PaymentApprovals() {
       </div>
 
       {/* Summary banners */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {pending.length > 0 && (
-          <div className="bg-chart-3/10 border border-chart-3/20 rounded-2xl p-4 flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-chart-3 flex-shrink-0" />
+          <div className="bg-chart-3/10 border border-chart-3/20 rounded-xl p-3 flex items-center gap-3">
+            <AlertTriangle className="w-4 h-4 text-chart-3 flex-shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-chart-3">{pending.length} Pending Approval</p>
-              <p className="text-xs text-chart-3/80">₱{totalPending.toLocaleString()} awaiting review</p>
+              <p className="text-xs font-semibold text-chart-3">{pending.length} Pending Approval</p>
+              <p className="text-[11px] text-chart-3/80">₱{totalPending.toLocaleString()} awaiting review</p>
             </div>
           </div>
         )}
         {approved.length > 0 && (
-          <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+          <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 flex items-center gap-3">
+            <CheckCircle className="w-4 h-4 text-primary flex-shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-primary">{approved.length} Approved — Ready to Pay</p>
-              <p className="text-xs text-primary/80">₱{totalApproved.toLocaleString()} to be disbursed</p>
+              <p className="text-xs font-semibold text-primary">{approved.length} Approved — Ready to Pay</p>
+              <p className="text-[11px] text-primary/80">₱{totalApproved.toLocaleString()} to be disbursed</p>
             </div>
           </div>
         )}
@@ -625,14 +625,14 @@ export default function PaymentApprovals() {
 
       {/* Approved Purchase Orders — Ready to Pay */}
       {availablePOs.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-2">
           <button
             onClick={() => setExpandedPOs(!expandedPOs)}
-            className="w-full flex items-center justify-between gap-2 p-3 bg-muted/30 hover:bg-muted/50 border border-border rounded-xl transition-colors"
+            className="w-full flex items-center justify-between gap-2 p-2.5 bg-muted/30 hover:bg-muted/50 border border-border rounded-xl transition-colors"
           >
             <div className="flex items-center gap-2">
               <ShoppingCart className="w-4 h-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Approved Purchase Orders — Ready to Pay</h2>
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Approved Purchase Orders — Ready to Pay</h2>
               <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">{availablePOs.length}</span>
             </div>
             <div className="flex items-center gap-2">
