@@ -4,15 +4,42 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export default function ProjectDeliverySummary({ receivingRecords }) {
+const COA_CATEGORY_LABELS = {
+  project_payment: "Project Payment", material_cost: "Material Cost", labor: "Labor",
+  equipment: "Equipment", subcontractor: "Subcontractor", overhead: "Overhead",
+  permits: "Permits", insurance: "Insurance", bank_reconciliation: "Bank Reconciliation",
+  non_current_assets: "Non-Current Assets", current_assets: "Current Assets",
+  current_liabilities: "Current Liabilities", non_current_liabilities: "Non-Current Liabilities",
+  repair_and_maintenance: "Repair & Maintenance", fixtures: "Fixtures", other: "Other",
+};
+
+export default function ProjectDeliverySummary({ receivingRecords, orders = [] }) {
   const [search, setSearch] = useState("");
+  const [supplierFilter, setSupplierFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [expandedProject, setExpandedProject] = useState(null);
+
+  const poCategoryMap = useMemo(() => {
+    const map = {};
+    orders.forEach((o) => { map[o.id] = o.category; });
+    return map;
+  }, [orders]);
+
+  const recordSuppliers = useMemo(() => [...new Set(receivingRecords.map((r) => r.supplier_name).filter(Boolean))].sort(), [receivingRecords]);
+  const recordCategories = useMemo(() => [...new Set(receivingRecords.map((r) => poCategoryMap[r.po_id]).filter(Boolean))].sort(), [receivingRecords, poCategoryMap]);
+
+  const filteredRecords = useMemo(() => receivingRecords.filter((r) => {
+    if (supplierFilter !== "all" && r.supplier_name !== supplierFilter) return false;
+    if (categoryFilter !== "all" && poCategoryMap[r.po_id] !== categoryFilter) return false;
+    return true;
+  }), [receivingRecords, supplierFilter, categoryFilter, poCategoryMap]);
 
   // Group all receiving line items by project
   const projectGroups = useMemo(() => {
     const map = {};
-    for (const record of receivingRecords) {
+    for (const record of filteredRecords) {
       const project = record.project_name || "(No Project)";
       if (!map[project]) {
         map[project] = {
@@ -41,7 +68,7 @@ export default function ProjectDeliverySummary({ receivingRecords }) {
       });
     }
     return Object.values(map).sort((a, b) => b.total_value - a.total_value);
-  }, [receivingRecords]);
+  }, [filteredRecords]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -64,9 +91,9 @@ export default function ProjectDeliverySummary({ receivingRecords }) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Projects", value: projectGroups.length },
-          { label: "Total POs Delivered", value: new Set(receivingRecords.map(r => r.po_number).filter(Boolean)).size },
-          { label: "Total Suppliers", value: new Set(receivingRecords.map(r => r.supplier_name).filter(Boolean)).size },
-          { label: "Grand Total Value", value: `₱${receivingRecords.reduce((s, r) => s + (r.total_amount || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, highlight: true },
+          { label: "Total POs Delivered", value: new Set(filteredRecords.map(r => r.po_number).filter(Boolean)).size },
+          { label: "Total Suppliers", value: new Set(filteredRecords.map(r => r.supplier_name).filter(Boolean)).size },
+          { label: "Grand Total Value", value: `₱${filteredRecords.reduce((s, r) => s + (r.total_amount || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, highlight: true },
         ].map((kpi, i) => (
           <div key={i} className="bg-card rounded-xl border border-border p-4">
             <p className="text-xs text-muted-foreground">{kpi.label}</p>
@@ -75,10 +102,26 @@ export default function ProjectDeliverySummary({ receivingRecords }) {
         ))}
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="Search by project or supplier..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+      {/* Search & Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Search by project or supplier..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+          <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="All Suppliers" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Suppliers</SelectItem>
+            {recordSuppliers.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="All Categories" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {recordCategories.map((c) => <SelectItem key={c} value={c}>{COA_CATEGORY_LABELS[c] || c}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Project cards */}

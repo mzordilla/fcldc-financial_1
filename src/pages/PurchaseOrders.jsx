@@ -785,7 +785,7 @@ export default function PurchaseOrders() {
         </TabsContent>
 
         <TabsContent value="project-summary">
-          <ProjectDeliverySummary receivingRecords={receivingGroups} />
+          <ProjectDeliverySummary receivingRecords={receivingGroups} orders={orders} />
         </TabsContent>
 
         <TabsContent value="suppliers">
