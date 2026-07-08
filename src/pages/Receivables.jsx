@@ -281,6 +281,17 @@ export default function Receivables() {
                 </div>
               );
             })}
+            <div className="bg-muted/50 px-5 py-3">
+              <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 items-center">
+                <span className="text-sm font-bold text-foreground">Total</span>
+                <span className="text-right text-xs font-bold text-primary">₱{clientList.reduce((s, c) => s + c.buckets.current, 0).toLocaleString()}</span>
+                <span className="text-right text-xs font-bold text-chart-3">₱{clientList.reduce((s, c) => s + c.buckets.days30, 0).toLocaleString()}</span>
+                <span className="text-right text-xs font-bold text-orange-500">₱{clientList.reduce((s, c) => s + c.buckets.days60, 0).toLocaleString()}</span>
+                <span className="text-right text-xs font-bold text-destructive">₱{clientList.reduce((s, c) => s + c.buckets.days90, 0).toLocaleString()}</span>
+                <span className="text-right text-xs font-bold text-destructive">₱{clientList.reduce((s, c) => s + c.buckets.days90plus, 0).toLocaleString()}</span>
+                <span></span>
+              </div>
+            </div>
           </div>
         )}
       </div>
