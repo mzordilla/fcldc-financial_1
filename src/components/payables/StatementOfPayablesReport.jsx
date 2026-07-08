@@ -79,18 +79,12 @@ export default function StatementOfPayablesReport() {
   );
 
   const handleExport = () => {
-    const header = ["Supplier", "Row", ...periods.map((p) => p.label)];
+    const header = ["Supplier", ...periods.map((p) => p.label)];
     const data = [header];
     rows.forEach(({ supplier, periodData }) => {
-      [
-        { key: "invoiced", label: "Invoiced" },
-        { key: "paid", label: "Paid" },
-        { key: "balance", label: "Balance" },
-      ].forEach((line) => {
-        data.push([supplier, line.label, ...periodData.map((pd) => pd[line.key])]);
-      });
+      data.push([supplier, ...periodData.map((pd) => pd.balance)]);
     });
-    data.push(["Total Balance", "", ...periodTotals.map((t) => t.balance)]);
+    data.push(["Total Balance", ...periodTotals.map((t) => t.balance)]);
     const ws = XLSX.utils.aoa_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Statement of Payables");
