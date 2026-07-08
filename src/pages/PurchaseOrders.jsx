@@ -74,6 +74,9 @@ export default function PurchaseOrders() {
   const [expandedGroups, setExpandedGroups] = useState({ pending: true, approved: true, rejected: false, cancelled: false });
   const [statusFilter, setStatusFilter] = useState("approved");
   const [supplierFilter, setSupplierFilter] = useState("all");
+  const [projectFilter, setProjectFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [coaFilter, setCoaFilter] = useState("all");
   const [poSearch, setPoSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -350,10 +353,15 @@ export default function PurchaseOrders() {
   };
 
   const poSuppliers = useMemo(() => [...new Set(orders.map((o) => o.supplier_name).filter(Boolean))].sort(), [orders]);
+  const poProjects = useMemo(() => [...new Set(orders.map((o) => o.project_name).filter(Boolean))].sort(), [orders]);
+  const poCoas = useMemo(() => [...new Set(orders.map((o) => o.chart_of_account).filter(Boolean))].sort(), [orders]);
 
   const filtered = orders.filter((o) => {
     if (statusFilter !== "all" && o.approval_status !== statusFilter) return false;
     if (supplierFilter !== "all" && o.supplier_name !== supplierFilter) return false;
+    if (projectFilter !== "all" && o.project_name !== projectFilter) return false;
+    if (categoryFilter !== "all" && o.category !== categoryFilter) return false;
+    if (coaFilter !== "all" && o.chart_of_account !== coaFilter) return false;
     if (dateFrom && (!o.requested_date || o.requested_date < dateFrom)) return false;
     if (dateTo && (!o.requested_date || o.requested_date > dateTo)) return false;
     const q = poSearch.toLowerCase();
@@ -489,6 +497,27 @@ export default function PurchaseOrders() {
             <SelectContent>
               <SelectItem value="all">All Suppliers</SelectItem>
               {poSuppliers.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={projectFilter} onValueChange={setProjectFilter}>
+            <SelectTrigger className="w-44"><SelectValue placeholder="All Projects" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Projects</SelectItem>
+              {poProjects.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-44"><SelectValue placeholder="All Categories" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {PO_CATEGORY_OPTIONS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={coaFilter} onValueChange={setCoaFilter}>
+            <SelectTrigger className="w-44"><SelectValue placeholder="All Chart of Accts" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Chart of Accts</SelectItem>
+              {poCoas.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
           <Input type="date" className="w-36" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} title="From date" />
