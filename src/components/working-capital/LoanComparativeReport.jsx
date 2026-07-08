@@ -43,12 +43,15 @@ export default function LoanComparativeReport({ items }) {
   });
 
   const [drafts, setDrafts] = useState({});
+  const [beginningBalanceOverrides, setBeginningBalanceOverrides] = useState({});
 
   const getCellKey = (loanId, month) => `${loanId}_${month}`;
 
   const buildSchedule = (loan) => {
     const monthlyRate = (loan.interest_rate || 0) / 100 / 12;
-    let runningBalance = loan.principal_balance || 0;
+    let runningBalance = beginningBalanceOverrides[loan.id] !== undefined
+      ? Number(beginningBalanceOverrides[loan.id]) || 0
+      : (loan.principal_balance || 0);
     const schedule = {};
     months.forEach(month => {
       const existing = payments.find(p => p.loan_id === loan.id && p.month === month);
@@ -147,8 +150,14 @@ export default function LoanComparativeReport({ items }) {
                           {rowIdx === 0 && (
                             <td rowSpan={rows.length} className="border border-border px-3 py-2 align-top font-medium text-foreground whitespace-nowrap sticky left-0 bg-card">
                               {loan.creditor}
-                              <div className="mt-1 font-normal text-muted-foreground">
-                                Beginning Principal (Jan 1): ₱{(loan.principal_balance || 0).toLocaleString()}
+                              <div className="mt-1 font-normal text-muted-foreground flex items-center gap-1">
+                                <span>Beginning Principal (Jan 1): ₱</span>
+                                <Input
+                                  type="number"
+                                  value={beginningBalanceOverrides[loan.id] !== undefined ? beginningBalanceOverrides[loan.id] : (loan.principal_balance || 0)}
+                                  onChange={e => setBeginningBalanceOverrides(prev => ({ ...prev, [loan.id]: e.target.value }))}
+                                  className="h-6 text-xs w-24"
+                                />
                               </div>
                             </td>
                           )}
