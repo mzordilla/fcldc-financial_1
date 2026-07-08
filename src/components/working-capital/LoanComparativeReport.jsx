@@ -44,7 +44,6 @@ export default function LoanComparativeReport({ items }) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["loan_payments"] }),
   });
 
-  const [drafts, setDrafts] = useState({});
   const [interestDrafts, setInterestDrafts] = useState({});
   const [principalDrafts, setPrincipalDrafts] = useState({});
   const [beginningBalanceOverrides, setBeginningBalanceOverrides] = useState({});
@@ -63,13 +62,13 @@ export default function LoanComparativeReport({ items }) {
       const expected = loan.monthly_payment || 0;
       const beginningBalance = runningBalance;
       const draftKey = getCellKey(loan.id, month);
-      const actual = drafts[draftKey] !== undefined ? drafts[draftKey] : (existing?.actual_amount ?? expected);
       const interestComponent = interestDrafts[draftKey] !== undefined
         ? (Number(interestDrafts[draftKey]) || 0)
         : (existing?.interest_component ?? Math.round(beginningBalance * monthlyRate));
       const principalComponent = principalDrafts[draftKey] !== undefined
         ? (Number(principalDrafts[draftKey]) || 0)
-        : Math.max(0, (Number(actual) || 0) - interestComponent);
+        : Math.max(0, (existing?.actual_amount ?? expected) - interestComponent);
+      const actual = interestComponent + principalComponent;
       const endingBalance = Math.max(0, beginningBalance - principalComponent);
       const finished = endingBalance <= 0;
       schedule[month] = { existing, expected, interestComponent, principalComponent, actual, beginningBalance, endingBalance, finished };
@@ -82,9 +81,8 @@ export default function LoanComparativeReport({ items }) {
 
   const handleBlur = (loan, month, cell) => {
     const draftKey = getCellKey(loan.id, month);
-    const hasEdit = drafts[draftKey] !== undefined || interestDrafts[draftKey] !== undefined || principalDrafts[draftKey] !== undefined;
+    const hasEdit = interestDrafts[draftKey] !== undefined || principalDrafts[draftKey] !== undefined;
     if (!hasEdit) return;
-    const actualAmount = Number(cell.actual) || 0;
     upsertMutation.mutate({
       existing: cell.existing,
       data: {
@@ -92,15 +90,10 @@ export default function LoanComparativeReport({ items }) {
         loan_creditor: loan.creditor,
         month,
         expected_amount: cell.expected,
-        actual_amount: actualAmount,
+        actual_amount: cell.actual,
         interest_component: cell.interestComponent,
         principal_component: cell.principalComponent,
       },
-    });
-    setDrafts(prev => {
-      const next = { ...prev };
-      delete next[draftKey];
-      return next;
     });
     setInterestDrafts(prev => {
       const next = { ...prev };
@@ -163,7 +156,6 @@ export default function LoanComparativeReport({ items }) {
                 {group.loans.map(loan => {
                   const schedule = buildSchedule(loan);
                   const rows = [
-                    { key: "actual", label: "Actual Paid" },
                     { key: "interestComponent", label: "Interest" },
                     { key: "principalComponent", label: "Principal" },
                     { key: "endingBalance", label: "Ending Balance" },
@@ -190,19 +182,6 @@ export default function LoanComparativeReport({ items }) {
                           {months.map(month => {
                             const cell = schedule[month];
                             const draftKey = getCellKey(loan.id, month);
-                            if (row.key === "actual") {
-                              return (
-                                <td key={month} className="border border-border px-1 py-1 text-center">
-                                  <Input
-                                    type="number"
-                                    value={drafts[draftKey] !== undefined ? drafts[draftKey] : cell.actual}
-                                    onChange={e => setDrafts(prev => ({ ...prev, [draftKey]: e.target.value }))}
-                                    onBlur={() => handleBlur(loan, month, cell)}
-                                    className="h-6 text-xs text-right w-24 mx-auto border-none shadow-none bg-transparent focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-background px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                  />
-                                </td>
-                              );
-                            }
                             if (row.key === "interestComponent") {
                               return (
                                 <td key={month} className="border border-border px-1 py-1 text-center">
