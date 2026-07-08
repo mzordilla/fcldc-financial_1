@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import PayableCard from "../components/payables/PayableCard";
 import SupplierStatementDialog from "../components/payables/SupplierStatementDialog";
 import SupplierInvoiceDetails from "../components/payables/SupplierInvoiceDetails";
+import StatementOfPayablesReport from "../components/payables/StatementOfPayablesReport";
 
 function AgingSummary({ overall, overallTotal }) {
   const buckets = [
@@ -42,6 +43,7 @@ function AgingSummary({ overall, overallTotal }) {
 }
 
 export default function Payables() {
+  const [activeTab, setActiveTab] = useState("payables");
   const [statementSupplier, setStatementSupplier] = useState(null);
   const [showPaymentRequests, setShowPaymentRequests] = useState(true);
   const [showPaid, setShowPaid] = useState(false);
@@ -262,6 +264,27 @@ export default function Payables() {
 
       {dupesResultMsg && <p className="text-xs text-muted-foreground">{dupesResultMsg}</p>}
 
+      <div className="flex gap-1 border-b border-border">
+        {[
+          { key: "payables", label: "Payables" },
+          { key: "statement", label: "Statement of Payables" },
+        ].map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
+              activeTab === tab.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "statement" && <StatementOfPayablesReport />}
+
+      {activeTab === "payables" && <>
+
       <div className="relative max-w-md">
         <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
         <Input
@@ -443,6 +466,7 @@ export default function Payables() {
         supplier={statementSupplier}
         payables={statementInvoices}
       />
+      </>}
     </div>
   );
 }
