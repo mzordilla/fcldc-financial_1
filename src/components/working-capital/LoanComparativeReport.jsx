@@ -1,22 +1,24 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { format, subMonths, startOfMonth } from "date-fns";
+import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
-
-const MONTHS_BACK = 6;
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function LoanComparativeReport({ items }) {
   const queryClient = useQueryClient();
   const activeLoans = items.filter(l => l.status === "active");
+  const currentYear = new Date().getFullYear();
+  const [year, setYear] = useState(String(currentYear));
+  const yearOptions = [currentYear - 1, currentYear, currentYear + 1].map(String);
 
   const months = useMemo(() => {
     const arr = [];
-    for (let i = MONTHS_BACK - 1; i >= 0; i--) {
-      arr.push(format(startOfMonth(subMonths(new Date(), i)), "yyyy-MM"));
+    for (let i = 0; i < 12; i++) {
+      arr.push(`${year}-${String(i + 1).padStart(2, "0")}`);
     }
     return arr;
-  }, []);
+  }, [year]);
 
   const { data: payments = [] } = useQuery({
     queryKey: ["loan_payments"],
@@ -73,9 +75,17 @@ export default function LoanComparativeReport({ items }) {
 
   return (
     <div className="bg-card rounded-2xl border border-border overflow-hidden">
-      <div className="px-6 py-4 border-b border-border">
-        <h2 className="text-lg font-bold text-foreground">Comparative Monthly Payments</h2>
-        <p className="text-sm text-muted-foreground">Interest vs. principal breakdown per loan — edit the actual amount debited from the bank</p>
+      <div className="px-6 py-4 border-b border-border flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-bold text-foreground">Comparative Monthly Payments</h2>
+          <p className="text-sm text-muted-foreground">Interest vs. principal breakdown per loan — edit the actual amount debited from the bank</p>
+        </div>
+        <Select value={year} onValueChange={setYear}>
+          <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {yearOptions.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">

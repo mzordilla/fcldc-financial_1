@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import OutstandingVsGranted from "../components/working-capital/OutstandingVsGranted";
 import ProjectedCashOutflows from "../components/working-capital/ProjectedCashOutflows";
@@ -155,7 +156,17 @@ export default function WorkingCapitalLoans() {
 
       <UpcomingMaturities items={items} />
 
-      <LoanComparativeReport items={items} />
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="comparative">Comparative Report</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="comparative" className="mt-4">
+          <LoanComparativeReport items={items} />
+        </TabsContent>
+
+        <TabsContent value="overview" className="mt-4 space-y-6">
 
       {viewMode === "table" ? (
         <>
@@ -323,6 +334,8 @@ export default function WorkingCapitalLoans() {
           )}
         </div>
       )}
+        </TabsContent>
+      </Tabs>
 
       <AddFormDialog
         open={showAdd}
