@@ -181,7 +181,7 @@ export default function LoanComparativeReport({ items }) {
                                     value={drafts[draftKey] !== undefined ? drafts[draftKey] : cell.actual}
                                     onChange={e => setDrafts(prev => ({ ...prev, [draftKey]: e.target.value }))}
                                     onBlur={() => handleBlur(loan, month, cell)}
-                                    className="h-6 text-xs text-right w-24 mx-auto"
+                                    className="h-6 text-xs text-right w-24 mx-auto border-none shadow-none bg-transparent focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-background px-1"
                                   />
                                 </td>
                               );
