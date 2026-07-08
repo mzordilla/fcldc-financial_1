@@ -15,6 +15,7 @@ import DebtServiceCoverageRatio from "../components/working-capital/DebtServiceC
 import UpcomingMaturities from "../components/working-capital/UpcomingMaturities";
 import LoanTypeTable from "../components/working-capital/LoanTypeTable";
 import CreditorLoansTable from "../components/working-capital/CreditorLoansTable";
+import LoanComparativeReport from "../components/working-capital/LoanComparativeReport";
 
 
 const typeLabels = {
@@ -153,6 +154,8 @@ export default function WorkingCapitalLoans() {
       <DebtServiceCoverageRatio items={items} />
 
       <UpcomingMaturities items={items} />
+
+      <LoanComparativeReport items={items} />
 
       {viewMode === "table" ? (
         <>

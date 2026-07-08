@@ -1,0 +1,42 @@
+{
+  "name": "LoanPayment",
+  "type": "object",
+  "properties": {
+    "loan_id": {
+      "type": "string",
+      "description": "Linked BankLoan or WorkingCapitalLoan ID"
+    },
+    "loan_creditor": {
+      "type": "string",
+      "description": "Creditor/lender name (denormalized)"
+    },
+    "month": {
+      "type": "string",
+      "description": "Month this payment covers, format YYYY-MM"
+    },
+    "expected_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Expected monthly payment amount"
+    },
+    "actual_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Actual amount debited from the bank"
+    },
+    "interest_component": {
+      "type": "number",
+      "default": 0,
+      "description": "Portion of the actual amount that is interest"
+    },
+    "principal_component": {
+      "type": "number",
+      "default": 0,
+      "description": "Portion of the actual amount that is principal"
+    }
+  },
+  "required": [
+    "loan_id",
+    "month"
+  ]
+}
