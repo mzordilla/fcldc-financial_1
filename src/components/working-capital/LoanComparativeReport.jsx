@@ -46,16 +46,27 @@ export default function LoanComparativeReport({ items }) {
 
   const getCellKey = (loanId, month) => `${loanId}_${month}`;
 
-  const getCell = (loan, month) => {
-    const existing = payments.find(p => p.loan_id === loan.id && p.month === month);
-    const expected = loan.monthly_payment || 0;
+  const buildSchedule = (loan) => {
     const monthlyRate = (loan.interest_rate || 0) / 100 / 12;
-    const interestComponent = existing?.interest_component ?? Math.round((loan.principal_balance || 0) * monthlyRate);
-    const draftKey = getCellKey(loan.id, month);
-    const actual = drafts[draftKey] !== undefined ? drafts[draftKey] : (existing?.actual_amount ?? expected);
-    const principalComponent = Math.max(0, (Number(actual) || 0) - interestComponent);
-    return { existing, expected, interestComponent, principalComponent, actual };
+    let runningBalance = loan.principal_balance || 0;
+    const schedule = {};
+    months.forEach(month => {
+      const existing = payments.find(p => p.loan_id === loan.id && p.month === month);
+      const expected = loan.monthly_payment || 0;
+      const beginningBalance = runningBalance;
+      const interestComponent = existing?.interest_component ?? Math.round(beginningBalance * monthlyRate);
+      const draftKey = getCellKey(loan.id, month);
+      const actual = drafts[draftKey] !== undefined ? drafts[draftKey] : (existing?.actual_amount ?? expected);
+      const principalComponent = Math.max(0, (Number(actual) || 0) - interestComponent);
+      const endingBalance = Math.max(0, beginningBalance - principalComponent);
+      const finished = endingBalance <= 0;
+      schedule[month] = { existing, expected, interestComponent, principalComponent, actual, beginningBalance, endingBalance, finished };
+      runningBalance = endingBalance;
+    });
+    return schedule;
   };
+
+  const getCell = (loan, month) => buildSchedule(loan)[month];
 
   const handleBlur = (loan, month, cell) => {
     const draftKey = getCellKey(loan.id, month);
@@ -120,35 +131,40 @@ export default function LoanComparativeReport({ items }) {
                     {typeLabels[group.type]}
                   </td>
                 </tr>
-                {group.loans.map(loan => (
-                  <tr key={loan.id} className="border-b border-border last:border-0 hover:bg-muted/30">
-                    <td className="px-4 py-3 text-sm font-medium text-foreground whitespace-nowrap sticky left-0 bg-card">
-                      {loan.creditor}
-                      <div className="text-[10px] font-normal text-muted-foreground">
-                        Beginning Principal (Jan 1): ₱{(loan.principal_balance || 0).toLocaleString()}
-                      </div>
-                    </td>
-                    {months.map(month => {
-                      const cell = getCell(loan, month);
-                      const draftKey = getCellKey(loan.id, month);
-                      return (
-                        <td key={month} className="px-2 py-2 text-center align-top">
-                          <Input
-                            type="number"
-                            value={drafts[draftKey] !== undefined ? drafts[draftKey] : cell.actual}
-                            onChange={e => setDrafts(prev => ({ ...prev, [draftKey]: e.target.value }))}
-                            onBlur={() => handleBlur(loan, month, cell)}
-                            className="h-7 text-xs text-right w-28 mx-auto"
-                          />
-                          <div className="mt-1 text-[10px] text-muted-foreground space-y-0.5">
-                            <div>Interest: ₱{cell.interestComponent.toLocaleString()}</div>
-                            <div>Principal: ₱{cell.principalComponent.toLocaleString()}</div>
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                {group.loans.map(loan => {
+                  const schedule = buildSchedule(loan);
+                  return (
+                    <tr key={loan.id} className="border-b border-border last:border-0 hover:bg-muted/30">
+                      <td className="px-4 py-3 text-sm font-medium text-foreground whitespace-nowrap sticky left-0 bg-card">
+                        {loan.creditor}
+                        <div className="text-[10px] font-normal text-muted-foreground">
+                          Beginning Principal (Jan 1): ₱{(loan.principal_balance || 0).toLocaleString()}
+                        </div>
+                      </td>
+                      {months.map(month => {
+                        const cell = schedule[month];
+                        const draftKey = getCellKey(loan.id, month);
+                        return (
+                          <td key={month} className="px-2 py-2 text-center align-top">
+                            <Input
+                              type="number"
+                              value={drafts[draftKey] !== undefined ? drafts[draftKey] : cell.actual}
+                              onChange={e => setDrafts(prev => ({ ...prev, [draftKey]: e.target.value }))}
+                              onBlur={() => handleBlur(loan, month, cell)}
+                              className="h-7 text-xs text-right w-28 mx-auto"
+                            />
+                            <div className="mt-1 text-[10px] text-muted-foreground space-y-0.5">
+                              <div>Interest: ₱{cell.interestComponent.toLocaleString()}</div>
+                              <div>Principal: ₱{cell.principalComponent.toLocaleString()}</div>
+                              <div className="font-medium text-foreground">Ending: ₱{cell.endingBalance.toLocaleString()}</div>
+                              {cell.finished && <div className="text-primary font-semibold">Paid Off</div>}
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
                 <tr className="bg-muted/10 font-medium">
                   <td className="px-4 py-2 text-xs text-muted-foreground sticky left-0 bg-muted/10">{typeLabels[group.type]} Subtotal</td>
                   {months.map(month => {
