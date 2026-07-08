@@ -370,7 +370,7 @@ export default function PurchaseOrders() {
   });
   const pending = orders.filter((o) => o.approval_status === "pending");
   const totalPendingValue = pending.reduce((s, o) => s + (o.amount || 0), 0);
-  const approved = orders.filter((o) => o.approval_status === "approved");
+  const approved = filtered.filter((o) => o.approval_status === "approved");
   const totalApprovedValue = approved.reduce((s, o) => s + (o.amount || 0), 0);
   const approvedByCategory = approved.reduce((acc, o) => {
     const key = o.category || "other";
