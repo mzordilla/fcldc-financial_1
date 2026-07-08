@@ -28,7 +28,7 @@ export default function SupplierGroupedPOs({ pos, onConvert }) {
   const supplierEntries = Object.entries(bySupplier).sort((a, b) => a[0].localeCompare(b[0]));
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-0.5">
       {supplierEntries.map(([supplier, supplierPOs]) => {
         const supplierTotal = supplierPOs.reduce((sum, po) => sum + (po.amount || 0), 0);
         const isExpanded = expandedSuppliers.has(supplier);

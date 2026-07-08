@@ -25,7 +25,7 @@ export default function SupplierGroupedRequests({ requests, renderPRRow, isAdmin
   const supplierEntries = Object.entries(bySupplier).sort((a, b) => a[0].localeCompare(b[0]));
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-0.5">
       {supplierEntries.map(([supplier, supplierPRs]) => {
         const supplierTotal = supplierPRs.reduce((sum, pr) => sum + (pr.amount || 0), 0);
         const isExpanded = expandedSuppliers.has(supplier);
