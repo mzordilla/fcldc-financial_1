@@ -236,7 +236,7 @@ export default function Payables() {
   };
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
+    <div className="p-4 md:p-6 w-full space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Payables</h1>
@@ -365,13 +365,14 @@ export default function Payables() {
           </div>
         )}
         {supplierList.length > 0 && (
-          <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 px-4 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 px-4 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
             <span>Supplier</span>
             <span className="text-right">Current</span>
             <span className="text-right">1-30</span>
             <span className="text-right">31-60</span>
             <span className="text-right">61-90</span>
             <span className="text-right">90+</span>
+            <span className="text-right">Total</span>
             <span></span>
           </div>
         )}
@@ -384,12 +385,12 @@ export default function Payables() {
                 className="w-full px-4 py-2 bg-muted/50 hover:bg-muted/70 transition-colors"
                 onClick={() => toggleSupplier(supplier)}
               >
-                <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 items-center">
+                <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 items-center">
                   <div className="flex items-center gap-2 text-left min-w-0">
                     <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />
                     <div className="min-w-0">
                       <h3 className="text-sm font-semibold text-foreground truncate">{supplier}</h3>
-                      <p className="text-[11px] text-muted-foreground">{count} invoice{count > 1 ? "s" : ""} · ₱{total.toLocaleString(undefined, { minimumFractionDigits: 2 })} outstanding</p>
+                      <p className="text-[11px] text-muted-foreground">{count} invoice{count > 1 ? "s" : ""}</p>
                     </div>
                   </div>
                   <span className="text-right text-xs font-semibold text-primary">₱{buckets.current.toLocaleString()}</span>
@@ -397,6 +398,7 @@ export default function Payables() {
                   <span className="text-right text-xs font-semibold text-orange-500">₱{buckets.days60.toLocaleString()}</span>
                   <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90.toLocaleString()}</span>
                   <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90plus.toLocaleString()}</span>
+                  <span className="text-right text-xs font-bold text-foreground">₱{total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   <Button
                     size="sm"
                     variant="outline"
