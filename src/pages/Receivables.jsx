@@ -224,13 +224,14 @@ export default function Receivables() {
           </div>
         )}
         {clientList.length > 0 && (
-          <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             <span>Client</span>
             <span className="text-right">Current</span>
             <span className="text-right">1-30</span>
             <span className="text-right">31-60</span>
             <span className="text-right">61-90</span>
             <span className="text-right">90+</span>
+            <span className="text-right">Total</span>
             <span></span>
           </div>
         )}
@@ -244,7 +245,7 @@ export default function Receivables() {
                     className="w-full px-5 py-3 bg-muted/50 hover:bg-muted/70 transition-colors"
                     onClick={() => toggleClient(client)}
                   >
-                    <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 items-center">
+                    <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 items-center">
                       <div className="flex items-center gap-2 text-left min-w-0">
                         <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />
                         <div className="min-w-0">
@@ -257,6 +258,7 @@ export default function Receivables() {
                       <span className="text-right text-xs font-semibold text-orange-500">₱{buckets.days60.toLocaleString()}</span>
                       <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90.toLocaleString()}</span>
                       <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90plus.toLocaleString()}</span>
+                      <span className="text-right text-xs font-bold text-foreground">₱{total.toLocaleString()}</span>
                       <span
                         role="button"
                         className="ml-3"
@@ -281,17 +283,6 @@ export default function Receivables() {
                 </div>
               );
             })}
-            <div className="bg-muted/50 px-5 py-3">
-              <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 items-center">
-                <span className="text-sm font-bold text-foreground">Total</span>
-                <span className="text-right text-xs font-bold text-primary">₱{clientList.reduce((s, c) => s + c.buckets.current, 0).toLocaleString()}</span>
-                <span className="text-right text-xs font-bold text-chart-3">₱{clientList.reduce((s, c) => s + c.buckets.days30, 0).toLocaleString()}</span>
-                <span className="text-right text-xs font-bold text-orange-500">₱{clientList.reduce((s, c) => s + c.buckets.days60, 0).toLocaleString()}</span>
-                <span className="text-right text-xs font-bold text-destructive">₱{clientList.reduce((s, c) => s + c.buckets.days90, 0).toLocaleString()}</span>
-                <span className="text-right text-xs font-bold text-destructive">₱{clientList.reduce((s, c) => s + c.buckets.days90plus, 0).toLocaleString()}</span>
-                <span></span>
-              </div>
-            </div>
           </div>
         )}
       </div>
