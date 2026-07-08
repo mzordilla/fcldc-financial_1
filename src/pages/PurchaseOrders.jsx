@@ -594,66 +594,83 @@ export default function PurchaseOrders() {
             <h2 className="text-lg font-semibold text-foreground">{riByPO.length} PO{riByPO.length !== 1 ? "s" : ""} · {receivingGroups.length} receipt transaction{receivingGroups.length !== 1 ? "s" : ""}</h2>
           </div>
           {riByPO.length === 0 && <p className="text-center py-12 text-muted-foreground">No receiving records yet.</p>}
-          {riByPO.map((group) => {
-            const key = group.po_id || group.po_number || "unknown";
-            const expanded = expandedRIPO === key;
-            const complete = group.receipts.some((r) => r.status === "complete");
-            return (
-              <div key={key} className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-md transition-shadow">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 cursor-pointer" onClick={() => setExpandedRIPO(expanded ? null : key)}>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 flex-wrap mb-1">
-                      <Package className="w-4 h-4 text-primary" />
-                      <h3 className="font-semibold text-foreground">{group.supplier_name}</h3>
-                      {group.po_number && <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded text-muted-foreground">PO: {group.po_number}</span>}
-                      <Badge variant="outline" className={`text-xs ${complete ? "bg-primary/10 text-primary border-primary/20" : "bg-amber-500/10 text-amber-700 border-amber-200"}`}>
-                        <CheckCircle className="w-3 h-3 mr-1" />{complete ? "Fully Received" : "Partially Received"}
-                      </Badge>
-                    </div>
-                    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                      {group.project_name && <span>Project: <span className="text-foreground font-medium">{group.project_name}</span></span>}
-                      <span>{group.receipts.length} receipt transaction{group.receipts.length !== 1 ? "s" : ""}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="sm:text-right">
-                      <p className="text-xl font-bold text-foreground">₱{group.total_received.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">Total Received Value</p>
-                    </div>
-                    {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
-                  </div>
-                </div>
-                {expanded &&
-                <div className="border-t border-border divide-y divide-border">
-                    {group.receipts.map((receipt) =>
-                  <div key={receipt.id} className="px-5 py-4 bg-muted/20">
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
-                          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                            <span>Received: <span className="text-foreground font-medium">{receipt.received_date ? format(new Date(receipt.received_date), "MMM d, yyyy") : "—"}</span></span>
-                            {receipt.received_by && <span>By: <span className="text-foreground">{receipt.received_by}</span></span>}
-                            <Badge variant="outline" className={`text-xs ${receipt.status === "complete" ? "bg-primary/10 text-primary border-primary/20" : "bg-amber-500/10 text-amber-700 border-amber-200"}`}>
-                              {receipt.status === "complete" ? "Complete" : "Partial"}
-                            </Badge>
-                          </div>
-                          <span className="text-sm font-bold text-foreground">₱{(receipt.total_amount || 0).toLocaleString()}</span>
-                        </div>
-                        {receipt.line_items?.length > 0 &&
-                    <div className="border border-border rounded-lg overflow-hidden">
-                            <table className="w-full text-xs">
-                              <thead><tr className="bg-muted/50 border-b border-border"><th className="px-3 py-2 text-left font-semibold">Item</th><th className="px-3 py-2 text-right font-semibold">Ordered</th><th className="px-3 py-2 text-right font-semibold">Received</th><th className="px-3 py-2 text-right font-semibold">Total</th></tr></thead>
-                              <tbody>{receipt.line_items.map((li, idx) => <tr key={idx} className="border-b border-border/50 last:border-0"><td className="px-3 py-2">{li.description}</td><td className="px-3 py-2 text-right">{li.quantity_ordered}</td><td className="px-3 py-2 text-right">{li.quantity_received}</td><td className="px-3 py-2 text-right font-semibold">₱{(li.total || 0).toLocaleString()}</td></tr>)}</tbody>
-                            </table>
-                          </div>
-                    }
-                        {receipt.notes && <p className="text-xs text-muted-foreground mt-2 italic border-l-2 border-border pl-2">{receipt.notes}</p>}
-                        {receipt.receipt_url && <a href={receipt.receipt_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary underline">View receipt document</a>}
-                      </div>
-                  )}
-                  </div>
-                }
-              </div>);
+          {riByPO.length > 0 &&
+          <div className="bg-card rounded-xl border border-border overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">PO #</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Supplier</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden md:table-cell">Project</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Receipts</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Total Received</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Status</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {riByPO.map((group) => {
+                      const key = group.po_id || group.po_number || "unknown";
+                      const expanded = expandedRIPO === key;
+                      const complete = group.receipts.some((r) => r.status === "complete");
+                      return (
+                        <>
+                          <tr key={key} className="border-b border-border/50 hover:bg-muted/20 transition-colors cursor-pointer" onClick={() => setExpandedRIPO(expanded ? null : key)}>
+                            <td className="px-4 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{group.po_number || "—"}</td>
+                            <td className="px-4 py-3 font-medium text-foreground">{group.supplier_name}</td>
+                            <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{group.project_name || "—"}</td>
+                            <td className="px-4 py-3 text-right text-muted-foreground">{group.receipts.length}</td>
+                            <td className="px-4 py-3 text-right font-semibold text-foreground">₱{group.total_received.toLocaleString()}</td>
+                            <td className="px-4 py-3">
+                              <Badge variant="outline" className={`text-xs ${complete ? "bg-primary/10 text-primary border-primary/20" : "bg-amber-500/10 text-amber-700 border-amber-200"}`}>
+                                {complete ? "Fully Received" : "Partially Received"}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground inline-block" /> : <ChevronDown className="w-4 h-4 text-muted-foreground inline-block" />}
+                            </td>
+                          </tr>
+                          {expanded &&
+                          <tr key={`${key}-expanded`} className="bg-muted/20">
+                              <td colSpan={7} className="px-6 py-4">
+                                <div className="divide-y divide-border border border-border rounded-lg overflow-hidden bg-card">
+                                  {group.receipts.map((receipt) =>
+                                <div key={receipt.id} className="px-4 py-3">
+                                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
+                                        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                                          <span>Received: <span className="text-foreground font-medium">{receipt.received_date ? format(new Date(receipt.received_date), "MMM d, yyyy") : "—"}</span></span>
+                                          {receipt.received_by && <span>By: <span className="text-foreground">{receipt.received_by}</span></span>}
+                                          <Badge variant="outline" className={`text-xs ${receipt.status === "complete" ? "bg-primary/10 text-primary border-primary/20" : "bg-amber-500/10 text-amber-700 border-amber-200"}`}>
+                                            {receipt.status === "complete" ? "Complete" : "Partial"}
+                                          </Badge>
+                                        </div>
+                                        <span className="text-sm font-bold text-foreground">₱{(receipt.total_amount || 0).toLocaleString()}</span>
+                                      </div>
+                                      {receipt.line_items?.length > 0 &&
+                                  <div className="border border-border rounded-lg overflow-hidden">
+                                          <table className="w-full text-xs">
+                                            <thead><tr className="bg-muted/50 border-b border-border"><th className="px-3 py-2 text-left font-semibold">Item</th><th className="px-3 py-2 text-right font-semibold">Ordered</th><th className="px-3 py-2 text-right font-semibold">Received</th><th className="px-3 py-2 text-right font-semibold">Total</th></tr></thead>
+                                            <tbody>{receipt.line_items.map((li, idx) => <tr key={idx} className="border-b border-border/50 last:border-0"><td className="px-3 py-2">{li.description}</td><td className="px-3 py-2 text-right">{li.quantity_ordered}</td><td className="px-3 py-2 text-right">{li.quantity_received}</td><td className="px-3 py-2 text-right font-semibold">₱{(li.total || 0).toLocaleString()}</td></tr>)}</tbody>
+                                          </table>
+                                        </div>
+                                  }
+                                      {receipt.notes && <p className="text-xs text-muted-foreground mt-2 italic border-l-2 border-border pl-2">{receipt.notes}</p>}
+                                      {receipt.receipt_url && <a href={receipt.receipt_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary underline">View receipt document</a>}
+                                    </div>
+                                )}
+                                </div>
+                              </td>
+                            </tr>
+                          }
+                        </>);
 
-          })}
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
         </TabsContent>
 
         {/* ── Materials History Tab ── */}
