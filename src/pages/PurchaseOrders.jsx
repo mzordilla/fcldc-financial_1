@@ -472,7 +472,7 @@ export default function PurchaseOrders() {
     <div className="p-4 md:p-8 w-full mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Purchase Orders</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">Purchase Orders</h1>
           <p className="text-muted-foreground mt-1">
             {pending.length} pending approval · ₱{totalPendingValue.toLocaleString()} pending value
           </p>
