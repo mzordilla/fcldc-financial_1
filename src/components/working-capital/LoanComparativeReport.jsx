@@ -112,12 +112,13 @@ export default function LoanComparativeReport({ items }) {
         </Select>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full border-collapse text-xs">
           <thead>
-            <tr className="border-b border-border">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-foreground sticky left-0 bg-card">Creditor</th>
+            <tr>
+              <th className="border border-border px-3 py-2 text-left font-semibold text-foreground sticky left-0 bg-muted/50 z-10">Creditor</th>
+              <th className="border border-border px-2 py-2 text-left font-semibold text-foreground bg-muted/50 whitespace-nowrap">Row</th>
               {months.map(m => (
-                <th key={m} className="px-4 py-3 text-center text-xs font-semibold text-foreground whitespace-nowrap">
+                <th key={m} className="border border-border px-2 py-2 text-center font-semibold text-foreground bg-muted/50 whitespace-nowrap">
                   {format(new Date(`${m}-01`), "MMM yyyy")}
                 </th>
               ))}
@@ -127,77 +128,78 @@ export default function LoanComparativeReport({ items }) {
             {groupedByType.map(group => (
               <React.Fragment key={group.type}>
                 <tr className="bg-muted/20">
-                  <td colSpan={months.length + 1} className="px-4 py-2 text-xs font-bold text-foreground uppercase tracking-wide sticky left-0 bg-muted/20">
+                  <td colSpan={months.length + 2} className="border border-border px-3 py-1.5 font-bold text-foreground uppercase tracking-wide sticky left-0 bg-muted/20">
                     {typeLabels[group.type]}
                   </td>
                 </tr>
                 {group.loans.map(loan => {
                   const schedule = buildSchedule(loan);
+                  const rows = [
+                    { key: "actual", label: "Actual Paid" },
+                    { key: "interestComponent", label: "Interest" },
+                    { key: "principalComponent", label: "Principal" },
+                    { key: "endingBalance", label: "Ending Balance" },
+                  ];
                   return (
-                    <tr key={loan.id} className="border-b border-border last:border-0 hover:bg-muted/30">
-                      <td className="px-4 py-3 text-sm font-medium text-foreground whitespace-nowrap sticky left-0 bg-card">
-                        {loan.creditor}
-                        <div className="text-[10px] font-normal text-muted-foreground">
-                          Beginning Principal (Jan 1): ₱{(loan.principal_balance || 0).toLocaleString()}
-                        </div>
-                      </td>
-                      {months.map(month => {
-                        const cell = schedule[month];
-                        const draftKey = getCellKey(loan.id, month);
-                        return (
-                          <td key={month} className="px-2 py-2 text-center align-top">
-                            <Input
-                              type="number"
-                              value={drafts[draftKey] !== undefined ? drafts[draftKey] : cell.actual}
-                              onChange={e => setDrafts(prev => ({ ...prev, [draftKey]: e.target.value }))}
-                              onBlur={() => handleBlur(loan, month, cell)}
-                              className="h-7 text-xs text-right w-28 mx-auto"
-                            />
-                            <div className="mt-1 text-[10px] text-muted-foreground space-y-0.5">
-                              <div>Interest: ₱{cell.interestComponent.toLocaleString()}</div>
-                              <div>Principal: ₱{cell.principalComponent.toLocaleString()}</div>
-                              <div className="font-medium text-foreground">Ending: ₱{cell.endingBalance.toLocaleString()}</div>
-                              {cell.finished && <div className="text-primary font-semibold">Paid Off</div>}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
+                    <React.Fragment key={loan.id}>
+                      {rows.map((row, rowIdx) => (
+                        <tr key={row.key} className="hover:bg-muted/30">
+                          {rowIdx === 0 && (
+                            <td rowSpan={rows.length} className="border border-border px-3 py-2 align-top font-medium text-foreground whitespace-nowrap sticky left-0 bg-card">
+                              {loan.creditor}
+                              <div className="mt-1 font-normal text-muted-foreground">
+                                Beginning Principal (Jan 1): ₱{(loan.principal_balance || 0).toLocaleString()}
+                              </div>
+                            </td>
+                          )}
+                          <td className="border border-border px-2 py-1.5 text-muted-foreground whitespace-nowrap bg-muted/5">{row.label}</td>
+                          {months.map(month => {
+                            const cell = schedule[month];
+                            const draftKey = getCellKey(loan.id, month);
+                            if (row.key === "actual") {
+                              return (
+                                <td key={month} className="border border-border px-1 py-1 text-center">
+                                  <Input
+                                    type="number"
+                                    value={drafts[draftKey] !== undefined ? drafts[draftKey] : cell.actual}
+                                    onChange={e => setDrafts(prev => ({ ...prev, [draftKey]: e.target.value }))}
+                                    onBlur={() => handleBlur(loan, month, cell)}
+                                    className="h-6 text-xs text-right w-24 mx-auto"
+                                  />
+                                </td>
+                              );
+                            }
+                            return (
+                              <td key={month} className="border border-border px-2 py-1.5 text-right">
+                                ₱{cell[row.key].toLocaleString()}
+                                {row.key === "endingBalance" && cell.finished && (
+                                  <span className="block text-primary font-semibold">Paid Off</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </React.Fragment>
                   );
                 })}
                 <tr className="bg-muted/10 font-medium">
-                  <td className="px-4 py-2 text-xs text-muted-foreground sticky left-0 bg-muted/10">{typeLabels[group.type]} Subtotal</td>
+                  <td colSpan={2} className="border border-border px-3 py-1.5 text-muted-foreground sticky left-0 bg-muted/10">{typeLabels[group.type]} Subtotal</td>
                   {months.map(month => {
                     const subActual = group.loans.reduce((s, loan) => s + (Number(getCell(loan, month).actual) || 0), 0);
-                    const subInterest = group.loans.reduce((s, loan) => s + getCell(loan, month).interestComponent, 0);
-                    const subPrincipal = group.loans.reduce((s, loan) => s + getCell(loan, month).principalComponent, 0);
                     return (
-                      <td key={month} className="px-2 py-2 text-center">
-                        <div className="text-xs text-foreground">₱{subActual.toLocaleString()}</div>
-                        <div className="mt-1 text-[10px] text-muted-foreground space-y-0.5">
-                          <div>Interest: ₱{subInterest.toLocaleString()}</div>
-                          <div>Principal: ₱{subPrincipal.toLocaleString()}</div>
-                        </div>
-                      </td>
+                      <td key={month} className="border border-border px-2 py-1.5 text-right">₱{subActual.toLocaleString()}</td>
                     );
                   })}
                 </tr>
               </React.Fragment>
             ))}
             <tr className="bg-muted/40 font-semibold">
-              <td className="px-4 py-3 text-sm text-foreground sticky left-0 bg-muted/40">Total</td>
+              <td colSpan={2} className="border border-border px-3 py-2 text-foreground sticky left-0 bg-muted/40">Total</td>
               {months.map(month => {
                 const totalActual = activeLoans.reduce((s, loan) => s + (Number(getCell(loan, month).actual) || 0), 0);
-                const totalInterest = activeLoans.reduce((s, loan) => s + getCell(loan, month).interestComponent, 0);
-                const totalPrincipal = activeLoans.reduce((s, loan) => s + getCell(loan, month).principalComponent, 0);
                 return (
-                  <td key={month} className="px-2 py-3 text-center">
-                    <div className="text-xs text-foreground">₱{totalActual.toLocaleString()}</div>
-                    <div className="mt-1 text-[10px] text-muted-foreground space-y-0.5">
-                      <div>Interest: ₱{totalInterest.toLocaleString()}</div>
-                      <div>Principal: ₱{totalPrincipal.toLocaleString()}</div>
-                    </div>
-                  </td>
+                  <td key={month} className="border border-border px-2 py-2 text-right">₱{totalActual.toLocaleString()}</td>
                 );
               })}
             </tr>
