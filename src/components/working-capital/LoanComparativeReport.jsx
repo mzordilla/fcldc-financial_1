@@ -122,7 +122,12 @@ export default function LoanComparativeReport({ items }) {
                 </tr>
                 {group.loans.map(loan => (
                   <tr key={loan.id} className="border-b border-border last:border-0 hover:bg-muted/30">
-                    <td className="px-4 py-3 text-sm font-medium text-foreground whitespace-nowrap sticky left-0 bg-card">{loan.creditor}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-foreground whitespace-nowrap sticky left-0 bg-card">
+                      {loan.creditor}
+                      <div className="text-[10px] font-normal text-muted-foreground">
+                        Beginning Principal (Jan 1): ₱{(loan.principal_balance || 0).toLocaleString()}
+                      </div>
+                    </td>
                     {months.map(month => {
                       const cell = getCell(loan, month);
                       const draftKey = getCellKey(loan.id, month);
