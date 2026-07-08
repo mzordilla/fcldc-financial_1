@@ -600,13 +600,13 @@ export default function PurchaseOrders() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border bg-muted/30">
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">PO #</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Supplier</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase hidden md:table-cell">Project</th>
-                      <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Receipts</th>
-                      <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Total Received</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Status</th>
-                      <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase"></th>
+                      <th className="text-left px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase">PO #</th>
+                      <th className="text-left px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase">Supplier</th>
+                      <th className="text-left px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase hidden md:table-cell">Project</th>
+                      <th className="text-right px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase">Receipts</th>
+                      <th className="text-right px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase">Total Received</th>
+                      <th className="text-left px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase">Status</th>
+                      <th className="text-right px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -617,18 +617,18 @@ export default function PurchaseOrders() {
                       return (
                         <>
                           <tr key={key} className="border-b border-border/50 hover:bg-muted/20 transition-colors cursor-pointer" onClick={() => setExpandedRIPO(expanded ? null : key)}>
-                            <td className="px-4 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{group.po_number || "—"}</td>
-                            <td className="px-4 py-3 font-medium text-foreground">{group.supplier_name}</td>
-                            <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{group.project_name || "—"}</td>
-                            <td className="px-4 py-3 text-right text-muted-foreground">{group.receipts.length}</td>
-                            <td className="px-4 py-3 text-right font-semibold text-foreground">₱{group.total_received.toLocaleString()}</td>
-                            <td className="px-4 py-3">
+                            <td className="px-2 py-1.5 font-mono text-xs text-muted-foreground whitespace-nowrap">{group.po_number || "—"}</td>
+                            <td className="px-2 py-1.5 text-xs font-medium text-foreground">{group.supplier_name}</td>
+                            <td className="px-2 py-1.5 text-xs text-muted-foreground hidden md:table-cell">{group.project_name || "—"}</td>
+                            <td className="px-2 py-1.5 text-xs text-right text-muted-foreground">{group.receipts.length}</td>
+                            <td className="px-2 py-1.5 text-xs text-right font-semibold text-foreground">₱{group.total_received.toLocaleString()}</td>
+                            <td className="px-2 py-1.5">
                               <Badge variant="outline" className={`text-xs ${complete ? "bg-primary/10 text-primary border-primary/20" : "bg-amber-500/10 text-amber-700 border-amber-200"}`}>
                                 {complete ? "Fully Received" : "Partially Received"}
                               </Badge>
                             </td>
-                            <td className="px-4 py-3 text-right">
-                              {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground inline-block" /> : <ChevronDown className="w-4 h-4 text-muted-foreground inline-block" />}
+                            <td className="px-2 py-1.5 text-right">
+                              {expanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground inline-block" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground inline-block" />}
                             </td>
                           </tr>
                           {expanded &&
