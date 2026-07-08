@@ -21,17 +21,17 @@ function AgingSummary({ overall, overallTotal }) {
   ];
   const colors = ["bg-primary", "bg-chart-3", "bg-orange-400", "bg-destructive/70", "bg-destructive"];
   return (
-    <div className="bg-card rounded-2xl border border-border p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-foreground">Aging Analysis</h3>
+    <div className="bg-card rounded-xl border border-border p-3">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-xs font-semibold text-foreground">Aging Analysis</h3>
         <p className="text-xs text-muted-foreground">Total Outstanding: <span className="font-bold text-foreground">₱{overallTotal.toLocaleString()}</span></p>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
         {buckets.map((b, i) => (
           <div key={b.key} className="text-center">
-            <div className={`h-1.5 rounded-full ${colors[i]} mb-2 opacity-80`} />
-            <p className="text-xs text-muted-foreground">{b.label}</p>
-            <p className={`text-sm font-bold mt-0.5 ${i >= 2 && b.amount > 0 ? "text-destructive" : "text-foreground"}`}>
+            <div className={`h-1 rounded-full ${colors[i]} mb-1 opacity-80`} />
+            <p className="text-[11px] text-muted-foreground">{b.label}</p>
+            <p className={`text-xs font-bold mt-0.5 ${i >= 2 && b.amount > 0 ? "text-destructive" : "text-foreground"}`}>
               ₱{b.amount.toLocaleString()}
             </p>
           </div>
@@ -236,7 +236,7 @@ export default function Payables() {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Payables</h1>
@@ -365,7 +365,7 @@ export default function Payables() {
           </div>
         )}
         {supplierList.length > 0 && (
-          <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 px-4 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
             <span>Supplier</span>
             <span className="text-right">Current</span>
             <span className="text-right">1-30</span>
@@ -375,21 +375,21 @@ export default function Payables() {
             <span></span>
           </div>
         )}
-        <div className="rounded-2xl border border-border overflow-hidden divide-y divide-border">
+        <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">
         {supplierList.map(({ supplier, count, buckets, total }) => {
           const isExpanded = expandedSuppliers.has(supplier);
           return (
             <div key={supplier} className="bg-card">
               <button
-                className="w-full px-5 py-3 bg-muted/50 hover:bg-muted/70 transition-colors"
+                className="w-full px-4 py-2 bg-muted/50 hover:bg-muted/70 transition-colors"
                 onClick={() => toggleSupplier(supplier)}
               >
                 <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 items-center">
                   <div className="flex items-center gap-2 text-left min-w-0">
-                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />
+                    <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />
                     <div className="min-w-0">
-                      <h3 className="text-base font-semibold text-foreground truncate">{supplier}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">{count} invoice{count > 1 ? "s" : ""} · ₱{total.toLocaleString(undefined, { minimumFractionDigits: 2 })} outstanding</p>
+                      <h3 className="text-sm font-semibold text-foreground truncate">{supplier}</h3>
+                      <p className="text-[11px] text-muted-foreground">{count} invoice{count > 1 ? "s" : ""} · ₱{total.toLocaleString(undefined, { minimumFractionDigits: 2 })} outstanding</p>
                     </div>
                   </div>
                   <span className="text-right text-xs font-semibold text-primary">₱{buckets.current.toLocaleString()}</span>
@@ -400,7 +400,7 @@ export default function Payables() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="text-xs ml-3"
+                    className="text-xs ml-3 h-7 px-2"
                     onClick={e => { e.stopPropagation(); setStatementSupplier(supplier); }}
                   >
                     <FileText className="w-3 h-3 mr-1" /> Statement
