@@ -2,9 +2,11 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, addDays, addMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths } from "date-fns";
-import { FileText } from "lucide-react";
+import { FileText, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import * as XLSX from "xlsx";
 
 const fmt = (v) =>
   `₱${Math.abs(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -76,6 +78,25 @@ export default function StatementOfPayablesReport() {
     )
   );
 
+  const handleExport = () => {
+    const header = ["Supplier", "Row", ...periods.map((p) => p.label)];
+    const data = [header];
+    rows.forEach(({ supplier, periodData }) => {
+      [
+        { key: "invoiced", label: "Invoiced" },
+        { key: "paid", label: "Paid" },
+        { key: "balance", label: "Balance" },
+      ].forEach((line) => {
+        data.push([supplier, line.label, ...periodData.map((pd) => pd[line.key])]);
+      });
+    });
+    data.push(["Total Balance", "", ...periodTotals.map((t) => t.balance)]);
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Statement of Payables");
+    XLSX.writeFile(wb, `statement-of-payables-${startDate}-to-${endDate}.xlsx`);
+  };
+
   if (!isLoading && suppliers.length === 0) {
     return (
       <div className="text-center py-16 text-muted-foreground">
@@ -103,6 +124,9 @@ export default function StatementOfPayablesReport() {
               <SelectItem value="monthly">Monthly</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <Download className="w-4 h-4 mr-1" /> Export
+          </Button>
         </div>
       </div>
       {isLoading ? (
