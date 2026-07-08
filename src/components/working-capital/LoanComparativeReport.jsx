@@ -156,7 +156,7 @@ export default function LoanComparativeReport({ items }) {
                                   type="number"
                                   value={beginningBalanceOverrides[loan.id] !== undefined ? beginningBalanceOverrides[loan.id] : (loan.principal_balance || 0)}
                                   onChange={e => setBeginningBalanceOverrides(prev => ({ ...prev, [loan.id]: e.target.value }))}
-                                  className="h-6 text-xs w-24"
+                                  className="h-6 text-xs text-right w-24"
                                 />
                               </div>
                             </td>
