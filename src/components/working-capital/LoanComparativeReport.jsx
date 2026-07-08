@@ -164,7 +164,7 @@ export default function LoanComparativeReport({ items }) {
                                   type="number"
                                   value={beginningBalanceOverrides[loan.id] !== undefined ? beginningBalanceOverrides[loan.id] : (loan.principal_balance || 0)}
                                   onChange={e => setBeginningBalanceOverrides(prev => ({ ...prev, [loan.id]: e.target.value }))}
-                                  className="h-6 text-xs text-right w-24"
+                                  className="h-6 text-xs text-right w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                               </div>
                             </td>
@@ -181,7 +181,7 @@ export default function LoanComparativeReport({ items }) {
                                     value={drafts[draftKey] !== undefined ? drafts[draftKey] : cell.actual}
                                     onChange={e => setDrafts(prev => ({ ...prev, [draftKey]: e.target.value }))}
                                     onBlur={() => handleBlur(loan, month, cell)}
-                                    className="h-6 text-xs text-right w-24 mx-auto border-none shadow-none bg-transparent focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-background px-1"
+                                    className="h-6 text-xs text-right w-24 mx-auto border-none shadow-none bg-transparent focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-background px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                   />
                                 </td>
                               );
