@@ -332,70 +332,69 @@ export default function Projects() {
                   <p className="text-xs text-muted-foreground">Completed: ₱{groupCompleted.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                 </div>
               </div>
-              <div className="grid gap-2">
-              {groupProjects.map((p) => {
-          const completedPct = p.completed_percentage || 0;
-          const retentionRate = p.retention_rate || 0;
-          const completedAmt = (p.contract_amount || 0) * (completedPct / 100);
-          const remainingAmt = (p.contract_amount || 0) - completedAmt;
-          const retentionAmt = completedAmt * (retentionRate / 100);
-          const netReceivable = completedAmt - retentionAmt;
-          return (
-            <div key={p.id} className="bg-card rounded-xl border border-border px-4 py-2 hover:shadow-md transition-shadow">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <button onClick={() => navigate(`/projects/${p.id}`)} className="font-semibold text-foreground flex items-center gap-1 hover:underline text-primary">{p.project_name} <ExternalLink className="w-3 h-3" /></button>
-                    {p.project_number && <Badge variant="secondary" className="text-xs">{p.project_number}</Badge>}
-                    <Badge variant="outline" className={`text-xs ${contractStatusStyles[p.contract_status] || ""}`}>
-                      {(p.contract_status || "pending").replace(/_/g, " ")}
-                    </Badge>
-                    {p.project_type && <Badge variant="secondary" className="text-xs">{projectTypeLabels[p.project_type]}</Badge>}
-                    <span className="text-sm text-muted-foreground">
-                      {p.client_name}
-                      {p.location ? ` · ${p.location}` : ""}
-                      {p.project_manager ? ` · ${p.project_manager}` : ""}
-                      {p.end_date && ` · Due ${format(new Date(p.end_date), "MMM d, yyyy")}`}
-                    </span>
-                  </div>
-                  <div className="mt-1.5 flex items-center gap-3">
-                    <Progress value={completedPct} className="h-1.5 flex-1 max-w-xs" />
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {completedPct}% · ₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })} / ₱{(p.contract_amount || 0).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-                  <p className="text-lg font-bold text-foreground">
-                    ₱{remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </p>
-                  <div className="flex gap-1">
-                    {p.contract_status === "approved" &&
-                    <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: p.id, data: { contract_status: "active" } })}>
-                        Set Active
-                      </Button>
-                    }
-                    {p.contract_status === "pending" &&
-                    <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: p.id, data: { contract_status: "approved" } })}>
-                        Approve
-                      </Button>
-                    }
-                    <Button variant="ghost" size="icon" onClick={() => navigate(`/projects/${p.id}?tab=change_orders`)} className="text-muted-foreground hover:text-foreground" title="Change Orders">
-                      <FileText className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setEditingProject(p)} className="text-muted-foreground hover:text-foreground">
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(p.id)} className="text-muted-foreground hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>);
-
-              })}
+              <div className="bg-card rounded-2xl border border-border overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-xs text-muted-foreground border-b border-border bg-muted/30">
+                      <th className="text-left py-2 px-4">Project</th>
+                      <th className="text-left py-2 px-4">Client</th>
+                      <th className="text-left py-2 px-4">Status</th>
+                      <th className="text-right py-2 px-4">Contract Amt</th>
+                      <th className="text-right py-2 px-4">Completed</th>
+                      <th className="text-right py-2 px-4">Balance</th>
+                      <th className="text-right py-2 px-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {groupProjects.map((p) => {
+                      const completedPct = p.completed_percentage || 0;
+                      const completedAmt = (p.contract_amount || 0) * (completedPct / 100);
+                      const remainingAmt = (p.contract_amount || 0) - completedAmt;
+                      return (
+                        <tr key={p.id} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
+                          <td className="py-2 px-4">
+                            <button onClick={() => navigate(`/projects/${p.id}`)} className="font-medium text-primary hover:underline flex items-center gap-1">
+                              {p.project_name} <ExternalLink className="w-3 h-3" />
+                            </button>
+                            {p.project_number && <span className="text-xs text-muted-foreground ml-1">({p.project_number})</span>}
+                          </td>
+                          <td className="py-2 px-4 text-muted-foreground">{p.client_name}</td>
+                          <td className="py-2 px-4">
+                            <Badge variant="outline" className={`text-xs ${contractStatusStyles[p.contract_status] || ""}`}>
+                              {(p.contract_status || "pending").replace(/_/g, " ")}
+                            </Badge>
+                          </td>
+                          <td className="py-2 px-4 text-right font-semibold text-foreground">₱{(p.contract_amount || 0).toLocaleString()}</td>
+                          <td className="py-2 px-4 text-right text-primary">{completedPct}% · ₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          <td className="py-2 px-4 text-right font-semibold text-foreground">₱{remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          <td className="py-2 px-4">
+                            <div className="flex items-center justify-end gap-1">
+                              {p.contract_status === "approved" &&
+                              <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: p.id, data: { contract_status: "active" } })}>
+                                  Set Active
+                                </Button>
+                              }
+                              {p.contract_status === "pending" &&
+                              <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: p.id, data: { contract_status: "approved" } })}>
+                                  Approve
+                                </Button>
+                              }
+                              <Button variant="ghost" size="icon" onClick={() => navigate(`/projects/${p.id}?tab=change_orders`)} className="text-muted-foreground hover:text-foreground" title="Change Orders">
+                                <FileText className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => setEditingProject(p)} className="text-muted-foreground hover:text-foreground">
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(p.id)} className="text-muted-foreground hover:text-destructive">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
           );
