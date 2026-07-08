@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { exportToExcel } from "@/utils/excelUtils";
 import PaymentRequestFormDialog from "../components/payment/PaymentRequestFormDialog";
 import BulkPaymentRequestDialog from "../components/payment/BulkPaymentRequestDialog";
@@ -65,6 +66,7 @@ export default function PaymentApprovals() {
   const [isDisbursementRole, setIsDisbursementRole] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [showBulkDisburse, setShowBulkDisburse] = useState(false);
+  const [poPrFilter, setPoPrFilter] = useState("all");
   const queryClient = useQueryClient();
   const posGroupRef = useRef();
   const pendingGroupRef = useRef();
@@ -116,6 +118,13 @@ export default function PaymentApprovals() {
     const hasPayableById = poIdsWithPayables.has(po.id);
     const hasPayableByRef = po.po_number && poIdsWithPayables.has(po.po_number);
     return !hasPayableById && !hasPayableByRef;
+  });
+
+  const poHasRequest = (po) => poRefsWithRequests.has(po.po_number) || poRefsWithRequests.has(po.id);
+  const availablePOsInView = availablePOs.filter(po => {
+    if (poPrFilter === "created") return poHasRequest(po);
+    if (poPrFilter === "not_created") return !poHasRequest(po);
+    return true;
   });
 
   // Map PR category to a sensible expense CoA name
@@ -621,7 +630,19 @@ export default function PaymentApprovals() {
         <TabsContent value="pos" className="space-y-3 mt-4">
           {availablePOs.length > 0 && (
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-muted-foreground">{new Set(availablePOs.map(po => po.supplier_name || "Unknown Supplier")).size} supplier{new Set(availablePOs.map(po => po.supplier_name || "Unknown Supplier")).size !== 1 ? "s" : ""}</p>
+              <div className="flex items-center gap-3">
+                <p className="text-sm font-semibold text-muted-foreground">{new Set(availablePOsInView.map(po => po.supplier_name || "Unknown Supplier")).size} supplier{new Set(availablePOsInView.map(po => po.supplier_name || "Unknown Supplier")).size !== 1 ? "s" : ""}</p>
+                <Select value={poPrFilter} onValueChange={setPoPrFilter}>
+                  <SelectTrigger className="h-8 w-44 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All POs</SelectItem>
+                    <SelectItem value="created">PR Created</SelectItem>
+                    <SelectItem value="not_created">PR Not Created</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex items-center gap-2">
                 <Button size="sm" variant="outline" onClick={() => posGroupRef.current?.expandAll()} className="text-xs">
                   <ChevronDown className="w-3 h-3 mr-1" /> Expand All
@@ -632,7 +653,7 @@ export default function PaymentApprovals() {
               </div>
             </div>
           )}
-          <SupplierGroupedPOs ref={posGroupRef} pos={availablePOs} onConvert={convertPOtoPaymentRequest} poIdsWithRequest={poRefsWithRequests} />
+          <SupplierGroupedPOs ref={posGroupRef} pos={availablePOsInView} onConvert={convertPOtoPaymentRequest} poIdsWithRequest={poRefsWithRequests} />
         </TabsContent>
 
         {/* Pending */}
