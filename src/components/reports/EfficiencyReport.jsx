@@ -74,7 +74,9 @@ export default function EfficiencyReport({ dateFrom, dateTo }) {
   const receivablesMetrics = useMemo(() => {
     const total = filteredData.receivables.reduce((s, r) => s + (r.amount || 0), 0);
     const collected = filteredData.receivables.reduce((s, r) => s + (r.amount_paid || 0), 0);
-    const outstanding = total - collected;
+    const outstanding = filteredData.receivables
+      .filter(r => r.status !== "paid")
+      .reduce((s, r) => s + ((r.amount || 0) - (r.amount_paid || 0)), 0);
     const efficiency = total > 0 ? (collected / total) * 100 : 0;
     
     return { total, collected, outstanding, efficiency };
