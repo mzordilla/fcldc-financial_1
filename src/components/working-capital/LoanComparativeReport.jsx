@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const typeLabels = {
@@ -44,6 +46,7 @@ export default function LoanComparativeReport({ items }) {
 
   const [drafts, setDrafts] = useState({});
   const [beginningBalanceOverrides, setBeginningBalanceOverrides] = useState({});
+  const [isFullPage, setIsFullPage] = useState(false);
 
   const getCellKey = (loanId, month) => `${loanId}_${month}`;
 
@@ -101,18 +104,23 @@ export default function LoanComparativeReport({ items }) {
     .filter(g => g.loans.length > 0);
 
   return (
-    <div className="bg-card rounded-2xl border border-border overflow-hidden">
-      <div className="px-6 py-4 border-b border-border flex items-center justify-between gap-4">
+    <div className={isFullPage ? "fixed inset-0 z-50 bg-card overflow-auto" : "bg-card rounded-2xl border border-border overflow-hidden"}>
+      <div className="px-6 py-4 border-b border-border flex items-center justify-between gap-4 sticky top-0 bg-card z-10">
         <div>
           <h2 className="text-lg font-bold text-foreground">Comparative Monthly Payments</h2>
           <p className="text-sm text-muted-foreground">Interest vs. principal breakdown per loan — edit the actual amount debited from the bank</p>
         </div>
-        <Select value={year} onValueChange={setYear}>
-          <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {yearOptions.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Select value={year} onValueChange={setYear}>
+            <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {yearOptions.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="icon" onClick={() => setIsFullPage(!isFullPage)} title={isFullPage ? "Exit Full Page" : "Full Page View"}>
+            {isFullPage ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </Button>
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-xs">
