@@ -224,65 +224,67 @@ export default function Receivables() {
           </div>
         )}
         {clientList.length > 0 && (
-          <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_2.5rem] gap-0 px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            <span>Client</span>
-            <span className="text-right">Current</span>
-            <span className="text-right">1-30</span>
-            <span className="text-right">31-60</span>
-            <span className="text-right">61-90</span>
-            <span className="text-right">90+</span>
-            <span className="text-right">Total</span>
-            <span></span>
-          </div>
-        )}
-        {clientList.length > 0 && (
-          <div className="rounded-2xl border border-border overflow-hidden divide-y divide-border">
-            {clientList.map(({ client, rows, count, buckets, total }) => {
-              const isExpanded = expandedClients.has(client);
-              return (
-                <div key={client} className="bg-card">
-                  <button
-                    className="w-full px-5 py-3 bg-muted/50 hover:bg-muted/70 transition-colors"
-                    onClick={() => toggleClient(client)}
-                  >
-                    <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_2.5rem] gap-0 items-center">
-                      <div className="flex items-center gap-2 text-left min-w-0">
-                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />
-                        <div className="min-w-0">
-                          <h3 className="text-base font-semibold text-foreground truncate">{client}</h3>
-                          <p className="text-xs text-muted-foreground mt-0.5">{count} invoice{count > 1 ? "s" : ""} · ₱{total.toLocaleString(undefined, { minimumFractionDigits: 2 })} outstanding</p>
-                        </div>
-                      </div>
-                      <span className="text-right text-xs font-semibold text-primary">₱{buckets.current.toLocaleString()}</span>
-                      <span className="text-right text-xs font-semibold text-chart-3">₱{buckets.days30.toLocaleString()}</span>
-                      <span className="text-right text-xs font-semibold text-orange-500">₱{buckets.days60.toLocaleString()}</span>
-                      <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90.toLocaleString()}</span>
-                      <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90plus.toLocaleString()}</span>
-                      <span className="text-right text-xs font-bold text-foreground">₱{total.toLocaleString()}</span>
-                      <span
-                        role="button"
-                        className="ml-3"
-                        onClick={(e) => e.stopPropagation()}
+          <div className="overflow-x-auto">
+            <div className="min-w-[900px]">
+              <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_2.5rem] gap-0 px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide sticky top-0 bg-background z-10">
+                <span>Client</span>
+                <span className="text-right">Current</span>
+                <span className="text-right">1-30</span>
+                <span className="text-right">31-60</span>
+                <span className="text-right">61-90</span>
+                <span className="text-right">90+</span>
+                <span className="text-right">Total</span>
+                <span></span>
+              </div>
+              <div className="rounded-2xl border border-border overflow-hidden divide-y divide-border max-h-[70vh] overflow-y-auto">
+                {clientList.map(({ client, rows, count, buckets, total }) => {
+                  const isExpanded = expandedClients.has(client);
+                  return (
+                    <div key={client} className="bg-card">
+                      <button
+                        className="w-full px-5 py-3 bg-muted/50 hover:bg-muted/70 transition-colors"
+                        onClick={() => toggleClient(client)}
                       >
-                        <StatementOfAccountPDF
-                          projectName={client}
-                          clientName={client}
+                        <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_2.5rem] gap-0 items-center">
+                          <div className="flex items-center gap-2 text-left min-w-0">
+                            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />
+                            <div className="min-w-0">
+                              <h3 className="text-base font-semibold text-foreground truncate">{client}</h3>
+                              <p className="text-xs text-muted-foreground mt-0.5">{count} invoice{count > 1 ? "s" : ""} · ₱{total.toLocaleString(undefined, { minimumFractionDigits: 2 })} outstanding</p>
+                            </div>
+                          </div>
+                          <span className="text-right text-xs font-semibold text-primary">₱{buckets.current.toLocaleString()}</span>
+                          <span className="text-right text-xs font-semibold text-chart-3">₱{buckets.days30.toLocaleString()}</span>
+                          <span className="text-right text-xs font-semibold text-orange-500">₱{buckets.days60.toLocaleString()}</span>
+                          <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90.toLocaleString()}</span>
+                          <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90plus.toLocaleString()}</span>
+                          <span className="text-right text-xs font-bold text-foreground">₱{total.toLocaleString()}</span>
+                          <span
+                            role="button"
+                            className="ml-3"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <StatementOfAccountPDF
+                              projectName={client}
+                              clientName={client}
+                              rows={rows}
+                            />
+                          </span>
+                        </div>
+                      </button>
+                      {isExpanded && (
+                        <ClientInvoiceDetails
                           rows={rows}
+                          onCollect={setCollectingR}
+                          onEdit={setEditingR}
+                          onDelete={(id) => deleteMutation.mutate(id)}
                         />
-                      </span>
+                      )}
                     </div>
-                  </button>
-                  {isExpanded && (
-                    <ClientInvoiceDetails
-                      rows={rows}
-                      onCollect={setCollectingR}
-                      onEdit={setEditingR}
-                      onDelete={(id) => deleteMutation.mutate(id)}
-                    />
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
       </div>
