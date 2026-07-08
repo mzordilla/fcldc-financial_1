@@ -341,65 +341,35 @@ export default function Projects() {
           const retentionAmt = completedAmt * (retentionRate / 100);
           const netReceivable = completedAmt - retentionAmt;
           return (
-            <div key={p.id} className="bg-card rounded-2xl border border-border p-5 hover:shadow-md transition-shadow">
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div key={p.id} className="bg-card rounded-2xl border border-border p-4 hover:shadow-md transition-shadow">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 flex-wrap mb-1">
-                    <button onClick={() => navigate(`/projects/${p.id}`)} className="text-primary hover:underline font-semibold text-foreground flex items-center gap-1">{p.project_name} <ExternalLink className="w-3 h-3" /></button>
-                    {p.project_number && <span className="text-xs text-muted-foreground font-mono">{p.project_number}</span>}
+                  <div className="flex items-center gap-3 mb-1 flex-wrap">
+                    <button onClick={() => navigate(`/projects/${p.id}`)} className="font-semibold text-foreground flex items-center gap-1 hover:underline text-primary">{p.project_name} <ExternalLink className="w-3 h-3" /></button>
+                    {p.project_number && <Badge variant="secondary" className="text-xs">{p.project_number}</Badge>}
                     <Badge variant="outline" className={`text-xs ${contractStatusStyles[p.contract_status] || ""}`}>
                       {(p.contract_status || "pending").replace(/_/g, " ")}
                     </Badge>
                     {p.project_type && <Badge variant="secondary" className="text-xs">{projectTypeLabels[p.project_type]}</Badge>}
-                    {p.project_classification && <Badge variant="outline" className="text-xs">{classificationLabels[p.project_classification]}</Badge>}
                   </div>
-                  <p className="text-sm text-muted-foreground">{p.client_name}</p>
-                  <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
-                    {p.location && <span>📍 {p.location}</span>}
-                    {p.project_manager && <span>👤 {p.project_manager}</span>}
-                    {p.start_date && <span>Start: {format(new Date(p.start_date), "MMM d, yyyy")}</span>}
-                    {p.end_date && <span>End: {format(new Date(p.end_date), "MMM d, yyyy")}</span>}
-                  </div>
-                  {p.scope_of_works && (
-                    <div className="mt-2 p-2.5 bg-muted/40 rounded-lg">
-                      <p className="text-xs font-medium text-muted-foreground mb-0.5">Scope of Works</p>
-                      <p className="text-xs text-foreground whitespace-pre-wrap">{p.scope_of_works}</p>
-                    </div>
-                  )}
-
-                  {/* Completion progress bar */}
-                  <div className="mt-3 space-y-1">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Completion</span>
-                      <span className="font-medium text-foreground">{completedPct}%</span>
-                    </div>
-                    <div className="relative h-2.5 rounded-full bg-muted overflow-hidden">
-                      <div className="absolute left-0 top-0 h-full bg-primary rounded-full transition-all" style={{ width: `${completedPct}%` }} />
-                    </div>
-                  </div>
-
-                  {/* Financial breakdown */}
-                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <div className="bg-muted/40 rounded-lg p-2">
-                      <p className="text-xs text-muted-foreground">Contract</p>
-                      <p className="text-sm font-semibold text-foreground">₱{(p.contract_amount || 0).toLocaleString()}</p>
-                      </div>
-                      <div className="bg-primary/5 rounded-lg p-2">
-                      <p className="text-xs text-muted-foreground">Completed</p>
-                      <p className="text-sm font-semibold text-primary">₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                      </div>
-                      <div className="bg-chart-3/5 rounded-lg p-2">
-                      <p className="text-xs text-muted-foreground">Retention ({retentionRate}%)</p>
-                      <p className="text-sm font-semibold text-chart-3">₱{retentionAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                      </div>
-                      <div className="bg-muted/40 rounded-lg p-2">
-                      <p className="text-xs text-muted-foreground">Balance</p>
-                      <p className="text-sm font-semibold text-foreground">₱{remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                    </div>
+                  <p className="text-sm text-muted-foreground">
+                    {p.client_name}
+                    {p.location ? ` · ${p.location}` : ""}
+                    {p.project_manager ? ` · ${p.project_manager}` : ""}
+                    {p.end_date && ` · Due ${format(new Date(p.end_date), "MMM d, yyyy")}`}
+                  </p>
+                  <div className="mt-3 flex items-center gap-3">
+                    <Progress value={completedPct} className="h-2 flex-1" />
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {completedPct}% · ₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })} / ₱{(p.contract_amount || 0).toLocaleString()}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:min-w-[120px]">
+                <div className="flex items-center gap-2 sm:flex-col sm:items-end">
+                  <p className="text-lg font-bold text-foreground">
+                    ₱{remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </p>
                   <div className="flex gap-1">
                     {p.contract_status === "approved" &&
                     <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: p.id, data: { contract_status: "active" } })}>
@@ -411,8 +381,8 @@ export default function Projects() {
                         Approve
                       </Button>
                     }
-                    <Button size="sm" variant="outline" onClick={() => navigate(`/projects/${p.id}?tab=change_orders`)}>
-                      <FileText className="w-4 h-4 mr-1" /> Change Orders
+                    <Button variant="ghost" size="icon" onClick={() => navigate(`/projects/${p.id}?tab=change_orders`)} className="text-muted-foreground hover:text-foreground" title="Change Orders">
+                      <FileText className="w-4 h-4" />
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => setEditingProject(p)} className="text-muted-foreground hover:text-foreground">
                       <Pencil className="w-4 h-4" />
