@@ -34,11 +34,27 @@ export default function AuditTrail() {
     queryFn: () => base44.entities.AuditLog.list("-timestamp", 500),
   });
 
+  const { data: users = [] } = useQuery({
+    queryKey: ["users-for-audit"],
+    queryFn: () => base44.entities.User.list(),
+  });
+
+  const userMap = users.reduce((map, u) => {
+    if (u.id) map[u.id] = u.full_name || u.email;
+    if (u.email) map[u.email] = u.full_name || u.email;
+    return map;
+  }, {});
+
+  const getActorName = (actor) => {
+    if (!actor || actor === "system") return actor || "—";
+    return userMap[actor] || actor;
+  };
+
   const filtered = logs.filter(log => {
     const matchesSearch =
       !search ||
       log.summary?.toLowerCase().includes(search.toLowerCase()) ||
-      log.actor?.toLowerCase().includes(search.toLowerCase()) ||
+      getActorName(log.actor)?.toLowerCase().includes(search.toLowerCase()) ||
       log.entity_name?.toLowerCase().includes(search.toLowerCase());
     const matchesAction = actionFilter === "all" || log.action === actionFilter;
     const matchesEntity = entityFilter === "All" || log.entity_name === entityFilter;
@@ -137,7 +153,7 @@ export default function AuditTrail() {
                     <p className="mt-1 text-sm text-foreground">{log.summary || "—"}</p>
                     <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                       <User className="h-3 w-3" />
-                      <span>{log.actor || "Unknown user"}</span>
+                      <span>{getActorName(log.actor) || "Unknown user"}</span>
                     </div>
                   </div>
 
