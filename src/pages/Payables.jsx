@@ -375,12 +375,13 @@ export default function Payables() {
             <span></span>
           </div>
         )}
+        <div className="rounded-2xl border border-border overflow-hidden divide-y divide-border">
         {supplierList.map(({ supplier, count, buckets, total }) => {
           const isExpanded = expandedSuppliers.has(supplier);
           return (
-            <div key={supplier} className="rounded-2xl border border-border overflow-hidden bg-card">
+            <div key={supplier} className="bg-card">
               <button
-                className="w-full px-5 py-3 bg-muted/50 border-b border-border hover:bg-muted/70 transition-colors"
+                className="w-full px-5 py-3 bg-muted/50 hover:bg-muted/70 transition-colors"
                 onClick={() => toggleSupplier(supplier)}
               >
                 <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 items-center">
@@ -410,6 +411,7 @@ export default function Payables() {
             </div>
           );
         })}
+        </div>
       </div>
 
       {/* Paid — collapsible, fetched only when opened */}
