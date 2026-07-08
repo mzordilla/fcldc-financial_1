@@ -197,7 +197,7 @@ export default function BankAccounts() {
 
       {activeTab === "reconciliation" && <BankReconciliationPage />}
 
-      {activeTab === "summary" && <BankAccountSummaryReport accounts={accounts} transactions={transactions} />}
+      {activeTab === "summary" && <BankAccountSummaryReport accounts={accounts} />}
 
       {activeTab === "accounts" && <>
 
