@@ -159,7 +159,7 @@ export default function LoanComparativeReport({ items }) {
                             <td rowSpan={rows.length} className="border border-border px-3 py-2 align-top font-medium text-foreground whitespace-nowrap sticky left-0 bg-card">
                               {loan.creditor}
                               <div className="mt-1 font-normal text-muted-foreground flex items-center gap-1">
-                                <span>Beginning Principal (Jan 1): ₱</span>
+                                <span>Principal Amount: ₱</span>
                                 <Input
                                   type="number"
                                   value={beginningBalanceOverrides[loan.id] !== undefined ? beginningBalanceOverrides[loan.id] : (loan.principal_balance || 0)}
