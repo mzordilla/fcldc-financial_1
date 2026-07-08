@@ -74,6 +74,7 @@ export default function PurchaseOrders() {
   const [expandedGroups, setExpandedGroups] = useState({ pending: true, approved: true, rejected: false, cancelled: false });
   const [statusFilter, setStatusFilter] = useState("approved");
   const [supplierFilter, setSupplierFilter] = useState("all");
+  const [poSearch, setPoSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -355,6 +356,8 @@ export default function PurchaseOrders() {
     if (supplierFilter !== "all" && o.supplier_name !== supplierFilter) return false;
     if (dateFrom && (!o.requested_date || o.requested_date < dateFrom)) return false;
     if (dateTo && (!o.requested_date || o.requested_date > dateTo)) return false;
+    const q = poSearch.toLowerCase();
+    if (q && !(o.po_number || "").toLowerCase().includes(q) && !(o.supplier_name || "").toLowerCase().includes(q) && !(o.project_name || "").toLowerCase().includes(q) && !(o.description || "").toLowerCase().includes(q)) return false;
     return true;
   });
   const pending = orders.filter((o) => o.approval_status === "pending");
@@ -467,6 +470,10 @@ export default function PurchaseOrders() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Search PO#, supplier, project..." className="pl-9 w-56" value={poSearch} onChange={(e) => setPoSearch(e.target.value)} />
+          </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
             <SelectContent>
