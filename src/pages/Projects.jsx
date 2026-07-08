@@ -237,65 +237,88 @@ export default function Projects() {
         </div>
       </div>
 
-      {/* Approved Contracts Summary */}
+      {/* Approved Contracts Summary, grouped by classification with subtotals */}
       {approvedProjects.length > 0 &&
       <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-[#000000]">
           <div className="flex items-center gap-2 mb-3">
             <CheckCircle2 className="w-4 h-4 text-primary" />
             <h3 className="text-sm font-semibold text-primary">Approved Contracts</h3>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-xs text-muted-foreground border-b border-border">
-                  <th className="text-left py-2 pr-4">Project</th>
-                  <th className="text-left py-2 pr-4">Client</th>
-                  <th className="text-left py-2 pr-4">Status</th>
-                  <th className="text-right py-2 pr-4">Contract Amt</th>
-                  <th className="text-right py-2 pr-4">Completed</th>
-                  <th className="text-right py-2 pr-4">Retention</th>
-                  <th className="text-right py-2">Balance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {approvedProjects.map((p) => {
-                const completedAmt = (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100);
-                const remainingAmt = (p.contract_amount || 0) - completedAmt;
-                const retentionAmt = completedAmt * ((p.retention_rate || 0) / 100);
-                const netReceivable = completedAmt - retentionAmt;
-                return (
-                  <tr key={p.id} className="border-b border-border/50 last:border-0">
-                      <td className="py-2.5 pr-4 font-medium"><button onClick={() => navigate(`/projects/${p.id}`)} className="text-primary hover:underline flex items-center gap-1">{p.project_name} <ExternalLink className="w-3 h-3" /></button></td>
-                      <td className="py-2.5 pr-4 text-muted-foreground">{p.client_name}</td>
-                      <td className="py-2.5 pr-4">
-                        <Badge variant="outline" className={`text-xs ${contractStatusStyles[p.contract_status]}`}>
-                          {p.contract_status}
-                        </Badge>
-                      </td>
-                      <td className="py-2.5 pr-4 text-right font-bold text-foreground">₱{(p.contract_amount || 0).toLocaleString()}</td>
-                      <td className="py-2.5 pr-4 text-right text-primary">₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                      <td className="py-2.5 pr-4 text-right text-chart-3">₱{retentionAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                      <td className="py-2.5 text-right text-muted-foreground">₱{remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                    </tr>);
+          <div className="overflow-x-auto space-y-6">
+            {Object.entries(
+              approvedProjects.reduce((acc, p) => {
+                const key = p.project_classification || "unclassified";
+                if (!acc[key]) acc[key] = [];
+                acc[key].push(p);
+                return acc;
+              }, {})
+            ).map(([classification, groupProjects]) => {
+              const groupTotal = groupProjects.reduce((s, p) => s + (p.contract_amount || 0), 0);
+              const groupCompleted = groupProjects.reduce((s, p) => s + (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100), 0);
+              const groupRetention = groupProjects.reduce((s, p) => {const c = (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100);return s + c * ((p.retention_rate || 0) / 100);}, 0);
+              const groupBalance = groupProjects.reduce((s, p) => s + (p.contract_amount || 0) * (1 - (p.completed_percentage || 0) / 100), 0);
+              return (
+                <div key={classification}>
+                  <h4 className="text-xs font-semibold text-foreground mb-2">
+                    {classificationLabels[classification] || "Unclassified"}
+                    <span className="text-muted-foreground font-normal ml-2">({groupProjects.length})</span>
+                  </h4>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-xs text-muted-foreground border-b border-border">
+                        <th className="text-left py-2 pr-4">Project</th>
+                        <th className="text-left py-2 pr-4">Client</th>
+                        <th className="text-left py-2 pr-4">Status</th>
+                        <th className="text-right py-2 pr-4">Contract Amt</th>
+                        <th className="text-right py-2 pr-4">Completed</th>
+                        <th className="text-right py-2 pr-4">Retention</th>
+                        <th className="text-right py-2">Balance</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {groupProjects.map((p) => {
+                      const completedAmt = (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100);
+                      const remainingAmt = (p.contract_amount || 0) - completedAmt;
+                      const retentionAmt = completedAmt * ((p.retention_rate || 0) / 100);
+                      return (
+                        <tr key={p.id} className="border-b border-border/50 last:border-0">
+                            <td className="py-2.5 pr-4 font-medium"><button onClick={() => navigate(`/projects/${p.id}`)} className="text-primary hover:underline flex items-center gap-1">{p.project_name} <ExternalLink className="w-3 h-3" /></button></td>
+                            <td className="py-2.5 pr-4 text-muted-foreground">{p.client_name}</td>
+                            <td className="py-2.5 pr-4">
+                              <Badge variant="outline" className={`text-xs ${contractStatusStyles[p.contract_status]}`}>
+                                {p.contract_status}
+                              </Badge>
+                            </td>
+                            <td className="py-2.5 pr-4 text-right font-bold text-foreground">₱{(p.contract_amount || 0).toLocaleString()}</td>
+                            <td className="py-2.5 pr-4 text-right text-primary">₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                            <td className="py-2.5 pr-4 text-right text-chart-3">₱{retentionAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                            <td className="py-2.5 text-right text-muted-foreground">₱{remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          </tr>);
 
-              })}
-              </tbody>
-              <tfoot>
-                <tr className="border-t border-border">
-                  <td colSpan={3} className="pt-3 text-sm font-semibold text-foreground">Total</td>
-                  <td className="pt-3 text-right font-bold text-primary">₱{totalApprovedValue.toLocaleString()}</td>
-                  <td className="pt-3 text-right font-bold text-primary">
-                    ₱{approvedProjects.reduce((s, p) => s + (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </td>
-                  <td className="pt-3 text-right font-bold text-chart-3">
-                    ₱{approvedProjects.reduce((s, p) => {const c = (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100);return s + c * ((p.retention_rate || 0) / 100);}, 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </td>
-                  <td className="pt-3 text-right font-bold text-muted-foreground">
-                    ₱{approvedProjects.reduce((s, p) => s + (p.contract_amount || 0) * (1 - (p.completed_percentage || 0) / 100), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+                    })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t border-border">
+                        <td colSpan={3} className="pt-3 text-sm font-semibold text-foreground">Subtotal</td>
+                        <td className="pt-3 text-right font-bold text-primary">₱{groupTotal.toLocaleString()}</td>
+                        <td className="pt-3 text-right font-bold text-primary">
+                          ₱{groupCompleted.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </td>
+                        <td className="pt-3 text-right font-bold text-chart-3">
+                          ₱{groupRetention.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </td>
+                        <td className="pt-3 text-right font-bold text-muted-foreground">
+                          ₱{groupBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              );
+            })}
+            <div className="pt-3 border-t-2 border-primary/30 flex justify-end">
+              <p className="text-sm font-bold text-foreground">Grand Total: <span className="text-primary">₱{totalApprovedValue.toLocaleString()}</span></p>
+            </div>
           </div>
         </div>
       }
