@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
@@ -66,6 +66,10 @@ export default function PaymentApprovals() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showBulkDisburse, setShowBulkDisburse] = useState(false);
   const queryClient = useQueryClient();
+  const posGroupRef = useRef();
+  const pendingGroupRef = useRef();
+  const approvedGroupRef = useRef();
+  const paidGroupRef = useRef();
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -615,8 +619,21 @@ export default function PaymentApprovals() {
         </TabsList>
 
         {/* Approved Purchase Orders — Ready to Pay */}
-        <TabsContent value="pos" className="space-y-2 mt-4">
-          <SupplierGroupedPOs pos={availablePOs} onConvert={convertPOtoPaymentRequest} />
+        <TabsContent value="pos" className="space-y-3 mt-4">
+          {availablePOs.length > 0 && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-muted-foreground">{new Set(availablePOs.map(po => po.supplier_name || "Unknown Supplier")).size} supplier{new Set(availablePOs.map(po => po.supplier_name || "Unknown Supplier")).size !== 1 ? "s" : ""}</p>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => posGroupRef.current?.expandAll()} className="text-xs">
+                  <ChevronDown className="w-3 h-3 mr-1" /> Expand All
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => posGroupRef.current?.collapseAll()} className="text-xs">
+                  <ChevronUp className="w-3 h-3 mr-1" /> Collapse All
+                </Button>
+              </div>
+            </div>
+          )}
+          <SupplierGroupedPOs ref={posGroupRef} pos={availablePOs} onConvert={convertPOtoPaymentRequest} />
         </TabsContent>
 
         {/* Pending */}
@@ -652,7 +669,22 @@ export default function PaymentApprovals() {
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">Loading...</div>
           ) : (
-            <SupplierGroupedRequests requests={pendingInView} renderPRRow={renderPRRow} isAdmin={isAdmin} emptyLabel="No pending requests" />
+            <>
+              {pendingInView.length > 0 && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-muted-foreground">{new Set(pendingInView.map(r => r.payee || "Unknown Supplier")).size} supplier{new Set(pendingInView.map(r => r.payee || "Unknown Supplier")).size !== 1 ? "s" : ""}</p>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" onClick={() => pendingGroupRef.current?.expandAll()} className="text-xs">
+                      <ChevronDown className="w-3 h-3 mr-1" /> Expand All
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => pendingGroupRef.current?.collapseAll()} className="text-xs">
+                      <ChevronUp className="w-3 h-3 mr-1" /> Collapse All
+                    </Button>
+                  </div>
+                </div>
+              )}
+              <SupplierGroupedRequests ref={pendingGroupRef} requests={pendingInView} renderPRRow={renderPRRow} isAdmin={isAdmin} emptyLabel="No pending requests" />
+            </>
           )}
         </TabsContent>
 
@@ -675,7 +707,22 @@ export default function PaymentApprovals() {
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">Loading...</div>
           ) : (
-            <SupplierGroupedRequests requests={approvedInView} renderPRRow={renderPRRow} isAdmin={isAdmin} emptyLabel="No approved requests" />
+            <>
+              {approvedInView.length > 0 && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-muted-foreground">{new Set(approvedInView.map(r => r.payee || "Unknown Supplier")).size} supplier{new Set(approvedInView.map(r => r.payee || "Unknown Supplier")).size !== 1 ? "s" : ""}</p>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" onClick={() => approvedGroupRef.current?.expandAll()} className="text-xs">
+                      <ChevronDown className="w-3 h-3 mr-1" /> Expand All
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => approvedGroupRef.current?.collapseAll()} className="text-xs">
+                      <ChevronUp className="w-3 h-3 mr-1" /> Collapse All
+                    </Button>
+                  </div>
+                </div>
+              )}
+              <SupplierGroupedRequests ref={approvedGroupRef} requests={approvedInView} renderPRRow={renderPRRow} isAdmin={isAdmin} emptyLabel="No approved requests" />
+            </>
           )}
         </TabsContent>
 
@@ -684,7 +731,22 @@ export default function PaymentApprovals() {
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">Loading...</div>
           ) : (
-            <SupplierGroupedRequests requests={paidInView} renderPRRow={renderPRRow} isAdmin={isAdmin} emptyLabel="No paid requests" />
+            <>
+              {paidInView.length > 0 && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-muted-foreground">{new Set(paidInView.map(r => r.payee || "Unknown Supplier")).size} supplier{new Set(paidInView.map(r => r.payee || "Unknown Supplier")).size !== 1 ? "s" : ""}</p>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" onClick={() => paidGroupRef.current?.expandAll()} className="text-xs">
+                      <ChevronDown className="w-3 h-3 mr-1" /> Expand All
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => paidGroupRef.current?.collapseAll()} className="text-xs">
+                      <ChevronUp className="w-3 h-3 mr-1" /> Collapse All
+                    </Button>
+                  </div>
+                </div>
+              )}
+              <SupplierGroupedRequests ref={paidGroupRef} requests={paidInView} renderPRRow={renderPRRow} isAdmin={isAdmin} emptyLabel="No paid requests" />
+            </>
           )}
         </TabsContent>
       </Tabs>
