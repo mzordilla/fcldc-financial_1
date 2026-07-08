@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import BankReconciliationPage from "./BankReconciliation";
 import DepositUndepositedDialog from "../components/bank-accounts/DepositUndepositedDialog";
+import BankAccountSummaryReport from "../components/bank-accounts/BankAccountSummaryReport";
 
 const ACCOUNT_TYPES = [
 { value: "checking", label: "Checking" },
@@ -180,6 +181,7 @@ export default function BankAccounts() {
         {[
           { key: "accounts", label: "Bank Accounts" },
           { key: "reconciliation", label: "Bank Reconciliation" },
+          { key: "summary", label: "Summary Report" },
         ].map(tab => (
           <button
             key={tab.key}
@@ -194,6 +196,8 @@ export default function BankAccounts() {
       </div>
 
       {activeTab === "reconciliation" && <BankReconciliationPage />}
+
+      {activeTab === "summary" && <BankAccountSummaryReport accounts={accounts} transactions={transactions} />}
 
       {activeTab === "accounts" && <>
 
