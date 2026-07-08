@@ -1,56 +1,34 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { format, differenceInDays, addDays } from "date-fns";
+import { format, addDays } from "date-fns";
 import { Plus, Trash2, CheckCircle, FileUp, Download, Banknote, ChevronDown, ChevronUp, CheckSquare, Square, Loader2, History, FileText, Search } from "lucide-react";
 
-import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
-import { useRef } from "react";
+import { exportToExcel, parseExcelFile } from "@/utils/excelUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import PayableCard from "../components/payables/PayableCard";
 import SupplierStatementDialog from "../components/payables/SupplierStatementDialog";
+import SupplierInvoiceDetails from "../components/payables/SupplierInvoiceDetails";
 
-function getAgingBucket(dueDateStr, status) {
-  if (status === "paid") return null;
-  if (!dueDateStr) return null;
-  const days = differenceInDays(new Date(), new Date(dueDateStr));
-  if (days <= 0) return { label: "Current", style: "bg-primary/10 text-primary" };
-  if (days <= 30) return { label: "1–30 days", style: "bg-chart-3/10 text-chart-3" };
-  if (days <= 60) return { label: "31–60 days", style: "bg-chart-3/20 text-chart-3" };
-  if (days <= 90) return { label: "61–90 days", style: "bg-destructive/10 text-destructive" };
-  return { label: "90+ days", style: "bg-destructive/20 text-destructive font-semibold" };
-}
-
-function AgingSummary({ items }) {
-  const today = new Date();
+function AgingSummary({ overall, overallTotal }) {
   const buckets = [
-    { label: "Current", range: "Not yet due", amount: 0 },
-    { label: "1–30 days", range: "Overdue", amount: 0 },
-    { label: "31–60 days", range: "Overdue", amount: 0 },
-    { label: "61–90 days", range: "Overdue", amount: 0 },
-    { label: "90+ days", range: "Critical", amount: 0 },
+    { key: "current", label: "Current", amount: overall.current },
+    { key: "days30", label: "1–30 days", amount: overall.days30 },
+    { key: "days60", label: "31–60 days", amount: overall.days60 },
+    { key: "days90", label: "61–90 days", amount: overall.days90 },
+    { key: "days90plus", label: "90+ days", amount: overall.days90plus },
   ];
-  items.filter(p => p.status !== "paid").forEach(p => {
-    if (!p.due_date) return;
-    const days = differenceInDays(today, new Date(p.due_date));
-    const net = (p.amount || 0) - (p.withholding_tax_amount || 0) + (p.vat_amount || 0);
-    const rem = net - (p.amount_paid || 0);
-    if (days <= 0) buckets[0].amount += rem;
-    else if (days <= 30) buckets[1].amount += rem;
-    else if (days <= 60) buckets[2].amount += rem;
-    else if (days <= 90) buckets[3].amount += rem;
-    else buckets[4].amount += rem;
-  });
   const colors = ["bg-primary", "bg-chart-3", "bg-orange-400", "bg-destructive/70", "bg-destructive"];
   return (
     <div className="bg-card rounded-2xl border border-border p-5">
-      <h3 className="text-sm font-semibold text-foreground mb-4">Aging Analysis</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-foreground">Aging Analysis</h3>
+        <p className="text-xs text-muted-foreground">Total Outstanding: <span className="font-bold text-foreground">₱{overallTotal.toLocaleString()}</span></p>
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {buckets.map((b, i) => (
-          <div key={b.label} className="text-center">
+          <div key={b.key} className="text-center">
             <div className={`h-1.5 rounded-full ${colors[i]} mb-2 opacity-80`} />
             <p className="text-xs text-muted-foreground">{b.label}</p>
             <p className={`text-sm font-bold mt-0.5 ${i >= 2 && b.amount > 0 ? "text-destructive" : "text-foreground"}`}>
@@ -63,36 +41,78 @@ function AgingSummary({ items }) {
   );
 }
 
-const statusStyles = {
-  unpaid: "bg-chart-2/10 text-chart-2 border-chart-2/20",
-  partially_paid: "bg-chart-3/10 text-chart-3 border-chart-3/20",
-  paid: "bg-primary/10 text-primary border-primary/20",
-  overdue: "bg-destructive/10 text-destructive border-destructive/20",
-};
-
 export default function Payables() {
-  const [markingPaid, setMarkingPaid] = useState(null); // kept for PayableCard compat but Pay button removed
   const [statementSupplier, setStatementSupplier] = useState(null);
   const [showPaymentRequests, setShowPaymentRequests] = useState(true);
   const [showPaid, setShowPaid] = useState(false);
   const [selectedPRs, setSelectedPRs] = useState(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
-  const [removingDupes, setRemovingDupes] = useState(false);
-  const [groupBySupplier, setGroupBySupplier] = useState(true);
+  const [checkingDupes, setCheckingDupes] = useState(false);
+  const [dupesResultMsg, setDupesResultMsg] = useState("");
   const [expandedSuppliers, setExpandedSuppliers] = useState(new Set());
   const [search, setSearch] = useState("");
+  const [exporting, setExporting] = useState(false);
   const queryClient = useQueryClient();
   const importRef = useRef();
+  const expandedSuppliersRef = useRef(expandedSuppliers);
 
-  const handleExport = (data) => {
-    exportToExcel(data.map(p => ({
-      supplier_name: p.supplier_name, description: p.description, invoice_number: p.invoice_number,
-      amount: p.amount, amount_paid: p.amount_paid, due_date: p.due_date,
-      project_name: p.project_name, category: p.category, status: p.status,
-      payment_method: p.payment_method, payment_date: p.payment_date,
-      payment_reference: p.payment_reference, notes: p.notes,
-    })), "payables.xlsx", "Payables");
+  useEffect(() => { expandedSuppliersRef.current = expandedSuppliers; }, [expandedSuppliers]);
+
+  // Lightweight, server-computed summary: only aggregates load up-front
+  const { data: summary, isLoading: summaryLoading } = useQuery({
+    queryKey: ["payablesAgingSummary"],
+    queryFn: async () => (await base44.functions.invoke("payablesAgingSummary", {})).data,
+  });
+
+  const { data: paymentRequests = [] } = useQuery({
+    queryKey: ["payment_requests_for_payables"],
+    queryFn: () => base44.entities.PaymentRequest.list("-created_date", 1000),
+  });
+
+  const { data: paidPayables = [] } = useQuery({
+    queryKey: ["payablesPaid"],
+    queryFn: () => base44.entities.Payable.filter({ status: "paid" }, "-due_date", 1000),
+    enabled: showPaid,
+  });
+
+  // Only fetched when there are approved payment requests to reconcile against existing payables
+  const { data: payablesForLinkCheck = [] } = useQuery({
+    queryKey: ["payablesLinkCheck"],
+    queryFn: () => base44.entities.Payable.list("-created_date", 5000),
+    enabled: paymentRequests.some((pr) => pr.approval_status === "approved"),
+  });
+
+  const { data: statementInvoices = [] } = useQuery({
+    queryKey: ["payablesSupplier", statementSupplier],
+    queryFn: () => base44.entities.Payable.filter({ supplier_name: statementSupplier }, "-due_date", 1000),
+    enabled: !!statementSupplier,
+  });
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ["payablesAgingSummary"] });
+    queryClient.invalidateQueries({ queryKey: ["payablesPaid"] });
+    expandedSuppliersRef.current.forEach((s) => queryClient.invalidateQueries({ queryKey: ["payablesSupplier", s] }));
+    if (statementSupplier) queryClient.invalidateQueries({ queryKey: ["payablesSupplier", statementSupplier] });
   };
+
+  // Real-time: auto-refresh aging summary + open supplier details whenever any Payable changes
+  useEffect(() => {
+    const unsubscribe = base44.entities.Payable.subscribe(() => {
+      invalidateAll();
+    });
+    return unsubscribe;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statementSupplier]);
+
+  const createMutation = useMutation({
+    mutationFn: (data) => base44.entities.Payable.create(data),
+    onSuccess: invalidateAll,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Payable.delete(id),
+    onSuccess: invalidateAll,
+  });
 
   const handleImportFile = async (e) => {
     const file = e.target.files[0];
@@ -113,53 +133,34 @@ export default function Payables() {
     e.target.value = "";
   };
 
-  const { data: payables = [], isLoading } = useQuery({
-    queryKey: ["payables"],
-    queryFn: () => base44.entities.Payable.list("-due_date", 1000),
-  });
+  const handleExport = async () => {
+    setExporting(true);
+    const all = await base44.entities.Payable.list("-due_date", 5000);
+    exportToExcel(all.map(p => ({
+      supplier_name: p.supplier_name, description: p.description, invoice_number: p.invoice_number,
+      amount: p.amount, amount_paid: p.amount_paid, due_date: p.due_date,
+      project_name: p.project_name, category: p.category, status: p.status,
+      payment_method: p.payment_method, payment_date: p.payment_date,
+      payment_reference: p.payment_reference, notes: p.notes,
+    })), "payables.xlsx", "Payables");
+    setExporting(false);
+  };
 
-  const { data: paymentRequests = [] } = useQuery({
-    queryKey: ["payment_requests_for_payables"],
-    queryFn: () => base44.entities.PaymentRequest.list("-created_date", 1000),
-  });
-
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Payable.create(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["payables"] }),
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Payable.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["payables"] }),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Payable.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["payables"] }),
-  });
-
-  const markPaid = (p, paymentData) => updateMutation.mutate({ id: p.id, data: paymentData });
-
-  // IDs already linked via notes tag
-  const linkedPRIds = new Set(payables.flatMap(p => {
-    if (!p.notes) return [];
-    const m = p.notes.match(/PR:(\S+)/);
-    return m ? [m[1]] : [];
-  }));
-
-  // Also deduplicate by matching supplier + amount + invoice_number against existing payables (any status including paid)
-  const existingPayableKeys = new Set(payables.map(p =>
-    `${(p.supplier_name || "").toLowerCase().trim()}|${p.amount}|${(p.invoice_number || "").toLowerCase().trim()}`
-  ));
-
-  const prKey = (pr) =>
-    `${(pr.payee || "").toLowerCase().trim()}|${pr.amount}|${(pr.invoice_number || pr.request_number || "").toLowerCase().trim()}`;
-
-  const pendingPRs = paymentRequests.filter(pr =>
-    pr.approval_status === "approved" &&
-    !linkedPRIds.has(pr.id) &&
-    !existingPayableKeys.has(prKey(pr))
-  );
+  const checkAndRemoveDuplicates = async () => {
+    setCheckingDupes(true);
+    setDupesResultMsg("");
+    const all = await base44.entities.Payable.list("-created_date", 5000);
+    const seen = {};
+    const toDelete = [];
+    [...all].sort((a, b) => new Date(b.created_date) - new Date(a.created_date)).forEach((p) => {
+      const key = `${(p.supplier_name || "").toLowerCase().trim()}|${p.amount}|${(p.invoice_number || "").toLowerCase().trim()}`;
+      if (seen[key]) toDelete.push(p.id);
+      else seen[key] = true;
+    });
+    if (toDelete.length) await Promise.all(toDelete.map((id) => deleteMutation.mutateAsync(id)));
+    setDupesResultMsg(toDelete.length ? `Removed ${toDelete.length} duplicate${toDelete.length > 1 ? "s" : ""}` : "No duplicates found");
+    setCheckingDupes(false);
+  };
 
   const createFromPR = async (pr) => {
     await createMutation.mutateAsync({
@@ -180,116 +181,58 @@ export default function Payables() {
     });
   };
 
-  // Bulk approve selected PRs
   const bulkApprovePRs = async () => {
     setBulkLoading(true);
-    await Promise.all([...selectedPRs].map(id => {
-      const pr = pendingPRs.find(r => r.id === id);
+    await Promise.all([...selectedPRs].map((id) => {
+      const pr = pendingPRs.find((r) => r.id === id);
       return pr ? createFromPR(pr) : Promise.resolve();
     }));
     setSelectedPRs(new Set());
     setBulkLoading(false);
   };
 
-  // Remove duplicate payables — keep the one with the latest created_date per key
-  const removeDuplicatePayables = async () => {
-    setRemovingDupes(true);
-    const seen = {};
-    const toDelete = [];
-    // Sort newest first so we keep the latest
-    const sorted = [...payables].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-    sorted.forEach(p => {
-      const key = `${(p.supplier_name || "").toLowerCase().trim()}|${p.amount}|${(p.invoice_number || "").toLowerCase().trim()}`;
-      if (seen[key]) {
-        toDelete.push(p.id);
-      } else {
-        seen[key] = true;
-      }
-    });
-    await Promise.all(toDelete.map(id => deleteMutation.mutateAsync(id)));
-    setRemovingDupes(false);
-  };
+  const approvedPRs = paymentRequests.filter((pr) => pr.approval_status === "approved");
 
-  // Detect duplicate payable entries: same supplier + amount + invoice_number
-  const payableKeyCount = {};
-  payables.forEach(p => {
-    const key = `${(p.supplier_name || "").toLowerCase().trim()}|${p.amount}|${(p.invoice_number || "").toLowerCase().trim()}`;
-    payableKeyCount[key] = (payableKeyCount[key] || 0) + 1;
-  });
-  const isDuplicatePayable = (p) => {
-    const key = `${(p.supplier_name || "").toLowerCase().trim()}|${p.amount}|${(p.invoice_number || "").toLowerCase().trim()}`;
-    return payableKeyCount[key] > 1;
-  };
-  // Count how many payables are duplicates (extras beyond the first)
-  const duplicatePayablesCount = Object.values(payableKeyCount).reduce((sum, cnt) => sum + (cnt > 1 ? cnt - 1 : 0), 0);
+  const linkedPRIds = new Set(payablesForLinkCheck.flatMap(p => {
+    if (!p.notes) return [];
+    const m = p.notes.match(/PR:(\S+)/);
+    return m ? [m[1]] : [];
+  }));
+  const existingPayableKeys = new Set(payablesForLinkCheck.map(p =>
+    `${(p.supplier_name || "").toLowerCase().trim()}|${p.amount}|${(p.invoice_number || "").toLowerCase().trim()}`
+  ));
+  const prKey = (pr) =>
+    `${(pr.payee || "").toLowerCase().trim()}|${pr.amount}|${(pr.invoice_number || pr.request_number || "").toLowerCase().trim()}`;
+
+  const pendingPRs = approvedPRs.filter(pr =>
+    !linkedPRIds.has(pr.id) && !existingPayableKeys.has(prKey(pr))
+  );
+
+  const overall = summary?.overall || { current: 0, days30: 0, days60: 0, days90: 0, days90plus: 0 };
+  const overallTotal = summary?.overallTotal || 0;
+  const overdueCount = summary?.overdueCount || 0;
+  const allSuppliers = summary?.suppliers || [];
 
   const searchTerm = search.trim().toLowerCase();
-  const filteredPayables = searchTerm
-    ? payables.filter(p =>
-        (p.invoice_number || "").toLowerCase().includes(searchTerm) ||
-        (p.po_number || "").toLowerCase().includes(searchTerm) ||
-        (p.supplier_name || "").toLowerCase().includes(searchTerm) ||
-        (p.project_name || "").toLowerCase().includes(searchTerm)
-      )
-    : payables;
-
-  const unpaidPayables = filteredPayables.filter(p => p.status !== "paid");
-  const paidPayables = filteredPayables.filter(p => p.status === "paid");
-
-  // Net payable = gross amount - withholding tax + vat (the actual cash to be paid)
-  const netPayable = (p) => (p.amount || 0) - (p.withholding_tax_amount || 0) + (p.vat_amount || 0);
-  const totalUnpaid = unpaidPayables.reduce((s, p) => s + (netPayable(p) - (p.amount_paid || 0)), 0);
-  const overdueCount = payables.filter(p => p.status === "overdue").length;
-  
-
-
-  // Group unpaid payables by supplier
-  const groupedBySupplier = unpaidPayables.reduce((acc, p) => {
-    const supplier = p.supplier_name || "Unknown Supplier";
-    if (!acc[supplier]) acc[supplier] = [];
-    acc[supplier].push(p);
-    return acc;
-  }, {});
-
-  // Calculate aging per supplier
-  const supplierAging = Object.entries(groupedBySupplier).map(([supplier, items]) => {
-    const buckets = { current: 0, days30: 0, days60: 0, days90: 0, days90plus: 0 };
-    items.forEach(p => {
-      if (!p.due_date) return;
-      const days = differenceInDays(new Date(), new Date(p.due_date));
-      const net = (p.amount || 0) - (p.withholding_tax_amount || 0) + (p.vat_amount || 0);
-      const rem = net - (p.amount_paid || 0);
-      if (days <= 0) buckets.current += rem;
-      else if (days <= 30) buckets.days30 += rem;
-      else if (days <= 60) buckets.days60 += rem;
-      else if (days <= 90) buckets.days90 += rem;
-      else buckets.days90plus += rem;
-    });
-    return { supplier, items, buckets, total: Object.values(buckets).reduce((a, b) => a + b, 0) };
-  }).sort((a, b) => b.total - a.total);
+  const supplierList = searchTerm
+    ? allSuppliers.filter((s) => s.supplier.toLowerCase().includes(searchTerm))
+    : allSuppliers;
 
   const toggleSupplier = (supplier) => {
-    setExpandedSuppliers(prev => {
+    setExpandedSuppliers((prev) => {
       const next = new Set(prev);
       next.has(supplier) ? next.delete(supplier) : next.add(supplier);
       return next;
     });
   };
 
-  const expandAllSuppliers = () => {
-    setExpandedSuppliers(new Set(supplierAging.map(s => s.supplier)));
-  };
+  const expandAllSuppliers = () => setExpandedSuppliers(new Set(allSuppliers.map((s) => s.supplier)));
+  const collapseAllSuppliers = () => setExpandedSuppliers(new Set());
 
-  const collapseAllSuppliers = () => {
-    setExpandedSuppliers(new Set());
+  const handleDeleteInvoice = (id, supplier) => {
+    deleteMutation.mutate(id);
+    queryClient.invalidateQueries({ queryKey: ["payablesSupplier", supplier] });
   };
-
-  // Expand all suppliers by default on first load
-  useEffect(() => {
-    if (supplierAging.length > 0 && expandedSuppliers.size === 0) {
-      setExpandedSuppliers(new Set(supplierAging.map(s => s.supplier)));
-    }
-  }, [supplierAging.length]);
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
@@ -297,21 +240,17 @@ export default function Payables() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Payables</h1>
           <p className="text-muted-foreground mt-1">
-            ₱{totalUnpaid.toLocaleString()} outstanding · {overdueCount} overdue
+            ₱{overallTotal.toLocaleString()} outstanding · {overdueCount} overdue
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          {duplicatePayablesCount > 0 && (
-            <Button variant="outline" size="sm" onClick={removeDuplicatePayables} disabled={removingDupes} className="text-destructive border-destructive/30 hover:bg-destructive/10">
-              {removingDupes ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
-              Remove {duplicatePayablesCount} Duplicate{duplicatePayablesCount > 1 ? "s" : ""}
-            </Button>
-          )}
-          <Button variant="outline" size="sm" onClick={() => setGroupBySupplier(!groupBySupplier)}>
-            {groupBySupplier ? "Ungroup" : "Group by Supplier"}
+          <Button variant="outline" size="sm" onClick={checkAndRemoveDuplicates} disabled={checkingDupes}>
+            {checkingDupes ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+            Check Duplicates
           </Button>
-          <Button variant="outline" size="sm" onClick={() => handleExport(payables)}>
-            <Download className="w-4 h-4 mr-2" /> Export
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
+            {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+            Export
           </Button>
           <Button variant="outline" size="sm" onClick={() => importRef.current.click()}>
             <FileUp className="w-4 h-4 mr-2" /> Import
@@ -320,17 +259,23 @@ export default function Payables() {
         </div>
       </div>
 
+      {dupesResultMsg && <p className="text-xs text-muted-foreground">{dupesResultMsg}</p>}
+
       <div className="relative max-w-md">
         <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
         <Input
-          placeholder="Search by invoice #, P.O. #, supplier, or project..."
+          placeholder="Search by supplier..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
         />
       </div>
 
-      <AgingSummary items={payables} />
+      {summaryLoading ? (
+        <p className="text-center py-12 text-muted-foreground">Loading aging summary...</p>
+      ) : (
+        <AgingSummary overall={overall} overallTotal={overallTotal} />
+      )}
 
       {/* From Approved Payment Requests */}
       {pendingPRs.length > 0 && (
@@ -401,223 +346,104 @@ export default function Payables() {
         </div>
       )}
 
-      {/* Unpaid / Outstanding - Grouped by Supplier (Tabular) */}
-      {groupBySupplier ? (
-        <div className="space-y-6">
-          {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
-          {!isLoading && supplierAging.length === 0 && <p className="text-center py-12 text-muted-foreground">No outstanding payables</p>}
-          {supplierAging.length > 0 && (
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-muted-foreground">{supplierAging.length} supplier{supplierAging.length !== 1 ? "s" : ""}</p>
-              <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" onClick={expandAllSuppliers} className="text-xs">
-                  <ChevronDown className="w-3 h-3 mr-1" /> Expand All
-                </Button>
-                <Button size="sm" variant="outline" onClick={collapseAllSuppliers} className="text-xs">
-                  <ChevronUp className="w-3 h-3 mr-1" /> Collapse All
-                </Button>
-              </div>
-            </div>
-          )}
-          {supplierAging.map(({ supplier, items, buckets, total }) => {
-            const isExpanded = expandedSuppliers.has(supplier);
-            return (
-              <div key={supplier} className="rounded-2xl border border-border overflow-hidden bg-card">
-                <button
-                  className="w-full px-5 py-3 bg-muted/50 border-b border-border hover:bg-muted/70 transition-colors"
-                  onClick={() => toggleSupplier(supplier)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "" : "-rotate-90"}`} />
-                      <div className="text-left">
-                        <h3 className="text-base font-semibold text-foreground">{supplier}</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">{items.length} invoice{items.length > 1 ? "s" : ""} · ₱{total.toLocaleString(undefined, { minimumFractionDigits: 2 })} outstanding</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs"
-                        onClick={e => { e.stopPropagation(); setStatementSupplier(supplier); }}
-                      >
-                        <FileText className="w-3 h-3 mr-1" /> Statement
-                      </Button>
-                      <div className="flex items-center gap-1 text-xs">
-                        <span className="text-muted-foreground">Current:</span>
-                        <span className="font-semibold text-primary">₱{buckets.current.toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs">
-                        <span className="text-muted-foreground">30:</span>
-                        <span className="font-semibold text-chart-3">₱{buckets.days30.toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs">
-                        <span className="text-muted-foreground">60:</span>
-                        <span className="font-semibold text-orange-500">₱{buckets.days60.toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs">
-                        <span className="text-muted-foreground">90:</span>
-                        <span className="font-semibold text-destructive">₱{buckets.days90.toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs">
-                        <span className="text-muted-foreground">90+:</span>
-                        <span className="font-semibold text-destructive">₱{buckets.days90plus.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-                {isExpanded && (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-muted/30 border-y border-border">
-                        <tr>
-                          <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Invoice #</th>
-                          <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Description</th>
-                          <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Project</th>
-                          <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Due Date</th>
-                          <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Aging</th>
-                          <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
-                          <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Paid</th>
-                          <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Balance</th>
-                          <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {items.map((p) => {
-                          const bucket = getAgingBucket(p.due_date, p.status);
-                          const netAmt = netPayable(p);
-                          const balance = netAmt - (p.amount_paid || 0);
-                          return (
-                            <tr key={p.id} className="hover:bg-muted/20 transition-colors">
-                              <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{p.invoice_number || "—"}</td>
-                              <td className="px-4 py-3 text-xs text-foreground max-w-[200px] truncate">{p.description}</td>
-                              <td className="px-4 py-3 text-xs text-muted-foreground">{p.project_name || "—"}</td>
-                              <td className="px-4 py-3 text-xs text-muted-foreground">{p.due_date ? format(new Date(p.due_date), "MMM d, yyyy") : "—"}</td>
-                              <td className="px-4 py-3">
-                                {bucket ? (
-                                  <Badge className={bucket.style} variant="outline">{bucket.label}</Badge>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">—</span>
-                                )}
-                              </td>
-                              <td className="px-4 py-3 text-right text-xs font-semibold text-foreground">
-                                ₱{netAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                {p.withholding_tax_amount > 0 && (
-                                  <div className="text-muted-foreground font-normal">Gross: ₱{(p.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                                )}
-                              </td>
-                              <td className="px-4 py-3 text-right text-xs text-primary">₱{(p.amount_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                              <td className="px-4 py-3 text-right text-xs font-bold text-foreground">₱{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                              <td className="px-4 py-3 text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                  <Button size="sm" variant="outline" onClick={() => deleteMutation.mutate(p.id)} className="text-xs text-destructive hover:text-destructive">
-                                    <Trash2 className="w-3 h-3" />
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-border overflow-hidden bg-card">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/30 border-y border-border">
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Supplier</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Invoice #</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Description</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Project</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Due Date</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Aging</th>
-                  <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
-                  <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Paid</th>
-                  <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Balance</th>
-                  <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {unpaidPayables.map((p) => {
-                  const bucket = getAgingBucket(p.due_date, p.status);
-                  const netAmt = netPayable(p);
-                  const balance = netAmt - (p.amount_paid || 0);
-                  return (
-                    <tr key={p.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="px-4 py-3 text-xs font-medium text-foreground">{p.supplier_name}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{p.invoice_number || "—"}</td>
-                      <td className="px-4 py-3 text-xs text-foreground max-w-[200px] truncate">{p.description}</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{p.project_name || "—"}</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{p.due_date ? format(new Date(p.due_date), "MMM d, yyyy") : "—"}</td>
-                      <td className="px-4 py-3">
-                        {bucket ? (
-                          <Badge className={bucket.style} variant="outline">{bucket.label}</Badge>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right text-xs font-semibold text-foreground">
-                        ₱{netAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        {p.withholding_tax_amount > 0 && (
-                          <div className="text-muted-foreground font-normal">Gross: ₱{(p.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right text-xs text-primary">₱{(p.amount_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                      <td className="px-4 py-3 text-right text-xs font-bold text-foreground">₱{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button size="sm" variant="outline" onClick={() => deleteMutation.mutate(p.id)} className="text-xs text-destructive hover:text-destructive">
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Paid — collapsible */}
-      {paidPayables.length > 0 && (
-        <div className="rounded-2xl border border-border overflow-hidden bg-card">
-          <button
-            className="w-full flex items-center justify-between px-5 py-3 bg-muted/50 hover:bg-muted/70 transition-colors"
-            onClick={() => setShowPaid(v => !v)}
-          >
+      {/* Supplier Aging Summary — invoice details load only when a supplier row is expanded */}
+      <div className="space-y-6">
+        {summaryLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
+        {!summaryLoading && supplierList.length === 0 && <p className="text-center py-12 text-muted-foreground">No outstanding payables</p>}
+        {supplierList.length > 0 && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-muted-foreground">{supplierList.length} supplier{supplierList.length !== 1 ? "s" : ""}</p>
             <div className="flex items-center gap-2">
-              <History className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-semibold text-foreground">Paid</span>
-              <span className="text-xs bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full">{paidPayables.length}</span>
+              <Button size="sm" variant="outline" onClick={expandAllSuppliers} className="text-xs">
+                <ChevronDown className="w-3 h-3 mr-1" /> Expand All
+              </Button>
+              <Button size="sm" variant="outline" onClick={collapseAllSuppliers} className="text-xs">
+                <ChevronUp className="w-3 h-3 mr-1" /> Collapse All
+              </Button>
             </div>
-            {showPaid ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-          </button>
-          {showPaid && (
-            <div className="grid gap-4 p-4">
-              {paidPayables.map((p) => <PayableCard key={p.id} p={p} isDuplicate={isDuplicatePayable(p)} onPay={setMarkingPaid} onDelete={(id) => deleteMutation.mutate(id)} />)}
+          </div>
+        )}
+        {supplierList.map(({ supplier, count, buckets, total }) => {
+          const isExpanded = expandedSuppliers.has(supplier);
+          return (
+            <div key={supplier} className="rounded-2xl border border-border overflow-hidden bg-card">
+              <button
+                className="w-full px-5 py-3 bg-muted/50 border-b border-border hover:bg-muted/70 transition-colors"
+                onClick={() => toggleSupplier(supplier)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "" : "-rotate-90"}`} />
+                    <div className="text-left">
+                      <h3 className="text-base font-semibold text-foreground">{supplier}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">{count} invoice{count > 1 ? "s" : ""} · ₱{total.toLocaleString(undefined, { minimumFractionDigits: 2 })} outstanding</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      onClick={e => { e.stopPropagation(); setStatementSupplier(supplier); }}
+                    >
+                      <FileText className="w-3 h-3 mr-1" /> Statement
+                    </Button>
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-muted-foreground">Current:</span>
+                      <span className="font-semibold text-primary">₱{buckets.current.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-muted-foreground">30:</span>
+                      <span className="font-semibold text-chart-3">₱{buckets.days30.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-muted-foreground">60:</span>
+                      <span className="font-semibold text-orange-500">₱{buckets.days60.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-muted-foreground">90:</span>
+                      <span className="font-semibold text-destructive">₱{buckets.days90.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="text-muted-foreground">90+:</span>
+                      <span className="font-semibold text-destructive">₱{buckets.days90plus.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </button>
+              <SupplierInvoiceDetails supplier={supplier} isExpanded={isExpanded} onDelete={handleDeleteInvoice} />
             </div>
-          )}
-        </div>
-      )}
+          );
+        })}
+      </div>
+
+      {/* Paid — collapsible, fetched only when opened */}
+      <div className="rounded-2xl border border-border overflow-hidden bg-card">
+        <button
+          className="w-full flex items-center justify-between px-5 py-3 bg-muted/50 hover:bg-muted/70 transition-colors"
+          onClick={() => setShowPaid(v => !v)}
+        >
+          <div className="flex items-center gap-2">
+            <History className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-semibold text-foreground">Paid</span>
+            {showPaid && <span className="text-xs bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full">{paidPayables.length}</span>}
+          </div>
+          {showPaid ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+        </button>
+        {showPaid && (
+          <div className="grid gap-4 p-4">
+            {paidPayables.length === 0 && <p className="text-center py-4 text-muted-foreground text-sm">No paid invoices</p>}
+            {paidPayables.map((p) => <PayableCard key={p.id} p={p} isDuplicate={false} onPay={() => {}} onDelete={(id) => handleDeleteInvoice(id, p.supplier_name)} />)}
+          </div>
+        )}
+      </div>
 
       <SupplierStatementDialog
         open={!!statementSupplier}
         onOpenChange={(v) => { if (!v) setStatementSupplier(null); }}
         supplier={statementSupplier}
-        payables={payables}
+        payables={statementInvoices}
       />
-
-
     </div>
   );
 }
