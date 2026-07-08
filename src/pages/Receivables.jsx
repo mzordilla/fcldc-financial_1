@@ -224,7 +224,7 @@ export default function Receivables() {
           </div>
         )}
         {clientList.length > 0 && (
-          <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_2.5rem] gap-0 px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             <span>Client</span>
             <span className="text-right">Current</span>
             <span className="text-right">1-30</span>
@@ -245,7 +245,7 @@ export default function Receivables() {
                     className="w-full px-5 py-3 bg-muted/50 hover:bg-muted/70 transition-colors"
                     onClick={() => toggleClient(client)}
                   >
-                    <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 items-center">
+                    <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_2.5rem] gap-0 items-center">
                       <div className="flex items-center gap-2 text-left min-w-0">
                         <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />
                         <div className="min-w-0">
