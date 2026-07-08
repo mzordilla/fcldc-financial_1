@@ -140,37 +140,19 @@ export default function StatementOfPayablesReport() {
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ supplier, periodData }) => {
-                const lines = [
-                  { key: "invoiced", label: "Invoiced" },
-                  { key: "paid", label: "Paid" },
-                  { key: "balance", label: "Balance" },
-                ];
-                return (
-                  <>
-                    {lines.map((line, lineIdx) => (
-                      <tr key={`${supplier}_${line.key}`} className="hover:bg-muted/30">
-                        {lineIdx === 0 && (
-                          <td rowSpan={lines.length} className="border border-border px-3 py-2 align-top font-medium text-foreground whitespace-nowrap sticky left-0 bg-card">
-                            {supplier}
-                          </td>
-                        )}
-                        <td className="border border-border px-2 py-1.5 text-muted-foreground whitespace-nowrap bg-muted/5">{line.label}</td>
-                        {periodData.map((pd, idx) => (
-                          <td
-                            key={idx}
-                            className={`border border-border px-2 py-1.5 text-right ${
-                              line.key === "paid" ? "text-primary" : line.key === "invoiced" ? "text-foreground" : "text-destructive font-medium"
-                            }`}
-                          >
-                            {fmt(pd[line.key])}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </>
-                );
-              })}
+              {rows.map(({ supplier, periodData }) => (
+                <tr key={supplier} className="hover:bg-muted/30">
+                  <td className="border border-border px-3 py-2 align-top font-medium text-foreground whitespace-nowrap sticky left-0 bg-card">
+                    {supplier}
+                  </td>
+                  <td className="border border-border px-2 py-1.5 text-muted-foreground whitespace-nowrap bg-muted/5">Balance</td>
+                  {periodData.map((pd, idx) => (
+                    <td key={idx} className="border border-border px-2 py-1.5 text-right text-destructive font-medium">
+                      {fmt(pd.balance)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
             </tbody>
             <tfoot>
               <tr className="bg-muted/40 font-semibold">
