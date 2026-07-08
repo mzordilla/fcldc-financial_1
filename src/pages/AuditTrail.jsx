@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, parseISO } from "date-fns";
-import { Search, PlusCircle, Pencil, Trash2, Filter } from "lucide-react";
+import { Search, PlusCircle, Pencil, Trash2, Filter, ChevronDown, ChevronUp, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,10 +18,16 @@ const ENTITIES = [
   "Receivable", "Project", "BillingCycle", "BankAccount", "WorkingCapitalLoan",
 ];
 
+function parseSnapshot(str) {
+  if (!str) return null;
+  try { return JSON.parse(str); } catch { return null; }
+}
+
 export default function AuditTrail() {
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
   const [entityFilter, setEntityFilter] = useState("All");
+  const [expandedId, setExpandedId] = useState(null);
 
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ["auditlogs"],
@@ -96,42 +102,85 @@ export default function AuditTrail() {
               try { return parseISO(log.timestamp); } catch { return null; }
             })() : null;
 
-            return (
-              <div key={log.id} className="flex items-start gap-4 px-5 py-4 hover:bg-muted/40 transition-colors">
-                {/* Icon */}
-                <div className={`mt-0.5 flex-shrink-0 rounded-full p-1.5 border ${cfg.color}`}>
-                  <Icon className="h-3.5 w-3.5" />
-                </div>
+            const expanded = expandedId === log.id;
+            const before = parseSnapshot(log.before);
+            const after = parseSnapshot(log.after);
+            const hasDetails = (log.changed_fields?.length > 0) && (before || after);
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className={`text-xs border ${cfg.color}`}>
-                      {cfg.label}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      {log.entity_name}
-                    </Badge>
-                    {log.changed_fields?.length > 0 && (
-                      <span className="text-xs text-muted-foreground">
-                        Fields: {log.changed_fields.slice(0, 6).join(", ")}
-                        {log.changed_fields.length > 6 ? ` +${log.changed_fields.length - 6} more` : ""}
-                      </span>
+            return (
+              <div key={log.id} className="hover:bg-muted/40 transition-colors">
+                <div
+                  className={`flex items-start gap-4 px-5 py-4 ${hasDetails ? "cursor-pointer" : ""}`}
+                  onClick={() => hasDetails && setExpandedId(expanded ? null : log.id)}
+                >
+                  {/* Icon */}
+                  <div className={`mt-0.5 flex-shrink-0 rounded-full p-1.5 border ${cfg.color}`}>
+                    <Icon className="h-3.5 w-3.5" />
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className={`text-xs border ${cfg.color}`}>
+                        {cfg.label}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {log.entity_name}
+                      </Badge>
+                      {log.changed_fields?.length > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          Fields: {log.changed_fields.slice(0, 6).join(", ")}
+                          {log.changed_fields.length > 6 ? ` +${log.changed_fields.length - 6} more` : ""}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-sm text-foreground">{log.summary || "—"}</p>
+                    <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                      <User className="h-3 w-3" />
+                      <span>{log.actor || "Unknown user"}</span>
+                    </div>
+                  </div>
+
+                  {/* Meta */}
+                  <div className="flex-shrink-0 text-right flex items-start gap-2">
+                    <div>
+                      {ts && (
+                        <>
+                          <p className="text-xs text-muted-foreground">{format(ts, "MMM d, yyyy")}</p>
+                          <p className="text-xs text-muted-foreground">{format(ts, "h:mm a")}</p>
+                        </>
+                      )}
+                    </div>
+                    {hasDetails && (
+                      expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground mt-0.5" /> : <ChevronDown className="h-4 w-4 text-muted-foreground mt-0.5" />
                     )}
                   </div>
-                  <p className="mt-1 text-sm text-foreground">{log.summary || "—"}</p>
                 </div>
 
-                {/* Meta */}
-                <div className="flex-shrink-0 text-right">
-                  <p className="text-sm font-medium text-foreground">{log.actor || "—"}</p>
-                  {ts && (
-                    <>
-                      <p className="text-xs text-muted-foreground">{format(ts, "MMM d, yyyy")}</p>
-                      <p className="text-xs text-muted-foreground">{format(ts, "h:mm a")}</p>
-                    </>
-                  )}
-                </div>
+                {expanded && hasDetails && (
+                  <div className="px-5 pb-4 pl-14">
+                    <div className="border border-border rounded-lg overflow-hidden">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="bg-muted/50 border-b border-border">
+                            <th className="px-3 py-2 text-left font-semibold">Field</th>
+                            <th className="px-3 py-2 text-left font-semibold">Before</th>
+                            <th className="px-3 py-2 text-left font-semibold">After</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {log.changed_fields.map((field) => (
+                            <tr key={field} className="border-b border-border/50 last:border-0">
+                              <td className="px-3 py-2 font-medium text-foreground">{field}</td>
+                              <td className="px-3 py-2 text-muted-foreground break-all">{before ? String(before[field] ?? "—") : "—"}</td>
+                              <td className="px-3 py-2 text-foreground break-all">{after ? String(after[field] ?? "—") : "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
