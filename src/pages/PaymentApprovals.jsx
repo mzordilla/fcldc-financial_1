@@ -466,54 +466,54 @@ export default function PaymentApprovals() {
           onClick={() => setExpandedHistory(isExpanded ? null : pr.id)}
         >
           {isAdmin && (
-            <td className="px-1 py-0.5" onClick={e => e.stopPropagation()}>
+            <td className="px-1 py-0" onClick={e => e.stopPropagation()}>
               {(pr.approval_status === "pending" || pr.approval_status === "approved") && (
                 <Checkbox checked={selectedIds.has(pr.id)} onCheckedChange={() => toggleSelect(pr.id)} />
               )}
             </td>
           )}
-          <td className="px-1 py-0.5 font-mono text-xs text-muted-foreground whitespace-nowrap">{pr.request_number || "—"}</td>
-          <td className="px-1 py-0.5 text-xs font-medium text-foreground whitespace-nowrap">{pr.payee}</td>
-          <td className="px-1 py-0.5 text-xs text-muted-foreground whitespace-nowrap">{pr.invoice_number || "—"}</td>
-          <td className="px-1 py-0.5 text-xs whitespace-nowrap">
+          <td className="px-1 py-0 font-mono text-xs text-muted-foreground whitespace-nowrap">{pr.request_number || "—"}</td>
+          <td className="px-1 py-0 text-xs font-medium text-foreground whitespace-nowrap">{pr.payee}</td>
+          <td className="px-1 py-0 text-xs text-muted-foreground whitespace-nowrap">{pr.invoice_number || "—"}</td>
+          <td className="px-1 py-0 text-xs whitespace-nowrap">
             {pr.due_date ? <span className={isOverdue ? "text-destructive font-medium" : "text-muted-foreground"}>{format(new Date(pr.due_date), "MMM d, yyyy")}</span> : "—"}
           </td>
-          <td className="px-1 py-0.5 text-right whitespace-nowrap">
+          <td className="px-1 py-0 text-right whitespace-nowrap">
             <span className="text-xs font-bold text-foreground">₱{(pr.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             {(pr.withholding_tax_amount > 0 || pr.vat_amount > 0) && (
               <span className="text-xs text-primary font-medium ml-1">/ ₱{((pr.amount || 0) - (pr.withholding_tax_amount || 0) + (pr.vat_amount || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             )}
           </td>
-          <td className="px-1 py-0.5" onClick={e => e.stopPropagation()}>
+          <td className="px-1 py-0" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-end gap-1">
               {isAdmin && pr.approval_status === "pending" && (
-                <Button size="sm" variant="outline" onClick={() => setReviewPR(pr)}>Review</Button>
+                <Button size="sm" variant="outline" onClick={() => setReviewPR(pr)} className="h-6 px-2 text-xs">Review</Button>
               )}
               {(isAdmin || isDisbursementRole) && pr.approval_status === "approved" && (
-                <Button size="sm" onClick={() => setReviewPR(pr)}>
+                <Button size="sm" onClick={() => setReviewPR(pr)} className="h-6 px-2 text-xs">
                   <Banknote className="w-3.5 h-3.5 mr-1" /> Disburse
                 </Button>
               )}
-              <Button variant="ghost" size="icon" onClick={() => setReviewPR(pr)} title="History" className="text-muted-foreground hover:text-foreground">
-                <History className="w-4 h-4" />
+              <Button variant="ghost" size="icon" onClick={() => setReviewPR(pr)} title="History" className="text-muted-foreground hover:text-foreground h-6 w-6">
+                <History className="w-3.5 h-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => setEditingPR({...pr})} title="Edit" className="text-muted-foreground hover:text-foreground">
-                <Pencil className="w-4 h-4" />
+              <Button variant="ghost" size="icon" onClick={() => setEditingPR({...pr})} title="Edit" className="text-muted-foreground hover:text-foreground h-6 w-6">
+                <Pencil className="w-3.5 h-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(pr.id)} title="Delete" className="text-muted-foreground hover:text-destructive">
-                <Trash2 className="w-4 h-4" />
+              <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(pr.id)} title="Delete" className="text-muted-foreground hover:text-destructive h-6 w-6">
+                <Trash2 className="w-3.5 h-3.5" />
               </Button>
-              {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+              {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
             </div>
           </td>
         </tr>
         {isExpanded && (
           <tr key={`${pr.id}-expanded`} className="bg-muted/20">
-            <td colSpan={10} className="px-6 py-4">
-              <div className="space-y-3">
+            <td colSpan={10} className="px-6 py-2">
+              <div className="space-y-2">
                 <div>
                   <span className="text-xs font-semibold text-muted-foreground uppercase">Description:</span>
-                  <p className="text-sm text-foreground mt-1">{pr.description}</p>
+                  <p className="text-sm text-foreground mt-0.5">{pr.description}</p>
                 </div>
                 <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
                   {pr.project_allocations?.length > 0 && (
@@ -528,7 +528,7 @@ export default function PaymentApprovals() {
                   <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-2">{pr.approval_notes}</p>
                 )}
                 {pr.approval_history?.length > 0 && (
-                  <div className="p-3 bg-muted/30 rounded-xl border border-border">
+                  <div className="p-2 bg-muted/30 rounded-xl border border-border">
                     <ApprovalHistoryLog history={pr.approval_history} />
                   </div>
                 )}

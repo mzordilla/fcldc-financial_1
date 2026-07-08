@@ -33,7 +33,7 @@ export default function SupplierGroupedRequests({ requests, renderPRRow, isAdmin
           <div key={supplier} className="border border-border rounded-xl overflow-hidden bg-card">
             <button
               onClick={() => toggleSupplier(supplier)}
-              className="w-full bg-muted/20 hover:bg-muted/40 px-3 py-1.5 border-b border-border flex items-center gap-2 transition-colors"
+              className="w-full bg-muted/20 hover:bg-muted/40 px-3 py-1 border-b border-border flex items-center gap-2 transition-colors"
             >
               {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
               <span className="text-xs font-bold uppercase tracking-wide text-foreground">{supplier}</span>
