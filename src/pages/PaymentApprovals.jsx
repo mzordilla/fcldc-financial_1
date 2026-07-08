@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { exportToExcel } from "@/utils/excelUtils";
 import PaymentRequestFormDialog from "../components/payment/PaymentRequestFormDialog";
 import BulkPaymentRequestDialog from "../components/payment/BulkPaymentRequestDialog";
@@ -17,7 +17,7 @@ import MarkPaidDialog from "../components/payment/MarkPaidDialog";
 import BulkDisburseDialog from "../components/payment/BulkDisburseDialog";
 import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
 import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
-import GroupedPaymentRequests from "../components/payment/GroupedPaymentRequests";
+import SupplierGroupedRequests from "../components/payment/SupplierGroupedRequests";
 
 const statusStyles = {
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
@@ -56,10 +56,7 @@ export default function PaymentApprovals() {
   const [reviewPR, setReviewPR] = useState(null);
   const [markingPaidPR, setMarkingPaidPR] = useState(null);
   const [expandedHistory, setExpandedHistory] = useState(null);
-  const [expandedSuppliers, setExpandedSuppliers] = useState(new Set());
-  const [expandedGroups, setExpandedGroups] = useState({ pending: true, approved: true, rejected: false, paid: false });
-  const [expandedPOs, setExpandedPOs] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("pending");
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkApproving, setBulkApproving] = useState(false);
@@ -366,20 +363,16 @@ export default function PaymentApprovals() {
     }
   };
 
-  const statusFiltered = statusFilter === "all" ? requests : requests.filter(r => r.approval_status === statusFilter);
   const searchTerm = search.trim().toLowerCase();
-  const filtered = searchTerm
-    ? statusFiltered.filter(r =>
-        (r.request_number || "").toLowerCase().includes(searchTerm) ||
-        (r.payee || "").toLowerCase().includes(searchTerm) ||
-        (r.invoice_number || "").toLowerCase().includes(searchTerm) ||
-        (r.description || "").toLowerCase().includes(searchTerm) ||
-        (r.project_allocations || []).some(a => (a.project_name || "").toLowerCase().includes(searchTerm))
-      )
-    : statusFiltered;
+  const matchesSearch = (r) => !searchTerm ||
+    (r.request_number || "").toLowerCase().includes(searchTerm) ||
+    (r.payee || "").toLowerCase().includes(searchTerm) ||
+    (r.invoice_number || "").toLowerCase().includes(searchTerm) ||
+    (r.description || "").toLowerCase().includes(searchTerm) ||
+    (r.project_allocations || []).some(a => (a.project_name || "").toLowerCase().includes(searchTerm));
 
   const handleExport = () => {
-    exportToExcel(filtered.map(r => ({
+    exportToExcel(requests.map(r => ({
       request_number: r.request_number, payee: r.payee, invoice_number: r.invoice_number,
       description: r.description, amount: r.amount, due_date: r.due_date,
       category: r.category, approval_status: r.approval_status,
@@ -389,15 +382,14 @@ export default function PaymentApprovals() {
   };
   const pending = requests.filter(r => r.approval_status === "pending");
   const approved = requests.filter(r => r.approval_status === "approved");
+  const paid = requests.filter(r => r.approval_status === "paid");
   const totalPending = pending.reduce((s, r) => s + (r.amount || 0), 0);
   const totalApproved = approved.reduce((s, r) => s + (r.amount || 0), 0);
 
-  const pendingInView = filtered.filter(r => r.approval_status === "pending");
+  const pendingInView = pending.filter(matchesSearch);
+  const approvedInView = approved.filter(matchesSearch);
+  const paidInView = paid.filter(matchesSearch);
   const allPendingSelected = pendingInView.length > 0 && pendingInView.every(r => selectedIds.has(r.id));
-
-  const toggleGroup = (status) => {
-    setExpandedGroups(prev => ({ ...prev, [status]: !prev[status] }));
-  };
 
   const toggleSelect = (id) => {
     setSelectedIds(prev => {
@@ -567,16 +559,6 @@ export default function PaymentApprovals() {
               className="pl-9 w-64"
             />
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
           <Button variant="outline" onClick={handleExport}>
             <Download className="w-4 h-4 mr-2" /> Export
           </Button>
@@ -623,24 +605,19 @@ export default function PaymentApprovals() {
         )}
       </div>
 
-      {/* Approved Purchase Orders — Ready to Pay */}
-      {availablePOs.length > 0 && (
-        <div className="space-y-2">
-          <button
-            onClick={() => setExpandedPOs(!expandedPOs)}
-            className="w-full flex items-center justify-between gap-2 p-2.5 bg-muted/30 hover:bg-muted/50 border border-border rounded-xl transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <ShoppingCart className="w-4 h-4 text-muted-foreground" />
-              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Approved Purchase Orders — Ready to Pay</h2>
-              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">{availablePOs.length}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <p className="text-xs text-muted-foreground">₱{availablePOs.reduce((s, po) => s + (po.amount || 0), 0).toLocaleString()}</p>
-              {expandedPOs ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-            </div>
-          </button>
-          {expandedPOs && (
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="pos">Approved Purchase Orders ({availablePOs.length})</TabsTrigger>
+          <TabsTrigger value="pending">Pending ({pending.length})</TabsTrigger>
+          <TabsTrigger value="approved">Approved ({approved.length})</TabsTrigger>
+          <TabsTrigger value="paid">Paid ({paid.length})</TabsTrigger>
+        </TabsList>
+
+        {/* Approved Purchase Orders — Ready to Pay */}
+        <TabsContent value="pos" className="space-y-2 mt-4">
+          {availablePOs.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">No approved purchase orders ready to pay</div>
+          ) : (
             <div className="border border-border rounded-xl overflow-hidden">
               <table className="w-full text-xs">
                 <thead className="bg-muted/30 border-b border-border">
@@ -679,71 +656,77 @@ export default function PaymentApprovals() {
               </table>
             </div>
           )}
-        </div>
-      )}
+        </TabsContent>
 
-      {/* Bulk action toolbar — admin only */}
-      {isAdmin && pendingInView.length > 0 && (
-        <div className="flex items-center justify-between bg-muted/50 border border-border rounded-xl px-4 py-2.5">
-          <div className="flex items-center gap-3">
-            <Checkbox
-              checked={allPendingSelected}
-              onCheckedChange={toggleSelectAll}
-              id="select-all"
-            />
-            <label htmlFor="select-all" className="text-sm font-medium cursor-pointer select-none">
-              {allPendingSelected ? "Deselect all" : `Select all pending (${pendingInView.length})`}
-            </label>
-            {selectedIds.size > 0 && (
-              <span className="text-xs text-muted-foreground">{selectedIds.size} selected</span>
-            )}
-          </div>
-          {selectedIds.size > 0 && (
-            <Button
-              size="sm"
-              onClick={bulkApprove}
-              disabled={bulkApproving}
-              className="gap-2"
-            >
-              <CheckCircle className="w-4 h-4" />
-              {bulkApproving ? "Approving..." : `Approve ${selectedIds.size} Request${selectedIds.size !== 1 ? "s" : ""}`}
-            </Button>
+        {/* Pending */}
+        <TabsContent value="pending" className="space-y-3 mt-4">
+          {isAdmin && pendingInView.length > 0 && (
+            <div className="flex items-center justify-between bg-muted/50 border border-border rounded-xl px-4 py-2.5">
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={allPendingSelected}
+                  onCheckedChange={toggleSelectAll}
+                  id="select-all"
+                />
+                <label htmlFor="select-all" className="text-sm font-medium cursor-pointer select-none">
+                  {allPendingSelected ? "Deselect all" : `Select all pending (${pendingInView.length})`}
+                </label>
+                {selectedIds.size > 0 && (
+                  <span className="text-xs text-muted-foreground">{selectedIds.size} selected</span>
+                )}
+              </div>
+              {selectedIds.size > 0 && (
+                <Button
+                  size="sm"
+                  onClick={bulkApprove}
+                  disabled={bulkApproving}
+                  className="gap-2"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  {bulkApproving ? "Approving..." : `Approve ${selectedIds.size} Request${selectedIds.size !== 1 ? "s" : ""}`}
+                </Button>
+              )}
+            </div>
           )}
-        </div>
-      )}
-
-      {/* Bulk disbursement toolbar — combine multiple approved requests for the same supplier into one check */}
-      {isAdmin && selectedApproved.length > 0 && (
-        <div className="flex items-center justify-between bg-chart-2/10 border border-chart-2/20 rounded-xl px-4 py-2.5">
-          <span className="text-sm text-chart-2">
-            {selectedApproved.length} approved request{selectedApproved.length !== 1 ? "s" : ""} selected
-            {!selectedApprovedSamePayee && " — select requests from the same supplier to combine into one check"}
-          </span>
-          {selectedApprovedSamePayee && (
-            <Button size="sm" onClick={() => setShowBulkDisburse(true)} className="bg-chart-2 hover:bg-chart-2/90 text-white gap-2">
-              <Banknote className="w-4 h-4" />
-              Disburse {selectedApproved.length} as One Check
-            </Button>
+          {isLoading ? (
+            <div className="text-center py-12 text-muted-foreground">Loading...</div>
+          ) : (
+            <SupplierGroupedRequests requests={pendingInView} renderPRRow={renderPRRow} isAdmin={isAdmin} emptyLabel="No pending requests" />
           )}
-        </div>
-      )}
+        </TabsContent>
 
-      {/* Grouped Payment Requests Table */}
-      {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">Loading...</div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">No payment requests found</div>
-      ) : (
-        <GroupedPaymentRequests
-          requests={filtered}
-          expandedGroups={expandedGroups}
-          toggleGroup={toggleGroup}
-          renderPRRow={renderPRRow}
-          isAdmin={isAdmin}
-          selectedIds={selectedIds}
-          toggleSelect={toggleSelect}
-        />
-      )}
+        {/* Approved */}
+        <TabsContent value="approved" className="space-y-3 mt-4">
+          {isAdmin && selectedApproved.length > 0 && (
+            <div className="flex items-center justify-between bg-chart-2/10 border border-chart-2/20 rounded-xl px-4 py-2.5">
+              <span className="text-sm text-chart-2">
+                {selectedApproved.length} approved request{selectedApproved.length !== 1 ? "s" : ""} selected
+                {!selectedApprovedSamePayee && " — select requests from the same supplier to combine into one check"}
+              </span>
+              {selectedApprovedSamePayee && (
+                <Button size="sm" onClick={() => setShowBulkDisburse(true)} className="bg-chart-2 hover:bg-chart-2/90 text-white gap-2">
+                  <Banknote className="w-4 h-4" />
+                  Disburse {selectedApproved.length} as One Check
+                </Button>
+              )}
+            </div>
+          )}
+          {isLoading ? (
+            <div className="text-center py-12 text-muted-foreground">Loading...</div>
+          ) : (
+            <SupplierGroupedRequests requests={approvedInView} renderPRRow={renderPRRow} isAdmin={isAdmin} emptyLabel="No approved requests" />
+          )}
+        </TabsContent>
+
+        {/* Paid */}
+        <TabsContent value="paid" className="space-y-3 mt-4">
+          {isLoading ? (
+            <div className="text-center py-12 text-muted-foreground">Loading...</div>
+          ) : (
+            <SupplierGroupedRequests requests={paidInView} renderPRRow={renderPRRow} isAdmin={isAdmin} emptyLabel="No paid requests" />
+          )}
+        </TabsContent>
+      </Tabs>
 
       <BillsPaymentSheet open={showBillsPayment} onOpenChange={setShowBillsPayment} />
       <BulkPaymentRequestDialog open={showBulk} onOpenChange={setShowBulk} onSubmit={bulkCreateRequests} />
