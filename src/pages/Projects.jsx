@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { Plus, Trash2, Briefcase, CheckCircle2, Pencil, ExternalLink, FileUp, Download, TrendingUp, TrendingDown, ChevronDown, ChevronRight, FileText } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
 import { Progress } from "@/components/ui/progress";
@@ -85,7 +84,7 @@ export default function Projects() {
   const [editingProject, setEditingProject] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [classificationFilter, setClassificationFilter] = useState("all");
-  const [collapsedGroups, setCollapsedGroups] = useState({});
+  const [approvedClassificationFilter, setApprovedClassificationFilter] = useState("all");
   const queryClient = useQueryClient();
   const importRef = useRef();
 
@@ -242,13 +241,24 @@ export default function Projects() {
       {/* Approved Contracts Summary, grouped by classification with subtotals */}
       {approvedProjects.length > 0 &&
       <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-[#000000]">
-          <div className="flex items-center gap-2 mb-3">
-            <CheckCircle2 className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-semibold text-primary">Approved Contracts</h3>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-semibold text-primary">Approved Contracts</h3>
+            </div>
+            <Select value={approvedClassificationFilter} onValueChange={setApprovedClassificationFilter}>
+              <SelectTrigger className="w-48 h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Classifications</SelectItem>
+                <SelectItem value="owned_project">Project Owned Project</SelectItem>
+                <SelectItem value="client_project">Client Project</SelectItem>
+                <SelectItem value="monitoring_project">Monitoring Project</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="overflow-x-auto space-y-6">
             {Object.entries(
-              approvedProjects.reduce((acc, p) => {
+              approvedProjects.filter(p => approvedClassificationFilter === "all" || (p.project_classification || "unclassified") === approvedClassificationFilter).reduce((acc, p) => {
                 const key = p.project_classification || "unclassified";
                 if (!acc[key]) acc[key] = [];
                 acc[key].push(p);
@@ -259,18 +269,12 @@ export default function Projects() {
               const groupCompleted = groupProjects.reduce((s, p) => s + (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100), 0);
               const groupRetention = groupProjects.reduce((s, p) => {const c = (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100);return s + c * ((p.retention_rate || 0) / 100);}, 0);
               const groupBalance = groupProjects.reduce((s, p) => s + (p.contract_amount || 0) * (1 - (p.completed_percentage || 0) / 100), 0);
-              const isOpen = !collapsedGroups[classification];
               return (
-                <Collapsible key={classification} open={isOpen} onOpenChange={(open) => setCollapsedGroups(prev => ({ ...prev, [classification]: !open }))}>
-                  <CollapsibleTrigger className="flex items-center justify-between w-full mb-2 group">
-                    <h4 className="text-xs font-semibold text-foreground flex items-center gap-1">
-                      {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                      {classificationLabels[classification] || "Unclassified"}
-                      <span className="text-muted-foreground font-normal ml-1">({groupProjects.length})</span>
-                    </h4>
-                    <span className="text-xs font-semibold text-primary">₱{groupTotal.toLocaleString()}</span>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
+                <div key={classification}>
+                  <h4 className="text-xs font-semibold text-foreground mb-2">
+                    {classificationLabels[classification] || "Unclassified"}
+                    <span className="text-muted-foreground font-normal ml-1">({groupProjects.length})</span>
+                  </h4>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-xs text-muted-foreground border-b border-border">
@@ -321,8 +325,7 @@ export default function Projects() {
                       </tr>
                     </tfoot>
                   </table>
-                  </CollapsibleContent>
-                </Collapsible>
+                </div>
               );
             })}
             <div className="pt-3 border-t-2 border-primary/30 flex justify-end">
