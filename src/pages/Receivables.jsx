@@ -1,30 +1,17 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { format, differenceInDays } from "date-fns";
-import { Plus, Trash2, CheckCircle, Pencil, Banknote, ChevronDown, ChevronRight } from "lucide-react";
+import { differenceInDays } from "date-fns";
+import { Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import ReceivableFormDialog from "../components/receivables/ReceivableFormDialog";
 import MarkReceivableAsCollectedDialog from "../components/receivables/MarkReceivableAsCollectedDialog";
 import StatementOfAccountPDF from "../components/receivables/StatementOfAccountPDF";
+import ClientInvoiceDetails from "../components/receivables/ClientInvoiceDetails";
 import BillingCycles from "./BillingCycles";
-
-function getAgingBucket(dueDateStr, status) {
-  if (status === "paid") return null;
-  if (!dueDateStr) return null;
-  const days = differenceInDays(new Date(), new Date(dueDateStr));
-  if (days <= 0) return { label: "Current", style: "bg-primary/10 text-primary" };
-  if (days <= 30) return { label: "1–30 days", style: "bg-chart-3/10 text-chart-3" };
-  if (days <= 60) return { label: "31–60 days", style: "bg-chart-3/20 text-chart-3" };
-  if (days <= 90) return { label: "61–90 days", style: "bg-destructive/10 text-destructive" };
-  return { label: "90+ days", style: "bg-destructive/20 text-destructive font-semibold" };
-}
-
-
 
 function AgingSummary({ items }) {
   const today = new Date();
@@ -64,13 +51,6 @@ function AgingSummary({ items }) {
   );
 }
 
-const statusStyles = {
-  outstanding: "bg-chart-2/10 text-chart-2 border-chart-2/20",
-  partially_paid: "bg-chart-3/10 text-chart-3 border-chart-3/20",
-  paid: "bg-primary/10 text-primary border-primary/20",
-  overdue: "bg-destructive/10 text-destructive border-destructive/20",
-};
-
 const fields = [
   { name: "client_name", label: "Client Name", required: true, placeholder: "e.g. ABC Developers" },
   { name: "invoice_number", label: "Invoice #", placeholder: "INV-001" },
@@ -86,15 +66,31 @@ const fields = [
   { name: "notes", label: "Notes", placeholder: "Optional notes" },
 ];
 
+function computeBuckets(rows) {
+  const today = new Date();
+  const buckets = { current: 0, days30: 0, days60: 0, days90: 0, days90plus: 0 };
+  let total = 0;
+  rows.filter(r => r.status !== "paid").forEach(r => {
+    if (!r.due_date) return;
+    const days = differenceInDays(today, new Date(r.due_date));
+    const rem = (r.amount || 0) - (r.amount_paid || 0);
+    total += rem;
+    if (days <= 0) buckets.current += rem;
+    else if (days <= 30) buckets.days30 += rem;
+    else if (days <= 60) buckets.days60 += rem;
+    else if (days <= 90) buckets.days90 += rem;
+    else buckets.days90plus += rem;
+  });
+  return { buckets, total };
+}
+
 export default function Receivables() {
   const [showAdd, setShowAdd] = useState(false);
   const [editingR, setEditingR] = useState(null);
   const [collectingR, setCollectingR] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [expandedGroups, setExpandedGroups] = useState({});
+  const [expandedClients, setExpandedClients] = useState(new Set());
   const queryClient = useQueryClient();
-
-  const toggleGroup = (key) => setExpandedGroups(prev => ({ ...prev, [key]: !prev[key] }));
 
   const { data: receivables = [], isLoading } = useQuery({
     queryKey: ["receivables"],
@@ -144,6 +140,32 @@ export default function Receivables() {
   const totalCollected = receivables.reduce((s, r) => s + (r.amount_paid || 0), 0);
   const collectionEfficiency = totalBilled > 0 ? ((totalCollected / totalBilled) * 100) : 0;
 
+  // Group by client
+  const clientMap = {};
+  filtered.forEach(r => {
+    const key = r.client_name || "No Client";
+    if (!clientMap[key]) clientMap[key] = [];
+    clientMap[key].push(r);
+  });
+  const clientList = Object.keys(clientMap)
+    .map((client) => {
+      const rows = clientMap[client];
+      const { buckets, total } = computeBuckets(rows);
+      return { client, rows, count: rows.length, buckets, total };
+    })
+    .sort((a, b) => a.client.localeCompare(b.client));
+
+  const toggleClient = (client) => {
+    setExpandedClients((prev) => {
+      const next = new Set(prev);
+      next.has(client) ? next.delete(client) : next.add(client);
+      return next;
+    });
+  };
+
+  const expandAllClients = () => setExpandedClients(new Set(clientList.map((c) => c.client)));
+  const collapseAllClients = () => setExpandedClients(new Set());
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <Tabs defaultValue="receivables" className="w-full">
@@ -184,135 +206,83 @@ export default function Receivables() {
 
       <AgingSummary items={receivables} />
 
-      <div className="bg-card rounded-2xl border border-border overflow-hidden">
+      {/* Client Aging Summary */}
+      <div className="space-y-4">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
-        {!isLoading && filtered.length === 0 && <p className="text-center py-12 text-muted-foreground">No receivables yet</p>}
-        {!isLoading && filtered.length > 0 && (() => {
-          // Group by project
-          const projectMap = {};
-          filtered.forEach(r => {
-            const key = r.project_name || "No Project";
-            if (!projectMap[key]) projectMap[key] = [];
-            projectMap[key].push(r);
-          });
-          const projectKeys = Object.keys(projectMap).sort((a, b) => {
-            if (a === "No Project") return 1;
-            if (b === "No Project") return -1;
-            return a.localeCompare(b);
-          });
-
-          return (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-muted/30 border-b border-border">
-                  <tr>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase w-6"></th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Invoice #</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Client</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Due Date</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Status</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase">Aging</th>
-                    <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Billed</th>
-                    <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Collected</th>
-                    <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Balance</th>
-                    <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {projectKeys.map(projectName => {
-                    const rows = projectMap[projectName];
-                    const grpBilled = rows.reduce((s, r) => s + (r.amount || 0), 0);
-                    const grpCollected = rows.reduce((s, r) => s + (r.amount_paid || 0), 0);
-                    const grpBalance = grpBilled - grpCollected;
-                    const isExpanded = expandedGroups[projectName] !== false; // default expanded
-                    const hasOverdue = rows.some(r => r.status === "overdue");
-
-                    return (
-                      <>
-                        {/* Project summary row */}
-                        <tr
-                          key={`project-${projectName}`}
-                          className="bg-muted/40 border-t border-border cursor-pointer hover:bg-muted/60 transition-colors"
-                          onClick={() => toggleGroup(projectName)}
-                        >
-                          <td className="px-3 py-2 text-muted-foreground">
-                            {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                          </td>
-                          <td className="px-3 py-2 font-semibold text-sm text-foreground" colSpan={2}>
-                            {projectName}
-                            <span className="ml-2 text-xs text-muted-foreground font-normal">{rows.length} invoice{rows.length !== 1 ? "s" : ""}</span>
-                            {hasOverdue && <span className="ml-2 text-xs text-destructive font-medium">· overdue</span>}
-                          </td>
-                          <td className="px-3 py-2" colSpan={3}></td>
-                          <td className="px-3 py-2 text-right text-sm font-mono font-semibold">₱{grpBilled.toLocaleString()}</td>
-                          <td className="px-3 py-2 text-right text-sm font-mono font-semibold text-primary">₱{grpCollected.toLocaleString()}</td>
-                          <td className="px-3 py-2 text-right text-sm font-mono font-bold text-foreground">₱{grpBalance.toLocaleString()}</td>
-                          <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
-                            <StatementOfAccountPDF
-                              projectName={projectName}
-                              clientName={rows[0]?.client_name}
-                              rows={rows}
-                            />
-                          </td>
-                        </tr>
-                        {/* Invoice breakdown rows */}
-                        {isExpanded && rows.map(r => {
-                          const remaining = (r.amount || 0) - (r.amount_paid || 0);
-                          const aging = getAgingBucket(r.due_date, r.status);
-                          return (
-                            <tr key={r.id} className="border-t border-border/50 hover:bg-muted/20 transition-colors">
-                              <td className="px-3 py-1.5"></td>
-                              <td className="px-3 py-1.5 text-xs text-muted-foreground font-mono pl-6">
-                                {r.invoice_number || "—"}
-                              </td>
-                              <td className="px-3 py-1.5 text-xs text-muted-foreground">{r.client_name || "—"}</td>
-                              <td className="px-3 py-1.5 text-xs text-muted-foreground whitespace-nowrap">
-                                {r.due_date ? format(new Date(r.due_date), "MMM d, yyyy") : "—"}
-                              </td>
-                              <td className="px-3 py-1.5">
-                                <Badge variant="outline" className={`text-xs ${statusStyles[r.status] || ""}`}>
-                                  {(r.status || "outstanding").replace(/_/g, " ")}
-                                </Badge>
-                              </td>
-                              <td className="px-3 py-1.5">
-                                {aging ? (
-                                  <span className={`text-xs px-1.5 py-0.5 rounded ${aging.style}`}>{aging.label}</span>
-                                ) : <span className="text-xs text-muted-foreground">—</span>}
-                              </td>
-                              <td className="px-3 py-1.5 text-right text-xs font-mono">₱{(r.amount || 0).toLocaleString()}</td>
-                              <td className="px-3 py-1.5 text-right text-xs font-mono text-primary">₱{(r.amount_paid || 0).toLocaleString()}</td>
-                              <td className="px-3 py-1.5 text-right text-xs font-mono font-semibold">₱{remaining.toLocaleString()}</td>
-                              <td className="px-3 py-1.5">
-                                <div className="flex items-center justify-end gap-1">
-                                  {r.status !== "paid" && (
-                                    <button onClick={() => setCollectingR(r)} className="text-primary hover:opacity-70 transition-opacity" title="Record Collection">
-                                      <CheckCircle className="w-3.5 h-3.5" />
-                                    </button>
-                                  )}
-                                  {r.status === "paid" && (r.payment_history || []).length > 0 && (
-                                    <button onClick={() => setCollectingR(r)} className="text-muted-foreground hover:text-primary transition-colors" title="View Collections">
-                                      <Banknote className="w-3.5 h-3.5" />
-                                    </button>
-                                  )}
-                                  <button onClick={() => setEditingR(r)} className="text-muted-foreground hover:text-foreground transition-colors">
-                                    <Pencil className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button onClick={() => deleteMutation.mutate(r.id)} className="text-muted-foreground hover:text-destructive transition-colors">
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </>
-                    );
-                  })}
-                </tbody>
-              </table>
+        {!isLoading && clientList.length === 0 && <p className="text-center py-12 text-muted-foreground">No receivables yet</p>}
+        {clientList.length > 0 && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-muted-foreground">{clientList.length} client{clientList.length !== 1 ? "s" : ""}</p>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={expandAllClients} className="text-xs">
+                <ChevronDown className="w-3 h-3 mr-1" /> Expand All
+              </Button>
+              <Button size="sm" variant="outline" onClick={collapseAllClients} className="text-xs">
+                <ChevronUp className="w-3 h-3 mr-1" /> Collapse All
+              </Button>
             </div>
-          );
-        })()}
+          </div>
+        )}
+        {clientList.length > 0 && (
+          <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            <span>Client</span>
+            <span className="text-right">Current</span>
+            <span className="text-right">1-30</span>
+            <span className="text-right">31-60</span>
+            <span className="text-right">61-90</span>
+            <span className="text-right">90+</span>
+            <span></span>
+          </div>
+        )}
+        {clientList.length > 0 && (
+          <div className="rounded-2xl border border-border overflow-hidden divide-y divide-border">
+            {clientList.map(({ client, rows, count, buckets, total }) => {
+              const isExpanded = expandedClients.has(client);
+              return (
+                <div key={client} className="bg-card">
+                  <button
+                    className="w-full px-5 py-3 bg-muted/50 hover:bg-muted/70 transition-colors"
+                    onClick={() => toggleClient(client)}
+                  >
+                    <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_auto] gap-0 items-center">
+                      <div className="flex items-center gap-2 text-left min-w-0">
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />
+                        <div className="min-w-0">
+                          <h3 className="text-base font-semibold text-foreground truncate">{client}</h3>
+                          <p className="text-xs text-muted-foreground mt-0.5">{count} invoice{count > 1 ? "s" : ""} · ₱{total.toLocaleString(undefined, { minimumFractionDigits: 2 })} outstanding</p>
+                        </div>
+                      </div>
+                      <span className="text-right text-xs font-semibold text-primary">₱{buckets.current.toLocaleString()}</span>
+                      <span className="text-right text-xs font-semibold text-chart-3">₱{buckets.days30.toLocaleString()}</span>
+                      <span className="text-right text-xs font-semibold text-orange-500">₱{buckets.days60.toLocaleString()}</span>
+                      <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90.toLocaleString()}</span>
+                      <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90plus.toLocaleString()}</span>
+                      <span
+                        role="button"
+                        className="ml-3"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <StatementOfAccountPDF
+                          projectName={client}
+                          clientName={client}
+                          rows={rows}
+                        />
+                      </span>
+                    </div>
+                  </button>
+                  {isExpanded && (
+                    <ClientInvoiceDetails
+                      rows={rows}
+                      onCollect={setCollectingR}
+                      onEdit={setEditingR}
+                      onDelete={(id) => deleteMutation.mutate(id)}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <ReceivableFormDialog
