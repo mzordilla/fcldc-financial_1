@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { Plus, Trash2, Briefcase, CheckCircle2, Pencil, ExternalLink, FileUp, Download, TrendingUp, TrendingDown, ChevronDown, ChevronRight, FileText } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
 import { Progress } from "@/components/ui/progress";
@@ -84,6 +85,7 @@ export default function Projects() {
   const [editingProject, setEditingProject] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [classificationFilter, setClassificationFilter] = useState("all");
+  const [collapsedGroups, setCollapsedGroups] = useState({});
   const queryClient = useQueryClient();
   const importRef = useRef();
 
@@ -257,12 +259,18 @@ export default function Projects() {
               const groupCompleted = groupProjects.reduce((s, p) => s + (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100), 0);
               const groupRetention = groupProjects.reduce((s, p) => {const c = (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100);return s + c * ((p.retention_rate || 0) / 100);}, 0);
               const groupBalance = groupProjects.reduce((s, p) => s + (p.contract_amount || 0) * (1 - (p.completed_percentage || 0) / 100), 0);
+              const isOpen = !collapsedGroups[classification];
               return (
-                <div key={classification}>
-                  <h4 className="text-xs font-semibold text-foreground mb-2">
-                    {classificationLabels[classification] || "Unclassified"}
-                    <span className="text-muted-foreground font-normal ml-2">({groupProjects.length})</span>
-                  </h4>
+                <Collapsible key={classification} open={isOpen} onOpenChange={(open) => setCollapsedGroups(prev => ({ ...prev, [classification]: !open }))}>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full mb-2 group">
+                    <h4 className="text-xs font-semibold text-foreground flex items-center gap-1">
+                      {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                      {classificationLabels[classification] || "Unclassified"}
+                      <span className="text-muted-foreground font-normal ml-1">({groupProjects.length})</span>
+                    </h4>
+                    <span className="text-xs font-semibold text-primary">₱{groupTotal.toLocaleString()}</span>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-xs text-muted-foreground border-b border-border">
@@ -313,7 +321,8 @@ export default function Projects() {
                       </tr>
                     </tfoot>
                   </table>
-                </div>
+                  </CollapsibleContent>
+                </Collapsible>
               );
             })}
             <div className="pt-3 border-t-2 border-primary/30 flex justify-end">
