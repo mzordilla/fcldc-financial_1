@@ -332,7 +332,7 @@ export default function Projects() {
                   <p className="text-xs text-muted-foreground">Completed: ₱{groupCompleted.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                 </div>
               </div>
-              <div className="grid gap-4">
+              <div className="grid gap-2">
               {groupProjects.map((p) => {
           const completedPct = p.completed_percentage || 0;
           const retentionRate = p.retention_rate || 0;
@@ -341,25 +341,25 @@ export default function Projects() {
           const retentionAmt = completedAmt * (retentionRate / 100);
           const netReceivable = completedAmt - retentionAmt;
           return (
-            <div key={p.id} className="bg-card rounded-2xl border border-border p-4 hover:shadow-md transition-shadow">
+            <div key={p.id} className="bg-card rounded-xl border border-border px-4 py-2 hover:shadow-md transition-shadow">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-1 flex-wrap">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <button onClick={() => navigate(`/projects/${p.id}`)} className="font-semibold text-foreground flex items-center gap-1 hover:underline text-primary">{p.project_name} <ExternalLink className="w-3 h-3" /></button>
                     {p.project_number && <Badge variant="secondary" className="text-xs">{p.project_number}</Badge>}
                     <Badge variant="outline" className={`text-xs ${contractStatusStyles[p.contract_status] || ""}`}>
                       {(p.contract_status || "pending").replace(/_/g, " ")}
                     </Badge>
                     {p.project_type && <Badge variant="secondary" className="text-xs">{projectTypeLabels[p.project_type]}</Badge>}
+                    <span className="text-sm text-muted-foreground">
+                      {p.client_name}
+                      {p.location ? ` · ${p.location}` : ""}
+                      {p.project_manager ? ` · ${p.project_manager}` : ""}
+                      {p.end_date && ` · Due ${format(new Date(p.end_date), "MMM d, yyyy")}`}
+                    </span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {p.client_name}
-                    {p.location ? ` · ${p.location}` : ""}
-                    {p.project_manager ? ` · ${p.project_manager}` : ""}
-                    {p.end_date && ` · Due ${format(new Date(p.end_date), "MMM d, yyyy")}`}
-                  </p>
-                  <div className="mt-3 flex items-center gap-3">
-                    <Progress value={completedPct} className="h-2 flex-1" />
+                  <div className="mt-1.5 flex items-center gap-3">
+                    <Progress value={completedPct} className="h-1.5 flex-1 max-w-xs" />
                     <span className="text-xs text-muted-foreground whitespace-nowrap">
                       {completedPct}% · ₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })} / ₱{(p.contract_amount || 0).toLocaleString()}
                     </span>
