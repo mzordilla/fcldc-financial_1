@@ -10,27 +10,27 @@ const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { minimumFractionDig
 export default function EfficiencyReport({ dateFrom, dateTo }) {
   const { data: payables = [] } = useQuery({
     queryKey: ["payables_efficiency"],
-    queryFn: () => base44.entities.Payable.list("-created_date", 500),
+    queryFn: () => base44.entities.Payable.list("-created_date", 10000),
   });
 
   const { data: receivables = [] } = useQuery({
     queryKey: ["receivables_efficiency"],
-    queryFn: () => base44.entities.Receivable.list("-created_date", 500),
+    queryFn: () => base44.entities.Receivable.list("-created_date", 10000),
   });
 
   const { data: purchaseOrders = [] } = useQuery({
     queryKey: ["pos_efficiency"],
-    queryFn: () => base44.entities.PurchaseOrder.list("-created_date", 500),
+    queryFn: () => base44.entities.PurchaseOrder.list("-created_date", 10000),
   });
 
   const { data: transactions = [] } = useQuery({
     queryKey: ["transactions_efficiency"],
-    queryFn: () => base44.entities.Transaction.list("-date", 500),
+    queryFn: () => base44.entities.Transaction.list("-date", 10000),
   });
 
   const { data: billingCycles = [] } = useQuery({
     queryKey: ["billing_cycles_efficiency"],
-    queryFn: () => base44.entities.BillingCycle.list("-created_date", 500),
+    queryFn: () => base44.entities.BillingCycle.list("-created_date", 10000),
   });
 
   const filteredData = useMemo(() => {
