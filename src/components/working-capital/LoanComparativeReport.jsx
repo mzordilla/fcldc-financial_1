@@ -45,6 +45,8 @@ export default function LoanComparativeReport({ items }) {
   });
 
   const [drafts, setDrafts] = useState({});
+  const [interestDrafts, setInterestDrafts] = useState({});
+  const [principalDrafts, setPrincipalDrafts] = useState({});
   const [beginningBalanceOverrides, setBeginningBalanceOverrides] = useState({});
   const [isFullPage, setIsFullPage] = useState(false);
 
@@ -60,10 +62,14 @@ export default function LoanComparativeReport({ items }) {
       const existing = payments.find(p => p.loan_id === loan.id && p.month === month);
       const expected = loan.monthly_payment || 0;
       const beginningBalance = runningBalance;
-      const interestComponent = existing?.interest_component ?? Math.round(beginningBalance * monthlyRate);
       const draftKey = getCellKey(loan.id, month);
       const actual = drafts[draftKey] !== undefined ? drafts[draftKey] : (existing?.actual_amount ?? expected);
-      const principalComponent = Math.max(0, (Number(actual) || 0) - interestComponent);
+      const interestComponent = interestDrafts[draftKey] !== undefined
+        ? (Number(interestDrafts[draftKey]) || 0)
+        : (existing?.interest_component ?? Math.round(beginningBalance * monthlyRate));
+      const principalComponent = principalDrafts[draftKey] !== undefined
+        ? (Number(principalDrafts[draftKey]) || 0)
+        : Math.max(0, (Number(actual) || 0) - interestComponent);
       const endingBalance = Math.max(0, beginningBalance - principalComponent);
       const finished = endingBalance <= 0;
       schedule[month] = { existing, expected, interestComponent, principalComponent, actual, beginningBalance, endingBalance, finished };
@@ -76,8 +82,9 @@ export default function LoanComparativeReport({ items }) {
 
   const handleBlur = (loan, month, cell) => {
     const draftKey = getCellKey(loan.id, month);
-    if (drafts[draftKey] === undefined) return;
-    const actualAmount = Number(drafts[draftKey]) || 0;
+    const hasEdit = drafts[draftKey] !== undefined || interestDrafts[draftKey] !== undefined || principalDrafts[draftKey] !== undefined;
+    if (!hasEdit) return;
+    const actualAmount = Number(cell.actual) || 0;
     upsertMutation.mutate({
       existing: cell.existing,
       data: {
@@ -87,10 +94,20 @@ export default function LoanComparativeReport({ items }) {
         expected_amount: cell.expected,
         actual_amount: actualAmount,
         interest_component: cell.interestComponent,
-        principal_component: Math.max(0, actualAmount - cell.interestComponent),
+        principal_component: cell.principalComponent,
       },
     });
     setDrafts(prev => {
+      const next = { ...prev };
+      delete next[draftKey];
+      return next;
+    });
+    setInterestDrafts(prev => {
+      const next = { ...prev };
+      delete next[draftKey];
+      return next;
+    });
+    setPrincipalDrafts(prev => {
       const next = { ...prev };
       delete next[draftKey];
       return next;
@@ -180,6 +197,32 @@ export default function LoanComparativeReport({ items }) {
                                     type="number"
                                     value={drafts[draftKey] !== undefined ? drafts[draftKey] : cell.actual}
                                     onChange={e => setDrafts(prev => ({ ...prev, [draftKey]: e.target.value }))}
+                                    onBlur={() => handleBlur(loan, month, cell)}
+                                    className="h-6 text-xs text-right w-24 mx-auto border-none shadow-none bg-transparent focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-background px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  />
+                                </td>
+                              );
+                            }
+                            if (row.key === "interestComponent") {
+                              return (
+                                <td key={month} className="border border-border px-1 py-1 text-center">
+                                  <Input
+                                    type="number"
+                                    value={interestDrafts[draftKey] !== undefined ? interestDrafts[draftKey] : cell.interestComponent}
+                                    onChange={e => setInterestDrafts(prev => ({ ...prev, [draftKey]: e.target.value }))}
+                                    onBlur={() => handleBlur(loan, month, cell)}
+                                    className="h-6 text-xs text-right w-24 mx-auto border-none shadow-none bg-transparent focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-background px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  />
+                                </td>
+                              );
+                            }
+                            if (row.key === "principalComponent") {
+                              return (
+                                <td key={month} className="border border-border px-1 py-1 text-center">
+                                  <Input
+                                    type="number"
+                                    value={principalDrafts[draftKey] !== undefined ? principalDrafts[draftKey] : cell.principalComponent}
+                                    onChange={e => setPrincipalDrafts(prev => ({ ...prev, [draftKey]: e.target.value }))}
                                     onBlur={() => handleBlur(loan, month, cell)}
                                     className="h-6 text-xs text-right w-24 mx-auto border-none shadow-none bg-transparent focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-background px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                   />
