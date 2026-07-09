@@ -79,6 +79,30 @@
       "type": "string",
       "description": "URL of the uploaded sale/lease contract document"
     },
+    "payment_history": {
+      "type": "array",
+      "description": "Log of all payments collected from the client for this sold/leased listing",
+      "items": {
+        "type": "object",
+        "properties": {
+          "payment_date": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "payment_method": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "notes": {
       "type": "string"
     }
