@@ -14,7 +14,9 @@
       "type": "string",
       "enum": [
         "income",
-        "expense"
+        "expense",
+        "fund_transfer",
+        "other"
       ],
       "description": "Transaction type"
     },

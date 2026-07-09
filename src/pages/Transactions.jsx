@@ -170,6 +170,8 @@ export default function Transactions() {
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="income">Income</SelectItem>
               <SelectItem value="expense">Expenses</SelectItem>
+              <SelectItem value="fund_transfer">Fund Transfer</SelectItem>
+              <SelectItem value="other">Others</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={handleExport} size="sm">

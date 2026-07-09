@@ -139,6 +139,8 @@ export default function TransactionFormDialog({ open, onOpenChange, title, bankA
                 <SelectContent>
                   <SelectItem value="income">Income</SelectItem>
                   <SelectItem value="expense">Expense</SelectItem>
+                  <SelectItem value="fund_transfer">Fund Transfer</SelectItem>
+                  <SelectItem value="other">Others</SelectItem>
                 </SelectContent>
               </Select>
             </div>
