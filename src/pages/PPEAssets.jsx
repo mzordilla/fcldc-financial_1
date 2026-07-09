@@ -196,11 +196,14 @@ export default function PPEAssets() {
     onSuccess: () => qc.invalidateQueries(["ppe_assets"]),
   });
 
-  const filtered = assets.filter(a => {
-    if (typeFilter !== "all" && a.asset_type !== typeFilter) return false;
-    if (statusFilter !== "all" && a.status !== statusFilter) return false;
-    return true;
-  });
+  const typeOrder = ASSET_TYPES.map(t => t.value);
+  const filtered = assets
+    .filter(a => {
+      if (typeFilter !== "all" && a.asset_type !== typeFilter) return false;
+      if (statusFilter !== "all" && a.status !== statusFilter) return false;
+      return true;
+    })
+    .sort((a, b) => typeOrder.indexOf(a.asset_type) - typeOrder.indexOf(b.asset_type));
 
   const totalCost = filtered.reduce((s, a) => s + (a.acquisition_cost || 0), 0);
   const totalAccumDep = filtered.reduce((s, a) => s + (a.accumulated_depreciation || 0), 0);
