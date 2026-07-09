@@ -18,6 +18,10 @@ export default function GroupedPurchaseOrders({ orders, expandedGroups, toggleGr
     return acc;
   }, {});
 
+  Object.values(grouped).forEach((pos) =>
+    pos.sort((a, b) => (b.requested_date || "").localeCompare(a.requested_date || ""))
+  );
+
   const statusOrder = ["pending", "approved", "rejected", "cancelled"];
 
   return (
