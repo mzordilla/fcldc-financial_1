@@ -5,6 +5,7 @@ import Listings from "./Listings";
 import PortfolioReports from "./PortfolioReports";
 import LeaseCollectionTracker from "../../components/realestate/LeaseCollectionTracker";
 import ClientPaymentTracker from "../../components/realestate/ClientPaymentTracker";
+import RealEstateClients from "../../components/realestate/RealEstateClients";
 
 export default function RealEstatePortfolio() {
   return (
@@ -33,6 +34,9 @@ export default function RealEstatePortfolio() {
           <TabsTrigger value="client-payments" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-red-600 data-[state=active]:text-white transition-all">
             🧾 Client Payments
           </TabsTrigger>
+          <TabsTrigger value="re-clients" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-fuchsia-600 data-[state=active]:text-white transition-all">
+            👤 RE Clients
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="units">
           <CondoUnits embedded />
@@ -51,6 +55,9 @@ export default function RealEstatePortfolio() {
         </TabsContent>
         <TabsContent value="client-payments">
           <ClientPaymentTracker />
+        </TabsContent>
+        <TabsContent value="re-clients">
+          <RealEstateClients />
         </TabsContent>
       </Tabs>
     </div>
