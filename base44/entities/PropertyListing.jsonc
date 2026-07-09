@@ -49,9 +49,13 @@
       "default": "active",
       "description": "Listing status"
     },
+    "client_id": {
+      "type": "string",
+      "description": "Linked Client ID from the Client masterlist"
+    },
     "buyer_tenant_name": {
       "type": "string",
-      "description": "Interested or confirmed buyer/tenant name"
+      "description": "Interested or confirmed buyer/tenant name (denormalized from linked Client)"
     },
     "buyer_tenant_contact": {
       "type": "string",

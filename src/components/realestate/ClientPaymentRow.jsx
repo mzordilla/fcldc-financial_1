@@ -7,7 +7,7 @@ import AddClientPaymentDialog from "./AddClientPaymentDialog";
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
-export default function ClientPaymentRow({ listing, onAddPayment }) {
+export default function ClientPaymentRow({ listing, client, onAddPayment }) {
   const [expanded, setExpanded] = useState(false);
   const [showAddPayment, setShowAddPayment] = useState(false);
 
@@ -36,7 +36,10 @@ export default function ClientPaymentRow({ listing, onAddPayment }) {
               <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-700 border-amber-200">Balance {fmt(balance)}</Badge>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">Unit: {unitLabel}{listing.date_closed ? ` · Closed ${format(new Date(listing.date_closed), "MMM d, yyyy")}` : ""}</p>
+          <p className="text-xs text-muted-foreground">
+            Unit: {unitLabel}{listing.date_closed ? ` · Closed ${format(new Date(listing.date_closed), "MMM d, yyyy")}` : ""}
+            {client?.client_code ? ` · Client Code: ${client.client_code}` : ""}
+          </p>
         </div>
         <div className="flex items-center gap-4">
           <div className="sm:text-right">

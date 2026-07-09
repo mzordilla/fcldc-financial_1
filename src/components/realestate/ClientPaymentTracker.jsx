@@ -18,6 +18,12 @@ export default function ClientPaymentTracker() {
     queryFn: () => base44.entities.PropertyListing.list("-date_closed", 500),
   });
 
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients"],
+    queryFn: () => base44.entities.Client.list("client_name", 500),
+  });
+  const clientsById = useMemo(() => Object.fromEntries(clients.map(c => [c.id, c])), [clients]);
+
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.PropertyListing.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["property_listings"] }),
@@ -89,7 +95,7 @@ export default function ClientPaymentTracker() {
           <p className="text-center py-12 text-muted-foreground">No sold or leased clients found.</p>
         ) : (
           filtered.map((listing) => (
-            <ClientPaymentRow key={listing.id} listing={listing} onAddPayment={handleAddPayment} />
+            <ClientPaymentRow key={listing.id} listing={listing} client={clientsById[listing.client_id]} onAddPayment={handleAddPayment} />
           ))
         )}
       </div>

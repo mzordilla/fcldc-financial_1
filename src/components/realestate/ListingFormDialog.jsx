@@ -7,11 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import { Paperclip, Loader2 } from "lucide-react";
 
 const defaults = {
   units: [], listing_type: "for_sale",
-  asking_price: "", status: "active", buyer_tenant_name: "",
+  asking_price: "", status: "active", client_id: "", buyer_tenant_name: "",
   buyer_tenant_contact: "", date_listed: "", date_closed: "",
   final_price: "", agent: "", contract_attachment_url: "", notes: "",
 };
@@ -20,6 +21,11 @@ export default function ListingFormDialog({ open, onOpenChange, initialData, uni
   const [form, setForm] = useState(defaults);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients"],
+    queryFn: () => base44.entities.Client.list("client_name", 500),
+  });
 
   const handleFileUpload = async (file) => {
     if (!file) return;
@@ -119,8 +125,29 @@ export default function ListingFormDialog({ open, onOpenChange, initialData, uni
               <Input type="number" value={form.final_price} onChange={e => set("final_price", e.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label>Buyer / Tenant Name</Label>
-              <Input value={form.buyer_tenant_name} onChange={e => set("buyer_tenant_name", e.target.value)} />
+              <Label>Client (Buyer / Tenant) *</Label>
+              <Select
+                value={form.client_id}
+                onValueChange={v => {
+                  const client = clients.find(c => c.id === v);
+                  setForm(f => ({
+                    ...f,
+                    client_id: v,
+                    buyer_tenant_name: client?.client_name || "",
+                    buyer_tenant_contact: client?.email || client?.phone || f.buyer_tenant_contact,
+                  }));
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Select client..." /></SelectTrigger>
+                <SelectContent>
+                  {clients.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.client_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {clients.length === 0 && (
+                <p className="text-xs text-muted-foreground">No clients found — add one in the Client Masterlist first.</p>
+              )}
             </div>
             <div className="space-y-1">
               <Label>Buyer / Tenant Contact</Label>
