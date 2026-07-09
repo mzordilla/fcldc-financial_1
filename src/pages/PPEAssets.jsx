@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -196,14 +197,11 @@ export default function PPEAssets() {
     onSuccess: () => qc.invalidateQueries(["ppe_assets"]),
   });
 
-  const typeOrder = ASSET_TYPES.map(t => t.value);
-  const filtered = assets
-    .filter(a => {
-      if (typeFilter !== "all" && a.asset_type !== typeFilter) return false;
-      if (statusFilter !== "all" && a.status !== statusFilter) return false;
-      return true;
-    })
-    .sort((a, b) => typeOrder.indexOf(a.asset_type) - typeOrder.indexOf(b.asset_type));
+  const filtered = assets.filter(a => {
+    if (typeFilter !== "all" && a.asset_type !== typeFilter) return false;
+    if (statusFilter !== "all" && a.status !== statusFilter) return false;
+    return true;
+  });
 
   const totalCost = filtered.reduce((s, a) => s + (a.acquisition_cost || 0), 0);
   const totalAccumDep = filtered.reduce((s, a) => s + (a.accumulated_depreciation || 0), 0);
@@ -253,16 +251,17 @@ export default function PPEAssets() {
         </div>
       </div>
 
+      {/* Type tabs */}
+      <Tabs value={typeFilter} onValueChange={setTypeFilter}>
+        <TabsList className="flex flex-wrap h-auto">
+          <TabsTrigger value="all">All Types</TabsTrigger>
+          {ASSET_TYPES.map(t => <TabsTrigger key={t.value} value={t.value}>{t.label}</TabsTrigger>)}
+        </TabsList>
+      </Tabs>
+
       {/* Filters + table */}
       <div className="bg-card border border-border rounded-2xl overflow-hidden">
         <div className="flex flex-wrap gap-3 p-4 border-b border-border">
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="All Types" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              {ASSET_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48"><SelectValue placeholder="All Statuses" /></SelectTrigger>
             <SelectContent>
