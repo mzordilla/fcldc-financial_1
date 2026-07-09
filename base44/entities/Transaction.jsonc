@@ -62,6 +62,10 @@
         "cancelled"
       ],
       "default": "completed"
+    },
+    "receiving_item_id": {
+      "type": "string",
+      "description": "Linked ReceivingItem ID (set when this expense was auto-recorded from a received PO delivery)"
     }
   },
   "required": [
