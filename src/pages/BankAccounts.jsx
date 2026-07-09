@@ -46,14 +46,58 @@ const typeColors = {
 const fmt = (v) =>
 `₱${Math.abs(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-function AccountTransactions({ accountId, transactions }) {
-  const [expanded, setExpanded] = useState(false);
-  const linked = transactions.
-  filter((t) => t.bank_account_id === accountId).
-  sort((a, b) => new Date(b.date) - new Date(a.date)).
-  slice(0, expanded ? 50 : 5);
+function MonthGroup({ monthKey, monthTransactions }) {
+  const [open, setOpen] = useState(false);
+  const income = monthTransactions.filter((t) => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
+  const expense = monthTransactions.filter((t) => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
 
-  const allLinked = transactions.filter((t) => t.bank_account_id === accountId);
+  return (
+    <div className="border border-border/50 rounded-lg overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-2.5 py-2 bg-muted/30 hover:bg-muted/50 transition-colors">
+        <div className="flex items-center gap-1.5">
+          {open ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
+          <span className="text-xs font-semibold text-foreground">{monthKey}</span>
+          <span className="text-[10px] text-muted-foreground">({monthTransactions.length})</span>
+        </div>
+        <div className="flex gap-2 text-[10px]">
+          <span className="text-primary font-medium">+{fmt(income)}</span>
+          <span className="text-destructive font-medium">-{fmt(expense)}</span>
+        </div>
+      </button>
+      {open &&
+      <div className="px-2.5 py-1.5 space-y-1">
+          {monthTransactions.map((t) =>
+        <div key={t.id} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${t.type === "income" ? "bg-primary/10" : "bg-destructive/10"}`}>
+                  {t.type === "income" ?
+              <ArrowUpRight className="w-3 h-3 text-primary" /> :
+              <ArrowDownRight className="w-3 h-3 text-destructive" />
+              }
+                </div>
+                <span className="text-xs text-foreground truncate">{t.description}</span>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                <span className="text-[10px] text-muted-foreground">{t.date ? format(new Date(t.date), "MMM d") : ""}</span>
+                <span className={`text-xs font-semibold ${t.type === "income" ? "text-primary" : "text-destructive"}`}>
+                  {t.type === "income" ? "+" : "-"}₱{(t.amount || 0).toLocaleString()}
+                </span>
+              </div>
+            </div>
+        )}
+        </div>
+      }
+    </div>);
+
+}
+
+function AccountTransactions({ accountId, transactions }) {
+  const allLinked = transactions.
+  filter((t) => t.bank_account_id === accountId).
+  sort((a, b) => new Date(b.date) - new Date(a.date));
+
   const totalIncome = allLinked.filter((t) => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
   const totalExpense = allLinked.filter((t) => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
 
@@ -62,6 +106,13 @@ function AccountTransactions({ accountId, transactions }) {
       <p className="text-xs text-muted-foreground italic">No transactions linked to this account yet.</p>);
 
   }
+
+  const groups = {};
+  allLinked.forEach((t) => {
+    const key = t.date ? format(new Date(t.date), "MMMM yyyy") : "No Date";
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(t);
+  });
 
   return (
     <div className="space-y-2">
@@ -72,38 +123,12 @@ function AccountTransactions({ accountId, transactions }) {
         <span className="text-muted-foreground">({allLinked.length} txn{allLinked.length !== 1 ? "s" : ""})</span>
       </div>
 
-      {/* Transaction rows */}
-      <div className="space-y-1">
-        {linked.map((t) =>
-        <div key={t.id} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${t.type === "income" ? "bg-primary/10" : "bg-destructive/10"}`}>
-                {t.type === "income" ?
-              <ArrowUpRight className="w-3 h-3 text-primary" /> :
-              <ArrowDownRight className="w-3 h-3 text-destructive" />
-              }
-              </div>
-              <span className="text-xs text-foreground truncate">{t.description}</span>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-              <span className="text-[10px] text-muted-foreground">{t.date ? format(new Date(t.date), "MMM d") : ""}</span>
-              <span className={`text-xs font-semibold ${t.type === "income" ? "text-primary" : "text-destructive"}`}>
-                {t.type === "income" ? "+" : "-"}₱{(t.amount || 0).toLocaleString()}
-              </span>
-            </div>
-          </div>
+      {/* Grouped by month */}
+      <div className="space-y-1.5">
+        {Object.entries(groups).map(([monthKey, monthTransactions]) =>
+        <MonthGroup key={monthKey} monthKey={monthKey} monthTransactions={monthTransactions} />
         )}
       </div>
-
-      {allLinked.length > 5 &&
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1 text-xs text-primary hover:underline">
-        
-          {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-          {expanded ? "Show less" : `Show all ${allLinked.length} transactions`}
-        </button>
-      }
     </div>);
 
 }
