@@ -18,11 +18,11 @@ export default function ClientPaymentTracker() {
     queryFn: () => base44.entities.PropertyListing.list("-date_closed", 500),
   });
 
-  const { data: clients = [] } = useQuery({
+  const { data: allClients = [] } = useQuery({
     queryKey: ["clients"],
     queryFn: () => base44.entities.Client.list("client_name", 500),
   });
-  const clientsById = useMemo(() => Object.fromEntries(clients.map(c => [c.id, c])), [clients]);
+  const clientsById = useMemo(() => Object.fromEntries(allClients.map(c => [c.id, c])), [allClients]);
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.PropertyListing.update(id, data),

@@ -206,10 +206,11 @@ export default function ClientMasterlist() {
   const [editingClient, setEditingClient] = useState(null);
   const [expandedClients, setExpandedClients] = useState({});
 
-  const { data: clients = [], isLoading } = useQuery({
+  const { data: allClients = [], isLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: () => base44.entities.Client.list("client_name", 200),
   });
+  const clients = allClients.filter(c => (c.client_category || "project") === "project");
 
   const { data: projects = [] } = useQuery({
     queryKey: ["projects"],
@@ -227,7 +228,7 @@ export default function ClientMasterlist() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Client.create(data),
+    mutationFn: (data) => base44.entities.Client.create({ ...data, client_category: "project" }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["clients"] }); setShowAdd(false); },
   });
 

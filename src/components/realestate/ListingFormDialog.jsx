@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
-import { Paperclip, Loader2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Paperclip, Loader2, UserPlus } from "lucide-react";
 
 const defaults = {
   units: [], listing_type: "for_sale",
@@ -21,10 +21,24 @@ export default function ListingFormDialog({ open, onOpenChange, initialData, uni
   const [form, setForm] = useState(defaults);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showAddClient, setShowAddClient] = useState(false);
+  const [newClientName, setNewClientName] = useState("");
+  const queryClient = useQueryClient();
 
-  const { data: clients = [] } = useQuery({
+  const { data: allClients = [] } = useQuery({
     queryKey: ["clients"],
     queryFn: () => base44.entities.Client.list("client_name", 500),
+  });
+  const clients = allClients.filter(c => c.client_category === "real_estate");
+
+  const createClientMutation = useMutation({
+    mutationFn: (name) => base44.entities.Client.create({ client_name: name, client_category: "real_estate" }),
+    onSuccess: (newClient) => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      setForm(f => ({ ...f, client_id: newClient.id, buyer_tenant_name: newClient.client_name }));
+      setNewClientName("");
+      setShowAddClient(false);
+    },
   });
 
   const handleFileUpload = async (file) => {
@@ -126,27 +140,49 @@ export default function ListingFormDialog({ open, onOpenChange, initialData, uni
             </div>
             <div className="space-y-1">
               <Label>Client (Buyer / Tenant) *</Label>
-              <Select
-                value={form.client_id}
-                onValueChange={v => {
-                  const client = clients.find(c => c.id === v);
-                  setForm(f => ({
-                    ...f,
-                    client_id: v,
-                    buyer_tenant_name: client?.client_name || "",
-                    buyer_tenant_contact: client?.email || client?.phone || f.buyer_tenant_contact,
-                  }));
-                }}
-              >
-                <SelectTrigger><SelectValue placeholder="Select client..." /></SelectTrigger>
-                <SelectContent>
-                  {clients.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.client_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {clients.length === 0 && (
-                <p className="text-xs text-muted-foreground">No clients found — add one in the Client Masterlist first.</p>
+              {!showAddClient ? (
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={form.client_id}
+                    onValueChange={v => {
+                      const client = clients.find(c => c.id === v);
+                      setForm(f => ({
+                        ...f,
+                        client_id: v,
+                        buyer_tenant_name: client?.client_name || "",
+                        buyer_tenant_contact: client?.email || client?.phone || f.buyer_tenant_contact,
+                      }));
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select client..." /></SelectTrigger>
+                    <SelectContent>
+                      {clients.map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.client_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" variant="outline" size="icon" className="shrink-0" onClick={() => setShowAddClient(true)} title="Add new client">
+                    <UserPlus className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Input
+                    autoFocus
+                    placeholder="New client name..."
+                    value={newClientName}
+                    onChange={e => setNewClientName(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!newClientName.trim() || createClientMutation.isPending}
+                    onClick={() => createClientMutation.mutate(newClientName.trim())}
+                  >
+                    {createClientMutation.isPending ? "Adding..." : "Add"}
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setShowAddClient(false)}>Cancel</Button>
+                </div>
               )}
             </div>
             <div className="space-y-1">

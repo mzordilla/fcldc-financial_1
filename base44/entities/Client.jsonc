@@ -37,6 +37,15 @@
       ],
       "description": "Type of client"
     },
+    "client_category": {
+      "type": "string",
+      "enum": [
+        "project",
+        "real_estate"
+      ],
+      "default": "project",
+      "description": "Which client list this belongs to: Project (construction clients) or Real Estate (property buyers/tenants)"
+    },
     "status": {
       "type": "string",
       "enum": [
