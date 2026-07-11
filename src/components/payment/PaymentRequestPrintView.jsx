@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import { useLayoutEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { Printer, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,8 +16,29 @@ const categoryLabels = {
 };
 
 function CopyBlock({ data, allocations, netAmount, watermark }) {
+  const containerRef = useRef(null);
+  const contentRef = useRef(null);
+  const [scale, setScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const content = contentRef.current;
+    if (!container || !content) return;
+    setScale(1);
+    const raf = requestAnimationFrame(() => {
+      const availableHeight = container.clientHeight;
+      const contentHeight = content.scrollHeight;
+      if (contentHeight > availableHeight) {
+        setScale(availableHeight / contentHeight);
+      } else {
+        setScale(1);
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [data, allocations, netAmount]);
+
   return (
-    <div className="relative h-[136mm] px-[12mm] py-[6mm] overflow-hidden">
+    <div ref={containerRef} className="relative h-[136mm] px-[12mm] py-[6mm] overflow-hidden">
       {/* Watermark */}
       <div className="absolute top-[4mm] right-[12mm] pointer-events-none">
         <span className="text-[10px] font-bold text-gray-300 tracking-widest select-none whitespace-nowrap">
@@ -24,7 +46,11 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
         </span>
       </div>
 
-      <div className="relative">
+      <div
+        ref={contentRef}
+        className="relative"
+        style={{ transform: `scale(${scale})`, transformOrigin: "top left", width: scale < 1 ? `${100 / scale}%` : "100%" }}
+      >
         {/* Company Header */}
         <div className="mb-3">
           <h2 className="text-base font-bold tracking-tight">Your Company Name</h2>
