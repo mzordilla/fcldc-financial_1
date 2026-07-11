@@ -59,7 +59,8 @@ export default function CheckWriterDialog({ open, onOpenChange, paymentRequest, 
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { font-family: 'Courier New', monospace; background: #fff; }
-            .check-body { width: 800px; margin: 20px auto; }
+            .check-body { width: 8.5in; height: 3.5in; position: relative; }
+            @page { size: 8.5in 3.5in; margin: 0; }
           </style>
         </head>
         <body>
@@ -75,56 +76,59 @@ export default function CheckWriterDialog({ open, onOpenChange, paymentRequest, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Printer className="w-4 h-4" /> Check Writer
           </DialogTitle>
         </DialogHeader>
 
-        {/* Check Preview */}
-        <div ref={checkRef} className="border-2 border-border rounded-lg p-5 bg-white font-mono text-sm space-y-3 shadow-inner">
-          {/* Header row */}
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest">Drawn From</p>
-              <p className="font-bold text-foreground text-base leading-tight">{bankAccount?.bank_name || "________________"}</p>
-              <p className="text-xs text-muted-foreground">{bankAccount?.account_name || ""}</p>
+        {/* Scaled preview wrapper — the ref below stays at true check size (8.5in x 3.5in)
+            so print output matches Philippine bank check dimensions exactly. */}
+        <div className="overflow-x-auto flex justify-center bg-muted/30 py-4 rounded-lg">
+          <div
+            ref={checkRef}
+            className="border-2 border-border bg-white font-mono text-foreground relative shadow-inner"
+            style={{ width: "8.5in", height: "3.5in", fontSize: "10px" }}
+          >
+            {/* Drawn from / bank info — top left */}
+            <div style={{ position: "absolute", top: "0.2in", left: "0.3in" }}>
+              <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Drawn From</p>
+              <p className="font-bold text-foreground text-sm leading-tight">{bankAccount?.bank_name || "________________"}</p>
+              <p className="text-[9px] text-muted-foreground">{bankAccount?.account_name || ""}</p>
               {bankAccount?.account_number && (
-                <p className="text-xs text-muted-foreground">Acct No: {bankAccount.account_number}</p>
+                <p className="text-[9px] text-muted-foreground">Acct No: {bankAccount.account_number}</p>
               )}
             </div>
-            <div className="text-right space-y-1">
+
+            {/* Check No. and Date — top right */}
+            <div style={{ position: "absolute", top: "0.2in", right: "0.3in" }} className="text-right space-y-1">
               <div className="flex items-center justify-end gap-2">
-                <span className="text-xs text-muted-foreground">Check No.</span>
+                <span className="text-[9px] text-muted-foreground">Check No.</span>
                 <span className="border-b border-foreground px-3 font-bold tracking-wider">{checkNumber}</span>
               </div>
               <div className="flex items-center justify-end gap-2">
-                <span className="text-xs text-muted-foreground">Date</span>
-                <span className="border-b border-foreground px-3">{checkDate ? format(new Date(checkDate), "MMMM d, yyyy") : "________________"}</span>
+                <span className="text-[9px] text-muted-foreground">Date</span>
+                <span className="border-b border-foreground px-3">{checkDate ? format(new Date(checkDate), "MM-dd-yyyy") : "__-__-____"}</span>
               </div>
             </div>
-          </div>
 
-          {/* Pay to the order of */}
-          <div className="flex items-end gap-2 border-b border-foreground/30 pb-1">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">PAY TO THE ORDER OF</span>
-            <span className="flex-1 border-b border-foreground font-bold text-foreground px-2">{paymentRequest.payee}</span>
-          </div>
-
-          {/* Amount in words */}
-          <div className="flex items-end gap-2 border-b border-foreground/30 pb-1">
-            <span className="flex-1 border-b border-foreground text-foreground px-2 py-0.5 leading-snug text-xs uppercase tracking-wide">
-              {numberToWords(netAmount)}
-            </span>
-            <div className="border-2 border-foreground rounded px-3 py-1 font-bold text-lg whitespace-nowrap">
-              ₱ {netAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {/* Pay to the order of — with amount box on the same line */}
+            <div style={{ position: "absolute", top: "1.3in", left: "0.3in", right: "0.3in" }} className="flex items-end gap-2">
+              <span className="text-[9px] text-muted-foreground whitespace-nowrap">PAY TO THE ORDER OF</span>
+              <span className="flex-1 border-b border-foreground font-bold text-foreground px-2 pb-0.5">{paymentRequest.payee}</span>
+              <div className="border-2 border-foreground rounded px-3 py-1 font-bold text-base whitespace-nowrap">
+                ₱ {netAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </div>
             </div>
-          </div>
 
-          {/* Memo / breakdown */}
-          <div className="flex items-start justify-between text-xs text-muted-foreground pt-1">
-            <div className="space-y-0.5">
+            {/* Amount in words */}
+            <div style={{ position: "absolute", top: "1.75in", left: "0.3in", right: "0.3in" }} className="border-b border-foreground/30 pb-1">
+              <span className="text-[9px] uppercase tracking-wide">{numberToWords(netAmount)}</span>
+            </div>
+
+            {/* Memo / breakdown — bottom left */}
+            <div style={{ position: "absolute", bottom: "0.25in", left: "0.3in" }} className="text-[9px] text-muted-foreground space-y-0.5">
               <div className="flex gap-2">
                 <span className="text-muted-foreground">FOR:</span>
                 <span className="text-foreground">{paymentRequest.description || "—"}</span>
@@ -147,15 +151,17 @@ export default function CheckWriterDialog({ open, onOpenChange, paymentRequest, 
                 </div>
               )}
             </div>
-            <div className="text-right border-t border-foreground pt-4 mt-4 w-48">
-              <p className="text-xs text-muted-foreground">Authorized Signature</p>
-            </div>
-          </div>
 
-          {/* MICR-style bottom bar */}
-          <div className="border-t border-dashed border-muted-foreground/30 pt-2 flex justify-between text-xs text-muted-foreground tracking-widest font-mono">
-            <span>⑆ {bankAccount?.account_number ? bankAccount.account_number.replace(/./g, "●") : "●●●●●●●●●●"} ⑆</span>
-            <span>⑈ {checkNumber} ⑈</span>
+            {/* Signature line — bottom right */}
+            <div style={{ position: "absolute", bottom: "0.25in", right: "0.3in", width: "2.2in" }} className="text-right border-t border-foreground pt-1">
+              <p className="text-[9px] text-muted-foreground">Authorized Signature</p>
+            </div>
+
+            {/* MICR-style bottom bar */}
+            <div style={{ position: "absolute", bottom: "0.02in", left: "0.3in", right: "0.3in" }} className="border-t border-dashed border-muted-foreground/30 pt-1 flex justify-between text-[9px] text-muted-foreground tracking-widest font-mono">
+              <span>⑆ {bankAccount?.account_number ? bankAccount.account_number.replace(/./g, "●") : "●●●●●●●●●●"} ⑆</span>
+              <span>⑈ {checkNumber} ⑈</span>
+            </div>
           </div>
         </div>
 
