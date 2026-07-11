@@ -80,6 +80,8 @@ export default function CheckMonitoring() {
                   <th className="text-left px-4 py-2.5">Description</th>
                   <th className="text-right px-4 py-2.5">Amount</th>
                   <th className="text-left px-4 py-2.5">Status</th>
+                  <th className="text-left px-4 py-2.5">Disbursed By</th>
+                  <th className="text-left px-4 py-2.5">Notes</th>
                 </tr>
               </thead>
               <tbody>
@@ -98,6 +100,8 @@ export default function CheckMonitoring() {
                         {c.approval_status || "pending"}
                       </Badge>
                     </td>
+                    <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{c.approved_by || "—"}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground truncate max-w-xs">{c.approval_notes || "—"}</td>
                   </tr>
                 ))}
               </tbody>
