@@ -48,9 +48,11 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
       >
         {/* Company Header */}
         <div className="mb-3">
-          <h2 className="text-base font-bold tracking-tight">Your Company Name</h2>
-          <p className="text-[10px] text-gray-600">123 Business Street, City, Country</p>
-          <p className="text-[10px] text-gray-600">Phone: (000) 000-0000 · Email: info@company.com</p>
+          <img
+            src="https://media.base44.com/images/public/69f02f8501c3688565579a10/ab43375cf_CONSTRUCTION_FINANCE.jpg"
+            alt="FCL Aranang Development Corporation"
+            className="h-14 w-auto"
+          />
         </div>
 
         {/* Header */}
