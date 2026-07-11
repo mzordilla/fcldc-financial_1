@@ -21,8 +21,8 @@ export default function CheckMonitoring() {
   });
 
   const checks = requests
-    .filter((r) => r.payment_method === "check" && r.check_number)
-    .sort((a, b) => new Date(b.check_date || 0) - new Date(a.check_date || 0));
+    .filter((r) => r.payment_method === "check")
+    .sort((a, b) => new Date(b.check_date || b.created_date || 0) - new Date(a.check_date || a.created_date || 0));
 
   const totalAmount = checks.reduce((s, c) => s + (c.amount || 0), 0);
 
