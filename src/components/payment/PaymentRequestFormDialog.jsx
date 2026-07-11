@@ -105,7 +105,12 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="sm:max-w-2xl max-h-[90vh] overflow-y-auto"
+        onInteractOutside={(e) => { if (showPrint) e.preventDefault(); }}
+        onPointerDownOutside={(e) => { if (showPrint) e.preventDefault(); }}
+        onFocusOutside={(e) => { if (showPrint) e.preventDefault(); }}
+      >
         <DialogHeader>
           <DialogTitle>{title || "Payment Request"}</DialogTitle>
         </DialogHeader>
