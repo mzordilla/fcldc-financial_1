@@ -170,6 +170,54 @@ export default function NoticeOfDeliveryPDF({ po, iconOnly }) {
     doc.setTextColor(160, 160, 160);
     doc.text("This is a system-generated Notice of Delivery.", pageW / 2, 285, { align: "center" });
 
+    // ── Receiving Copy stub (5 inches / 127mm tall, on its own page, cut along dashed line) ──
+    doc.addPage();
+    const stubH = 127; // 5 inches in mm
+    let sy = 15;
+
+    doc.setDrawColor(150, 150, 150);
+    doc.setLineDashPattern([2, 2], 0);
+    doc.line(margin, sy, pageW - margin, sy);
+    doc.setLineDashPattern([], 0);
+    doc.setFontSize(7);
+    doc.setTextColor(140, 140, 140);
+    doc.text("✂ Cut along this line", pageW - margin, sy - 2, { align: "right" });
+
+    sy += 10;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(30, 30, 30);
+    doc.text("RECEIVING COPY", margin, sy);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Notice of Delivery", pageW - margin, sy, { align: "right" });
+
+    sy += 10;
+    const sCol1 = margin;
+    const sCol2 = pageW / 2 + 5;
+    field("PO Number", po.po_number || "—", sCol1, sy);
+    field("Supplier", po.supplier_name || "—", sCol2, sy);
+    sy += 12;
+    field("Project", po.project_name || "—", sCol1, sy);
+    field("Delivery Date", po.delivery_date ? format(new Date(po.delivery_date), "MMM d, yyyy") : "—", sCol2, sy);
+    sy += 12;
+    field("Total Amount", `P${(po.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, sCol1, sy);
+
+    sy += 20;
+    doc.setDrawColor(220, 220, 220);
+    doc.line(margin, sy, margin + 65, sy);
+    doc.line(pageW - margin - 65, sy, pageW - margin, sy);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Received by / Signature", margin, sy + 5);
+    doc.text("Date", pageW - margin - 65, sy + 5);
+
+    doc.setFontSize(7);
+    doc.setTextColor(160, 160, 160);
+    doc.text("This stub confirms receipt of the goods/services listed above.", pageW / 2, 15 + stubH, { align: "center" });
+
     const filename = `NOD-${po.po_number || po.id}-${format(new Date(), "yyyyMMdd")}.pdf`;
     doc.save(filename);
   };
