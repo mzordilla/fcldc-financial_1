@@ -175,11 +175,20 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
         </div>
 
         {/* Signature lines */}
-        <div className="grid grid-cols-4 gap-3 text-[9px]">
-          <div className="border-t border-black pt-1">Requested By</div>
-          <div className="border-t border-black pt-1">Approved By</div>
-          <div className="border-t border-black pt-1">Disbursed By</div>
-          <div className="border-t border-black pt-1">Received By</div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="grid grid-cols-3 gap-3 text-[9px] flex-1">
+            <div className="border-t border-black pt-1">Requested By</div>
+            <div className="border-t border-black pt-1">Approved By</div>
+            <div className="border-t border-black pt-1">Disbursed By</div>
+          </div>
+
+          <div className="border border-black rounded p-1.5 w-32 text-[8px]">
+            <p className="font-semibold uppercase text-center mb-1">Received By</p>
+            <div className="border-b border-black h-4 mb-0.5" />
+            <p className="text-gray-500 text-center">Name</p>
+            <div className="border-b border-black h-4 mb-0.5 mt-1" />
+            <p className="text-gray-500 text-center">Signature</p>
+          </div>
         </div>
       </div>
     </div>
