@@ -54,11 +54,7 @@ export default function Sidebar() {
     <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col z-50" style={{ minHeight: 0, height: "100%" }}>
       <div className="p-6 border-b border-sidebar-border">
          <div className="flex items-center gap-3">
-           <img src="https://media.base44.com/images/public/69f02f8501c3688565579a10/194dcac58_image.png" alt="FCLDC" className="w-10 h-10" />
-           <div className="flex-1">
-             <h1 className="font-bold text-lg leading-tight">FCLDC</h1>
-             <p className="text-xs text-sidebar-foreground/50">FINANCE</p>
-           </div>
+           <img src="https://media.base44.com/images/public/69f02f8501c3688565579a10/ab43375cf_CONSTRUCTION_FINANCE.jpg" alt="FCL Aranang Development Corporation" className="flex-1 h-auto rounded" />
            <button
              onClick={() => setCollapsed(true)}
              className="p-1.5 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all"
