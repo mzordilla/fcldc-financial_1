@@ -319,7 +319,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setShowPrint(true)}>
+            <Button type="button" variant="outline" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPrint(true); }}>
               <Printer className="w-4 h-4 mr-2" /> Print Preview
             </Button>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

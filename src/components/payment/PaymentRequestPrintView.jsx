@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { format } from "date-fns";
 import { Printer, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -156,7 +157,7 @@ export default function PaymentRequestPrintView({ open, onOpenChange, data }) {
   const allocations = (data.allocations || []).filter(a => a.project_name);
   const netAmount = (data.totalAmount || 0) - (data.withholdingTaxAmount || 0) + (data.vatAmount || 0);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] bg-black/50 overflow-y-auto">
       <style>{`
         @media print {
@@ -168,10 +169,10 @@ export default function PaymentRequestPrintView({ open, onOpenChange, data }) {
       `}</style>
 
       <div className="print:hidden sticky top-0 z-10 bg-background border-b border-border flex items-center justify-end gap-2 px-4 py-3">
-        <Button variant="outline" size="sm" onClick={() => window.print()}>
+        <Button type="button" variant="outline" size="sm" onClick={() => window.print()}>
           <Printer className="w-4 h-4 mr-2" /> Print
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
           <X className="w-4 h-4 mr-2" /> Close
         </Button>
       </div>
@@ -183,6 +184,7 @@ export default function PaymentRequestPrintView({ open, onOpenChange, data }) {
           <CopyBlock data={data} allocations={allocations} netAmount={netAmount} watermark="FCL COPY" />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
