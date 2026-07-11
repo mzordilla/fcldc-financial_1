@@ -45,6 +45,12 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
 
   return (
     <div ref={containerRef} className="relative h-[136mm] px-[12mm] py-[6mm] overflow-hidden">
+      <div className="absolute bottom-[4mm] right-[12mm] pointer-events-none">
+        <span className="text-[8px] font-semibold text-gray-400 tracking-wide select-none whitespace-nowrap">
+          {watermark}
+        </span>
+      </div>
+
       <div
         ref={contentRef}
         className="relative w-full"
