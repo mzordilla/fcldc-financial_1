@@ -144,24 +144,23 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
           </tbody>
         </table>
 
-        {/* Payment details box */}
-        <div className="border border-black rounded p-1 mb-1.5 grid grid-cols-3 gap-1.5 text-[7px]">
-          <div>
-            <p className="text-gray-500 font-semibold uppercase text-[6px]">Check #</p>
-            <p className="font-medium">{data.check_number || "—"}</p>
+        {/* Payment details box + Totals */}
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div className="border border-black rounded p-1.5 text-[8px] space-y-1 w-40">
+            <div>
+              <p className="text-gray-500 font-semibold uppercase text-[7px]">Check #</p>
+              <p className="font-medium">{data.check_number || "—"}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 font-semibold uppercase text-[7px]">Check Date</p>
+              <p className="font-medium">{data.check_date ? format(new Date(data.check_date), "MMM d, yyyy") : "—"}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 font-semibold uppercase text-[7px]">Bank</p>
+              <p className="font-medium">{data.bank_name || "—"}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-gray-500 font-semibold uppercase text-[6px]">Check Date</p>
-            <p className="font-medium">{data.check_date ? format(new Date(data.check_date), "MMM d, yyyy") : "—"}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 font-semibold uppercase text-[6px]">Bank</p>
-            <p className="font-medium">{data.bank_name || "—"}</p>
-          </div>
-        </div>
 
-        {/* Totals */}
-        <div className="flex justify-end mb-2">
           <div className="w-52 text-[10px] space-y-0.5">
             <div className="flex justify-between">
               <span>Subtotal:</span>
