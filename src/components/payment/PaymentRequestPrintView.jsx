@@ -20,7 +20,7 @@ export default function PaymentRequestPrintView({ open, onOpenChange, data }) {
   const netAmount = (data.totalAmount || 0) - (data.withholdingTaxAmount || 0) + (data.vatAmount || 0);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] bg-black/50 overflow-y-auto">
       <style>{`
         @media print {
           body * { visibility: hidden; }
