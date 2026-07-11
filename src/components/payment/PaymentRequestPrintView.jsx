@@ -45,13 +45,6 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
 
   return (
     <div ref={containerRef} className="relative h-[136mm] px-[12mm] py-[6mm] overflow-hidden">
-      {/* Watermark */}
-      <div className="absolute top-[4mm] right-[12mm] pointer-events-none">
-        <span className="text-[10px] font-bold text-gray-300 tracking-widest select-none whitespace-nowrap">
-          {watermark}
-        </span>
-      </div>
-
       <div
         ref={contentRef}
         className="relative w-full"
@@ -66,7 +59,6 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
           />
           <div className="text-center">
             <h1 className="text-base font-bold tracking-tight">VOUCHER</h1>
-            <p className="text-[9px] text-gray-600">{watermark}</p>
           </div>
           <div className="text-right text-[11px]">
             <p className="font-semibold">Request #: {data.request_number || "—"}</p>
