@@ -103,6 +103,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
   const setField = (name, value) => setForm(prev => ({ ...prev, [name]: value }));
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -326,17 +327,18 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
           </DialogFooter>
         </form>
       </DialogContent>
-      <PaymentRequestPrintView
-        open={showPrint}
-        onOpenChange={setShowPrint}
-        data={{
-          ...form,
-          allocations,
-          totalAmount,
-          withholdingTaxAmount,
-          vatAmount,
-        }}
-      />
     </Dialog>
+    <PaymentRequestPrintView
+      open={showPrint}
+      onOpenChange={setShowPrint}
+      data={{
+        ...form,
+        allocations,
+        totalAmount,
+        withholdingTaxAmount,
+        vatAmount,
+      }}
+    />
+    </>
   );
 }
