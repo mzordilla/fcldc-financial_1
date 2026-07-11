@@ -24,17 +24,12 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
     const container = containerRef.current;
     const content = contentRef.current;
     if (!container || !content) return;
-    setScale(1);
-    const raf = requestAnimationFrame(() => {
-      const availableHeight = container.clientHeight;
-      const contentHeight = content.scrollHeight;
-      if (contentHeight > availableHeight) {
-        setScale(availableHeight / contentHeight);
-      } else {
-        setScale(1);
-      }
-    });
-    return () => cancelAnimationFrame(raf);
+    // Reset to natural size before measuring, so we measure the true unscaled height
+    content.style.transform = "none";
+    content.style.width = "100%";
+    const availableHeight = container.clientHeight;
+    const contentHeight = content.scrollHeight;
+    setScale(contentHeight > availableHeight ? availableHeight / contentHeight : 1);
   }, [data, allocations, netAmount]);
 
   return (
