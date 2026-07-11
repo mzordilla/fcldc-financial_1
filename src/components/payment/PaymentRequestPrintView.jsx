@@ -18,8 +18,8 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
   return (
     <div className="relative h-[136mm] px-[12mm] py-[6mm] overflow-hidden">
       {/* Watermark */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <span className="text-[54px] font-extrabold text-gray-200 rotate-[-30deg] tracking-widest select-none whitespace-nowrap">
+      <div className="absolute top-[4mm] right-[12mm] pointer-events-none">
+        <span className="text-[10px] font-bold text-gray-300 tracking-widest select-none whitespace-nowrap">
           {watermark}
         </span>
       </div>
