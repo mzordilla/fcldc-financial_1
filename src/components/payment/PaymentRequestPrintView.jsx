@@ -24,12 +24,12 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
     const container = containerRef.current;
     const content = contentRef.current;
     if (!container || !content) return;
-    // Reset to natural size before measuring, so we measure the true unscaled height
-    content.style.transform = "none";
-    content.style.width = "100%";
+    // Content width is always fixed at 100%, so scrollHeight here is a stable, natural
+    // measurement unaffected by the scale transform (CSS transform doesn't change scrollHeight).
     const availableHeight = container.clientHeight;
-    const contentHeight = content.scrollHeight;
-    setScale(contentHeight > availableHeight ? availableHeight / contentHeight : 1);
+    const naturalHeight = content.scrollHeight;
+    const nextScale = naturalHeight > availableHeight ? availableHeight / naturalHeight : 1;
+    setScale(nextScale);
   }, [data, allocations, netAmount]);
 
   return (
@@ -43,8 +43,8 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
 
       <div
         ref={contentRef}
-        className="relative"
-        style={{ transform: `scale(${scale})`, transformOrigin: "top left", width: scale < 1 ? `${100 / scale}%` : "100%" }}
+        className="relative w-full"
+        style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}
       >
         {/* Company Header */}
         <div className="mb-3">
