@@ -58,28 +58,28 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
         style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}
       >
         {/* Company Header */}
-        <div className="mb-3">
+        <div className="mb-1.5">
           <img
             src="https://media.base44.com/images/public/69f02f8501c3688565579a10/ab43375cf_CONSTRUCTION_FINANCE.jpg"
             alt="FCL Aranang Development Corporation"
-            className="h-14 w-auto"
+            className="h-10 w-auto"
           />
         </div>
 
         {/* Header */}
-        <div className="flex items-start justify-between border-b-2 border-black pb-2 mb-3">
+        <div className="flex items-start justify-between border-b-2 border-black pb-1 mb-2">
           <div>
-            <h1 className="text-lg font-bold tracking-tight">PAYMENT REQUEST</h1>
-            <p className="text-[10px] text-gray-600">{watermark}</p>
+            <h1 className="text-base font-bold tracking-tight">PAYMENT REQUEST</h1>
+            <p className="text-[9px] text-gray-600">{watermark}</p>
           </div>
-          <div className="text-right text-xs">
+          <div className="text-right text-[11px]">
             <p className="font-semibold">Request #: {data.request_number || "—"}</p>
             <p className="text-gray-600">Date: {format(new Date(), "MMM d, yyyy")}</p>
           </div>
         </div>
 
         {/* Info grid */}
-        <div className="grid grid-cols-4 gap-2 mb-3 text-[11px]">
+        <div className="grid grid-cols-4 gap-1.5 mb-2 text-[10px]">
           <div>
             <p className="text-gray-500 font-semibold uppercase text-[9px]">Payee</p>
             <p className="font-medium">{data.payee || "—"}</p>
@@ -115,42 +115,42 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
         </div>
 
         {/* Description */}
-        <div className="mb-3">
+        <div className="mb-2">
           <p className="text-gray-500 font-semibold uppercase text-[9px] mb-0.5">Description / Reason</p>
-          <p className="text-[11px]">{data.description || "—"}</p>
+          <p className="text-[10px]">{data.description || "—"}</p>
         </div>
 
         {/* Project allocations */}
-        <table className="w-full text-[11px] border-collapse mb-3 table-fixed">
+        <table className="w-full text-[10px] border-collapse mb-2 table-fixed">
           <thead>
             <tr className="border-b-2 border-black">
-              <th className="text-left py-1 w-[8%]">#</th>
-              <th className="text-left py-1 w-[42%]">Project</th>
-              <th className="text-left py-1 w-[25%]">Category</th>
-              <th className="text-right py-1 w-[25%]">Amount</th>
+              <th className="text-left py-0.5 w-[8%]">#</th>
+              <th className="text-left py-0.5 w-[42%]">Project</th>
+              <th className="text-left py-0.5 w-[25%]">Category</th>
+              <th className="text-right py-0.5 w-[25%]">Amount</th>
             </tr>
           </thead>
           <tbody>
             {allocations.length > 0 ? (
               allocations.map((a, idx) => (
                 <tr key={idx} className="border-b border-gray-300">
-                  <td className="py-1 break-words">{idx + 1}</td>
-                  <td className="py-1 break-words">{a.project_name}</td>
-                  <td className="py-1 break-words">{a.category || "—"}</td>
-                  <td className="py-1 text-right break-words">₱{(parseFloat(a.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  <td className="py-0.5 break-words">{idx + 1}</td>
+                  <td className="py-0.5 break-words">{a.project_name}</td>
+                  <td className="py-0.5 break-words">{a.category || "—"}</td>
+                  <td className="py-0.5 text-right break-words">₱{(parseFloat(a.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={4} className="py-1 text-gray-500">No project allocations</td>
+                <td colSpan={4} className="py-0.5 text-gray-500">No project allocations</td>
               </tr>
             )}
           </tbody>
         </table>
 
         {/* Totals */}
-        <div className="flex justify-end mb-4">
-          <div className="w-56 text-[11px] space-y-1">
+        <div className="flex justify-end mb-2">
+          <div className="w-52 text-[10px] space-y-0.5">
             <div className="flex justify-between">
               <span>Subtotal:</span>
               <span className="font-medium">₱{(data.totalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
@@ -175,10 +175,11 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
         </div>
 
         {/* Signature lines */}
-        <div className="grid grid-cols-3 gap-4 text-[10px]">
+        <div className="grid grid-cols-4 gap-3 text-[9px]">
           <div className="border-t border-black pt-1">Requested By</div>
           <div className="border-t border-black pt-1">Approved By</div>
           <div className="border-t border-black pt-1">Disbursed By</div>
+          <div className="border-t border-black pt-1">Received By</div>
         </div>
       </div>
     </div>
