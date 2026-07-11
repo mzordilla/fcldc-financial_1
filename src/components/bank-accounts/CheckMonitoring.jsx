@@ -20,6 +20,16 @@ export default function CheckMonitoring() {
     queryFn: () => base44.entities.PaymentRequest.list("-check_date", 1000),
   });
 
+  const { data: bankAccounts = [] } = useQuery({
+    queryKey: ["bankaccounts"],
+    queryFn: () => base44.entities.BankAccount.list("-created_date", 100),
+  });
+
+  const bankLabel = (id) => {
+    const acc = bankAccounts.find((a) => a.id === id);
+    return acc ? `${acc.account_name} — ${acc.bank_name}` : "—";
+  };
+
   const checks = requests
     .filter((r) => r.payment_method === "check")
     .sort((a, b) => new Date(b.check_date || b.created_date || 0) - new Date(a.check_date || a.created_date || 0));
@@ -64,6 +74,7 @@ export default function CheckMonitoring() {
               <thead>
                 <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground uppercase tracking-wide">
                   <th className="text-left px-4 py-2.5">Check No.</th>
+                  <th className="text-left px-4 py-2.5">Bank</th>
                   <th className="text-left px-4 py-2.5">Date</th>
                   <th className="text-left px-4 py-2.5">Payee</th>
                   <th className="text-left px-4 py-2.5">Description</th>
@@ -74,7 +85,8 @@ export default function CheckMonitoring() {
               <tbody>
                 {checks.map((c) => (
                   <tr key={c.id} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
-                    <td className="px-4 py-2.5 font-semibold text-foreground">{c.check_number}</td>
+                    <td className="px-4 py-2.5 font-semibold text-foreground">{c.check_number || "—"}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{bankLabel(c.bank_account_id)}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">
                       {c.check_date ? format(new Date(c.check_date), "MMM d, yyyy") : "—"}
                     </td>

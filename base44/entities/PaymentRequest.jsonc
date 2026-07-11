@@ -137,6 +137,10 @@
     "check_number": {
       "type": "string"
     },
+    "bank_account_id": {
+      "type": "string",
+      "description": "Linked BankAccount ID the check/payment was disbursed from"
+    },
     "check_date": {
       "type": "string",
       "format": "date"

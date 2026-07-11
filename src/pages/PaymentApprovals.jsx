@@ -284,7 +284,7 @@ export default function PaymentApprovals() {
         approved_by: actor,
         approval_step: action,
         approval_history: history,
-        ...(action === "paid" ? { check_date: disbursedDate } : {}),
+        ...(action === "paid" ? { check_date: disbursedDate, check_number: paymentReference || pr.check_number, bank_account_id: bankAccountId || pr.bank_account_id } : {}),
       },
     });
 
