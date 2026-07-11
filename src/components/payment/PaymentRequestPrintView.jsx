@@ -59,20 +59,34 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b-2 border-black pb-1 mb-2">
-          <div className="flex items-center gap-2">
-            <img
-              src="https://media.base44.com/images/public/69f02f8501c3688565579a10/ab43375cf_CONSTRUCTION_FINANCE.jpg"
-              alt="FCL Aranang Development Corporation"
-              className="h-10 w-auto"
-            />
-            <div>
-              <h1 className="text-base font-bold tracking-tight">VOUCHER</h1>
-              <p className="text-[9px] text-gray-600">{watermark}</p>
-            </div>
+          <img
+            src="https://media.base44.com/images/public/69f02f8501c3688565579a10/ab43375cf_CONSTRUCTION_FINANCE.jpg"
+            alt="FCL Aranang Development Corporation"
+            className="h-10 w-auto"
+          />
+          <div className="text-center">
+            <h1 className="text-base font-bold tracking-tight">VOUCHER</h1>
+            <p className="text-[9px] text-gray-600">{watermark}</p>
           </div>
           <div className="text-right text-[11px]">
             <p className="font-semibold">Request #: {data.request_number || "—"}</p>
             <p className="text-gray-600">Date: {format(new Date(), "MMM d, yyyy")}</p>
+          </div>
+        </div>
+
+        {/* Payment details box */}
+        <div className="border border-black rounded p-1.5 mb-2 grid grid-cols-3 gap-2 text-[9px]">
+          <div>
+            <p className="text-gray-500 font-semibold uppercase text-[8px]">Check #</p>
+            <p className="font-medium">{data.check_number || "—"}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 font-semibold uppercase text-[8px]">Check Date</p>
+            <p className="font-medium">{data.check_date ? format(new Date(data.check_date), "MMM d, yyyy") : "—"}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 font-semibold uppercase text-[8px]">Bank</p>
+            <p className="font-medium">{data.bank_name || "—"}</p>
           </div>
         </div>
 
