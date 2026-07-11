@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, useCallback } from "react";
 import { format } from "date-fns";
 import { Printer, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
   const contentRef = useRef(null);
   const [scale, setScale] = useState(1);
 
-  useLayoutEffect(() => {
+  const recalcScale = useCallback(() => {
     const container = containerRef.current;
     const content = contentRef.current;
     if (!container || !content) return;
@@ -29,8 +29,19 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
     const availableHeight = container.clientHeight;
     const naturalHeight = content.scrollHeight;
     const nextScale = naturalHeight > availableHeight ? availableHeight / naturalHeight : 1;
-    setScale(nextScale);
-  }, [data, allocations, netAmount]);
+    setScale((prev) => (Math.abs(prev - nextScale) > 0.005 ? nextScale : prev));
+  }, []);
+
+  useLayoutEffect(() => {
+    recalcScale();
+    const content = contentRef.current;
+    if (!content) return;
+    // Recalculate whenever the natural (unscaled) content size changes — covers async image
+    // loads (e.g. the logo), font loading, and any data change, not just the deps below.
+    const observer = new ResizeObserver(() => recalcScale());
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [data, allocations, netAmount, recalcScale]);
 
   return (
     <div ref={containerRef} className="relative h-[136mm] px-[12mm] py-[6mm] overflow-hidden">
