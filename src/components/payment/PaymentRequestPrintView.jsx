@@ -176,10 +176,18 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
 
         {/* Signature lines */}
         <div className="flex items-start justify-between gap-3">
-          <div className="grid grid-cols-3 gap-3 text-[9px] flex-1">
-            <div className="border-t border-black pt-1">Requested By</div>
-            <div className="border-t border-black pt-1">Approved By</div>
-            <div className="border-t border-black pt-1">Disbursed By</div>
+          <div className="text-[9px] flex-1">
+            <div className="grid grid-cols-4 gap-3 mb-1">
+              <p className="text-gray-500 font-semibold uppercase text-[8px] col-span-2">Requested By:</p>
+              <p className="text-gray-500 font-semibold uppercase text-[8px]">Checked By:</p>
+              <p className="text-gray-500 font-semibold uppercase text-[8px]">Approved By:</p>
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              <div className="border-t border-black pt-1">Accounting</div>
+              <div className="border-t border-black pt-1">Disbursement</div>
+              <div className="border-t border-black pt-1">&nbsp;</div>
+              <div className="border-t border-black pt-1">Finance Director</div>
+            </div>
           </div>
 
           <div className="border border-black rounded p-1.5 w-32 text-[8px]">
