@@ -64,7 +64,7 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
             className="h-10 w-auto"
           />
           <div className="text-center">
-            <h1 className="text-base font-bold tracking-tight">VOUCHER</h1>
+            <h1 className="text-2xl font-bold tracking-tight">VOUCHER</h1>
           </div>
           <div className="text-right text-[11px]">
             <p className="font-semibold">Request #: {data.request_number || "—"}</p>
