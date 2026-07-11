@@ -104,7 +104,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={!showPrint}>
       <DialogContent
         className="sm:max-w-2xl max-h-[90vh] overflow-y-auto"
         onInteractOutside={(e) => { if (showPrint) e.preventDefault(); }}
