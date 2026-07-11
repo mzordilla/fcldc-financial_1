@@ -74,22 +74,6 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
           </div>
         </div>
 
-        {/* Payment details box */}
-        <div className="border border-black rounded p-1.5 mb-2 grid grid-cols-3 gap-2 text-[9px]">
-          <div>
-            <p className="text-gray-500 font-semibold uppercase text-[8px]">Check #</p>
-            <p className="font-medium">{data.check_number || "—"}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 font-semibold uppercase text-[8px]">Check Date</p>
-            <p className="font-medium">{data.check_date ? format(new Date(data.check_date), "MMM d, yyyy") : "—"}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 font-semibold uppercase text-[8px]">Bank</p>
-            <p className="font-medium">{data.bank_name || "—"}</p>
-          </div>
-        </div>
-
         {/* Info grid */}
         <div className="grid grid-cols-4 gap-1.5 mb-2 text-[10px]">
           <div>
@@ -186,6 +170,22 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
           </div>
         </div>
 
+        {/* Payment details box */}
+        <div className="border border-black rounded p-1 mb-1.5 grid grid-cols-3 gap-1.5 text-[7px]">
+          <div>
+            <p className="text-gray-500 font-semibold uppercase text-[6px]">Check #</p>
+            <p className="font-medium">{data.check_number || "—"}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 font-semibold uppercase text-[6px]">Check Date</p>
+            <p className="font-medium">{data.check_date ? format(new Date(data.check_date), "MMM d, yyyy") : "—"}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 font-semibold uppercase text-[6px]">Bank</p>
+            <p className="font-medium">{data.bank_name || "—"}</p>
+          </div>
+        </div>
+
         {/* Signature lines */}
         <div className="flex items-start justify-between gap-3">
           <div className="text-[9px] flex-1">
@@ -202,14 +202,22 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
             </div>
           </div>
 
-          <div className="border border-black rounded p-1.5 w-32 text-[8px]">
+          <div className="border border-black rounded p-1 w-48 text-[7px]">
             <p className="font-semibold uppercase text-center mb-1">Received By</p>
-            <div className="border-b border-black h-4 mb-0.5" />
-            <p className="text-gray-500 text-center">Name</p>
-            <div className="border-b border-black h-4 mb-0.5 mt-1" />
-            <p className="text-gray-500 text-center">Signature</p>
-            <div className="border-b border-black h-4 mb-0.5 mt-1" />
-            <p className="text-gray-500 text-center">Date</p>
+            <div className="flex gap-1.5">
+              <div className="flex-1">
+                <div className="border-b border-black h-4" />
+                <p className="text-gray-500 text-center">Name</p>
+              </div>
+              <div className="flex-1">
+                <div className="border-b border-black h-4" />
+                <p className="text-gray-500 text-center">Signature</p>
+              </div>
+              <div className="flex-1">
+                <div className="border-b border-black h-4" />
+                <p className="text-gray-500 text-center">Date</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
