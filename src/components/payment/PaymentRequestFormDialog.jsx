@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Printer } from "lucide-react";
 import PayeeSelector from "./PayeeSelector";
+import PaymentRequestPrintView from "./PaymentRequestPrintView";
 
 const defaultForm = {
   request_number: "",
@@ -31,6 +32,7 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
   const [form, setForm] = useState(defaultForm);
   const [allocations, setAllocations] = useState([{ project_name: "", project_code: "", amount: "", category: "" }]);
   const [saving, setSaving] = useState(false);
+  const [showPrint, setShowPrint] = useState(false);
   const { data: projects = [] } = useQuery({
     queryKey: ["projects"],
     queryFn: () => base44.entities.Project.list("-created_date", 200),
@@ -316,11 +318,25 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
           </div>
 
           <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setShowPrint(true)}>
+              <Printer className="w-4 h-4 mr-2" /> Print Preview
+            </Button>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
+      <PaymentRequestPrintView
+        open={showPrint}
+        onOpenChange={setShowPrint}
+        data={{
+          ...form,
+          allocations,
+          totalAmount,
+          withholdingTaxAmount,
+          vatAmount,
+        }}
+      />
     </Dialog>
   );
 }
