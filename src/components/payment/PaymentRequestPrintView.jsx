@@ -57,20 +57,18 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
         className="relative w-full"
         style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}
       >
-        {/* Company Header */}
-        <div className="mb-1.5">
-          <img
-            src="https://media.base44.com/images/public/69f02f8501c3688565579a10/ab43375cf_CONSTRUCTION_FINANCE.jpg"
-            alt="FCL Aranang Development Corporation"
-            className="h-10 w-auto"
-          />
-        </div>
-
         {/* Header */}
-        <div className="flex items-start justify-between border-b-2 border-black pb-1 mb-2">
-          <div>
-            <h1 className="text-base font-bold tracking-tight">PAYMENT REQUEST</h1>
-            <p className="text-[9px] text-gray-600">{watermark}</p>
+        <div className="flex items-center justify-between border-b-2 border-black pb-1 mb-2">
+          <div className="flex items-center gap-2">
+            <img
+              src="https://media.base44.com/images/public/69f02f8501c3688565579a10/ab43375cf_CONSTRUCTION_FINANCE.jpg"
+              alt="FCL Aranang Development Corporation"
+              className="h-10 w-auto"
+            />
+            <div>
+              <h1 className="text-base font-bold tracking-tight">VOUCHER</h1>
+              <p className="text-[9px] text-gray-600">{watermark}</p>
+            </div>
           </div>
           <div className="text-right text-[11px]">
             <p className="font-semibold">Request #: {data.request_number || "—"}</p>
@@ -196,6 +194,8 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
             <p className="text-gray-500 text-center">Name</p>
             <div className="border-b border-black h-4 mb-0.5 mt-1" />
             <p className="text-gray-500 text-center">Signature</p>
+            <div className="border-b border-black h-4 mb-0.5 mt-1" />
+            <p className="text-gray-500 text-center">Date</p>
           </div>
         </div>
       </div>
