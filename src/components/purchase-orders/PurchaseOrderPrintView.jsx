@@ -31,12 +31,12 @@ export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
       <div className="flex justify-center py-8 px-4">
         <div id="po-print-content" className="w-[210mm] min-h-[297mm] bg-white text-black p-[15mm] shadow-lg">
           {/* Company Header */}
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-bold tracking-tight">Your Company Name</h2>
-              <p className="text-xs text-gray-600 mt-0.5">123 Business Street, City, Country</p>
-              <p className="text-xs text-gray-600">Phone: (000) 000-0000 · Email: info@company.com</p>
-            </div>
+          <div className="mb-6">
+            <img
+              src="https://media.base44.com/images/public/69f02f8501c3688565579a10/7a3b001fb_CONSTRUCTION_FINANCE.jpg"
+              alt="FCL Aranang Development Corporation"
+              className="h-20 w-auto"
+            />
           </div>
 
           {/* Header */}
