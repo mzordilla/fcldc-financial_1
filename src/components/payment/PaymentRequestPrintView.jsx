@@ -87,23 +87,23 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
         </div>
 
         {/* Project allocations */}
-        <table className="w-full text-[11px] border-collapse mb-3">
+        <table className="w-full text-[11px] border-collapse mb-3 table-fixed">
           <thead>
             <tr className="border-b-2 border-black">
-              <th className="text-left py-1">#</th>
-              <th className="text-left py-1">Project</th>
-              <th className="text-left py-1">Category</th>
-              <th className="text-right py-1">Amount</th>
+              <th className="text-left py-1 w-[8%]">#</th>
+              <th className="text-left py-1 w-[42%]">Project</th>
+              <th className="text-left py-1 w-[25%]">Category</th>
+              <th className="text-right py-1 w-[25%]">Amount</th>
             </tr>
           </thead>
           <tbody>
             {allocations.length > 0 ? (
               allocations.map((a, idx) => (
                 <tr key={idx} className="border-b border-gray-300">
-                  <td className="py-1">{idx + 1}</td>
-                  <td className="py-1">{a.project_name}</td>
-                  <td className="py-1">{a.category || "—"}</td>
-                  <td className="py-1 text-right">₱{(parseFloat(a.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                  <td className="py-1 break-words">{idx + 1}</td>
+                  <td className="py-1 break-words">{a.project_name}</td>
+                  <td className="py-1 break-words">{a.category || "—"}</td>
+                  <td className="py-1 text-right break-words">₱{(parseFloat(a.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                 </tr>
               ))
             ) : (
