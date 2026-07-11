@@ -30,6 +30,15 @@ export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
 
       <div className="flex justify-center py-8 px-4">
         <div id="po-print-content" className="w-[210mm] min-h-[297mm] bg-white text-black p-[15mm] shadow-lg">
+          {/* Company Header */}
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">Your Company Name</h2>
+              <p className="text-xs text-gray-600 mt-0.5">123 Business Street, City, Country</p>
+              <p className="text-xs text-gray-600">Phone: (000) 000-0000 · Email: info@company.com</p>
+            </div>
+          </div>
+
           {/* Header */}
           <div className="flex items-start justify-between border-b-2 border-black pb-4 mb-6">
             <div>
