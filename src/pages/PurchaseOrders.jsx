@@ -170,6 +170,7 @@ export default function PurchaseOrders() {
               <button onClick={() => setPrintingPO(po)} className="text-muted-foreground hover:text-foreground transition-colors" title="Print">
                 <Printer className="w-2.5 h-2.5" />
               </button>
+              <NoticeOfDeliveryPDF po={po} iconOnly />
               <button onClick={() => setReviewPO(po)} className="text-muted-foreground hover:text-foreground transition-colors" title="History">
                 <History className="w-2.5 h-2.5" />
               </button>

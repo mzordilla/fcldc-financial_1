@@ -3,7 +3,7 @@ import { FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
-export default function NoticeOfDeliveryPDF({ po }) {
+export default function NoticeOfDeliveryPDF({ po, iconOnly }) {
   const handleGenerate = () => {
     const doc = new jsPDF();
     const pageW = doc.internal.pageSize.getWidth();
@@ -173,6 +173,14 @@ export default function NoticeOfDeliveryPDF({ po }) {
     const filename = `NOD-${po.po_number || po.id}-${format(new Date(), "yyyyMMdd")}.pdf`;
     doc.save(filename);
   };
+
+  if (iconOnly) {
+    return (
+      <button onClick={handleGenerate} className="text-muted-foreground hover:text-foreground transition-colors" title="Notice of Delivery">
+        <FileDown className="w-2.5 h-2.5" />
+      </button>
+    );
+  }
 
   return (
     <Button size="sm" variant="outline" onClick={handleGenerate} className="text-primary hover:text-primary">
