@@ -17,6 +17,7 @@ import POToPayableDialog from "../components/purchase-orders/POToPayableDialog";
 import ReceiptUploadDialog from "../components/purchase-orders/ReceiptUploadDialog";
 import NoticeOfDeliveryPDF from "../components/purchase-orders/NoticeOfDeliveryPDF";
 import PurchaseOrderPDF from "../components/purchase-orders/PurchaseOrderPDF";
+import PurchaseOrderPrintView from "../components/purchase-orders/PurchaseOrderPrintView";
 import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
 import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
 import ReceiveItemsDialog from "../components/purchase-orders/ReceiveItemsDialog";
@@ -70,6 +71,7 @@ export default function PurchaseOrders() {
   const [convertingPO, setConvertingPO] = useState(null);
   const [uploadingReceipt, setUploadingReceipt] = useState(null);
   const [receivingItems, setReceivingItems] = useState(null);
+  const [printingPO, setPrintingPO] = useState(null);
   const [expandedHistory, setExpandedHistory] = useState(null);
   const [expandedGroups, setExpandedGroups] = useState({ pending: true, approved: true, rejected: false, cancelled: false });
   const [statusFilter, setStatusFilter] = useState("approved");
@@ -165,6 +167,9 @@ export default function PurchaseOrders() {
                 className="text-[8px] text-primary font-medium px-0.5 py-px rounded border border-primary/30 hover:bg-primary/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap leading-tight">
                 Pay</button>
               }
+              <button onClick={() => setPrintingPO(po)} className="text-muted-foreground hover:text-foreground transition-colors" title="Print">
+                <Printer className="w-2.5 h-2.5" />
+              </button>
               <button onClick={() => setReviewPO(po)} className="text-muted-foreground hover:text-foreground transition-colors" title="History">
                 <History className="w-2.5 h-2.5" />
               </button>
@@ -934,6 +939,11 @@ export default function PurchaseOrders() {
         open={!!receivingItems}
         onOpenChange={(v) => {if (!v) setReceivingItems(null);}}
         po={receivingItems} />
+
+      <PurchaseOrderPrintView
+        open={!!printingPO}
+        onOpenChange={(v) => {if (!v) setPrintingPO(null);}}
+        po={printingPO} />
       
     </div>);
 
