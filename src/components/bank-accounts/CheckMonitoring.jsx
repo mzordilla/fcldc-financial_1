@@ -79,6 +79,7 @@ export default function CheckMonitoring() {
                   <th className="text-left px-4 py-2.5">Payee</th>
                   <th className="text-left px-4 py-2.5">Description</th>
                   <th className="text-right px-4 py-2.5">Amount</th>
+                  <th className="text-right px-4 py-2.5">Net Disbursed</th>
                   <th className="text-left px-4 py-2.5">Status</th>
                   <th className="text-left px-4 py-2.5">Disbursed By</th>
                   <th className="text-left px-4 py-2.5">Notes</th>
@@ -95,6 +96,9 @@ export default function CheckMonitoring() {
                     <td className="px-4 py-2.5 text-foreground">{c.payee}</td>
                     <td className="px-4 py-2.5 text-muted-foreground truncate max-w-xs">{c.description || "—"}</td>
                     <td className="px-4 py-2.5 text-right font-medium text-foreground">{fmt(c.amount)}</td>
+                    <td className="px-4 py-2.5 text-right font-medium text-foreground">
+                      {fmt((c.amount || 0) - (c.withholding_tax_amount || 0) + (c.vat_amount || 0))}
+                    </td>
                     <td className="px-4 py-2.5">
                       <Badge className={`text-xs capitalize ${statusColors[c.approval_status] || "bg-muted text-muted-foreground"}`}>
                         {c.approval_status || "pending"}
