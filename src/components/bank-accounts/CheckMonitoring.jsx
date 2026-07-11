@@ -73,6 +73,7 @@ export default function CheckMonitoring() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground uppercase tracking-wide">
+                  <th className="text-left px-4 py-2.5">Request #</th>
                   <th className="text-left px-4 py-2.5">Check No.</th>
                   <th className="text-left px-4 py-2.5">Bank</th>
                   <th className="text-left px-4 py-2.5">Date</th>
@@ -88,6 +89,7 @@ export default function CheckMonitoring() {
               <tbody>
                 {checks.map((c) => (
                   <tr key={c.id} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
+                    <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground whitespace-nowrap">{c.request_number || "—"}</td>
                     <td className="px-4 py-2.5 font-semibold text-foreground">{c.check_number || "—"}</td>
                     <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{bankLabel(c.bank_account_id)}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">
