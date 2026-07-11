@@ -194,10 +194,10 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
               <p className="text-gray-500 font-semibold uppercase text-[8px]">Approved By:</p>
             </div>
             <div className="grid grid-cols-4 gap-3">
-              <div className="h-6 border-t border-black pt-1">Accounting</div>
-              <div className="h-6 border-t border-black pt-1">Disbursement</div>
-              <div className="h-6 border-t border-black pt-1">&nbsp;</div>
-              <div className="h-6 border-t border-black pt-1">Finance Director</div>
+              <div><div className="h-6" /><div className="border-t border-black pt-1">Accounting</div></div>
+              <div><div className="h-6" /><div className="border-t border-black pt-1">Disbursement</div></div>
+              <div><div className="h-6" /><div className="border-t border-black pt-1">&nbsp;</div></div>
+              <div><div className="h-6" /><div className="border-t border-black pt-1">Finance Director</div></div>
             </div>
           </div>
 
