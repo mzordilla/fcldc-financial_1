@@ -13,6 +13,143 @@ const categoryLabels = {
   other: "Other",
 };
 
+function CopyBlock({ data, allocations, netAmount, watermark }) {
+  return (
+    <div className="relative h-[136mm] px-[12mm] py-[6mm] overflow-hidden">
+      {/* Watermark */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <span className="text-[54px] font-extrabold text-gray-200 rotate-[-30deg] tracking-widest select-none whitespace-nowrap">
+          {watermark}
+        </span>
+      </div>
+
+      <div className="relative">
+        {/* Company Header */}
+        <div className="mb-3">
+          <h2 className="text-base font-bold tracking-tight">Your Company Name</h2>
+          <p className="text-[10px] text-gray-600">123 Business Street, City, Country</p>
+          <p className="text-[10px] text-gray-600">Phone: (000) 000-0000 · Email: info@company.com</p>
+        </div>
+
+        {/* Header */}
+        <div className="flex items-start justify-between border-b-2 border-black pb-2 mb-3">
+          <div>
+            <h1 className="text-lg font-bold tracking-tight">PAYMENT REQUEST</h1>
+            <p className="text-[10px] text-gray-600">{watermark}</p>
+          </div>
+          <div className="text-right text-xs">
+            <p className="font-semibold">Request #: {data.request_number || "—"}</p>
+            <p className="text-gray-600">Date: {format(new Date(), "MMM d, yyyy")}</p>
+          </div>
+        </div>
+
+        {/* Info grid */}
+        <div className="grid grid-cols-4 gap-2 mb-3 text-[11px]">
+          <div>
+            <p className="text-gray-500 font-semibold uppercase text-[9px]">Payee</p>
+            <p className="font-medium">{data.payee || "—"}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 font-semibold uppercase text-[9px]">Category</p>
+            <p className="font-medium">{categoryLabels[data.category] || data.category || "—"}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 font-semibold uppercase text-[9px]">Payment Method</p>
+            <p className="font-medium capitalize">{(data.payment_method || "—").replace(/_/g, " ")}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 font-semibold uppercase text-[9px]">Requested By</p>
+            <p className="font-medium">{data.requested_by || "—"}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 font-semibold uppercase text-[9px]">Invoice / Ref #</p>
+            <p className="font-medium">{data.invoice_number || "—"}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 font-semibold uppercase text-[9px]">Invoice Date</p>
+            <p className="font-medium">{data.invoice_date ? format(new Date(data.invoice_date), "MMM d, yyyy") : "—"}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 font-semibold uppercase text-[9px]">Due Date</p>
+            <p className="font-medium">{data.due_date ? format(new Date(data.due_date), "MMM d, yyyy") : "—"}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 font-semibold uppercase text-[9px]">Supporting Docs</p>
+            <p className="font-medium">{data.supporting_docs || "—"}</p>
+          </div>
+        </div>
+
+        {/* Description */}
+        <div className="mb-3">
+          <p className="text-gray-500 font-semibold uppercase text-[9px] mb-0.5">Description / Reason</p>
+          <p className="text-[11px]">{data.description || "—"}</p>
+        </div>
+
+        {/* Project allocations */}
+        <table className="w-full text-[11px] border-collapse mb-3">
+          <thead>
+            <tr className="border-b-2 border-black">
+              <th className="text-left py-1">#</th>
+              <th className="text-left py-1">Project</th>
+              <th className="text-left py-1">Category</th>
+              <th className="text-right py-1">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {allocations.length > 0 ? (
+              allocations.map((a, idx) => (
+                <tr key={idx} className="border-b border-gray-300">
+                  <td className="py-1">{idx + 1}</td>
+                  <td className="py-1">{a.project_name}</td>
+                  <td className="py-1">{a.category || "—"}</td>
+                  <td className="py-1 text-right">₱{(parseFloat(a.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={4} className="py-1 text-gray-500">No project allocations</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+
+        {/* Totals */}
+        <div className="flex justify-end mb-4">
+          <div className="w-56 text-[11px] space-y-1">
+            <div className="flex justify-between">
+              <span>Subtotal:</span>
+              <span className="font-medium">₱{(data.totalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+            {data.withholdingTaxAmount > 0 && (
+              <div className="flex justify-between">
+                <span>Withholding Tax ({data.withholding_tax_percentage}%):</span>
+                <span className="font-medium">-₱{data.withholdingTaxAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              </div>
+            )}
+            {data.vatAmount > 0 && (
+              <div className="flex justify-between">
+                <span>VAT ({data.vat_percentage}%):</span>
+                <span className="font-medium">+₱{data.vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm font-bold border-t-2 border-black pt-1">
+              <span>Net Amount:</span>
+              <span>₱{netAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Signature lines */}
+        <div className="grid grid-cols-3 gap-4 text-[10px]">
+          <div className="border-t border-black pt-1">Requested By</div>
+          <div className="border-t border-black pt-1">Approved By</div>
+          <div className="border-t border-black pt-1">Disbursed By</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PaymentRequestPrintView({ open, onOpenChange, data }) {
   if (!open || !data) return null;
 
@@ -26,7 +163,7 @@ export default function PaymentRequestPrintView({ open, onOpenChange, data }) {
           body * { visibility: hidden; }
           #pr-print-content, #pr-print-content * { visibility: visible; }
           #pr-print-content { position: absolute; left: 0; top: 0; width: 210mm; }
-          @page { size: A4; margin: 15mm; }
+          @page { size: A4; margin: 0; }
         }
       `}</style>
 
@@ -40,136 +177,10 @@ export default function PaymentRequestPrintView({ open, onOpenChange, data }) {
       </div>
 
       <div className="flex justify-center py-8 px-4">
-        <div id="pr-print-content" className="w-[210mm] min-h-[297mm] bg-white text-black p-[15mm] shadow-lg">
-          {/* Company Header */}
-          <div className="mb-6">
-            <h2 className="text-xl font-bold tracking-tight">Your Company Name</h2>
-            <p className="text-xs text-gray-600 mt-0.5">123 Business Street, City, Country</p>
-            <p className="text-xs text-gray-600">Phone: (000) 000-0000 · Email: info@company.com</p>
-          </div>
-
-          {/* Header */}
-          <div className="flex items-start justify-between border-b-2 border-black pb-4 mb-6">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">PAYMENT REQUEST</h1>
-              <p className="text-sm text-gray-600 mt-1">Request for disbursement authorization</p>
-            </div>
-            <div className="text-right text-sm">
-              <p className="font-semibold">Request #: {data.request_number || "—"}</p>
-              <p className="text-gray-600">Date: {format(new Date(), "MMM d, yyyy")}</p>
-            </div>
-          </div>
-
-          {/* Info grid */}
-          <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-            <div>
-              <p className="text-gray-500 font-semibold uppercase text-xs">Payee</p>
-              <p className="font-medium">{data.payee || "—"}</p>
-            </div>
-            <div>
-              <p className="text-gray-500 font-semibold uppercase text-xs">Category</p>
-              <p className="font-medium">{categoryLabels[data.category] || data.category || "—"}</p>
-            </div>
-            <div>
-              <p className="text-gray-500 font-semibold uppercase text-xs">Payment Method</p>
-              <p className="font-medium capitalize">{(data.payment_method || "—").replace(/_/g, " ")}</p>
-            </div>
-            <div>
-              <p className="text-gray-500 font-semibold uppercase text-xs">Requested By</p>
-              <p className="font-medium">{data.requested_by || "—"}</p>
-            </div>
-            <div>
-              <p className="text-gray-500 font-semibold uppercase text-xs">Invoice / Ref #</p>
-              <p className="font-medium">{data.invoice_number || "—"}</p>
-            </div>
-            <div>
-              <p className="text-gray-500 font-semibold uppercase text-xs">Invoice Date</p>
-              <p className="font-medium">{data.invoice_date ? format(new Date(data.invoice_date), "MMM d, yyyy") : "—"}</p>
-            </div>
-            <div>
-              <p className="text-gray-500 font-semibold uppercase text-xs">Payment Due Date</p>
-              <p className="font-medium">{data.due_date ? format(new Date(data.due_date), "MMM d, yyyy") : "—"}</p>
-            </div>
-            <div>
-              <p className="text-gray-500 font-semibold uppercase text-xs">Supporting Docs</p>
-              <p className="font-medium">{data.supporting_docs || "—"}</p>
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="mb-6">
-            <p className="text-gray-500 font-semibold uppercase text-xs mb-1">Description / Reason</p>
-            <p className="text-sm">{data.description || "—"}</p>
-          </div>
-
-          {/* Project allocations */}
-          <table className="w-full text-sm border-collapse mb-6">
-            <thead>
-              <tr className="border-b-2 border-black">
-                <th className="text-left py-2">#</th>
-                <th className="text-left py-2">Project</th>
-                <th className="text-left py-2">Category</th>
-                <th className="text-right py-2">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {allocations.length > 0 ? (
-                allocations.map((a, idx) => (
-                  <tr key={idx} className="border-b border-gray-300">
-                    <td className="py-2">{idx + 1}</td>
-                    <td className="py-2">{a.project_name}</td>
-                    <td className="py-2">{a.category || "—"}</td>
-                    <td className="py-2 text-right">₱{(parseFloat(a.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={4} className="py-2 text-gray-500">No project allocations</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-
-          {/* Totals */}
-          <div className="flex justify-end mb-8">
-            <div className="w-64 text-sm space-y-1.5">
-              <div className="flex justify-between">
-                <span>Subtotal:</span>
-                <span className="font-medium">₱{(data.totalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-              </div>
-              {data.withholdingTaxAmount > 0 && (
-                <div className="flex justify-between">
-                  <span>Withholding Tax ({data.withholding_tax_percentage}%):</span>
-                  <span className="font-medium">-₱{data.withholdingTaxAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                </div>
-              )}
-              {data.vatAmount > 0 && (
-                <div className="flex justify-between">
-                  <span>VAT ({data.vat_percentage}%):</span>
-                  <span className="font-medium">+₱{data.vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-base font-bold border-t-2 border-black pt-1.5">
-                <span>Net Amount:</span>
-                <span>₱{netAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Signature lines */}
-          <div className="grid grid-cols-3 gap-8 mt-16 text-sm">
-            <div>
-              <div className="border-t border-black pt-1">Requested By</div>
-            </div>
-            <div>
-              <div className="border-t border-black pt-1">Approved By</div>
-            </div>
-            <div>
-              <div className="border-t border-black pt-1">Disbursed By</div>
-            </div>
-          </div>
-
-          <p className="text-xs text-gray-400 text-center mt-12">This is a computer-generated document.</p>
+        <div id="pr-print-content" className="w-[210mm] h-[297mm] bg-white text-black shadow-lg">
+          <CopyBlock data={data} allocations={allocations} netAmount={netAmount} watermark="PAYEE'S COPY" />
+          <div className="border-t-2 border-dashed border-gray-400" />
+          <CopyBlock data={data} allocations={allocations} netAmount={netAmount} watermark="FCL COPY" />
         </div>
       </div>
     </div>
