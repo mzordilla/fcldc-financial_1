@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
+import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 const fmtSigned = (v, type) => (type === "income" ? "+" : "-") + fmt(Math.abs(v));
@@ -29,7 +30,7 @@ export default function BankTransactionsReport({ dateFrom, dateTo }) {
 
   const { data: allTransactions = [] } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 50000),
+    queryFn: () => fetchAllTransactions("-date"),
   });
 
   const transactions = useMemo(() => {

@@ -18,6 +18,7 @@ import MonthlyTransactionsReport from "../components/reports/MonthlyTransactions
 import WithholdingTaxSync from "../components/reports/WithholdingTaxSync";
 import CorporateDocuments from "../components/reports/CorporateDocuments";
 import WeeklyCollatedReport from "../components/reports/WeeklyCollatedReport";
+import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import { Badge } from "@/components/ui/badge";
@@ -390,7 +391,7 @@ export default function Reports() {
 
   const { data: transactions = [] } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 50000),
+    queryFn: () => fetchAllTransactions("-date"),
   });
 
   const { data: loans = [] } = useQuery({

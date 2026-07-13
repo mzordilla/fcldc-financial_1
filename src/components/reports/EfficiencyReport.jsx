@@ -4,6 +4,7 @@ import { TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
@@ -25,7 +26,7 @@ export default function EfficiencyReport({ dateFrom, dateTo }) {
 
   const { data: transactions = [] } = useQuery({
     queryKey: ["transactions_efficiency"],
-    queryFn: () => base44.entities.Transaction.list("-date", 10000),
+    queryFn: () => fetchAllTransactions("-date"),
   });
 
   const { data: billingCycles = [] } = useQuery({

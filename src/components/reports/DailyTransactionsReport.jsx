@@ -6,6 +6,7 @@ import { FileSpreadsheet, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import * as XLSX from "xlsx";
+import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
@@ -21,7 +22,7 @@ export default function DailyTransactionsReport({ dateFrom, dateTo }) {
 
   const { data: allTransactions = [] } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 50000),
+    queryFn: () => fetchAllTransactions("-date"),
   });
 
   const filtered = useMemo(() => {

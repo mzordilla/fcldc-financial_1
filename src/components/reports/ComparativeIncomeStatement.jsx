@@ -6,6 +6,7 @@ import { FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import * as XLSX from "xlsx";
+import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
 import { buildPeriod } from "./comparativeIncomeStatementUtils";
 import ComparativeIncomeStatementTable from "./ComparativeIncomeStatementTable";
 import TransactionDrilldownDialog from "./TransactionDrilldownDialog";
@@ -20,7 +21,7 @@ export default function ComparativeIncomeStatement() {
 
   const { data: transactions = [] } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 100000),
+    queryFn: () => fetchAllTransactions("-date"),
   });
 
   const { data: projects = [] } = useQuery({

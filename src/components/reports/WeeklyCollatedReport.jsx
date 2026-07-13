@@ -5,6 +5,7 @@ import { format, startOfWeek, endOfWeek } from "date-fns";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, CalendarDays } from "lucide-react";
+import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
@@ -24,7 +25,7 @@ export default function WeeklyCollatedReport() {
 
   const { data: transactions = [] } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 50000),
+    queryFn: () => fetchAllTransactions("-date"),
   });
   const { data: receivables = [] } = useQuery({
     queryKey: ["receivables"],

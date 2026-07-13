@@ -5,6 +5,7 @@ import { FileSpreadsheet, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
 import { format, parseISO } from "date-fns";
+import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
@@ -78,7 +79,7 @@ export default function BalanceSheetReport({ asOfDate }) {
 
   const { data: transactions = [] } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 50000),
+    queryFn: () => fetchAllTransactions("-date"),
   });
 
   const { data: ppeAssets = [] } = useQuery({

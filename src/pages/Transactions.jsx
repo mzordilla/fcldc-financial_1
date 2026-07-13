@@ -19,6 +19,7 @@ import ExcelImportDialog from "../components/transactions/ExcelImportDialog";
 import ChartOfAccounts from "./ChartOfAccounts";
 import Payees from "./Payees";
 import ReceiptScanner from "./ReceiptScanner";
+import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
 
 const CATEGORIES = [
   { value: "project_payment", label: "Project Payment" },
@@ -53,7 +54,7 @@ export default function Transactions() {
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 100000),
+    queryFn: () => fetchAllTransactions("-date"),
   });
 
   const { data: bankAccounts = [] } = useQuery({
@@ -120,7 +121,7 @@ export default function Transactions() {
   const handleBackupAll = async () => {
     setIsBackingUp(true);
     // Fetch all transactions without limit
-    const all = await base44.entities.Transaction.list("-date", 9999);
+    const all = await fetchAllTransactions("-date");
     const rows = all.map(t => ({
       id: t.id,
       description: t.description,
