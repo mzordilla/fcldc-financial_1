@@ -382,9 +382,9 @@ export default function Reports() {
   const [coaTypeFilter, setCoaTypeFilter] = useState("all");
   const queryClient = useQueryClient();
 
-  // Date range filter (shared across tabs)
+  // Date range filter (shared across tabs) — defaults to full year-to-date from Jan 1, 2026
   const defaultEnd = format(new Date(), "yyyy-MM-dd");
-  const defaultStart = format(subMonths(new Date(), 6), "yyyy-MM-dd");
+  const defaultStart = "2026-01-01";
   const [dateFrom, setDateFrom] = useState(defaultStart);
   const [dateTo, setDateTo] = useState(defaultEnd);
 
@@ -395,17 +395,17 @@ export default function Reports() {
 
   const { data: loans = [] } = useQuery({
     queryKey: ["bankloans"],
-    queryFn: () => base44.entities.BankLoan.list("-created_date", 50),
+    queryFn: () => base44.entities.BankLoan.list("-created_date", 500),
   });
 
   const { data: wcLoans = [] } = useQuery({
     queryKey: ["workingcapitalloans"],
-    queryFn: () => base44.entities.WorkingCapitalLoan.list("-created_date", 50),
+    queryFn: () => base44.entities.WorkingCapitalLoan.list("-created_date", 500),
   });
 
   const { data: chartOfAccounts = [] } = useQuery({
     queryKey: ["chartofaccounts"],
-    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 200),
+    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 1000),
   });
 
   const createCOAMutation = useMutation({

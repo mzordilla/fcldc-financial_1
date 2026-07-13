@@ -29,7 +29,7 @@ export default function BankTransactionsReport({ dateFrom, dateTo }) {
 
   const { data: allTransactions = [] } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 500),
+    queryFn: () => base44.entities.Transaction.list("-date", 50000),
   });
 
   const transactions = useMemo(() => {
@@ -43,7 +43,7 @@ export default function BankTransactionsReport({ dateFrom, dateTo }) {
 
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ["bankaccounts"],
-    queryFn: () => base44.entities.BankAccount.list("-created_date", 100),
+    queryFn: () => base44.entities.BankAccount.list("-created_date", 500),
   });
 
   const accountMap = useMemo(() =>

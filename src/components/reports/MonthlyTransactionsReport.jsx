@@ -22,7 +22,7 @@ export default function MonthlyTransactionsReport({ dateFrom, dateTo }) {
 
   const { data: allTransactions = [] } = useQuery({
     queryKey: ["transactions_monthly_report"],
-    queryFn: () => base44.entities.Transaction.list("-date", 1000),
+    queryFn: () => base44.entities.Transaction.list("-date", 50000),
   });
 
   const filtered = useMemo(() => {

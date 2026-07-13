@@ -58,32 +58,32 @@ export default function BalanceSheetReport({ asOfDate }) {
 
   const { data: receivables = [] } = useQuery({
     queryKey: ["receivables"],
-    queryFn: () => base44.entities.Receivable.list("-created_date", 200),
+    queryFn: () => base44.entities.Receivable.list("-created_date", 10000),
   });
 
   const { data: payables = [] } = useQuery({
     queryKey: ["payables"],
-    queryFn: () => base44.entities.Payable.list("-created_date", 200),
+    queryFn: () => base44.entities.Payable.list("-created_date", 10000),
   });
 
   const { data: loans = [] } = useQuery({
     queryKey: ["bankloans"],
-    queryFn: () => base44.entities.BankLoan.list("-created_date", 50),
+    queryFn: () => base44.entities.BankLoan.list("-created_date", 500),
   });
 
   const { data: wcLoans = [] } = useQuery({
     queryKey: ["workingcapitalloans"],
-    queryFn: () => base44.entities.WorkingCapitalLoan.list("-created_date", 50),
+    queryFn: () => base44.entities.WorkingCapitalLoan.list("-created_date", 500),
   });
 
   const { data: transactions = [] } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 1000),
+    queryFn: () => base44.entities.Transaction.list("-date", 50000),
   });
 
   const { data: ppeAssets = [] } = useQuery({
     queryKey: ["ppeassets"],
-    queryFn: () => base44.entities.PPEAsset.list("-created_date", 200),
+    queryFn: () => base44.entities.PPEAsset.list("-created_date", 5000),
   });
 
   const bs = useMemo(() => {
