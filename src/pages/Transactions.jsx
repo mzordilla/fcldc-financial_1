@@ -53,7 +53,7 @@ export default function Transactions() {
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 50000),
+    queryFn: () => base44.entities.Transaction.list("-date", 100000),
   });
 
   const { data: bankAccounts = [] } = useQuery({
