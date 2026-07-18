@@ -12,6 +12,7 @@ import MarkReceivableAsCollectedDialog from "../components/receivables/MarkRecei
 import StatementOfAccountPDF from "../components/receivables/StatementOfAccountPDF";
 import ClientInvoiceDetails from "../components/receivables/ClientInvoiceDetails";
 import BillingCycles from "./BillingCycles";
+import RetentionReceivables from "../components/receivables/RetentionReceivables";
 
 function AgingSummary({ items }) {
   const today = new Date();
@@ -172,6 +173,7 @@ export default function Receivables() {
         <TabsList className="mb-4">
           <TabsTrigger value="receivables">Receivables</TabsTrigger>
           <TabsTrigger value="billing-cycles">Billing Cycles</TabsTrigger>
+          <TabsTrigger value="retention">Retention Receivable</TabsTrigger>
         </TabsList>
 
         <TabsContent value="receivables" className="space-y-6">
@@ -314,6 +316,10 @@ export default function Receivables() {
 
         <TabsContent value="billing-cycles">
           <BillingCycles embedded />
+        </TabsContent>
+
+        <TabsContent value="retention">
+          <RetentionReceivables />
         </TabsContent>
       </Tabs>
     </div>
