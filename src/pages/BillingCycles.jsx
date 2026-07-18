@@ -81,14 +81,14 @@ export default function BillingCycles() {
       });
       updateData.receivable_id = receivable.id;
 
-      // 2. Immediately recognize income in P&L (accrual basis — income recognized when billed, not when collected)
+      // 2. Immediately recognize income in P&L (accrual basis — recognized in the billed period, not the approval date)
       await base44.entities.Transaction.create({
         description: `Income recognized — ${bc.client_name}${bc.billing_number ? ` (${bc.billing_number})` : ""}${bc.period_label ? ` · ${bc.period_label}` : ""}`,
         amount: billingAmount,
         type: "income",
         category: "project_payment",
         project_name: bc.project_name || "",
-        date: today,
+        date: bc.period_end || bc.period_start || bc.due_date || today,
         status: "completed",
       });
     }
