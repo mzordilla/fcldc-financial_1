@@ -45,6 +45,12 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
 
   return (
     <div ref={containerRef} className="relative h-[136mm] px-[12mm] py-[6mm] overflow-hidden">
+      <div className="absolute bottom-[4mm] left-[12mm] pointer-events-none">
+        <span className="text-[7px] text-gray-400 tracking-wide select-none whitespace-nowrap">
+          Doc. Code: FM-FIN-02-01 / Rev. No. 1 / Eff. Date: July 16, 2025
+        </span>
+      </div>
+
       <div className="absolute bottom-[4mm] right-[12mm] pointer-events-none">
         <span className="text-[8px] font-semibold text-gray-400 tracking-wide select-none whitespace-nowrap">
           {watermark}
