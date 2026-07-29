@@ -5,7 +5,7 @@ const fmt = (n) => `₱${Number(n || 0).toLocaleString()}`;
 const typeLabels = { studio: "Studio", "1br": "1BR", "2br": "2BR", "3br": "3BR", penthouse: "PH", commercial: "Comm.", parking: "Parking" };
 
 export default function LeaseForecastReport({ units }) {
-  const unsoldUnits = units.filter((u) => u.status === "available_for_sale" || u.status === "available_for_lease");
+  const unsoldUnits = units.filter((u) => (u.status === "available_for_sale" || u.status === "available_for_lease") && u.unit_type !== "parking");
 
   const rows = unsoldUnits.map((u) => {
     const estMonthlyRent = u.monthly_rent || (u.area_sqm && u.price_per_sqm_rent ? u.area_sqm * u.price_per_sqm_rent : 0);
