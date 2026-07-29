@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import ClientPaymentRow from "./ClientPaymentRow";
+import ClientPaymentGroup from "./ClientPaymentGroup";
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
@@ -57,6 +57,23 @@ export default function ClientPaymentTracker() {
     updateMutation.mutate({ id: listing.id, data: { payment_history: history } });
   };
 
+  const clientGroups = useMemo(() => {
+    const groups = {};
+    filtered.forEach((l) => {
+      const key = l.client_id || l.buyer_tenant_name || "unknown";
+      if (!groups[key]) {
+        groups[key] = {
+          key,
+          clientName: l.buyer_tenant_name || "—",
+          clientCode: clientsById[l.client_id]?.client_code,
+          listings: [],
+        };
+      }
+      groups[key].listings.push(l);
+    });
+    return Object.values(groups).sort((a, b) => a.clientName.localeCompare(b.clientName));
+  }, [filtered, clientsById]);
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -91,11 +108,11 @@ export default function ClientPaymentTracker() {
       <div className="space-y-3">
         {isLoading ? (
           <p className="text-center py-12 text-muted-foreground">Loading...</p>
-        ) : filtered.length === 0 ? (
+        ) : clientGroups.length === 0 ? (
           <p className="text-center py-12 text-muted-foreground">No sold or leased clients found.</p>
         ) : (
-          filtered.map((listing) => (
-            <ClientPaymentRow key={listing.id} listing={listing} client={clientsById[listing.client_id]} onAddPayment={handleAddPayment} />
+          clientGroups.map((group) => (
+            <ClientPaymentGroup key={group.key} clientName={group.clientName} clientCode={group.clientCode} listings={group.listings} onAddPayment={handleAddPayment} />
           ))
         )}
       </div>
