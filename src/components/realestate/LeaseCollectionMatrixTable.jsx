@@ -82,13 +82,28 @@ export default function LeaseCollectionMatrixTable({ tenants, monthOptions, coll
             return (
               <>
                 <tr key={clientName} className="border-b border-border last:border-0 bg-muted/30 hover:bg-muted/40 cursor-pointer" onClick={() => toggleClient(clientName)}>
-                  <td className="px-2 py-2 sticky left-0 bg-muted/30" colSpan={monthOptions.length + 1}>
+                  <td className="px-2 py-2 sticky left-0 bg-muted/30">
                     <div className="flex items-center gap-2">
                       {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
-                      <span className="font-semibold text-foreground">{clientName}</span>
-                      <span className="text-[11px] text-muted-foreground">{unitTenants.length} units</span>
+                      <span className="font-semibold text-foreground whitespace-nowrap">{clientName}</span>
+                      <span className="text-[11px] text-muted-foreground whitespace-nowrap">{unitTenants.length} units</span>
                     </div>
                   </td>
+                  {monthOptions.map((m) => {
+                    const monthTotal = unitTenants.reduce((s, t) => {
+                      const record = recordFor(t.id, m.value);
+                      return s + (record?.amount ?? t.monthly_rent ?? 0);
+                    }, 0);
+                    const allCollected = unitTenants.every((t) => recordFor(t.id, m.value)?.collected);
+                    return (
+                      <td key={m.value} className="px-1 py-2 text-center">
+                        <div className={`flex flex-col items-center gap-0.5 mx-auto px-2 py-1 rounded-lg ${allCollected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                          {allCollected ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
+                          <span className="font-semibold whitespace-nowrap">{fmt(monthTotal)}</span>
+                        </div>
+                      </td>
+                    );
+                  })}
                 </tr>
                 {isExpanded && unitTenants.map((t) => renderUnitRow(t, true))}
               </>
