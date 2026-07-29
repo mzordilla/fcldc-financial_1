@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { FileCheck2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const statusColors = {
   pending: "bg-yellow-500/10 text-yellow-600",
@@ -15,6 +17,8 @@ const fmt = (v) =>
   `₱${(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function CheckMonitoring() {
+  const [bankFilter, setBankFilter] = useState("all");
+
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["payment_requests_checks"],
     queryFn: () => base44.entities.PaymentRequest.list("-check_date", 1000),
@@ -32,11 +36,8 @@ export default function CheckMonitoring() {
 
   const checks = requests
     .filter((r) => r.payment_method === "check")
-    .sort((a, b) => {
-      const bankCompare = bankLabel(a.bank_account_id).localeCompare(bankLabel(b.bank_account_id));
-      if (bankCompare !== 0) return bankCompare;
-      return new Date(b.check_date || b.created_date || 0) - new Date(a.check_date || a.created_date || 0);
-    });
+    .filter((r) => bankFilter === "all" || r.bank_account_id === bankFilter)
+    .sort((a, b) => new Date(b.check_date || b.created_date || 0) - new Date(a.check_date || a.created_date || 0));
 
   const totalAmount = checks.reduce((s, c) => s + (c.amount || 0), 0);
 
@@ -61,6 +62,20 @@ export default function CheckMonitoring() {
             <p className="text-3xl font-bold text-foreground">{fmt(totalAmount)}</p>
           </div>
         </div>
+      </div>
+
+      <div className="flex justify-end">
+        <Select value={bankFilter} onValueChange={setBankFilter}>
+          <SelectTrigger className="w-64">
+            <SelectValue placeholder="Filter by bank" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Banks</SelectItem>
+            {bankAccounts.map((a) => (
+              <SelectItem key={a.id} value={a.id}>{a.account_name} — {a.bank_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="bg-card rounded-2xl border border-border overflow-hidden">
