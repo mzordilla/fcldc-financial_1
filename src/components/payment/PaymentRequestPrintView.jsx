@@ -15,7 +15,7 @@ const categoryLabels = {
   other: "Other",
 };
 
-function CopyBlock({ data, allocations, netAmount, watermark }) {
+function CopyBlock({ data, allocations, netAmount, watermark, heightMm = 136 }) {
   const containerRef = useRef(null);
   const contentRef = useRef(null);
   const [scale, setScale] = useState(1);
@@ -44,7 +44,7 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
   }, [data, allocations, netAmount, recalcScale]);
 
   return (
-    <div ref={containerRef} className="relative h-[136mm] px-[12mm] py-[6mm] overflow-hidden">
+    <div ref={containerRef} className="relative px-[12mm] py-[6mm] overflow-hidden" style={{ height: `${heightMm}mm` }}>
       <div className="absolute bottom-[4mm] left-[12mm] pointer-events-none">
         <span className="text-[7px] text-gray-400 tracking-wide select-none whitespace-nowrap">
           Doc. Code: FM-FIN-02-01 / Rev. No. 1 / Eff. Date: July 16, 2025
@@ -229,6 +229,8 @@ function CopyBlock({ data, allocations, netAmount, watermark }) {
 }
 
 export default function PaymentRequestPrintView({ open, onOpenChange, data }) {
+  const [fullPage, setFullPage] = useState(false);
+
   if (!open || !data) return null;
 
   const allocations = (data.allocations || []).filter(a => a.project_name);
@@ -246,6 +248,14 @@ export default function PaymentRequestPrintView({ open, onOpenChange, data }) {
       `}</style>
 
       <div className="print:hidden sticky top-0 z-10 bg-background border-b border-border flex items-center justify-end gap-2 px-4 py-3">
+        <Button
+          type="button"
+          variant={fullPage ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFullPage((v) => !v)}
+        >
+          {fullPage ? "Two Copies per Page" : "Whole Page A4"}
+        </Button>
         <Button type="button" variant="outline" size="sm" onClick={() => window.print()}>
           <Printer className="w-4 h-4 mr-2" /> Print
         </Button>
@@ -256,9 +266,15 @@ export default function PaymentRequestPrintView({ open, onOpenChange, data }) {
 
       <div className="flex justify-center py-8 px-4">
         <div id="pr-print-content" className="w-[210mm] h-[297mm] bg-white text-black shadow-lg">
-          <CopyBlock data={data} allocations={allocations} netAmount={netAmount} watermark="PAYEE'S COPY" />
-          <div className="border-t-2 border-dashed border-gray-400" />
-          <CopyBlock data={data} allocations={allocations} netAmount={netAmount} watermark="FCL COPY" />
+          {fullPage ? (
+            <CopyBlock data={data} allocations={allocations} netAmount={netAmount} watermark="FCL COPY" heightMm={297} />
+          ) : (
+            <>
+              <CopyBlock data={data} allocations={allocations} netAmount={netAmount} watermark="PAYEE'S COPY" />
+              <div className="border-t-2 border-dashed border-gray-400" />
+              <CopyBlock data={data} allocations={allocations} netAmount={netAmount} watermark="FCL COPY" />
+            </>
+          )}
         </div>
       </div>
     </div>,
