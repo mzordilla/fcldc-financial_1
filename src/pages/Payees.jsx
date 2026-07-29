@@ -414,16 +414,12 @@ export default function Payees() {
                   <td className="px-4 py-3 font-medium hidden lg:table-cell">{p.credit_limit ? `₱${p.credit_limit.toLocaleString()}` : "—"}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
-                      {p.category === "supplier" && (
-                        <>
-                          <Button variant="ghost" size="icon" title="Supplier Accreditation" onClick={() => setAccreditingPayee(p)} className="text-muted-foreground hover:text-primary h-8 w-8">
-                            <ClipboardCheck className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="icon" title="Supplier Evaluation" onClick={() => setEvaluatingPayee(p)} className="text-muted-foreground hover:text-chart-3 h-8 w-8">
-                            <Star className="w-3.5 h-3.5" />
-                          </Button>
-                        </>
-                      )}
+                      <Button variant="ghost" size="icon" title="Supplier Accreditation" onClick={() => setAccreditingPayee(p)} className="text-muted-foreground hover:text-primary h-8 w-8">
+                        <ClipboardCheck className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" title="Supplier Evaluation" onClick={() => setEvaluatingPayee(p)} className="text-muted-foreground hover:text-chart-3 h-8 w-8">
+                        <Star className="w-3.5 h-3.5" />
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => setEditingPayee(p)} className="text-muted-foreground hover:text-foreground h-8 w-8">
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
