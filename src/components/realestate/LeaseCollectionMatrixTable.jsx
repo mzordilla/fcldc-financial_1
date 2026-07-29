@@ -3,7 +3,7 @@ import { CheckCircle2, Circle, ChevronDown, ChevronUp } from "lucide-react";
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString()}`;
 
-export default function LeaseCollectionMatrixTable({ tenants, monthOptions, collections, onCellClick }) {
+export default function LeaseCollectionMatrixTable({ tenants, monthOptions, collections, onCellClick, onGroupCellClick }) {
   const [expandedClients, setExpandedClients] = useState(new Set());
 
   const recordFor = (tenantId, month) => collections.find((c) => c.tenant_id === tenantId && c.month === month);
@@ -95,12 +95,17 @@ export default function LeaseCollectionMatrixTable({ tenants, monthOptions, coll
                       return s + (record?.amount ?? t.monthly_rent ?? 0);
                     }, 0);
                     const allCollected = unitTenants.every((t) => recordFor(t.id, m.value)?.collected);
+                    const records = unitTenants.map((t) => recordFor(t.id, m.value));
                     return (
                       <td key={m.value} className="px-1 py-2 text-center">
-                        <div className={`flex flex-col items-center gap-0.5 mx-auto px-2 py-1 rounded-lg ${allCollected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onGroupCellClick(unitTenants, m.value, records); }}
+                          title={allCollected ? "Collected — click for summary" : "Not fully collected — click to record"}
+                          className={`flex flex-col items-center gap-0.5 mx-auto px-2 py-1 rounded-lg transition-colors ${allCollected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}
+                        >
                           {allCollected ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
                           <span className="font-semibold whitespace-nowrap">{fmt(monthTotal)}</span>
-                        </div>
+                        </button>
                       </td>
                     );
                   })}

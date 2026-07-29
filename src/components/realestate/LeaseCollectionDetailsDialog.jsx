@@ -16,15 +16,24 @@ const defaultForm = {
   notes: "",
 };
 
-export default function LeaseCollectionDetailsDialog({ open, onOpenChange, tenant, month, monthLabel, record, onMarkCollected, onUndo }) {
+// unit mode: tenant + record. group mode: tenants (array) + records (array, one per tenant, may be undefined)
+export default function LeaseCollectionDetailsDialog({
+  open, onOpenChange, tenant, tenants, month, monthLabel, record, records,
+  onMarkCollected, onUndo, onMarkGroupCollected, onUndoGroup,
+}) {
   const [form, setForm] = useState(defaultForm);
-  const isCollected = !!record?.collected;
+  const isGroup = !!tenants;
+  const isCollected = isGroup ? tenants.length > 0 && tenants.every((t, i) => records[i]?.collected) : !!record?.collected;
 
   useEffect(() => {
     if (open) setForm(defaultForm);
-  }, [open, record]);
+  }, [open, record, records]);
 
-  const amount = record?.amount ?? tenant?.monthly_rent ?? 0;
+  const amount = isGroup
+    ? tenants.reduce((s, t, i) => s + (records[i]?.amount ?? t.monthly_rent ?? 0), 0)
+    : (record?.amount ?? tenant?.monthly_rent ?? 0);
+
+  const clientName = isGroup ? tenants[0]?.full_name : tenant?.full_name;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -36,40 +45,56 @@ export default function LeaseCollectionDetailsDialog({ open, onOpenChange, tenan
         <div className="space-y-3 text-sm">
           <div className="flex justify-between border-b border-border pb-2">
             <span className="text-muted-foreground">Client</span>
-            <span className="font-medium text-foreground">{tenant?.full_name}</span>
+            <span className="font-medium text-foreground">{clientName}</span>
           </div>
-          <div className="flex justify-between border-b border-border pb-2">
-            <span className="text-muted-foreground">Unit</span>
-            <span className="font-medium text-foreground">{tenant?.unit_number}{tenant?.building ? ` · ${tenant.building}` : ""}</span>
-          </div>
+          {isGroup ? (
+            <div className="border-b border-border pb-2">
+              <span className="text-muted-foreground">Units</span>
+              <ul className="mt-1 space-y-1">
+                {tenants.map((t, i) => (
+                  <li key={t.id} className="flex justify-between text-xs">
+                    <span className="text-foreground">{t.unit_number}{t.building ? ` · ${t.building}` : ""}</span>
+                    <span className="text-muted-foreground">{fmt(records[i]?.amount ?? t.monthly_rent)}{records[i]?.collected ? " ✓" : ""}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <div className="flex justify-between border-b border-border pb-2">
+              <span className="text-muted-foreground">Unit</span>
+              <span className="font-medium text-foreground">{tenant?.unit_number}{tenant?.building ? ` · ${tenant.building}` : ""}</span>
+            </div>
+          )}
           <div className="flex justify-between border-b border-border pb-2">
             <span className="text-muted-foreground">Month</span>
             <span className="font-medium text-foreground">{monthLabel}</span>
           </div>
           <div className="flex justify-between border-b border-border pb-2">
-            <span className="text-muted-foreground">Amount</span>
+            <span className="text-muted-foreground">{isGroup ? "Total Amount" : "Amount"}</span>
             <span className="font-semibold text-primary">{fmt(amount)}</span>
           </div>
 
           {isCollected ? (
-            <>
-              <div className="flex justify-between border-b border-border pb-2">
-                <span className="text-muted-foreground">Collected Date</span>
-                <span className="font-medium text-foreground">{record.collected_date ? format(new Date(record.collected_date), "MMM d, yyyy") : "—"}</span>
-              </div>
-              <div className="flex justify-between border-b border-border pb-2">
-                <span className="text-muted-foreground">Payment Method</span>
-                <span className="font-medium text-foreground capitalize">{(record.payment_method || "—").replace("_", " ")}</span>
-              </div>
-              <div className="flex justify-between border-b border-border pb-2">
-                <span className="text-muted-foreground">Reference</span>
-                <span className="font-medium text-foreground">{record.reference || "—"}</span>
-              </div>
-              <div>
-                <p className="text-muted-foreground mb-1">Notes</p>
-                <p className="text-foreground">{record.notes || "—"}</p>
-              </div>
-            </>
+            !isGroup && (
+              <>
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground">Collected Date</span>
+                  <span className="font-medium text-foreground">{record.collected_date ? format(new Date(record.collected_date), "MMM d, yyyy") : "—"}</span>
+                </div>
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground">Payment Method</span>
+                  <span className="font-medium text-foreground capitalize">{(record.payment_method || "—").replace("_", " ")}</span>
+                </div>
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground">Reference</span>
+                  <span className="font-medium text-foreground">{record.reference || "—"}</span>
+                </div>
+                <div>
+                  <p className="text-muted-foreground mb-1">Notes</p>
+                  <p className="text-foreground">{record.notes || "—"}</p>
+                </div>
+              </>
+            )
           ) : (
             <div className="space-y-3 pt-1">
               <div>
@@ -102,7 +127,13 @@ export default function LeaseCollectionDetailsDialog({ open, onOpenChange, tenan
 
         <DialogFooter>
           {isCollected ? (
-            <Button variant="outline" onClick={() => onUndo(tenant, month, record)}>Undo Collection</Button>
+            isGroup ? (
+              <Button variant="outline" onClick={() => onUndoGroup(tenants, month, records)}>Undo Collection for All Units</Button>
+            ) : (
+              <Button variant="outline" onClick={() => onUndo(tenant, month, record)}>Undo Collection</Button>
+            )
+          ) : isGroup ? (
+            <Button onClick={() => onMarkGroupCollected(tenants, month, records, form)}>Mark All Units as Collected</Button>
           ) : (
             <Button onClick={() => onMarkCollected(tenant, month, record, form)}>Mark as Collected</Button>
           )}

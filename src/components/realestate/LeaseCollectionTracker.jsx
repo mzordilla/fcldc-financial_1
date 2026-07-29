@@ -105,6 +105,51 @@ export default function LeaseCollectionTracker() {
     setDetailsDialog(null);
   };
 
+  const [groupDialog, setGroupDialog] = useState(null); // { tenants, month, records }
+
+  const handleGroupCellClick = (tenants, month, records) => {
+    setGroupDialog({ tenants, month, records });
+  };
+
+  const handleMarkGroupCollected = (tenants, month, records, form) => {
+    const details = {
+      collected: true,
+      collected_date: form.collected_date,
+      payment_method: form.payment_method,
+      reference: form.reference,
+      notes: form.notes,
+    };
+    tenants.forEach((t, i) => {
+      const record = records[i];
+      if (record) {
+        updateMutation.mutate({ id: record.id, data: details });
+      } else {
+        createMutation.mutate({
+          tenant_id: t.id,
+          tenant_name: t.full_name,
+          unit_number: t.unit_number,
+          building: t.building,
+          month,
+          amount: t.monthly_rent || 0,
+          ...details,
+        });
+      }
+    });
+    setGroupDialog(null);
+  };
+
+  const handleUndoGroup = (tenants, month, records) => {
+    records.forEach((record) => {
+      if (record) {
+        updateMutation.mutate({
+          id: record.id,
+          data: { collected: false, collected_date: "", payment_method: "", reference: "", notes: "" },
+        });
+      }
+    });
+    setGroupDialog(null);
+  };
+
   const currentMonthRecords = collections.filter((c) => c.month === currentMonth);
   const monthCollected = currentMonthRecords.filter((r) => r.collected).reduce((s, r) => s + (r.amount || 0), 0);
   const monthExpected = currentMonthRecords.reduce((s, r) => s + (r.amount || 0), 0);
@@ -142,6 +187,7 @@ export default function LeaseCollectionTracker() {
           monthOptions={monthOptions}
           collections={collections}
           onCellClick={handleCellClick}
+          onGroupCellClick={handleGroupCellClick}
         />
       </div>
 
@@ -154,6 +200,17 @@ export default function LeaseCollectionTracker() {
         record={detailsDialog?.record}
         onMarkCollected={handleMarkCollected}
         onUndo={handleUndo}
+      />
+
+      <LeaseCollectionDetailsDialog
+        open={!!groupDialog}
+        onOpenChange={(open) => !open && setGroupDialog(null)}
+        tenants={groupDialog?.tenants}
+        month={groupDialog?.month}
+        monthLabel={monthOptions.find((m) => m.value === groupDialog?.month)?.label}
+        records={groupDialog?.records}
+        onMarkGroupCollected={handleMarkGroupCollected}
+        onUndoGroup={handleUndoGroup}
       />
     </div>
   );
