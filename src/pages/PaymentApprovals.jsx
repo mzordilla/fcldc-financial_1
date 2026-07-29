@@ -670,7 +670,7 @@ export default function PaymentApprovals() {
 
         {/* Approved Purchase Orders — Ready to Pay */}
         <TabsContent value="pos" className="space-y-3 mt-4">
-          {isAdmin && selectedPOIds.size > 0 && (
+          {selectedPOIds.size > 0 && (
             <div className="flex items-center justify-between bg-chart-2/10 border border-chart-2/20 rounded-xl px-4 py-2.5">
               <span className="text-sm text-chart-2">
                 {selectedPOIds.size} PO{selectedPOIds.size !== 1 ? "s" : ""} selected
@@ -709,7 +709,7 @@ export default function PaymentApprovals() {
               </div>
             </div>
           )}
-          <SupplierGroupedPOs ref={posGroupRef} pos={availablePOsInView} onConvert={convertPOtoPaymentRequest} poIdsWithRequest={poRefsWithRequests} isAdmin={isAdmin} selectedIds={selectedPOIds} onToggleSelect={togglePOSelect} />
+          <SupplierGroupedPOs ref={posGroupRef} pos={availablePOsInView} onConvert={convertPOtoPaymentRequest} poIdsWithRequest={poRefsWithRequests} selectedIds={selectedPOIds} onToggleSelect={togglePOSelect} />
         </TabsContent>
 
         {/* Pending */}
