@@ -65,15 +65,18 @@ export default function BillingCycles() {
 
     // If approved: create Receivable AND immediately recognize income in P&L (accrual basis)
     if (action === "approved") {
-      const billingAmount = bc.net_billing_amount || bc.billing_amount || 0;
+      // Retention held is still earned income (just collected later) — recognize the FULL gross billing as income
+      const grossBillingAmount = bc.billing_amount || 0;
+      // The receivable is only for the net cash currently due (retention portion isn't collectible yet)
+      const netBillingAmount = bc.net_billing_amount || bc.billing_amount || 0;
       const today = new Date().toISOString().split("T")[0];
 
-      // 1. Create Accounts Receivable record
+      // 1. Create Accounts Receivable record (net amount currently due)
       const receivable = await base44.entities.Receivable.create({
         client_name: bc.client_name,
         project_name: bc.project_name,
         invoice_number: bc.billing_number || "",
-        amount: billingAmount,
+        amount: netBillingAmount,
         amount_paid: 0,
         due_date: bc.due_date || today,
         status: "outstanding",
@@ -81,10 +84,10 @@ export default function BillingCycles() {
       });
       updateData.receivable_id = receivable.id;
 
-      // 2. Immediately recognize income in P&L (accrual basis — recognized in the billed period, not the approval date)
+      // 2. Immediately recognize income in P&L (accrual basis — full gross billing, since retention held is part of income earned on this billing)
       await base44.entities.Transaction.create({
         description: `Income recognized — ${bc.client_name}${bc.billing_number ? ` (${bc.billing_number})` : ""}${bc.period_label ? ` · ${bc.period_label}` : ""}`,
-        amount: billingAmount,
+        amount: grossBillingAmount,
         type: "income",
         category: "project_payment",
         project_name: bc.project_name || "",
