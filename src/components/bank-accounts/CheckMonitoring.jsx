@@ -32,7 +32,11 @@ export default function CheckMonitoring() {
 
   const checks = requests
     .filter((r) => r.payment_method === "check")
-    .sort((a, b) => new Date(b.check_date || b.created_date || 0) - new Date(a.check_date || a.created_date || 0));
+    .sort((a, b) => {
+      const bankCompare = bankLabel(a.bank_account_id).localeCompare(bankLabel(b.bank_account_id));
+      if (bankCompare !== 0) return bankCompare;
+      return new Date(b.check_date || b.created_date || 0) - new Date(a.check_date || a.created_date || 0);
+    });
 
   const totalAmount = checks.reduce((s, c) => s + (c.amount || 0), 0);
 
