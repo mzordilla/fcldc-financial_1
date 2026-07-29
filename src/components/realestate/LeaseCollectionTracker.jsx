@@ -49,7 +49,9 @@ export default function LeaseCollectionTracker() {
   // Ensure a LeaseCollection record exists for each active tenant for every visible month
   useEffect(() => {
     activeTenants.forEach((t) => {
+      const leaseStartMonth = t.lease_start ? format(new Date(t.lease_start), "yyyy-MM") : null;
       monthOptions.forEach((m) => {
+        if (leaseStartMonth && m.value < leaseStartMonth) return;
         const exists = collections.some((c) => c.tenant_id === t.id && c.month === m.value);
         if (!exists) {
           createMutation.mutate({

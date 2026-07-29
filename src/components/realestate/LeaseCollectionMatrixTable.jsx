@@ -8,6 +8,12 @@ export default function LeaseCollectionMatrixTable({ tenants, monthOptions, coll
 
   const recordFor = (tenantId, month) => collections.find((c) => c.tenant_id === tenantId && c.month === month);
 
+  const leaseStartMonth = (t) => (t.lease_start ? t.lease_start.slice(0, 7) : null);
+  const isBeforeLeaseStart = (t, month) => {
+    const start = leaseStartMonth(t);
+    return start && month < start;
+  };
+
   const clientGroups = useMemo(() => {
     const groups = {};
     tenants.forEach((t) => {
@@ -43,6 +49,13 @@ export default function LeaseCollectionMatrixTable({ tenants, monthOptions, coll
         )}
       </td>
       {monthOptions.map((m) => {
+        if (isBeforeLeaseStart(t, m.value)) {
+          return (
+            <td key={m.value} className="px-1 py-2 text-center">
+              <span className="text-[11px] text-muted-foreground/50">—</span>
+            </td>
+          );
+        }
         const record = recordFor(t.id, m.value);
         const collected = record?.collected;
         return (
@@ -90,16 +103,24 @@ export default function LeaseCollectionMatrixTable({ tenants, monthOptions, coll
                     </div>
                   </td>
                   {monthOptions.map((m) => {
-                    const monthTotal = unitTenants.reduce((s, t) => {
+                    const applicableTenants = unitTenants.filter((t) => !isBeforeLeaseStart(t, m.value));
+                    if (applicableTenants.length === 0) {
+                      return (
+                        <td key={m.value} className="px-1 py-2 text-center">
+                          <span className="text-[11px] text-muted-foreground/50">—</span>
+                        </td>
+                      );
+                    }
+                    const monthTotal = applicableTenants.reduce((s, t) => {
                       const record = recordFor(t.id, m.value);
                       return s + (record?.amount ?? t.monthly_rent ?? 0);
                     }, 0);
-                    const allCollected = unitTenants.every((t) => recordFor(t.id, m.value)?.collected);
-                    const records = unitTenants.map((t) => recordFor(t.id, m.value));
+                    const allCollected = applicableTenants.every((t) => recordFor(t.id, m.value)?.collected);
+                    const records = applicableTenants.map((t) => recordFor(t.id, m.value));
                     return (
                       <td key={m.value} className="px-1 py-2 text-center">
                         <button
-                          onClick={(e) => { e.stopPropagation(); onGroupCellClick(unitTenants, m.value, records); }}
+                          onClick={(e) => { e.stopPropagation(); onGroupCellClick(applicableTenants, m.value, records); }}
                           title={allCollected ? "Collected — click for summary" : "Not fully collected — click to record"}
                           className={`flex flex-col items-center gap-0.5 mx-auto px-2 py-1 rounded-lg transition-colors ${allCollected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}
                         >
@@ -115,6 +136,30 @@ export default function LeaseCollectionMatrixTable({ tenants, monthOptions, coll
             );
           })}
         </tbody>
+        <tfoot>
+          <tr className="border-t-2 border-border bg-muted/50">
+            <td className="px-2 py-2 sticky left-0 bg-muted/50">
+              <span className="font-bold text-foreground whitespace-nowrap">Grand Total</span>
+            </td>
+            {monthOptions.map((m) => {
+              const applicableTenants = tenants.filter((t) => !isBeforeLeaseStart(t, m.value));
+              const monthTotal = applicableTenants.reduce((s, t) => {
+                const record = recordFor(t.id, m.value);
+                return s + (record?.amount ?? t.monthly_rent ?? 0);
+              }, 0);
+              const monthCollected = applicableTenants.reduce((s, t) => {
+                const record = recordFor(t.id, m.value);
+                return s + (record?.collected ? (record?.amount ?? t.monthly_rent ?? 0) : 0);
+              }, 0);
+              return (
+                <td key={m.value} className="px-1 py-2 text-center">
+                  <p className="font-bold text-foreground whitespace-nowrap">{fmt(monthCollected)}</p>
+                  <p className="text-[10px] text-muted-foreground whitespace-nowrap">of {fmt(monthTotal)}</p>
+                </td>
+              );
+            })}
+          </tr>
+        </tfoot>
       </table>
     </div>
   );
