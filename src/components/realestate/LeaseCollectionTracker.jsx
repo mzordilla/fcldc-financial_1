@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import LeaseCollectionMatrixTable from "./LeaseCollectionMatrixTable";
+import LeaseCollectionDetailsDialog from "./LeaseCollectionDetailsDialog";
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString()}`;
 
@@ -66,15 +67,22 @@ export default function LeaseCollectionTracker() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTenants.length, collections.length]);
 
-  const toggleCollected = (tenant, month, record) => {
+  const [detailsDialog, setDetailsDialog] = useState(null); // { tenant, month, record }
+
+  const handleCellClick = (tenant, month, record) => {
+    setDetailsDialog({ tenant, month, record });
+  };
+
+  const handleMarkCollected = (tenant, month, record, form) => {
+    const details = {
+      collected: true,
+      collected_date: form.collected_date,
+      payment_method: form.payment_method,
+      reference: form.reference,
+      notes: form.notes,
+    };
     if (record) {
-      updateMutation.mutate({
-        id: record.id,
-        data: {
-          collected: !record.collected,
-          collected_date: !record.collected ? format(new Date(), "yyyy-MM-dd") : "",
-        },
-      });
+      updateMutation.mutate({ id: record.id, data: details });
     } else {
       createMutation.mutate({
         tenant_id: tenant.id,
@@ -83,10 +91,18 @@ export default function LeaseCollectionTracker() {
         building: tenant.building,
         month,
         amount: tenant.monthly_rent || 0,
-        collected: true,
-        collected_date: format(new Date(), "yyyy-MM-dd"),
+        ...details,
       });
     }
+    setDetailsDialog(null);
+  };
+
+  const handleUndo = (tenant, month, record) => {
+    updateMutation.mutate({
+      id: record.id,
+      data: { collected: false, collected_date: "", payment_method: "", reference: "", notes: "" },
+    });
+    setDetailsDialog(null);
   };
 
   const currentMonthRecords = collections.filter((c) => c.month === currentMonth);
@@ -125,9 +141,20 @@ export default function LeaseCollectionTracker() {
           tenants={activeTenants}
           monthOptions={monthOptions}
           collections={collections}
-          onToggle={toggleCollected}
+          onCellClick={handleCellClick}
         />
       </div>
+
+      <LeaseCollectionDetailsDialog
+        open={!!detailsDialog}
+        onOpenChange={(open) => !open && setDetailsDialog(null)}
+        tenant={detailsDialog?.tenant}
+        month={detailsDialog?.month}
+        monthLabel={monthOptions.find((m) => m.value === detailsDialog?.month)?.label}
+        record={detailsDialog?.record}
+        onMarkCollected={handleMarkCollected}
+        onUndo={handleUndo}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { CheckCircle2, Circle, ChevronDown, ChevronUp } from "lucide-react";
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString()}`;
 
-export default function LeaseCollectionMatrixTable({ tenants, monthOptions, collections, onToggle }) {
+export default function LeaseCollectionMatrixTable({ tenants, monthOptions, collections, onCellClick }) {
   const [expandedClients, setExpandedClients] = useState(new Set());
 
   const recordFor = (tenantId, month) => collections.find((c) => c.tenant_id === tenantId && c.month === month);
@@ -48,7 +48,7 @@ export default function LeaseCollectionMatrixTable({ tenants, monthOptions, coll
         return (
           <td key={m.value} className="px-1 py-2 text-center">
             <button
-              onClick={() => onToggle(t, m.value, record)}
+              onClick={() => onCellClick(t, m.value, record)}
               title={collected ? `Collected ${record?.collected_date || ""}` : "Not collected"}
               className={`flex flex-col items-center gap-0.5 mx-auto px-2 py-1 rounded-lg transition-colors ${
                 collected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"

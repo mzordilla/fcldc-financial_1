@@ -35,6 +35,24 @@
       "type": "string",
       "format": "date",
       "description": "Date the payment was collected"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "bank_transfer",
+        "check",
+        "cash",
+        "other"
+      ],
+      "description": "Method used to collect this payment"
+    },
+    "reference": {
+      "type": "string",
+      "description": "Check number, transfer reference, receipt number, etc."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes about the collection"
     }
   },
   "required": [
