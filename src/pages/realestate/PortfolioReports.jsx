@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { BarChart2, Home, Users, List, TrendingUp } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import LeaseForecastReport from "@/components/realestate/LeaseForecastReport";
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString()}`;
 
@@ -207,6 +208,8 @@ export default function PortfolioReports() {
           </div>
         )}
       </div>
+
+      <LeaseForecastReport units={units} />
     </div>
   );
 }
