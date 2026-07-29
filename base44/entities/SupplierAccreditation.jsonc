@@ -1,0 +1,82 @@
+{
+  "name": "SupplierAccreditation",
+  "type": "object",
+  "properties": {
+    "payee_id": {
+      "type": "string",
+      "description": "Linked Payee ID"
+    },
+    "supplier_name": {
+      "type": "string",
+      "description": "Supplier / business name"
+    },
+    "product_line": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "tel_nos": {
+      "type": "string"
+    },
+    "fax_nos": {
+      "type": "string"
+    },
+    "contact_person": {
+      "type": "string"
+    },
+    "date_evaluated": {
+      "type": "string",
+      "format": "date"
+    },
+    "sections": {
+      "type": "array",
+      "description": "Checklist sections with findings",
+      "items": {
+        "type": "object",
+        "properties": {
+          "section_name": {
+            "type": "string"
+          },
+          "checklist_items": {
+            "type": "string"
+          },
+          "remarks": {
+            "type": "string"
+          },
+          "finding": {
+            "type": "string",
+            "enum": [
+              "qualified",
+              "not_qualified"
+            ]
+          }
+        }
+      }
+    },
+    "general_remarks_recommendations": {
+      "type": "string"
+    },
+    "overall_result": {
+      "type": "string",
+      "enum": [
+        "accredited",
+        "not_accredited"
+      ],
+      "default": "not_accredited"
+    },
+    "evaluated_by": {
+      "type": "string"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "doc_code": {
+      "type": "string",
+      "default": "FM-FIN-04-01"
+    }
+  },
+  "required": [
+    "supplier_name"
+  ]
+}

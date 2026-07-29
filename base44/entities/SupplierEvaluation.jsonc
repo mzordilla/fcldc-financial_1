@@ -1,0 +1,71 @@
+{
+  "name": "SupplierEvaluation",
+  "type": "object",
+  "properties": {
+    "payee_id": {
+      "type": "string",
+      "description": "Linked Payee ID"
+    },
+    "supplier_name": {
+      "type": "string"
+    },
+    "evaluation_period": {
+      "type": "string",
+      "description": "e.g. Q1 2026"
+    },
+    "evaluation_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "quality_score": {
+      "type": "number",
+      "description": "1-5 rating"
+    },
+    "delivery_score": {
+      "type": "number",
+      "description": "1-5 rating"
+    },
+    "pricing_score": {
+      "type": "number",
+      "description": "1-5 rating"
+    },
+    "service_score": {
+      "type": "number",
+      "description": "1-5 rating"
+    },
+    "compliance_score": {
+      "type": "number",
+      "description": "1-5 rating"
+    },
+    "total_score": {
+      "type": "number"
+    },
+    "overall_rating": {
+      "type": "string",
+      "enum": [
+        "excellent",
+        "good",
+        "fair",
+        "poor"
+      ]
+    },
+    "recommendation": {
+      "type": "string",
+      "enum": [
+        "continue",
+        "probation",
+        "discontinue"
+      ],
+      "default": "continue"
+    },
+    "remarks": {
+      "type": "string"
+    },
+    "evaluated_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "supplier_name"
+  ]
+}

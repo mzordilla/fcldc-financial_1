@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Trash2, Pencil, Users, List, FileUp, Download, ShieldCheck, ShieldOff } from "lucide-react";
+import { Plus, Trash2, Pencil, Users, List, FileUp, Download, ShieldCheck, ShieldOff, ClipboardCheck, Star } from "lucide-react";
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
 import BatchPayeeDialog from "../components/payees/BatchPayeeDialog";
+import SupplierAccreditationDialog from "../components/payees/SupplierAccreditationDialog";
+import SupplierEvaluationDialog from "../components/payees/SupplierEvaluationDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -176,6 +178,8 @@ export default function Payees() {
   const [showAdd, setShowAdd] = useState(false);
   const [showBatch, setShowBatch] = useState(false);
   const [editingPayee, setEditingPayee] = useState(null);
+  const [accreditingPayee, setAccreditingPayee] = useState(null);
+  const [evaluatingPayee, setEvaluatingPayee] = useState(null);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const queryClient = useQueryClient();
@@ -218,6 +222,25 @@ export default function Payees() {
     queryKey: ["payables"],
     queryFn: () => base44.entities.Payable.list("-created_date", 500),
   });
+
+  const { data: accreditations = [] } = useQuery({
+    queryKey: ["supplier-accreditations-all"],
+    queryFn: () => base44.entities.SupplierAccreditation.list("-created_date", 500),
+  });
+
+  const { data: evaluations = [] } = useQuery({
+    queryKey: ["supplier-evaluations-all"],
+    queryFn: () => base44.entities.SupplierEvaluation.list("-created_date", 500),
+  });
+
+  const getLatestAccreditation = (payeeId) => accreditations.find(a => a.payee_id === payeeId);
+  const getLatestEvaluation = (payeeId) => evaluations.find(e => e.payee_id === payeeId);
+  const ratingStyles = {
+    excellent: "bg-primary/10 text-primary border-primary/20",
+    good: "bg-chart-2/10 text-chart-2 border-chart-2/20",
+    fair: "bg-chart-3/10 text-chart-3 border-chart-3/20",
+    poor: "bg-destructive/10 text-destructive border-destructive/20",
+  };
 
   const getOutstandingBalance = (payeeName) => {
     return payables
@@ -331,6 +354,7 @@ export default function Payees() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">VAT</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Chart of Account</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Accredited</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Evaluation</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Outstanding</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Credit Limit</th>
                 <th className="px-4 py-3" />
@@ -373,6 +397,13 @@ export default function Payees() {
                        {p.is_accredited ? "Yes" : "No"}
                      </button>
                   </td>
+                  <td className="px-4 py-3 hidden lg:table-cell">
+                    {getLatestEvaluation(p.id) ? (
+                      <Badge variant="outline" className={ratingStyles[getLatestEvaluation(p.id).overall_rating] || "bg-muted text-muted-foreground border-border"}>
+                        {getLatestEvaluation(p.id).overall_rating}
+                      </Badge>
+                    ) : <span className="text-muted-foreground text-xs">—</span>}
+                  </td>
                   <td className="px-4 py-3 text-right font-medium">
                     {getOutstandingBalance(p.name) > 0 ? (
                       <span className="text-destructive">₱{getOutstandingBalance(p.name).toLocaleString()}</span>
@@ -383,6 +414,16 @@ export default function Payees() {
                   <td className="px-4 py-3 font-medium hidden lg:table-cell">{p.credit_limit ? `₱${p.credit_limit.toLocaleString()}` : "—"}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
+                      {p.category === "supplier" && (
+                        <>
+                          <Button variant="ghost" size="icon" title="Supplier Accreditation" onClick={() => setAccreditingPayee(p)} className="text-muted-foreground hover:text-primary h-8 w-8">
+                            <ClipboardCheck className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" title="Supplier Evaluation" onClick={() => setEvaluatingPayee(p)} className="text-muted-foreground hover:text-chart-3 h-8 w-8">
+                            <Star className="w-3.5 h-3.5" />
+                          </Button>
+                        </>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => setEditingPayee(p)} className="text-muted-foreground hover:text-foreground h-8 w-8">
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
@@ -417,6 +458,16 @@ export default function Payees() {
         title="Edit Payee"
         initialData={editingPayee || defaultForm}
         onSubmit={(data) => updateMutation.mutateAsync({ id: editingPayee.id, data })}
+      />
+      <SupplierAccreditationDialog
+        open={!!accreditingPayee}
+        onOpenChange={(v) => { if (!v) setAccreditingPayee(null); }}
+        payee={accreditingPayee}
+      />
+      <SupplierEvaluationDialog
+        open={!!evaluatingPayee}
+        onOpenChange={(v) => { if (!v) setEvaluatingPayee(null); }}
+        payee={evaluatingPayee}
       />
     </div>
   );
