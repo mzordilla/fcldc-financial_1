@@ -2,8 +2,9 @@ import { useState, forwardRef, useImperativeHandle } from "react";
 import { ChevronDown, ChevronUp, Plus, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
-const SupplierGroupedPOs = forwardRef(function SupplierGroupedPOs({ pos, onConvert, poIdsWithRequest }, ref) {
+const SupplierGroupedPOs = forwardRef(function SupplierGroupedPOs({ pos, onConvert, poIdsWithRequest, isAdmin, selectedIds, onToggleSelect }, ref) {
   const [expandedSuppliers, setExpandedSuppliers] = useState(new Set());
 
   const bySupplier = {};
@@ -52,6 +53,7 @@ const SupplierGroupedPOs = forwardRef(function SupplierGroupedPOs({ pos, onConve
                 <table className="w-full text-xs">
                   <thead className="bg-muted/30 border-y border-border">
                     <tr>
+                      {isAdmin && <th className="px-2 py-0.5 w-6"></th>}
                       <th className="px-2 py-0.5 text-left font-semibold text-muted-foreground uppercase">PO #</th>
                       <th className="px-2 py-0.5 text-left font-semibold text-muted-foreground uppercase">Project</th>
                       <th className="px-2 py-0.5 text-left font-semibold text-muted-foreground uppercase">Description</th>
@@ -65,6 +67,16 @@ const SupplierGroupedPOs = forwardRef(function SupplierGroupedPOs({ pos, onConve
                       const hasRequest = poIdsWithRequest && (poIdsWithRequest.has(po.po_number) || poIdsWithRequest.has(po.id));
                       return (
                       <tr key={po.id} className="hover:bg-muted/20 transition-colors">
+                        {isAdmin && (
+                          <td className="px-2 py-0.5" onClick={(e) => e.stopPropagation()}>
+                            {!hasRequest && (
+                              <Checkbox
+                                checked={selectedIds?.has(po.id) || false}
+                                onCheckedChange={() => onToggleSelect?.(po.id)}
+                              />
+                            )}
+                          </td>
+                        )}
                         <td className="px-2 py-0.5 font-mono text-muted-foreground whitespace-nowrap">
                           {po.po_number || "—"}
                           {po.priority && po.priority !== "normal" && (

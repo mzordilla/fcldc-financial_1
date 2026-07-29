@@ -67,6 +67,7 @@ export default function PaymentApprovals() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showBulkDisburse, setShowBulkDisburse] = useState(false);
   const [poPrFilter, setPoPrFilter] = useState("all");
+  const [selectedPOIds, setSelectedPOIds] = useState(new Set());
   const queryClient = useQueryClient();
   const posGroupRef = useRef();
   const pendingGroupRef = useRef();
@@ -103,7 +104,7 @@ export default function PaymentApprovals() {
       .filter(Boolean)
       .flatMap(doc => {
         const match = doc.match(/PO:\s*(.+)/);
-        return match ? [match[1].trim()] : [];
+        return match ? match[1].split(",").map(s => s.trim()) : [];
       })
       .filter(Boolean)
   );
@@ -264,6 +265,47 @@ export default function PaymentApprovals() {
     };
     setShowAdd(true);
     setPrefillData(prData);
+  };
+
+  const togglePOSelect = (id) => {
+    setSelectedPOIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const selectedPOs = availablePOsInView.filter(po => selectedPOIds.has(po.id));
+  const selectedPOsSameSupplier = selectedPOs.length > 1 && selectedPOs.every(po => po.supplier_name === selectedPOs[0].supplier_name);
+
+  const consolidatePOs = () => {
+    const supplier = selectedPOs[0].supplier_name;
+    const poRefs = selectedPOs.map(po => po.po_number || po.id.slice(-6).toUpperCase());
+    const totalAmount = selectedPOs.reduce((s, po) => s + (po.amount || 0), 0);
+    // Aggregate project allocations across all selected POs by project
+    const allocMap = {};
+    selectedPOs.forEach(po => {
+      const key = po.project_name || "Unassigned";
+      allocMap[key] = (allocMap[key] || 0) + (po.amount || 0);
+    });
+    const dueDates = selectedPOs.map(po => po.required_date).filter(Boolean).sort();
+    const prData = {
+      request_number: `PR-PO-${poRefs.join("_")}`.slice(0, 60),
+      payee: supplier,
+      description: `Consolidated payment for ${selectedPOs.length} POs: ${poRefs.join(", ")}`,
+      category: "supplier_invoice",
+      payment_method: "bank_transfer",
+      invoice_number: poRefs.join(", "),
+      invoice_date: selectedPOs[0].requested_date || "",
+      due_date: dueDates[0] || "",
+      requested_by: selectedPOs[0].requested_by || "",
+      supporting_docs: `PO: ${poRefs.join(", ")}`,
+      project_allocations: Object.entries(allocMap).map(([project_name, amount]) => ({ project_name, amount })),
+      amount: totalAmount,
+    };
+    setShowAdd(true);
+    setPrefillData(prData);
+    setSelectedPOIds(new Set());
   };
 
   const handleDecision = async (pr, { action, actor, notes, bankAccountId, paymentReference, paymentDate }) => {
@@ -628,6 +670,20 @@ export default function PaymentApprovals() {
 
         {/* Approved Purchase Orders — Ready to Pay */}
         <TabsContent value="pos" className="space-y-3 mt-4">
+          {isAdmin && selectedPOIds.size > 0 && (
+            <div className="flex items-center justify-between bg-chart-2/10 border border-chart-2/20 rounded-xl px-4 py-2.5">
+              <span className="text-sm text-chart-2">
+                {selectedPOIds.size} PO{selectedPOIds.size !== 1 ? "s" : ""} selected
+                {!selectedPOsSameSupplier && selectedPOIds.size > 1 && " — select POs from the same supplier to combine into one Payment Request"}
+              </span>
+              {selectedPOsSameSupplier && (
+                <Button size="sm" onClick={consolidatePOs} className="bg-chart-2 hover:bg-chart-2/90 text-white gap-2">
+                  <Plus className="w-4 h-4" />
+                  Create 1 Payment Request from {selectedPOs.length} POs
+                </Button>
+              )}
+            </div>
+          )}
           {availablePOs.length > 0 && (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -653,7 +709,7 @@ export default function PaymentApprovals() {
               </div>
             </div>
           )}
-          <SupplierGroupedPOs ref={posGroupRef} pos={availablePOsInView} onConvert={convertPOtoPaymentRequest} poIdsWithRequest={poRefsWithRequests} />
+          <SupplierGroupedPOs ref={posGroupRef} pos={availablePOsInView} onConvert={convertPOtoPaymentRequest} poIdsWithRequest={poRefsWithRequests} isAdmin={isAdmin} selectedIds={selectedPOIds} onToggleSelect={togglePOSelect} />
         </TabsContent>
 
         {/* Pending */}
