@@ -27,8 +27,8 @@ export default function PurchaseOrderPrintDocument({ po, compact = false }) {
         <thead><tr className="border-b-2 border-black"><th className="text-left py-2">#</th><th className="text-left py-2">Description</th><th className="text-right py-2">Qty</th><th className="text-right py-2">Unit</th><th className="text-right py-2">Unit Price</th><th className="text-right py-2">Total</th></tr></thead>
         <tbody>
           {lineItems.length > 0 ? lineItems.map((item, index) => (
-            <tr key={index} className="border-b border-gray-300"><td className="py-2">{index + 1}</td><td className="py-2">{item.description || "—"}</td><td className="py-2 text-right">{item.quantity ?? "—"}</td><td className="py-2 text-right">{item.unit_of_measure || "—"}</td><td className="py-2 text-right">₱{(item.cost_per_item || 0).toLocaleString()}</td><td className="py-2 text-right font-semibold">₱{(item.total || 0).toLocaleString()}</td></tr>
-          )) : <tr><td colSpan={6} className="py-2 text-gray-500">{po.items || "No line items"}</td></tr>}
+            <tr key={index} className="border-b border-gray-300"><td className="py-1">{index + 1}</td><td className="py-1">{item.description || "—"}</td><td className="py-1 text-right">{item.quantity ?? "—"}</td><td className="py-1 text-right">{item.unit_of_measure || "—"}</td><td className="py-1 text-right">₱{(item.cost_per_item || 0).toLocaleString()}</td><td className="py-1 text-right font-semibold">₱{(item.total || 0).toLocaleString()}</td></tr>
+          )) : <tr><td colSpan={6} className="py-1 text-gray-500">{po.items || "No line items"}</td></tr>}
         </tbody>
         <tfoot><tr><td colSpan={5} className="py-3 text-right font-bold">TOTAL AMOUNT:</td><td className="py-3 text-right font-bold">₱{total.toLocaleString()}</td></tr></tfoot>
       </table>
