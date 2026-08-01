@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Printer, Settings, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -13,6 +13,17 @@ export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
   const { data: signatures = [], refetch } = useQuery({ queryKey: ["company-signatures"], queryFn: () => base44.entities.CompanySignature.list("-created_date"), enabled: open });
   const { data: currentUser } = useQuery({ queryKey: ["current-user"], queryFn: () => base44.auth.me(), enabled: open });
   const signature = signatures.find((item) => item.id === signatureId) || null;
+
+  useEffect(() => {
+    if (!open || !po || po.approval_status !== "approved") {
+      setSignatureId("");
+      return;
+    }
+    const approver = (po.approved_by || "").trim().toLowerCase();
+    const match = signatures.find((item) => item.signatory_name?.trim().toLowerCase() === approver);
+    setSignatureId(match?.id || "");
+  }, [open, po, signatures]);
+
   if (!open || !po) return null;
 
   return (
