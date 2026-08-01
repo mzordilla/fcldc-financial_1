@@ -3,9 +3,10 @@ import { ChevronDown, ChevronUp, Truck } from "lucide-react";
 
 export default function SupplierDeliveryDropdown({ name, records }) {
   const [expanded, setExpanded] = useState(false);
-  const items = records.flatMap((record) => (record.line_items || []).map((item) => ({ ...item, po_number: record.po_number })));
-  const total = records.reduce((sum, record) => sum + (record.total_amount || 0), 0);
-  const poCount = new Set(records.map((record) => record.po_number).filter(Boolean)).size;
+  const uniqueRecords = [...new Map(records.map((record) => [record.po_key || record.po_number || record.id, record])).values()];
+  const items = uniqueRecords.flatMap((record) => (record.issued_line_items || []).map((item) => ({ ...item, quantity_ordered: item.quantity_ordered ?? item.quantity, po_number: record.po_number })));
+  const total = uniqueRecords.reduce((sum, record) => sum + (record.issued_amount || 0), 0);
+  const poCount = uniqueRecords.length;
 
   return (
     <div className="border-b border-border last:border-0">

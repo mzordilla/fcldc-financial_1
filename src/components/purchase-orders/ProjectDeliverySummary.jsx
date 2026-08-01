@@ -18,6 +18,12 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [], 
   const [supplierFilter, setSupplierFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
+  const poMap = useMemo(() => {
+    const map = {};
+    orders.forEach((order) => { map[order.id] = order; });
+    return map;
+  }, [orders]);
+
   const poCategoryMap = useMemo(() => {
     const map = {};
     orders.forEach((o) => { map[o.id] = o.category; });
@@ -51,6 +57,7 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [], 
           total_value: 0,
           total_items: 0,
           po_count: new Set(),
+          po_ids: new Set(),
           suppliers: new Set(),
           records: [],
           supplier_records: {},
@@ -58,11 +65,18 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [], 
         };
       }
       const g = map[project];
-      g.total_value += record.total_amount || 0;
-      g.records.push(record);
+      const linkedPO = poMap[record.po_id];
+      const poKey = record.po_id || record.po_number || record.id;
+      const issuedAmount = linkedPO ? (linkedPO.amount ?? (linkedPO.line_items || []).reduce((sum, item) => sum + (item.total || item.quantity * item.cost_per_item || 0), 0)) : (record.total_amount ?? 0);
+      const issuedRecord = { ...record, po_key: poKey, issued_amount: issuedAmount, issued_line_items: linkedPO?.line_items || record.line_items || [] };
+      if (!g.po_ids.has(poKey)) {
+        g.total_value += issuedAmount;
+        g.po_ids.add(poKey);
+      }
+      g.records.push(issuedRecord);
       const supplier = record.supplier_name || "(No Supplier)";
       if (!g.supplier_records[supplier]) g.supplier_records[supplier] = [];
-      g.supplier_records[supplier].push(record);
+      g.supplier_records[supplier].push(issuedRecord);
       if (record.po_number) g.po_count.add(record.po_number);
       if (record.supplier_name) g.suppliers.add(record.supplier_name);
       (record.line_items || []).forEach((li) => {
@@ -76,7 +90,7 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [], 
       });
     }
     return Object.values(map).sort((a, b) => b.total_value - a.total_value);
-  }, [filteredRecords, projectClassificationMap]);
+  }, [filteredRecords, projectClassificationMap, poMap]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -110,7 +124,7 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [], 
           { label: "Projects", value: projectGroups.length },
           { label: "Total POs Delivered", value: new Set(filteredRecords.map(r => r.po_number).filter(Boolean)).size },
           { label: "Total Suppliers", value: new Set(filteredRecords.map(r => r.supplier_name).filter(Boolean)).size },
-          { label: "Grand Total Value", value: `₱${filteredRecords.reduce((s, r) => s + (r.total_amount || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, highlight: true },
+          { label: "Grand Total Value", value: `₱${projectGroups.reduce((sum, project) => sum + project.total_value, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, highlight: true },
         ].map((kpi, i) => (
           <div key={i} className="bg-card rounded-xl border border-border p-4">
             <p className="text-xs text-muted-foreground">{kpi.label}</p>

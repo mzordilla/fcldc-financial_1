@@ -20,7 +20,7 @@ export default function ProjectDeliveryCard({ project }) {
         </div>
       </button>
       {expanded && <div className="border-t border-border">
-        {Object.entries(project.supplier_records).sort(([, a], [, b]) => b.reduce((sum, record) => sum + (record.total_amount || 0), 0) - a.reduce((sum, record) => sum + (record.total_amount || 0), 0)).map(([supplier, records]) => <SupplierDeliveryDropdown key={supplier} name={supplier} records={records} />)}
+        {Object.entries(project.supplier_records).sort(([, a], [, b]) => b.reduce((sum, record) => sum + (record.issued_amount || 0), 0) - a.reduce((sum, record) => sum + (record.issued_amount || 0), 0)).map(([supplier, records]) => <SupplierDeliveryDropdown key={supplier} name={supplier} records={records} />)}
         <div className="px-5 py-3 bg-primary/5 border-t border-border flex justify-between"><span className="text-sm font-semibold">{project.project_name} — Total</span><span className="text-sm font-bold text-primary">₱{project.total_value.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
       </div>}
     </div>
