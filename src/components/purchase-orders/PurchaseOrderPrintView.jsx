@@ -32,12 +32,12 @@ export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
           ) : (
             <>
               <div className="relative h-[148mm] overflow-hidden">
-                <div style={{ width: "200%", transform: "scale(0.5)", transformOrigin: "top left" }}><PurchaseOrderPrintDocument po={po} /></div>
+                <div style={{ width: "200%", transform: "scale(0.5)", transformOrigin: "top left" }}><PurchaseOrderPrintDocument po={po} compact /></div>
                 <span className="absolute bottom-3 right-5 text-xs font-bold uppercase tracking-wider text-gray-500">Vendor Copy</span>
               </div>
               <div className="border-t-2 border-dashed border-gray-400" />
               <div className="relative h-[148mm] overflow-hidden">
-                <div style={{ width: "200%", transform: "scale(0.5)", transformOrigin: "top left" }}><PurchaseOrderPrintDocument po={po} /></div>
+                <div style={{ width: "200%", transform: "scale(0.5)", transformOrigin: "top left" }}><PurchaseOrderPrintDocument po={po} compact /></div>
                 <span className="absolute bottom-3 right-5 text-xs font-bold uppercase tracking-wider text-gray-500">FCL Copy</span>
               </div>
             </>
