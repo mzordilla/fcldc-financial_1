@@ -1,7 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Package } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import SupplierDeliveryDropdown from "@/components/purchase-orders/SupplierDeliveryDropdown";
+import ProjectClassificationSection from "@/components/purchase-orders/ProjectClassificationSection";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,17 +13,22 @@ const COA_CATEGORY_LABELS = {
   repair_and_maintenance: "Repair & Maintenance", fixtures: "Fixtures", other: "Other",
 };
 
-export default function ProjectDeliverySummary({ receivingRecords, orders = [] }) {
+export default function ProjectDeliverySummary({ receivingRecords, orders = [], projects = [] }) {
   const [search, setSearch] = useState("");
   const [supplierFilter, setSupplierFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [expandedProject, setExpandedProject] = useState(null);
 
   const poCategoryMap = useMemo(() => {
     const map = {};
     orders.forEach((o) => { map[o.id] = o.category; });
     return map;
   }, [orders]);
+
+  const projectClassificationMap = useMemo(() => {
+    const map = {};
+    projects.forEach((project) => { map[project.project_name] = project.project_classification || "unclassified"; });
+    return map;
+  }, [projects]);
 
   const recordSuppliers = useMemo(() => [...new Set(receivingRecords.map((r) => r.supplier_name).filter(Boolean))].sort(), [receivingRecords]);
   const recordCategories = useMemo(() => [...new Set(receivingRecords.map((r) => poCategoryMap[r.po_id]).filter(Boolean))].sort(), [receivingRecords, poCategoryMap]);
@@ -44,6 +47,7 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [] }
       if (!map[project]) {
         map[project] = {
           project_name: project,
+          classification: projectClassificationMap[project] || "unclassified",
           total_value: 0,
           total_items: 0,
           po_count: new Set(),
@@ -72,7 +76,7 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [] }
       });
     }
     return Object.values(map).sort((a, b) => b.total_value - a.total_value);
-  }, [filteredRecords]);
+  }, [filteredRecords, projectClassificationMap]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -82,6 +86,15 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [] }
       [...g.suppliers].some(s => s.toLowerCase().includes(q))
     );
   }, [projectGroups, search]);
+
+  const classificationGroups = useMemo(() => {
+    const groups = {};
+    filtered.forEach((project) => {
+      if (!groups[project.classification]) groups[project.classification] = [];
+      groups[project.classification].push(project);
+    });
+    return Object.entries(groups).sort(([, a], [, b]) => b.reduce((sum, project) => sum + project.total_value, 0) - a.reduce((sum, project) => sum + project.total_value, 0));
+  }, [filtered]);
 
   const grandTotal = useMemo(() => filtered.reduce((s, g) => s + g.total_value, 0), [filtered]);
 
@@ -128,52 +141,10 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [] }
         </Select>
       </div>
 
-      {/* Project cards */}
-      {filtered.map((g) => {
-        const key = g.project_name;
-        const expanded = expandedProject === key;
-        return (
-          <div key={key} className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-md transition-shadow">
-            <div
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 cursor-pointer"
-              onClick={() => setExpandedProject(expanded ? null : key)}
-            >
-              <div className="flex-1">
-                <div className="flex items-center gap-3 flex-wrap mb-1">
-                  <Package className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold text-foreground">{g.project_name}</h3>
-                  <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
-                    {g.po_count.size} PO{g.po_count.size !== 1 ? "s" : ""}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    {g.records.length} receipt{g.records.length !== 1 ? "s" : ""}
-                  </Badge>
-                </div>
-
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="sm:text-right">
-                  <p className="text-xl font-bold text-foreground">₱{g.total_value.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                  <p className="text-xs text-muted-foreground">Total Delivered Value</p>
-                </div>
-                {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
-              </div>
-            </div>
-
-            {expanded && (
-              <div className="border-t border-border">
-                {Object.entries(g.supplier_records)
-                  .sort(([, a], [, b]) => b.reduce((sum, record) => sum + (record.total_amount || 0), 0) - a.reduce((sum, record) => sum + (record.total_amount || 0), 0))
-                  .map(([supplier, records]) => <SupplierDeliveryDropdown key={supplier} name={supplier} records={records} />)}
-                <div className="px-5 py-3 bg-primary/5 border-t border-border flex justify-between items-center">
-                  <span className="text-sm font-semibold text-foreground">{g.project_name} — Total</span>
-                  <span className="text-sm font-bold text-primary">₱{g.total_value.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })}
+      {/* Projects grouped by classification */}
+      {classificationGroups.map(([classification, groupedProjects]) => (
+        <ProjectClassificationSection key={classification} classification={classification} projects={groupedProjects} />
+      ))}
 
       {/* Grand total */}
       {filtered.length > 0 && (

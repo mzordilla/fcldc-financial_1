@@ -275,6 +275,11 @@ export default function PurchaseOrders() {
     queryFn: () => base44.entities.PurchaseOrder.list("-created_date", 10000)
   });
 
+  const { data: projects = [] } = useQuery({
+    queryKey: ["projects_for_delivery_summary"],
+    queryFn: () => base44.entities.Project.list("project_name", 1000)
+  });
+
   const { data: payables = [] } = useQuery({
     queryKey: ["payables_for_po_check"],
     queryFn: () => base44.entities.Payable.list("-created_date", 500)
@@ -791,7 +796,7 @@ export default function PurchaseOrders() {
         </TabsContent>
 
         <TabsContent value="project-summary">
-          <ProjectDeliverySummary receivingRecords={receivingGroups} orders={orders} />
+          <ProjectDeliverySummary receivingRecords={receivingGroups} orders={orders} projects={projects} />
         </TabsContent>
 
         <TabsContent value="suppliers">
