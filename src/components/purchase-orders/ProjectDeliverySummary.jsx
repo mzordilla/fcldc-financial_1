@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Package } from "lucide-react";
-import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import SupplierDeliveryDropdown from "@/components/purchase-orders/SupplierDeliveryDropdown";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -49,12 +49,16 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [] }
           po_count: new Set(),
           suppliers: new Set(),
           records: [],
+          supplier_records: {},
           line_items: [],
         };
       }
       const g = map[project];
       g.total_value += record.total_amount || 0;
       g.records.push(record);
+      const supplier = record.supplier_name || "(No Supplier)";
+      if (!g.supplier_records[supplier]) g.supplier_records[supplier] = [];
+      g.supplier_records[supplier].push(record);
       if (record.po_number) g.po_count.add(record.po_number);
       if (record.supplier_name) g.suppliers.add(record.supplier_name);
       (record.line_items || []).forEach((li) => {
@@ -160,49 +164,9 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [] }
 
             {expanded && (
               <div className="border-t border-border">
-                {/* Per-record breakdown */}
-                <div className="divide-y divide-border">
-                  {g.records.map((rec, ri) => (
-                    <div key={ri} className="px-5 py-3 bg-muted/10">
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mb-2">
-                        {rec.po_number && <span className="font-mono bg-muted px-2 py-0.5 rounded">PO: {rec.po_number}</span>}
-                        <span className="font-medium text-foreground">{rec.supplier_name}</span>
-                        {rec.received_date && <span>Received: {format(new Date(rec.received_date), "MMM d, yyyy")}</span>}
-                        {rec.received_by && <span>by {rec.received_by}</span>}
-                        <Badge variant="outline" className={`text-xs ${rec.status === "complete" ? "bg-primary/10 text-primary border-primary/20" : "bg-amber-500/10 text-amber-700 border-amber-200"}`}>
-                          {rec.status === "complete" ? "Complete" : "Partial"}
-                        </Badge>
-                        <span className="ml-auto font-semibold text-foreground">₱{(rec.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                      </div>
-                      {rec.line_items?.length > 0 && (
-                        <div className="border border-border rounded-lg overflow-hidden">
-                          <table className="w-full text-xs">
-                            <thead>
-                              <tr className="bg-muted/50 border-b border-border">
-                                <th className="px-3 py-2 text-left font-semibold">Item</th>
-                                <th className="px-3 py-2 text-right font-semibold">Ordered</th>
-                                <th className="px-3 py-2 text-right font-semibold">Received</th>
-                                <th className="px-3 py-2 text-right font-semibold">Total</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {rec.line_items.map((li, li_i) => (
-                                <tr key={li_i} className="border-b border-border/50 last:border-0">
-                                  <td className="px-3 py-2">{li.description}</td>
-                                  <td className="px-3 py-2 text-right text-muted-foreground">{li.quantity_ordered ?? "—"}</td>
-                                  <td className="px-3 py-2 text-right text-muted-foreground">{li.quantity_received ?? "—"}</td>
-                                  <td className="px-3 py-2 text-right font-semibold">₱{(li.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Project subtotal footer */}
+                {Object.entries(g.supplier_records)
+                  .sort(([, a], [, b]) => b.reduce((sum, record) => sum + (record.total_amount || 0), 0) - a.reduce((sum, record) => sum + (record.total_amount || 0), 0))
+                  .map(([supplier, records]) => <SupplierDeliveryDropdown key={supplier} name={supplier} records={records} />)}
                 <div className="px-5 py-3 bg-primary/5 border-t border-border flex justify-between items-center">
                   <span className="text-sm font-semibold text-foreground">{g.project_name} — Total</span>
                   <span className="text-sm font-bold text-primary">₱{g.total_value.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
