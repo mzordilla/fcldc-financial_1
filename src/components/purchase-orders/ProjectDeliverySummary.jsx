@@ -36,16 +36,25 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [], 
     return map;
   }, [projects]);
 
-  const recordSuppliers = useMemo(() => [...new Set(receivingRecords.map((r) => r.supplier_name).filter(Boolean))].sort(), [receivingRecords]);
-  const recordCategories = useMemo(() => [...new Set(receivingRecords.map((r) => poCategoryMap[r.po_id]).filter(Boolean))].sort(), [receivingRecords, poCategoryMap]);
+  const approvedOrders = useMemo(() => orders.filter((order) => order.approval_status === "approved").map((order) => ({
+    ...order,
+    po_id: order.id,
+    po_key: order.id,
+    total_amount: order.amount || 0,
+    issued_amount: order.amount || 0,
+    issued_line_items: order.line_items || [],
+  })), [orders]);
 
-  const filteredRecords = useMemo(() => receivingRecords.filter((r) => {
-    if (supplierFilter !== "all" && r.supplier_name !== supplierFilter) return false;
-    if (categoryFilter !== "all" && poCategoryMap[r.po_id] !== categoryFilter) return false;
+  const recordSuppliers = useMemo(() => [...new Set(approvedOrders.map((order) => order.supplier_name).filter(Boolean))].sort(), [approvedOrders]);
+  const recordCategories = useMemo(() => [...new Set(approvedOrders.map((order) => order.category).filter(Boolean))].sort(), [approvedOrders]);
+
+  const filteredRecords = useMemo(() => approvedOrders.filter((order) => {
+    if (supplierFilter !== "all" && order.supplier_name !== supplierFilter) return false;
+    if (categoryFilter !== "all" && order.category !== categoryFilter) return false;
     return true;
-  }), [receivingRecords, supplierFilter, categoryFilter, poCategoryMap]);
+  }), [approvedOrders, supplierFilter, categoryFilter]);
 
-  // Group all receiving line items by project
+  // Group approved purchase orders by project
   const projectGroups = useMemo(() => {
     const map = {};
     for (const record of filteredRecords) {
@@ -86,7 +95,7 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [], 
           supplier_name: record.supplier_name,
           received_date: record.received_date,
         });
-        g.total_items += li.quantity_received || li.quantity_ordered || 0;
+        g.total_items += li.quantity_received ?? li.quantity_ordered ?? li.quantity ?? 0;
       });
     }
     return Object.values(map).sort((a, b) => b.total_value - a.total_value);
@@ -112,8 +121,8 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [], 
 
   const grandTotal = useMemo(() => filtered.reduce((s, g) => s + g.total_value, 0), [filtered]);
 
-  if (receivingRecords.length === 0) {
-    return <p className="text-center py-16 text-muted-foreground">No delivery records yet.</p>;
+  if (approvedOrders.length === 0) {
+    return <p className="text-center py-16 text-muted-foreground">No approved purchase orders yet.</p>;
   }
 
   return (
@@ -122,7 +131,7 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [], 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Projects", value: projectGroups.length },
-          { label: "Total POs Delivered", value: new Set(filteredRecords.map(r => r.po_number).filter(Boolean)).size },
+          { label: "Approved POs", value: new Set(filteredRecords.map(r => r.po_number).filter(Boolean)).size },
           { label: "Total Suppliers", value: new Set(filteredRecords.map(r => r.supplier_name).filter(Boolean)).size },
           { label: "Grand Total Value", value: `₱${projectGroups.reduce((sum, project) => sum + project.total_value, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, highlight: true },
         ].map((kpi, i) => (
