@@ -149,9 +149,7 @@ export default function ProjectDeliverySummary({ receivingRecords, orders = [] }
                     {g.records.length} receipt{g.records.length !== 1 ? "s" : ""}
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {[...g.suppliers].join(", ") || "—"}
-                </p>
+
               </div>
               <div className="flex items-center gap-4">
                 <div className="sm:text-right">
