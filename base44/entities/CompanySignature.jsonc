@@ -1,0 +1,22 @@
+{
+  "name": "CompanySignature",
+  "type": "object",
+  "properties": {
+    "signatory_name": {
+      "type": "string",
+      "description": "Name of the authorized company signatory"
+    },
+    "signatory_title": {
+      "type": "string",
+      "description": "Position or title of the authorized signatory"
+    },
+    "signature_url": {
+      "type": "string",
+      "description": "Uploaded signature image URL"
+    }
+  },
+  "required": [
+    "signatory_name",
+    "signature_url"
+  ]
+}
