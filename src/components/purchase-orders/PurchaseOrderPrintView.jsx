@@ -11,6 +11,7 @@ export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
   const [signatureId, setSignatureId] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { data: signatures = [], refetch } = useQuery({ queryKey: ["company-signatures"], queryFn: () => base44.entities.CompanySignature.list("-created_date"), enabled: open });
+  const { data: currentUser } = useQuery({ queryKey: ["current-user"], queryFn: () => base44.auth.me(), enabled: open });
   const signature = signatures.find((item) => item.id === signatureId) || null;
   if (!open || !po) return null;
 
@@ -30,7 +31,7 @@ export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
           <option value="">No signature</option>
           {signatures.map((item) => <option key={item.id} value={item.id}>{item.signatory_name}</option>)}
         </select>
-        <Button variant="outline" size="sm" onClick={() => setSettingsOpen(true)}><Settings className="w-4 h-4 mr-2" /> Signature Settings</Button>
+        {currentUser?.role === "admin" && <Button variant="outline" size="sm" onClick={() => setSettingsOpen(true)}><Settings className="w-4 h-4 mr-2" /> Signature Settings</Button>}
         <Button variant={layout === "full" ? "default" : "outline"} size="sm" onClick={() => setLayout("full")}>Whole Page A4</Button>
         <Button variant={layout === "two" ? "default" : "outline"} size="sm" onClick={() => setLayout("two")}>Two Copies</Button>
         <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="w-4 h-4 mr-2" /> Print</Button>
