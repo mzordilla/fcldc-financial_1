@@ -31,9 +31,9 @@ export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
             <PurchaseOrderPrintDocument po={po} />
           ) : (
             <>
-              <div className="h-[148mm] overflow-hidden"><div className="w-[200%]" style={{ zoom: 0.5 }}><PurchaseOrderPrintDocument po={po} /></div></div>
+              <div className="h-[148mm] overflow-hidden"><div style={{ width: "200%", transform: "scale(0.5)", transformOrigin: "top left" }}><PurchaseOrderPrintDocument po={po} /></div></div>
               <div className="border-t-2 border-dashed border-gray-400" />
-              <div className="h-[148mm] overflow-hidden"><div className="w-[200%]" style={{ zoom: 0.5 }}><PurchaseOrderPrintDocument po={po} /></div></div>
+              <div className="h-[148mm] overflow-hidden"><div style={{ width: "200%", transform: "scale(0.5)", transformOrigin: "top left" }}><PurchaseOrderPrintDocument po={po} /></div></div>
             </>
           )}
         </div>
