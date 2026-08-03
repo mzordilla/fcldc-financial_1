@@ -12,7 +12,7 @@ const fmt = (n) => `₱${Number(n || 0).toLocaleString(undefined, { minimumFract
 const unitBreakdown = (units) => units.reduce((totals, unit) => {
   const total = Number(unit.selling_price || 0);
   const vatRate = Number(unit.vat_percentage || 12);
-  const closingRate = Number(unit.closing_fees_percentage || 7);
+  const closingRate = Number(unit.closing_fees_percentage || 8);
   const base = total / (1 + (vatRate + closingRate) / 100);
   totals.base += base;
   totals.vat += base * vatRate / 100;
@@ -223,7 +223,7 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
         ) : salesOnly ? (
           <div className="min-w-[1280px]">
             <div className="grid grid-cols-[1.5fr_1.2fr_1fr_1fr_1fr_1fr_1fr_7rem_2.5rem] gap-3 px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              <span>Buyer</span><span>Units</span><span className="text-right">Closing Fees</span><span className="text-right">VAT</span><span className="text-right">Final Price</span><span className="text-right">Collected</span><span className="text-right">Balance</span><span className="text-center">Status</span><span />
+              <span>Buyer</span><span>Units</span><span className="text-right">Closing Fees (8%)</span><span className="text-right">VAT (12%)</span><span className="text-right">Final Price</span><span className="text-right">Collected</span><span className="text-right">Balance</span><span className="text-center">Status</span><span />
             </div>
             <div className="rounded-2xl border border-border overflow-hidden divide-y divide-border max-h-[70vh] overflow-y-auto">
               {clientGroups.map((group) => (

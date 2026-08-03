@@ -54,13 +54,13 @@
     },
     "vat_percentage": {
       "type": "number",
-      "default": 0,
-      "description": "VAT percentage on the selling price (e.g. 12 for 12%)"
+      "default": 12,
+      "description": "VAT percentage included in the final sale price"
     },
     "closing_fees_percentage": {
       "type": "number",
-      "default": 0,
-      "description": "Closing fees percentage on the selling price (e.g. 3 for 3%)"
+      "default": 8,
+      "description": "Closing fees percentage included in the final sale price"
     },
     "price_per_sqm_rent": {
       "type": "number",

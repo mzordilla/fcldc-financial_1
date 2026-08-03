@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 const defaults = {
   unit_number: "", building: "", floor: "", unit_type: "1br",
   status: "available_for_sale", area_sqm: "", price_per_sqm: "", selling_price: "",
-  vat_percentage: 0, closing_fees_percentage: 0,
+  vat_percentage: 12, closing_fees_percentage: 8,
   price_per_sqm_rent: "", monthly_rent: "",
   description: "", amenities: "", parking_slots: 0, notes: "",
 };
@@ -134,7 +134,7 @@ export default function UnitFormDialog({ open, onOpenChange, initialData, onSubm
             </div>
             <div className="space-y-1">
               <Label>Closing Fees (%)</Label>
-              <Input type="number" min="0" max="100" step="0.01" value={form.closing_fees_percentage} onChange={e => set("closing_fees_percentage", e.target.value)} placeholder="e.g. 3" />
+              <Input type="number" min="0" max="100" step="0.01" value={form.closing_fees_percentage} onChange={e => set("closing_fees_percentage", e.target.value)} placeholder="e.g. 8" />
             </div>
             <div className="space-y-1">
               <Label>Price per sqm Rent (₱)</Label>
