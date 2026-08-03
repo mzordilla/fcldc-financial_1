@@ -519,7 +519,7 @@ export default function PaymentApprovals() {
           className={`hover:bg-muted/30 transition-colors cursor-pointer ${selectedIds.has(pr.id) ? "bg-primary/5" : ""} ${isOverdue ? "border-l-2 border-l-destructive" : ""}`}
           onClick={() => setExpandedHistory(isExpanded ? null : pr.id)}
         >
-          {isAdmin && (
+          {(isAdmin || (isDisbursementRole && pr.approval_status === "approved")) && (
             <td className="px-1 py-0" onClick={e => e.stopPropagation()}>
               {(pr.approval_status === "pending" || pr.approval_status === "approved") && (
                 <Checkbox checked={selectedIds.has(pr.id)} onCheckedChange={() => toggleSelect(pr.id)} />
@@ -766,7 +766,7 @@ export default function PaymentApprovals() {
 
         {/* Approved */}
         <TabsContent value="approved" className="space-y-3 mt-4">
-          {isAdmin && selectedApproved.length > 0 && (
+          {(isAdmin || isDisbursementRole) && selectedApproved.length > 0 && (
             <div className="flex items-center justify-between bg-chart-2/10 border border-chart-2/20 rounded-xl px-4 py-2.5">
               <span className="text-sm text-chart-2">
                 {selectedApproved.length} approved request{selectedApproved.length !== 1 ? "s" : ""} selected
@@ -797,7 +797,7 @@ export default function PaymentApprovals() {
                   </div>
                 </div>
               )}
-              <SupplierGroupedRequests ref={approvedGroupRef} requests={approvedInView} renderPRRow={renderPRRow} isAdmin={isAdmin} emptyLabel="No approved requests" />
+              <SupplierGroupedRequests ref={approvedGroupRef} requests={approvedInView} renderPRRow={renderPRRow} isAdmin={isAdmin || isDisbursementRole} emptyLabel="No approved requests" />
             </>
           )}
         </TabsContent>
