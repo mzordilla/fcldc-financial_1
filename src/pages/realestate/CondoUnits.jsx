@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Building2, Pencil, Trash2, Home, Square } from "lucide-react";
+import { Plus, Building2, ChevronDown, Pencil, Trash2, Home, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -46,6 +46,7 @@ export default function CondoUnits() {
   const [editing, setEditing] = useState(null);
   const [showBulkEdit, setShowBulkEdit] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [expandedBuildings, setExpandedBuildings] = useState(new Set());
   const queryClient = useQueryClient();
 
   const { data: units = [], isLoading } = useQuery({
@@ -90,6 +91,17 @@ export default function CondoUnits() {
   };
 
   const filtered = statusFilter === "all" ? units : units.filter(u => u.status === statusFilter);
+  const buildingGroups = Object.entries(filtered.reduce((groups, unit) => {
+    const building = unit.building?.trim() || "No Building";
+    (groups[building] ||= []).push(unit);
+    return groups;
+  }, {})).sort(([a], [b]) => a.localeCompare(b));
+
+  const toggleBuilding = (building) => setExpandedBuildings((prev) => {
+    const next = new Set(prev);
+    next.has(building) ? next.delete(building) : next.add(building);
+    return next;
+  });
 
   const totalArea = filtered.reduce((s, u) => s + (u.area_sqm || 0), 0);
   const totalSellingPrice = filtered.reduce((s, u) => s + (u.selling_price || 0), 0);
@@ -198,80 +210,97 @@ export default function CondoUnits() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map(u => (
-              <TableRow
-                key={u.id}
-                className={`hover:bg-muted/30 ${selectedIds.has(u.id) ? "bg-primary/5" : ""}`}
-              >
-                <TableCell>
-                  <Checkbox
-                    checked={selectedIds.has(u.id)}
-                    onCheckedChange={() => toggleSelect(u.id)}
-                  />
-                </TableCell>
-                <TableCell className="font-semibold">{u.unit_number}</TableCell>
-                <TableCell>
-                  {u.building && (
-                    <div>
-                      <p className="text-sm">{u.building}</p>
-                      {u.floor && <p className="text-xs text-muted-foreground">Floor {u.floor}</p>}
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell>{u.unit_type ? typeLabels[u.unit_type] : "—"}</TableCell>
-                <TableCell>
-                  {u.parking_slots ? (
-                    <div className="flex items-center gap-1">
-                      <span className="font-semibold text-foreground">{u.parking_slots}</span>
-                      <span className="text-xs text-muted-foreground">slot{u.parking_slots > 1 ? "s" : ""}</span>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-                <TableCell>{u.area_sqm ? `${u.area_sqm} sqm` : "—"}</TableCell>
-                <TableCell>{u.price_per_sqm ? fmt(u.price_per_sqm) : "—"}</TableCell>
-                <TableCell>
-                  {u.selling_price ? (
-                    <div>
-                      <p className="font-semibold text-emerald-700">{fmt(u.selling_price)}</p>
-                      {(u.vat_percentage > 0 || u.closing_fees_percentage > 0) && (
-                        <p className="text-xs text-muted-foreground">
-                          {u.vat_percentage > 0 && `+${u.vat_percentage}% VAT`}
-                          {u.closing_fees_percentage > 0 && ` +${u.closing_fees_percentage}% Closing`}
-                        </p>
-                      )}
-                    </div>
-                  ) : "—"}
-                </TableCell>
-                <TableCell>{u.monthly_rent ? `${fmt(u.monthly_rent)}/mo` : "—"}</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={`text-xs ${statusStyles[u.status]}`}>
-                    {statusLabels[u.status]}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      onClick={() => { setEditing(u); setShowForm(true); }}
+            {buildingGroups.map(([building, buildingUnits]) => {
+              const isExpanded = expandedBuildings.has(building);
+              return (
+                <Fragment key={building}>
+                  <TableRow className="bg-muted/40 hover:bg-muted/60 cursor-pointer" onClick={() => toggleBuilding(building)}>
+                    <TableCell colSpan={11} className="py-3">
+                      <div className="flex items-center gap-3">
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "" : "-rotate-90"}`} />
+                        <Building2 className="w-4 h-4 text-primary" />
+                        <span className="font-semibold text-foreground">{building}</span>
+                        <Badge variant="secondary" className="text-xs">{buildingUnits.length} unit{buildingUnits.length !== 1 ? "s" : ""}</Badge>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  {isExpanded && buildingUnits.map(u => (
+                    <TableRow
+                      key={u.id}
+                      className={`hover:bg-muted/30 ${selectedIds.has(u.id) ? "bg-primary/5" : ""}`}
                     >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => deleteMutation.mutate(u.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(u.id)}
+                          onCheckedChange={() => toggleSelect(u.id)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-semibold">{u.unit_number}</TableCell>
+                      <TableCell>
+                        {u.building && (
+                          <div>
+                            <p className="text-sm">{u.building}</p>
+                            {u.floor && <p className="text-xs text-muted-foreground">Floor {u.floor}</p>}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>{u.unit_type ? typeLabels[u.unit_type] : "—"}</TableCell>
+                      <TableCell>
+                        {u.parking_slots ? (
+                          <div className="flex items-center gap-1">
+                            <span className="font-semibold text-foreground">{u.parking_slots}</span>
+                            <span className="text-xs text-muted-foreground">slot{u.parking_slots > 1 ? "s" : ""}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>{u.area_sqm ? `${u.area_sqm} sqm` : "—"}</TableCell>
+                      <TableCell>{u.price_per_sqm ? fmt(u.price_per_sqm) : "—"}</TableCell>
+                      <TableCell>
+                        {u.selling_price ? (
+                          <div>
+                            <p className="font-semibold text-emerald-700">{fmt(u.selling_price)}</p>
+                            {(u.vat_percentage > 0 || u.closing_fees_percentage > 0) && (
+                              <p className="text-xs text-muted-foreground">
+                                {u.vat_percentage > 0 && `+${u.vat_percentage}% VAT`}
+                                {u.closing_fees_percentage > 0 && ` +${u.closing_fees_percentage}% Closing`}
+                              </p>
+                            )}
+                          </div>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell>{u.monthly_rent ? `${fmt(u.monthly_rent)}/mo` : "—"}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={`text-xs ${statusStyles[u.status]}`}>
+                          {statusLabels[u.status]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={() => { setEditing(u); setShowForm(true); }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => deleteMutation.mutate(u.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </Fragment>
+              );
+            })}
           </TableBody>
           {filtered.length > 0 && (
             <tfoot>
