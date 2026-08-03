@@ -14,11 +14,11 @@ export default function BuildingMapUnit({ unit, onSelect }) {
     <button
       type="button"
       onClick={() => onSelect(unit)}
-      className={`min-h-20 min-w-0 rounded-lg border p-3 text-left transition-shadow hover:shadow-md ${statusClasses[unit.status] || "border-border bg-muted text-foreground"}`}
+      className={`flex min-h-16 min-w-0 items-center justify-between gap-2 rounded-lg border p-3 text-left transition-shadow hover:shadow-md ${statusClasses[unit.status] || "border-border bg-muted text-foreground"}`}
       aria-label={`Unit ${unit.unit_number}, ${statusLabels[unit.status] || unit.status}`}
     >
       <p className="font-bold">Unit {unit.unit_number}</p>
-      <p className="mt-1 text-xs font-medium">{statusLabels[unit.status] || unit.status}</p>
+      <p className="text-xs font-medium">{statusLabels[unit.status] || unit.status}</p>
     </button>
   );
 }

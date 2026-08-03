@@ -43,7 +43,7 @@ export default function BuildingMap() {
         <section key={building} className="overflow-hidden rounded-xl border bg-card">
           <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-3"><Building2 className="h-5 w-5 text-primary" /><h2 className="font-semibold">{building}</h2></div>
           <div className="divide-y">{Object.entries(floors).sort(([a], [b]) => floorRank(a) - floorRank(b)).map(([floor, floorUnits]) => (
-            <div key={floor} className="grid grid-cols-[112px_minmax(0,1fr)] gap-3 p-4"><p className="pt-3 text-sm font-semibold text-muted-foreground">{floorLabel(floor)}</p><div className="grid min-w-0 grid-flow-col auto-cols-fr gap-3">{floorUnits.sort((a, b) => String(a.unit_number).localeCompare(String(b.unit_number), undefined, { numeric: true })).map((unit) => <BuildingMapUnit key={unit.id} unit={unit} onSelect={setSelectedUnit} />)}</div></div>
+            <div key={floor} className="grid grid-cols-[112px_minmax(0,1fr)] items-center gap-3 p-4"><p className="text-sm font-semibold text-muted-foreground">{floorLabel(floor)}</p><div className="grid min-w-0 grid-flow-col auto-cols-fr gap-3">{floorUnits.sort((a, b) => String(a.unit_number).localeCompare(String(b.unit_number), undefined, { numeric: true })).map((unit) => <BuildingMapUnit key={unit.id} unit={unit} onSelect={setSelectedUnit} />)}</div></div>
           ))}</div>
         </section>
       ))}
