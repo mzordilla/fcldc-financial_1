@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Users, Pencil, Trash2 } from "lucide-react";
+import { Plus, Users, ChevronDown, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format, differenceInDays } from "date-fns";
@@ -19,6 +19,7 @@ const fmt = (n) => n ? `₱${Number(n).toLocaleString()}` : "—";
 export default function Tenants() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [expandedNames, setExpandedNames] = useState(new Set());
   const queryClient = useQueryClient();
 
   const { data: tenants = [], isLoading } = useQuery({
@@ -78,6 +79,18 @@ export default function Tenants() {
     return differenceInDays(new Date(t.lease_end), new Date()) <= 30;
   }).length;
   const totalMonthlyRent = tenants.filter(t => t.status === "active").reduce((s, t) => s + (t.monthly_rent || 0) + (t.association_dues || 0), 0);
+  const tenantGroups = Object.entries(tenants.reduce((groups, tenant) => {
+    const key = tenant.full_name?.trim().toLowerCase() || "unnamed tenant";
+    (groups[key] ||= []).push(tenant);
+    return groups;
+  }, {})).map(([key, items]) => ({ key, name: items[0].full_name || "Unnamed Tenant", items }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const toggleName = (key) => setExpandedNames((prev) => {
+    const next = new Set(prev);
+    next.has(key) ? next.delete(key) : next.add(key);
+    return next;
+  });
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
@@ -126,51 +139,64 @@ export default function Tenants() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {tenants.map(t => {
-                const daysLeft = t.lease_end ? differenceInDays(new Date(t.lease_end), new Date()) : null;
+              {tenantGroups.map((group) => {
+                const isExpanded = expandedNames.has(group.key);
+                const groupRent = group.items.filter((t) => t.status === "active").reduce((sum, t) => sum + (t.monthly_rent || 0), 0);
                 return (
-                  <tr key={t.id} className="hover:bg-muted/20 transition-colors">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-foreground">{t.full_name}</p>
-                      {t.contact_number && <p className="text-xs text-muted-foreground">{t.contact_number}</p>}
-                      {t.email && <p className="text-xs text-muted-foreground">{t.email}</p>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="font-medium">Unit {t.unit_number || "—"}</p>
-                      {t.building && <p className="text-xs text-muted-foreground">{t.building}</p>}
-                    </td>
-                    <td className="px-4 py-3">
-                      {t.lease_start && <p className="text-xs">{format(new Date(t.lease_start), "MMM d, yyyy")}</p>}
-                      {t.lease_end && <p className="text-xs">{format(new Date(t.lease_end), "MMM d, yyyy")}</p>}
-                      {daysLeft !== null && t.status === "active" && (
-                        <p className={`text-xs font-medium mt-0.5 ${daysLeft <= 30 ? "text-amber-600" : "text-muted-foreground"}`}>
-                          {daysLeft > 0 ? `${daysLeft}d left` : "Expired"}
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 font-semibold text-primary">{fmt(t.monthly_rent)}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {fmt(t.deposit_amount)}
-                      {t.contract_attachment_url && (
-                        <a href={t.contract_attachment_url} target="_blank" rel="noreferrer" className="block text-xs text-primary hover:underline mt-0.5">View contract</a>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge variant="outline" className={`text-xs ${statusStyles[t.status]}`}>
-                        {t.status}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-8 w-8" onClick={() => { setEditing(t); setShowForm(true); }}>
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive h-8 w-8" onClick={() => deleteMutation.mutate(t.id)}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
+                  <Fragment key={group.key}>
+                    <tr className="bg-muted/40 hover:bg-muted/60 cursor-pointer" onClick={() => toggleName(group.key)}>
+                      <td colSpan={7} className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "" : "-rotate-90"}`} />
+                          <Users className="w-4 h-4 text-primary" />
+                          <span className="font-semibold text-foreground">{group.name}</span>
+                          <Badge variant="secondary" className="text-xs">{group.items.length} lease{group.items.length !== 1 ? "s" : ""}</Badge>
+                          <span className="ml-auto text-sm font-semibold text-primary">{fmt(groupRent)}/mo</span>
+                        </div>
+                      </td>
+                    </tr>
+                    {isExpanded && group.items.map((t) => {
+                      const daysLeft = t.lease_end ? differenceInDays(new Date(t.lease_end), new Date()) : null;
+                      return (
+                        <tr key={t.id} className="hover:bg-muted/20 transition-colors">
+                          <td className="px-4 py-3 pl-11">
+                            <p className="font-medium text-foreground">{t.full_name}</p>
+                            {t.contact_number && <p className="text-xs text-muted-foreground">{t.contact_number}</p>}
+                            {t.email && <p className="text-xs text-muted-foreground">{t.email}</p>}
+                          </td>
+                          <td className="px-4 py-3">
+                            <p className="font-medium">Unit {t.unit_number || "—"}</p>
+                            {t.building && <p className="text-xs text-muted-foreground">{t.building}</p>}
+                          </td>
+                          <td className="px-4 py-3">
+                            {t.lease_start && <p className="text-xs">{format(new Date(t.lease_start), "MMM d, yyyy")}</p>}
+                            {t.lease_end && <p className="text-xs">{format(new Date(t.lease_end), "MMM d, yyyy")}</p>}
+                            {daysLeft !== null && t.status === "active" && (
+                              <p className={`text-xs font-medium mt-0.5 ${daysLeft <= 30 ? "text-amber-600" : "text-muted-foreground"}`}>
+                                {daysLeft > 0 ? `${daysLeft}d left` : "Expired"}
+                              </p>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-primary">{fmt(t.monthly_rent)}</td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {fmt(t.deposit_amount)}
+                            {t.contract_attachment_url && (
+                              <a href={t.contract_attachment_url} target="_blank" rel="noreferrer" className="block text-xs text-primary hover:underline mt-0.5">View contract</a>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge variant="outline" className={`text-xs ${statusStyles[t.status]}`}>{t.status}</Badge>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-8 w-8" onClick={() => { setEditing(t); setShowForm(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
+                              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive h-8 w-8" onClick={() => deleteMutation.mutate(t.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </Fragment>
                 );
               })}
             </tbody>
