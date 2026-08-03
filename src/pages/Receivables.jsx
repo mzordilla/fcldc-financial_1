@@ -132,7 +132,30 @@ export default function Receivables() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["receivables"] }),
   });
 
-  const markCollected = (r, data) => updateMutation.mutate({ id: r.id, data });
+  const markCollected = async (r, data) => {
+    await updateMutation.mutateAsync({ id: r.id, data });
+
+    if (r.property_listing_id) {
+      const listing = await base44.entities.PropertyListing.get(r.property_listing_id);
+      const latestCollection = data.payment_history?.[data.payment_history.length - 1];
+      if (latestCollection) {
+        await base44.entities.PropertyListing.update(r.property_listing_id, {
+          payment_history: [
+            ...(listing.payment_history || []),
+            {
+              payment_date: latestCollection.collection_date,
+              amount: latestCollection.amount,
+              payment_method: latestCollection.undeposited ? "undeposited" : latestCollection.bank_account_id ? "bank_transfer" : "other",
+              reference: latestCollection.reference || "",
+              notes: latestCollection.notes || "",
+            },
+          ],
+        });
+        queryClient.invalidateQueries({ queryKey: ["property_listings"] });
+        queryClient.invalidateQueries({ queryKey: ["property-listings"] });
+      }
+    }
+  };
 
   const categoryReceivables = activeTab === "condo-sales"
     ? receivables.filter(r => r.property_listing_id)
