@@ -38,7 +38,7 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
       const listing = await base44.entities.PropertyListing.update(id, data);
       if (listing.status === "sold") {
         const linkedUnits = condoUnits.filter((unit) => listing.units?.some((linked) => linked.unit_id === unit.id));
-        const salePrice = linkedUnits.length ? calculateCondoSaleBreakdown(linkedUnits).total : listing.final_price || listing.asking_price || 0;
+        const salePrice = Number(listing.final_price || (linkedUnits.length ? calculateCondoSaleBreakdown(linkedUnits).total : listing.asking_price) || 0);
         const amountPaid = (listing.payment_history || []).reduce((sum, payment) => sum + (payment.amount || 0), 0);
         const linked = listing.receivable_id ? [await base44.entities.Receivable.get(listing.receivable_id)] : await base44.entities.Receivable.filter({ property_listing_id: listing.id }, "-created_date", 1);
         if (linked[0]) await base44.entities.Receivable.update(linked[0].id, {
@@ -63,8 +63,8 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
       const listing = await base44.entities.PropertyListing.create({
         units: sale.units.map((unit) => ({ unit_id: unit.id, unit_number: unit.unit_number, building: unit.building })),
         listing_type: "for_sale",
-        asking_price: sale.final_price,
-        final_price: sale.final_price,
+        asking_price: sale.price_breakdown?.base || sale.final_price,
+        final_price: sale.price_breakdown?.total || sale.final_price,
         status: "sold",
         client_id: client.id,
         buyer_tenant_name: client.client_name,
@@ -106,7 +106,14 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
         const units = soldUnits.filter((unit) => listing.units?.some((linked) => linked.unit_id === unit.id));
         units.forEach((unit) => linkedUnitIds.add(unit.id));
         if (!units.length) return null;
-        const breakdown = calculateCondoSaleBreakdown(units);
+        const calculated = calculateCondoSaleBreakdown(units);
+        const base = Number(listing.asking_price || (listing.final_price ? listing.final_price / 1.2 : calculated.base));
+        const breakdown = {
+          base,
+          closing: base * 0.08,
+          vat: base * 0.12,
+          total: Number(listing.final_price || base * 1.2),
+        };
         return { ...listing, units, final_price: breakdown.total, price_breakdown: breakdown, can_record_payment: true };
       })
       .filter(Boolean);
