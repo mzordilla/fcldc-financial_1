@@ -15,12 +15,15 @@ const groupUnits = (units) => Object.entries(units.reduce((buildings, unit) => {
 }, {})).sort(([a], [b]) => a.localeCompare(b));
 
 const floorRank = (floor) => {
-  const value = floor.toLowerCase();
-  if (value.includes("penthouse")) return 10000;
-  if (value.includes("ground")) return 0;
-  if (value.includes("basement")) return -(Number(value.match(/\d+/)?.[0]) || 1);
-  if (value === "unassigned") return -10000;
-  return Number(value.match(/\d+/)?.[0]) || 0;
+  const value = floor.toLowerCase().trim();
+  const words = { first: 1, one: 1, second: 2, two: 2, third: 3, three: 3, fourth: 4, four: 4, fifth: 5, five: 5, sixth: 6, six: 6, seventh: 7, seven: 7, eighth: 8, eight: 8 };
+  const wordNumber = Object.entries(words).find(([word]) => value.includes(word))?.[1];
+  const number = Number(value.match(/\d+/)?.[0]) || wordNumber || 1;
+  if (value === "unassigned") return 10000;
+  if (value.includes("penthouse")) return 1000;
+  if (value.includes("basement") || /^b\d+/.test(value)) return 4 - number;
+  if (value.includes("ground")) return 4;
+  return 4 + number;
 };
 
 const floorLabel = (floor) => /floor/i.test(floor) || floor === "Unassigned" ? floor : `Floor ${floor}`;
@@ -39,7 +42,7 @@ export default function BuildingMap() {
       {buildings.map(([building, floors]) => (
         <section key={building} className="overflow-hidden rounded-xl border bg-card">
           <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-3"><Building2 className="h-5 w-5 text-primary" /><h2 className="font-semibold">{building}</h2></div>
-          <div className="divide-y">{Object.entries(floors).sort(([a], [b]) => floorRank(b) - floorRank(a)).map(([floor, floorUnits]) => (
+          <div className="divide-y">{Object.entries(floors).sort(([a], [b]) => floorRank(a) - floorRank(b)).map(([floor, floorUnits]) => (
             <div key={floor} className="grid gap-3 p-4 md:grid-cols-[100px_1fr]"><p className="pt-3 text-sm font-semibold text-muted-foreground">{floorLabel(floor)}</p><div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">{floorUnits.sort((a, b) => String(a.unit_number).localeCompare(String(b.unit_number), undefined, { numeric: true })).map((unit) => <BuildingMapUnit key={unit.id} unit={unit} onSelect={setSelectedUnit} />)}</div></div>
           ))}</div>
         </section>
