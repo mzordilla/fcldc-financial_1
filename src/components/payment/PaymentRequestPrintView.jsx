@@ -270,9 +270,9 @@ export default function PaymentRequestPrintView({ open, onOpenChange, data }) {
             <CopyBlock data={data} allocations={allocations} netAmount={netAmount} watermark="FCL COPY" heightMm={297} />
           ) : (
             <>
-              <CopyBlock data={data} allocations={allocations} netAmount={netAmount} watermark="PAYEE'S COPY" />
-              <div className="border-t-2 border-dashed border-gray-400" />
               <CopyBlock data={data} allocations={allocations} netAmount={netAmount} watermark="FCL COPY" />
+              <div className="border-t-2 border-dashed border-gray-400" />
+              <CopyBlock data={data} allocations={allocations} netAmount={netAmount} watermark="PAYEE'S COPY" />
             </>
           )}
         </div>
