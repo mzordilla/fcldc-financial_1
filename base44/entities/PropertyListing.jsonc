@@ -71,6 +71,11 @@
       "format": "date",
       "description": "Date the deal was closed"
     },
+    "payment_due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Due date for the unpaid condo sale balance"
+    },
     "final_price": {
       "type": "number",
       "description": "Final agreed price or rent"
@@ -82,6 +87,10 @@
     "contract_attachment_url": {
       "type": "string",
       "description": "URL of the uploaded sale/lease contract document"
+    },
+    "receivable_id": {
+      "type": "string",
+      "description": "Linked Receivable for a sold condo unit"
     },
     "payment_history": {
       "type": "array",

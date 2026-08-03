@@ -49,10 +49,34 @@ export default function Listings() {
     }
   };
 
+  const syncSaleReceivable = async (listing) => {
+    if (listing.listing_type !== "for_sale" || listing.status !== "sold") return;
+    const salePrice = listing.final_price || listing.asking_price || 0;
+    const amountPaid = (listing.payment_history || []).reduce((sum, payment) => sum + (payment.amount || 0), 0);
+    const unitLabel = (listing.units || []).map((unit) => unit.unit_number).filter(Boolean).join(", ") || "Condo Unit";
+    const receivableData = {
+      client_name: listing.buyer_tenant_name || "Condo Buyer",
+      project_name: `${unitLabel} Condo Sale`,
+      invoice_number: `SALE-${listing.id.slice(-8).toUpperCase()}`,
+      property_listing_id: listing.id,
+      amount: salePrice,
+      amount_paid: amountPaid,
+      due_date: listing.payment_due_date || listing.date_closed || listing.date_listed || format(new Date(), "yyyy-MM-dd"),
+      status: amountPaid >= salePrice ? "paid" : amountPaid > 0 ? "partially_paid" : "outstanding",
+      payment_history: (listing.payment_history || []).map((payment) => ({ collection_date: payment.payment_date, amount: payment.amount, reference: payment.reference || "", notes: payment.notes || payment.payment_method || "Condo sale payment" })),
+      notes: `Unpaid balance for sold condo unit(s): ${unitLabel}`,
+    };
+    const existing = listing.receivable_id ? [await base44.entities.Receivable.get(listing.receivable_id)] : await base44.entities.Receivable.filter({ property_listing_id: listing.id }, "-created_date", 1);
+    const receivable = existing[0] ? await base44.entities.Receivable.update(existing[0].id, receivableData) : await base44.entities.Receivable.create(receivableData);
+    if (listing.receivable_id !== receivable.id) await base44.entities.PropertyListing.update(listing.id, { receivable_id: receivable.id });
+    queryClient.invalidateQueries({ queryKey: ["receivables"] });
+  };
+
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const listing = await base44.entities.PropertyListing.create(data);
       await cascadeUnitStatus(data);
+      await syncSaleReceivable(listing);
       return listing;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["property-listings"] }),
@@ -62,6 +86,7 @@ export default function Listings() {
     mutationFn: async ({ id, data }) => {
       const listing = await base44.entities.PropertyListing.update(id, data);
       await cascadeUnitStatus(data);
+      await syncSaleReceivable(listing);
       return listing;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["property-listings"] }),

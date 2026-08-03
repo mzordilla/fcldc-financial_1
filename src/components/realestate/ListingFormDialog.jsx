@@ -13,7 +13,7 @@ import { Paperclip, Loader2, UserPlus } from "lucide-react";
 const defaults = {
   units: [], listing_type: "for_sale",
   asking_price: "", status: "active", client_id: "", buyer_tenant_name: "",
-  buyer_tenant_contact: "", date_listed: "", date_closed: "",
+  buyer_tenant_contact: "", date_listed: "", date_closed: "", payment_due_date: "",
   final_price: "", agent: "", contract_attachment_url: "", notes: "",
 };
 
@@ -201,6 +201,10 @@ export default function ListingFormDialog({ open, onOpenChange, initialData, uni
               <Label>Date Closed</Label>
               <Input type="date" value={form.date_closed} onChange={e => set("date_closed", e.target.value)} />
             </div>
+            {form.listing_type === "for_sale" && <div className="space-y-1">
+              <Label>Unpaid Balance Due Date</Label>
+              <Input type="date" value={form.payment_due_date} onChange={e => set("payment_due_date", e.target.value)} required={form.status === "sold"} />
+            </div>}
           </div>
           <div className="space-y-1">
             <Label>Contract</Label>

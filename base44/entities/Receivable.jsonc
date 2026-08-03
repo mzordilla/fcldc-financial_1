@@ -14,6 +14,10 @@
       "type": "string",
       "description": "Invoice reference number"
     },
+    "property_listing_id": {
+      "type": "string",
+      "description": "Linked sold PropertyListing ID"
+    },
     "amount": {
       "type": "number",
       "description": "Total invoice amount"

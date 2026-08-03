@@ -25,8 +25,25 @@ export default function ClientPaymentTracker() {
   const clientsById = useMemo(() => Object.fromEntries(allClients.map(c => [c.id, c])), [allClients]);
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.PropertyListing.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["property_listings"] }),
+    mutationFn: async ({ id, data }) => {
+      const listing = await base44.entities.PropertyListing.update(id, data);
+      if (listing.status === "sold") {
+        const salePrice = listing.final_price || listing.asking_price || 0;
+        const amountPaid = (listing.payment_history || []).reduce((sum, payment) => sum + (payment.amount || 0), 0);
+        const linked = listing.receivable_id ? [await base44.entities.Receivable.get(listing.receivable_id)] : await base44.entities.Receivable.filter({ property_listing_id: listing.id }, "-created_date", 1);
+        if (linked[0]) await base44.entities.Receivable.update(linked[0].id, {
+          amount: salePrice,
+          amount_paid: amountPaid,
+          status: amountPaid >= salePrice ? "paid" : amountPaid > 0 ? "partially_paid" : "outstanding",
+          payment_history: (listing.payment_history || []).map((payment) => ({ collection_date: payment.payment_date, amount: payment.amount, reference: payment.reference || "", notes: payment.notes || payment.payment_method || "Condo sale payment" })),
+        });
+      }
+      return listing;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["property_listings"] });
+      queryClient.invalidateQueries({ queryKey: ["receivables"] });
+    },
   });
 
   const closedListings = useMemo(
