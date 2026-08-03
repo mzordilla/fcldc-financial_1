@@ -17,11 +17,11 @@ export default function LeaseCollectionMatrixTable({ tenants, monthOptions, coll
   const clientGroups = useMemo(() => {
     const groups = {};
     tenants.forEach((t) => {
-      const key = t.full_name || "—";
+      const key = t.full_name?.trim().toLowerCase() || "—";
       if (!groups[key]) groups[key] = [];
       groups[key].push(t);
     });
-    return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
+    return Object.values(groups).map((items) => [items[0].full_name, items]).sort((a, b) => a[0].localeCompare(b[0]));
   }, [tenants]);
 
   const toggleClient = (name) => {
@@ -68,7 +68,7 @@ export default function LeaseCollectionMatrixTable({ tenants, monthOptions, coll
               }`}
             >
               {collected ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
-              <span className="font-semibold whitespace-nowrap">{fmt(record?.amount ?? t.monthly_rent)}</span>
+              <span className="font-semibold whitespace-nowrap">{fmt(record?.amount ?? ((t.monthly_rent || 0) + (t.association_dues || 0)))}</span>
             </button>
           </td>
         );
@@ -113,7 +113,7 @@ export default function LeaseCollectionMatrixTable({ tenants, monthOptions, coll
                     }
                     const monthTotal = applicableTenants.reduce((s, t) => {
                       const record = recordFor(t.id, m.value);
-                      return s + (record?.amount ?? t.monthly_rent ?? 0);
+                      return s + (record?.amount ?? ((t.monthly_rent || 0) + (t.association_dues || 0)) ?? 0);
                     }, 0);
                     const allCollected = applicableTenants.every((t) => recordFor(t.id, m.value)?.collected);
                     const records = applicableTenants.map((t) => recordFor(t.id, m.value));
@@ -145,11 +145,11 @@ export default function LeaseCollectionMatrixTable({ tenants, monthOptions, coll
               const applicableTenants = tenants.filter((t) => !isBeforeLeaseStart(t, m.value));
               const monthTotal = applicableTenants.reduce((s, t) => {
                 const record = recordFor(t.id, m.value);
-                return s + (record?.amount ?? t.monthly_rent ?? 0);
+                return s + (record?.amount ?? ((t.monthly_rent || 0) + (t.association_dues || 0)) ?? 0);
               }, 0);
               const monthCollected = applicableTenants.reduce((s, t) => {
                 const record = recordFor(t.id, m.value);
-                return s + (record?.collected ? (record?.amount ?? t.monthly_rent ?? 0) : 0);
+                return s + (record?.collected ? (record?.amount ?? ((t.monthly_rent || 0) + (t.association_dues || 0)) ?? 0) : 0);
               }, 0);
               return (
                 <td key={m.value} className="px-1 py-2 text-center">

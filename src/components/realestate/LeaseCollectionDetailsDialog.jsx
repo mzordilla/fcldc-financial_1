@@ -30,8 +30,8 @@ export default function LeaseCollectionDetailsDialog({
   }, [open, record, records]);
 
   const amount = isGroup
-    ? tenants.reduce((s, t, i) => s + (records[i]?.amount ?? t.monthly_rent ?? 0), 0)
-    : (record?.amount ?? tenant?.monthly_rent ?? 0);
+    ? tenants.reduce((s, t, i) => s + (records[i]?.amount ?? ((t.monthly_rent || 0) + (t.association_dues || 0))), 0)
+    : (record?.amount ?? ((tenant?.monthly_rent || 0) + (tenant?.association_dues || 0)));
 
   const clientName = isGroup ? tenants[0]?.full_name : tenant?.full_name;
 
@@ -53,8 +53,8 @@ export default function LeaseCollectionDetailsDialog({
               <ul className="mt-1 space-y-1">
                 {tenants.map((t, i) => (
                   <li key={t.id} className="flex justify-between text-xs">
-                    <span className="text-foreground">{t.unit_number}{t.building ? ` · ${t.building}` : ""}</span>
-                    <span className="text-muted-foreground">{fmt(records[i]?.amount ?? t.monthly_rent)}{records[i]?.collected ? " ✓" : ""}</span>
+                    <span className="text-foreground">{t.contract_attachment_url ? <a href={t.contract_attachment_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{t.unit_number || "View contract"}</a> : t.unit_number}{t.building ? ` · ${t.building}` : ""}</span>
+                    <span className="text-muted-foreground">{fmt(records[i]?.amount ?? ((t.monthly_rent || 0) + (t.association_dues || 0)))}{records[i]?.collected ? " ✓" : ""}</span>
                   </li>
                 ))}
               </ul>
@@ -62,13 +62,15 @@ export default function LeaseCollectionDetailsDialog({
           ) : (
             <div className="flex justify-between border-b border-border pb-2">
               <span className="text-muted-foreground">Unit</span>
-              <span className="font-medium text-foreground">{tenant?.unit_number}{tenant?.building ? ` · ${tenant.building}` : ""}</span>
+              <span className="font-medium text-foreground">{tenant?.contract_attachment_url ? <a href={tenant.contract_attachment_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{tenant.unit_number || "View contract"}</a> : tenant?.unit_number}{tenant?.building ? ` · ${tenant.building}` : ""}</span>
             </div>
           )}
           <div className="flex justify-between border-b border-border pb-2">
             <span className="text-muted-foreground">Month</span>
             <span className="font-medium text-foreground">{monthLabel}</span>
           </div>
+          <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Rent</span><span>{fmt(isGroup ? tenants.reduce((sum, t, i) => sum + (records[i]?.rent_amount ?? t.monthly_rent ?? 0), 0) : (record?.rent_amount ?? tenant?.monthly_rent ?? 0))}</span></div>
+          <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Association Dues</span><span>{fmt(isGroup ? tenants.reduce((sum, t, i) => sum + (records[i]?.association_dues ?? t.association_dues ?? 0), 0) : (record?.association_dues ?? tenant?.association_dues ?? 0))}</span></div>
           <div className="flex justify-between border-b border-border pb-2">
             <span className="text-muted-foreground">{isGroup ? "Total Amount" : "Amount"}</span>
             <span className="font-semibold text-primary">{fmt(amount)}</span>

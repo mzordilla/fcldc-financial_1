@@ -21,9 +21,15 @@ export default function LeaseBillingCycles() {
     const history = [...(cycle.approval_history || []), { action, actor, timestamp: new Date().toISOString() }];
     if (action === "rejected") return base44.entities.LeaseBillingCycle.update(cycle.id, { approval_status: action, approved_by: actor, approval_history: history });
     const receivable = await base44.entities.Receivable.create({ client_name: cycle.tenant_name, project_name: `${cycle.unit_number || "Unit"} Lease`, invoice_number: cycle.billing_number || "", amount: cycle.billing_amount || 0, amount_paid: 0, due_date: cycle.due_date, status: "outstanding", notes: `Lease billing for ${cycle.period_month}${cycle.building ? ` · ${cycle.building}` : ""}` });
-    const existing = await base44.entities.LeaseCollection.filter({ tenant_id: cycle.tenant_id, month: cycle.period_month }, "-created_date", 1);
-    const collectionData = { tenant_id: cycle.tenant_id, tenant_name: cycle.tenant_name, unit_number: cycle.unit_number, building: cycle.building, month: cycle.period_month, amount: cycle.billing_amount || 0, billing_cycle_id: cycle.id, receivable_id: receivable.id };
-    const collection = existing[0] ? await base44.entities.LeaseCollection.update(existing[0].id, collectionData) : await base44.entities.LeaseCollection.create({ ...collectionData, collected: false });
+    const contracts = cycle.tenant_contracts?.length ? cycle.tenant_contracts : [{ tenant_id: cycle.tenant_id, unit_number: cycle.unit_number, building: cycle.building, rent_amount: cycle.rent_amount || 0, association_dues: cycle.association_dues || 0 }];
+    const linkedCollections = [];
+    for (const [index, contract] of contracts.entries()) {
+      const existing = await base44.entities.LeaseCollection.filter({ tenant_id: contract.tenant_id, month: cycle.period_month }, "-created_date", 1);
+      const adjustment = index === 0 ? (cycle.other_charges || 0) - (cycle.deductions || 0) : 0;
+      const collectionData = { tenant_id: contract.tenant_id, tenant_name: cycle.tenant_name, unit_number: contract.unit_number, building: contract.building, month: cycle.period_month, rent_amount: contract.rent_amount || 0, association_dues: contract.association_dues || 0, amount: (contract.rent_amount || 0) + (contract.association_dues || 0) + adjustment, billing_cycle_id: cycle.id, receivable_id: index === 0 ? receivable.id : "" };
+      linkedCollections.push(existing[0] ? await base44.entities.LeaseCollection.update(existing[0].id, collectionData) : await base44.entities.LeaseCollection.create({ ...collectionData, collected: false }));
+    }
+    const collection = linkedCollections[0];
     await base44.entities.Transaction.create({ description: `Lease income recognized — ${cycle.tenant_name} (${cycle.period_month})`, amount: cycle.billing_amount || 0, type: "income", category: "other", chart_of_account: "Lease Income", project_code: cycle.unit_number || "", date: cycle.period_end || cycle.due_date, status: "completed" });
     return base44.entities.LeaseBillingCycle.update(cycle.id, { approval_status: "approved", approved_by: actor, approval_history: history, receivable_id: receivable.id, lease_collection_id: collection.id });
   }, onSuccess: refresh, onError: (err) => setError(err?.message || "Unable to process this lease billing.") });

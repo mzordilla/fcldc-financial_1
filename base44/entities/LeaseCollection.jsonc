@@ -22,9 +22,19 @@
       "type": "string",
       "description": "Month this lease payment covers, format YYYY-MM"
     },
+    "rent_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Monthly rent portion"
+    },
+    "association_dues": {
+      "type": "number",
+      "default": 0,
+      "description": "Association dues portion"
+    },
     "amount": {
       "type": "number",
-      "description": "Expected monthly rent amount"
+      "description": "Total expected rent and association dues"
     },
     "collected": {
       "type": "boolean",

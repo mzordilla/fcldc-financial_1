@@ -52,22 +52,29 @@ export default function LeaseCollectionTracker() {
       const leaseStartMonth = t.lease_start ? format(new Date(t.lease_start), "yyyy-MM") : null;
       monthOptions.forEach((m) => {
         if (leaseStartMonth && m.value < leaseStartMonth) return;
-        const exists = collections.some((c) => c.tenant_id === t.id && c.month === m.value);
-        if (!exists) {
+        const existing = collections.find((c) => c.tenant_id === t.id && c.month === m.value);
+        const rentAmount = t.monthly_rent || 0;
+        const associationDues = t.association_dues || 0;
+        const expectedAmount = rentAmount + associationDues;
+        if (!existing) {
           createMutation.mutate({
             tenant_id: t.id,
             tenant_name: t.full_name,
             unit_number: t.unit_number,
             building: t.building,
             month: m.value,
-            amount: t.monthly_rent || 0,
+            rent_amount: rentAmount,
+            association_dues: associationDues,
+            amount: expectedAmount,
             collected: false,
           });
+        } else if (!existing.billing_cycle_id && (existing.amount !== expectedAmount || existing.association_dues !== associationDues)) {
+          updateMutation.mutate({ id: existing.id, data: { rent_amount: rentAmount, association_dues: associationDues, amount: expectedAmount } });
         }
       });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTenants.length, collections.length]);
+  }, [activeTenants.length, collections.length, tenants]);
 
   const [detailsDialog, setDetailsDialog] = useState(null); // { tenant, month, record }
 
@@ -108,7 +115,9 @@ export default function LeaseCollectionTracker() {
         unit_number: tenant.unit_number,
         building: tenant.building,
         month,
-        amount: tenant.monthly_rent || 0,
+        rent_amount: tenant.monthly_rent || 0,
+        association_dues: tenant.association_dues || 0,
+        amount: (tenant.monthly_rent || 0) + (tenant.association_dues || 0),
         ...details,
       });
     }
@@ -150,7 +159,9 @@ export default function LeaseCollectionTracker() {
           unit_number: t.unit_number,
           building: t.building,
           month,
-          amount: t.monthly_rent || 0,
+          rent_amount: t.monthly_rent || 0,
+          association_dues: t.association_dues || 0,
+          amount: (t.monthly_rent || 0) + (t.association_dues || 0),
           ...details,
         });
       }
