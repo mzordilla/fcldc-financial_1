@@ -1,4 +1,5 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useNavigate } from "react-router-dom";
 import CondoUnits from "./CondoUnits";
 import Tenants from "./Tenants";
 import Listings from "./Listings";
@@ -9,6 +10,8 @@ import RealEstateClients from "../../components/realestate/RealEstateClients";
 import LeaseBillingCycles from "@/components/realestate/LeaseBillingCycles";
 
 export default function RealEstatePortfolio() {
+  const navigate = useNavigate();
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <div className="mb-6">
@@ -26,7 +29,7 @@ export default function RealEstatePortfolio() {
           <TabsTrigger value="listings" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-600 data-[state=active]:text-white transition-all">
             📋 Listings
           </TabsTrigger>
-          <TabsTrigger value="condo-sales" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600 data-[state=active]:text-white transition-all">
+          <TabsTrigger value="condo-sales" onClick={() => navigate("/re/condo-sales")} className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600 data-[state=active]:text-white transition-all">
             Condo Sales
           </TabsTrigger>
           <TabsTrigger value="reports" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-600 data-[state=active]:text-white transition-all">
@@ -53,9 +56,6 @@ export default function RealEstatePortfolio() {
         </TabsContent>
         <TabsContent value="listings">
           <Listings embedded />
-        </TabsContent>
-        <TabsContent value="condo-sales">
-          <ClientPaymentTracker salesOnly />
         </TabsContent>
         <TabsContent value="reports">
           <PortfolioReports embedded />

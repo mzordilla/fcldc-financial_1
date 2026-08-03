@@ -32,6 +32,7 @@ import Tenants from './pages/realestate/Tenants';
 import Listings from './pages/realestate/Listings';
 import PortfolioReports from './pages/realestate/PortfolioReports';
 import RealEstatePortfolio from './pages/realestate/RealEstatePortfolio';
+import CondoSales from './pages/realestate/CondoSales';
 import WorkflowDiagram from './pages/WorkflowDiagram';
 import Clients from './pages/Clients';
 import Payroll from './pages/Payroll';
@@ -90,6 +91,7 @@ const AuthenticatedApp = () => {
         <Route path="/re/listings" element={<Listings />} />
         <Route path="/re/reports" element={<PortfolioReports />} />
         <Route path="/re/portfolio" element={<RealEstatePortfolio />} />
+        <Route path="/re/condo-sales" element={<CondoSales />} />
         <Route path="/workflow" element={<WorkflowDiagram />} />
         <Route path="/clients" element={<Clients />} />
         <Route path="/payroll" element={<Payroll />} />
