@@ -53,6 +53,14 @@
     "notes": {
       "type": "string",
       "description": "Additional notes about the collection"
+    },
+    "billing_cycle_id": {
+      "type": "string",
+      "description": "Linked LeaseBillingCycle ID"
+    },
+    "receivable_id": {
+      "type": "string",
+      "description": "Linked lease Receivable ID"
     }
   },
   "required": [

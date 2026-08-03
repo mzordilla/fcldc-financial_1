@@ -1,0 +1,112 @@
+{
+  "name": "LeaseBillingCycle",
+  "type": "object",
+  "properties": {
+    "billing_number": {
+      "type": "string",
+      "description": "Lease billing reference number"
+    },
+    "tenant_id": {
+      "type": "string",
+      "description": "Linked Tenant ID"
+    },
+    "tenant_name": {
+      "type": "string",
+      "description": "Tenant name"
+    },
+    "unit_number": {
+      "type": "string",
+      "description": "Unit number"
+    },
+    "building": {
+      "type": "string",
+      "description": "Building name"
+    },
+    "period_month": {
+      "type": "string",
+      "description": "Lease billing month in YYYY-MM format"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "rent_amount": {
+      "type": "number",
+      "default": 0
+    },
+    "association_dues": {
+      "type": "number",
+      "default": 0
+    },
+    "other_charges": {
+      "type": "number",
+      "default": 0
+    },
+    "deductions": {
+      "type": "number",
+      "default": 0
+    },
+    "billing_amount": {
+      "type": "number",
+      "description": "Total lease amount due"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "description": {
+      "type": "string"
+    },
+    "prepared_by": {
+      "type": "string"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "approval_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "lease_collection_id": {
+      "type": "string",
+      "description": "Linked LeaseCollection record"
+    },
+    "receivable_id": {
+      "type": "string",
+      "description": "Linked Receivable record"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "tenant_name",
+    "period_month",
+    "billing_amount",
+    "due_date"
+  ]
+}

@@ -6,6 +6,7 @@ import PortfolioReports from "./PortfolioReports";
 import LeaseCollectionTracker from "../../components/realestate/LeaseCollectionTracker";
 import ClientPaymentTracker from "../../components/realestate/ClientPaymentTracker";
 import RealEstateClients from "../../components/realestate/RealEstateClients";
+import LeaseBillingCycles from "@/components/realestate/LeaseBillingCycles";
 
 export default function RealEstatePortfolio() {
   return (
@@ -28,6 +29,9 @@ export default function RealEstatePortfolio() {
           <TabsTrigger value="reports" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-600 data-[state=active]:text-white transition-all">
             📊 Portfolio Reports
           </TabsTrigger>
+          <TabsTrigger value="lease-billing" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-600 data-[state=active]:text-white transition-all">
+            Lease Billing Cycles
+          </TabsTrigger>
           <TabsTrigger value="lease-collections" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-600 data-[state=active]:text-white transition-all">
             💰 Lease Collections
           </TabsTrigger>
@@ -49,6 +53,9 @@ export default function RealEstatePortfolio() {
         </TabsContent>
         <TabsContent value="reports">
           <PortfolioReports embedded />
+        </TabsContent>
+        <TabsContent value="lease-billing">
+          <LeaseBillingCycles />
         </TabsContent>
         <TabsContent value="lease-collections">
           <LeaseCollectionTracker />

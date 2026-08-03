@@ -71,11 +71,26 @@ export default function LeaseCollectionTracker() {
 
   const [detailsDialog, setDetailsDialog] = useState(null); // { tenant, month, record }
 
+  const syncReceivable = async (record, collected, form = {}) => {
+    if (!record?.receivable_id) return;
+    const receivable = await base44.entities.Receivable.get(record.receivable_id);
+    const priorHistory = receivable.payment_history || [];
+    const paymentHistory = collected
+      ? [...priorHistory, { collection_date: form.collected_date, amount: record.amount || 0, reference: form.reference || "", notes: "Recorded from Lease Collections" }]
+      : priorHistory.filter((entry) => entry.notes !== "Recorded from Lease Collections");
+    await base44.entities.Receivable.update(receivable.id, {
+      amount_paid: collected ? receivable.amount : 0,
+      status: collected ? "paid" : "outstanding",
+      payment_history: paymentHistory,
+    });
+    queryClient.invalidateQueries({ queryKey: ["receivables"] });
+  };
+
   const handleCellClick = (tenant, month, record) => {
     setDetailsDialog({ tenant, month, record });
   };
 
-  const handleMarkCollected = (tenant, month, record, form) => {
+  const handleMarkCollected = async (tenant, month, record, form) => {
     const details = {
       collected: true,
       collected_date: form.collected_date,
@@ -84,9 +99,10 @@ export default function LeaseCollectionTracker() {
       notes: form.notes,
     };
     if (record) {
-      updateMutation.mutate({ id: record.id, data: details });
+      await updateMutation.mutateAsync({ id: record.id, data: details });
+      await syncReceivable(record, true, form);
     } else {
-      createMutation.mutate({
+      await createMutation.mutateAsync({
         tenant_id: tenant.id,
         tenant_name: tenant.full_name,
         unit_number: tenant.unit_number,
@@ -99,11 +115,12 @@ export default function LeaseCollectionTracker() {
     setDetailsDialog(null);
   };
 
-  const handleUndo = (tenant, month, record) => {
-    updateMutation.mutate({
+  const handleUndo = async (tenant, month, record) => {
+    await updateMutation.mutateAsync({
       id: record.id,
       data: { collected: false, collected_date: "", payment_method: "", reference: "", notes: "" },
     });
+    await syncReceivable(record, false);
     setDetailsDialog(null);
   };
 
@@ -113,7 +130,7 @@ export default function LeaseCollectionTracker() {
     setGroupDialog({ tenants, month, records });
   };
 
-  const handleMarkGroupCollected = (tenants, month, records, form) => {
+  const handleMarkGroupCollected = async (tenants, month, records, form) => {
     const details = {
       collected: true,
       collected_date: form.collected_date,
@@ -121,12 +138,13 @@ export default function LeaseCollectionTracker() {
       reference: form.reference,
       notes: form.notes,
     };
-    tenants.forEach((t, i) => {
+    await Promise.all(tenants.map(async (t, i) => {
       const record = records[i];
       if (record) {
-        updateMutation.mutate({ id: record.id, data: details });
+        await updateMutation.mutateAsync({ id: record.id, data: details });
+        await syncReceivable(record, true, form);
       } else {
-        createMutation.mutate({
+        await createMutation.mutateAsync({
           tenant_id: t.id,
           tenant_name: t.full_name,
           unit_number: t.unit_number,
@@ -136,19 +154,18 @@ export default function LeaseCollectionTracker() {
           ...details,
         });
       }
-    });
+    }));
     setGroupDialog(null);
   };
 
-  const handleUndoGroup = (tenants, month, records) => {
-    records.forEach((record) => {
-      if (record) {
-        updateMutation.mutate({
-          id: record.id,
-          data: { collected: false, collected_date: "", payment_method: "", reference: "", notes: "" },
-        });
-      }
-    });
+  const handleUndoGroup = async (tenants, month, records) => {
+    await Promise.all(records.filter(Boolean).map(async (record) => {
+      await updateMutation.mutateAsync({
+        id: record.id,
+        data: { collected: false, collected_date: "", payment_method: "", reference: "", notes: "" },
+      });
+      await syncReceivable(record, false);
+    }));
     setGroupDialog(null);
   };
 
