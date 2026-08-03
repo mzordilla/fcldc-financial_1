@@ -41,6 +41,7 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
     queryFn: () => base44.entities.Client.list("client_name", 500),
   });
   const clientsById = useMemo(() => Object.fromEntries(allClients.map(c => [c.id, c])), [allClients]);
+  const buyerClients = useMemo(() => allClients.filter((client) => client.client_category === "real_estate"), [allClients]);
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }) => {
@@ -60,6 +61,45 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["property_listings"] });
+      queryClient.invalidateQueries({ queryKey: ["receivables"] });
+    },
+  });
+
+  const assignBuyerMutation = useMutation({
+    mutationFn: async ({ sale, client }) => {
+      const today = new Date().toISOString().slice(0, 10);
+      const unitLabel = sale.units.map((unit) => unit.unit_number).filter(Boolean).join(", ");
+      const listing = await base44.entities.PropertyListing.create({
+        units: sale.units.map((unit) => ({ unit_id: unit.id, unit_number: unit.unit_number, building: unit.building })),
+        listing_type: "for_sale",
+        asking_price: sale.final_price,
+        final_price: sale.final_price,
+        status: "sold",
+        client_id: client.id,
+        buyer_tenant_name: client.client_name,
+        buyer_tenant_contact: client.email || client.phone || "",
+        date_listed: today,
+        date_closed: today,
+        payment_due_date: today,
+        payment_history: [],
+      });
+      const receivable = await base44.entities.Receivable.create({
+        client_name: client.client_name,
+        project_name: `${unitLabel} Condo Sale`,
+        invoice_number: `SALE-${listing.id.slice(-8).toUpperCase()}`,
+        property_listing_id: listing.id,
+        amount: sale.final_price,
+        amount_paid: 0,
+        due_date: today,
+        status: "outstanding",
+        payment_history: [],
+        notes: `Unpaid balance for sold condo unit(s): ${unitLabel}`,
+      });
+      await base44.entities.PropertyListing.update(listing.id, { receivable_id: receivable.id });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["property_listings"] });
+      queryClient.invalidateQueries({ queryKey: ["property-listings"] });
       queryClient.invalidateQueries({ queryKey: ["receivables"] });
     },
   });
@@ -124,6 +164,8 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
     updateMutation.mutate({ id: listing.id, data: { payment_history: history } });
   };
 
+  const handleAssignBuyer = (sale, client) => assignBuyerMutation.mutateAsync({ sale, client });
+
   const clientGroups = useMemo(() => {
     const groups = {};
     filtered.forEach((l) => {
@@ -179,7 +221,7 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
           <p className="text-center py-12 text-muted-foreground">{salesOnly ? "No condo sales found." : "No sold or leased clients found."}</p>
         ) : (
           clientGroups.map((group) => (
-            <ClientPaymentGroup key={group.key} clientName={group.clientName} clientCode={group.clientCode} listings={group.listings} onAddPayment={handleAddPayment} />
+            <ClientPaymentGroup key={group.key} clientName={group.clientName} clientCode={group.clientCode} listings={group.listings} clients={buyerClients} onAddPayment={handleAddPayment} onAssignBuyer={handleAssignBuyer} />
           ))
         )}
       </div>

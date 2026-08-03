@@ -5,7 +5,7 @@ import ClientPaymentRow from "./ClientPaymentRow";
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
-export default function ClientPaymentGroup({ clientName, clientCode, listings, onAddPayment }) {
+export default function ClientPaymentGroup({ clientName, clientCode, listings, clients, onAddPayment, onAssignBuyer }) {
   const [expanded, setExpanded] = useState(false);
 
   const totalDue = listings.reduce((s, l) => s + (l.final_price || l.asking_price || 0), 0);
@@ -45,7 +45,7 @@ export default function ClientPaymentGroup({ clientName, clientCode, listings, o
       {expanded && (
         <div className="border-t border-border p-3 space-y-2 bg-muted/10">
           {listings.map((listing) => (
-            <ClientPaymentRow key={listing.id} listing={listing} client={null} onAddPayment={onAddPayment} />
+            <ClientPaymentRow key={listing.id} listing={listing} client={null} clients={clients} onAddPayment={onAddPayment} onAssignBuyer={onAssignBuyer} />
           ))}
         </div>
       )}

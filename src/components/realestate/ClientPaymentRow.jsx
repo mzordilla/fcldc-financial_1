@@ -5,12 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import AddClientPaymentDialog from "./AddClientPaymentDialog";
 import CondoSaleBreakdown from "./CondoSaleBreakdown";
+import AssignCondoBuyerDialog from "./AssignCondoBuyerDialog";
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
-export default function ClientPaymentRow({ listing, client, onAddPayment }) {
+export default function ClientPaymentRow({ listing, client, clients = [], onAddPayment, onAssignBuyer }) {
   const [expanded, setExpanded] = useState(false);
   const [showAddPayment, setShowAddPayment] = useState(false);
+  const [showAssignBuyer, setShowAssignBuyer] = useState(false);
 
   const history = listing.payment_history || [];
   const totalPaid = history.reduce((s, p) => s + (p.amount || 0), 0);
@@ -56,7 +58,9 @@ export default function ClientPaymentRow({ listing, client, onAddPayment }) {
           {isSale && <CondoSaleBreakdown totalPrice={totalDue} breakdown={listing.price_breakdown} />}
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-muted-foreground uppercase">Payment History</p>
-            {listing.can_record_payment !== false && <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setShowAddPayment(true); }}>
+            {listing.can_record_payment === false ? <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setShowAssignBuyer(true); }}>
+              Assign Buyer
+            </Button> : <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setShowAddPayment(true); }}>
               <Plus className="w-3.5 h-3.5 mr-1" /> Add Payment
             </Button>}
           </div>
@@ -96,6 +100,13 @@ export default function ClientPaymentRow({ listing, client, onAddPayment }) {
           )}
         </div>
       )}
+
+      <AssignCondoBuyerDialog
+        open={showAssignBuyer}
+        onOpenChange={setShowAssignBuyer}
+        clients={clients}
+        onAssign={(buyer) => onAssignBuyer(listing, buyer)}
+      />
 
       <AddClientPaymentDialog
         open={showAddPayment}
