@@ -162,7 +162,7 @@ export default function UnitFormDialog({ open, onOpenChange, initialData, onSubm
                 </div>
               )}
               <div className="flex justify-between font-bold text-slate-800 border-t border-slate-300 pt-2">
-                <span>Total Amount</span>
+                <span>Total Contract Price</span>
                 <span className="text-emerald-700">{fmt(totalAmount)}</span>
               </div>
             </div>

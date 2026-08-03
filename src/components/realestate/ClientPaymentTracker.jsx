@@ -6,20 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ClientPaymentGroup from "./ClientPaymentGroup";
 import CompactClientPaymentGroup from "./CompactClientPaymentGroup";
+import { calculateCondoSaleBreakdown } from "@/lib/condoSalePricing";
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
-
-const unitBreakdown = (units) => units.reduce((totals, unit) => {
-  const total = Number(unit.selling_price || 0);
-  const vatRate = Number(unit.vat_percentage || 12);
-  const closingRate = Number(unit.closing_fees_percentage || 8);
-  const base = total / (1 + (vatRate + closingRate) / 100);
-  totals.base += base;
-  totals.vat += base * vatRate / 100;
-  totals.closing += base * closingRate / 100;
-  totals.total += total;
-  return totals;
-}, { base: 0, vat: 0, closing: 0, total: 0 });
 
 export default function ClientPaymentTracker({ salesOnly = false }) {
   const queryClient = useQueryClient();
@@ -48,7 +37,8 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
     mutationFn: async ({ id, data }) => {
       const listing = await base44.entities.PropertyListing.update(id, data);
       if (listing.status === "sold") {
-        const salePrice = listing.final_price || listing.asking_price || 0;
+        const linkedUnits = condoUnits.filter((unit) => listing.units?.some((linked) => linked.unit_id === unit.id));
+        const salePrice = linkedUnits.length ? calculateCondoSaleBreakdown(linkedUnits).total : listing.final_price || listing.asking_price || 0;
         const amountPaid = (listing.payment_history || []).reduce((sum, payment) => sum + (payment.amount || 0), 0);
         const linked = listing.receivable_id ? [await base44.entities.Receivable.get(listing.receivable_id)] : await base44.entities.Receivable.filter({ property_listing_id: listing.id }, "-created_date", 1);
         if (linked[0]) await base44.entities.Receivable.update(linked[0].id, {
@@ -116,7 +106,7 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
         const units = soldUnits.filter((unit) => listing.units?.some((linked) => linked.unit_id === unit.id));
         units.forEach((unit) => linkedUnitIds.add(unit.id));
         if (!units.length) return null;
-        const breakdown = unitBreakdown(units);
+        const breakdown = calculateCondoSaleBreakdown(units);
         return { ...listing, units, final_price: breakdown.total, price_breakdown: breakdown, can_record_payment: true };
       })
       .filter(Boolean);
@@ -124,7 +114,7 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
     const unlinkedSales = soldUnits
       .filter((unit) => !linkedUnitIds.has(unit.id))
       .map((unit) => {
-        const breakdown = unitBreakdown([unit]);
+        const breakdown = calculateCondoSaleBreakdown([unit]);
         return {
           id: `unit-${unit.id}`,
           units: [unit],
@@ -221,9 +211,9 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
         ) : clientGroups.length === 0 ? (
           <p className="text-center py-12 text-muted-foreground">{salesOnly ? "No condo sales found." : "No sold or leased clients found."}</p>
         ) : salesOnly ? (
-          <div className="min-w-[1280px]">
-            <div className="grid grid-cols-[1.5fr_1.2fr_1fr_1fr_1fr_1fr_1fr_7rem_2.5rem] gap-3 px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              <span>Buyer</span><span>Units</span><span className="text-right">Closing Fees (8%)</span><span className="text-right">VAT (12%)</span><span className="text-right">Final Price</span><span className="text-right">Collected</span><span className="text-right">Balance</span><span className="text-center">Status</span><span />
+          <div className="min-w-[1440px]">
+            <div className="grid grid-cols-[1.5fr_1.2fr_1fr_1fr_1fr_1fr_1fr_1fr_7rem_2.5rem] gap-3 px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <span>Buyer</span><span>Units</span><span className="text-right">Final Price</span><span className="text-right">Closing Fees (8%)</span><span className="text-right">VAT (12%)</span><span className="text-right">TCP</span><span className="text-right">Collected</span><span className="text-right">Outstanding</span><span className="text-center">Status</span><span />
             </div>
             <div className="rounded-2xl border border-border overflow-hidden divide-y divide-border max-h-[70vh] overflow-y-auto">
               {clientGroups.map((group) => (

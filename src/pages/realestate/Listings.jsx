@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import ListingFormDialog from "@/components/realestate/ListingFormDialog";
+import { calculateCondoSaleBreakdown } from "@/lib/condoSalePricing";
 
 const statusStyles = {
   active: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -51,7 +52,8 @@ export default function Listings() {
 
   const syncSaleReceivable = async (listing) => {
     if (listing.listing_type !== "for_sale" || listing.status !== "sold") return;
-    const salePrice = listing.final_price || listing.asking_price || 0;
+    const linkedUnits = units.filter((unit) => listing.units?.some((linked) => linked.unit_id === unit.id));
+    const salePrice = linkedUnits.length ? calculateCondoSaleBreakdown(linkedUnits).total : listing.final_price || listing.asking_price || 0;
     const amountPaid = (listing.payment_history || []).reduce((sum, payment) => sum + (payment.amount || 0), 0);
     const unitLabel = (listing.units || []).map((unit) => unit.unit_number).filter(Boolean).join(", ") || "Condo Unit";
     const receivableData = {
