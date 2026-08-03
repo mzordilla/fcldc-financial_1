@@ -14,7 +14,7 @@ export default function BuildingMapUnit({ unit, onSelect }) {
     <button
       type="button"
       onClick={() => onSelect(unit)}
-      className={`min-h-20 min-w-32 rounded-lg border p-3 text-left transition-shadow hover:shadow-md ${statusClasses[unit.status] || "border-border bg-muted text-foreground"}`}
+      className={`min-h-20 min-w-0 rounded-lg border p-3 text-left transition-shadow hover:shadow-md ${statusClasses[unit.status] || "border-border bg-muted text-foreground"}`}
       aria-label={`Unit ${unit.unit_number}, ${statusLabels[unit.status] || unit.status}`}
     >
       <p className="font-bold">Unit {unit.unit_number}</p>

@@ -40,10 +40,10 @@ export default function BuildingMap() {
     <div className="space-y-5">
       <div className="flex flex-wrap gap-3">{mapLegend.map((item) => <div key={item.status} className="flex items-center gap-2 text-xs"><span className={`h-3 w-3 rounded-sm border ${item.className}`} />{item.label}</div>)}</div>
       {buildings.map(([building, floors]) => (
-        <section key={building} className="overflow-x-auto rounded-xl border bg-card">
+        <section key={building} className="overflow-hidden rounded-xl border bg-card">
           <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-3"><Building2 className="h-5 w-5 text-primary" /><h2 className="font-semibold">{building}</h2></div>
           <div className="divide-y">{Object.entries(floors).sort(([a], [b]) => floorRank(a) - floorRank(b)).map(([floor, floorUnits]) => (
-            <div key={floor} className="flex min-w-max gap-3 p-4"><p className="w-28 shrink-0 pt-3 text-sm font-semibold text-muted-foreground">{floorLabel(floor)}</p><div className="flex flex-nowrap gap-3">{floorUnits.sort((a, b) => String(a.unit_number).localeCompare(String(b.unit_number), undefined, { numeric: true })).map((unit) => <BuildingMapUnit key={unit.id} unit={unit} onSelect={setSelectedUnit} />)}</div></div>
+            <div key={floor} className="grid grid-cols-[112px_minmax(0,1fr)] gap-3 p-4"><p className="pt-3 text-sm font-semibold text-muted-foreground">{floorLabel(floor)}</p><div className="grid min-w-0 grid-flow-col auto-cols-fr gap-3">{floorUnits.sort((a, b) => String(a.unit_number).localeCompare(String(b.unit_number), undefined, { numeric: true })).map((unit) => <BuildingMapUnit key={unit.id} unit={unit} onSelect={setSelectedUnit} />)}</div></div>
           ))}</div>
         </section>
       ))}
