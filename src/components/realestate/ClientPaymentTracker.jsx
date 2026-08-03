@@ -8,7 +8,7 @@ import ClientPaymentGroup from "./ClientPaymentGroup";
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
-export default function ClientPaymentTracker() {
+export default function ClientPaymentTracker({ salesOnly = false }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -47,8 +47,10 @@ export default function ClientPaymentTracker() {
   });
 
   const closedListings = useMemo(
-    () => listings.filter((l) => l.status === "sold" || l.status === "leased"),
-    [listings]
+    () => listings.filter((l) => salesOnly
+      ? l.listing_type === "for_sale" && l.status === "sold"
+      : l.status === "sold" || l.status === "leased"),
+    [listings, salesOnly]
   );
 
   const filtered = useMemo(() => {
@@ -95,7 +97,7 @@ export default function ClientPaymentTracker() {
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Sold + Leased Clients", value: closedListings.length },
+          { label: salesOnly ? "Condo Sales" : "Sold + Leased Clients", value: closedListings.length },
           { label: "Total Value", value: fmt(totals.totalDue) },
           { label: "Total Collected", value: fmt(totals.totalCollected), highlight: true },
           { label: "Outstanding Balance", value: fmt(totals.outstanding) },
@@ -112,21 +114,21 @@ export default function ClientPaymentTracker() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Search by client name..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
+        {!salesOnly && <Select value={typeFilter} onValueChange={setTypeFilter}>
           <SelectTrigger className="w-full sm:w-44"><SelectValue placeholder="All" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All</SelectItem>
             <SelectItem value="sold">Sold</SelectItem>
             <SelectItem value="leased">Leased</SelectItem>
           </SelectContent>
-        </Select>
+        </Select>}
       </div>
 
       <div className="space-y-3">
         {isLoading ? (
           <p className="text-center py-12 text-muted-foreground">Loading...</p>
         ) : clientGroups.length === 0 ? (
-          <p className="text-center py-12 text-muted-foreground">No sold or leased clients found.</p>
+          <p className="text-center py-12 text-muted-foreground">{salesOnly ? "No condo sales found." : "No sold or leased clients found."}</p>
         ) : (
           clientGroups.map((group) => (
             <ClientPaymentGroup key={group.key} clientName={group.clientName} clientCode={group.clientCode} listings={group.listings} onAddPayment={handleAddPayment} />
