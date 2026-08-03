@@ -90,6 +90,7 @@ export default function Receivables() {
   const [editingR, setEditingR] = useState(null);
   const [collectingR, setCollectingR] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("project-receivables");
   const [expandedClients, setExpandedClients] = useState(new Set());
   const queryClient = useQueryClient();
 
@@ -133,12 +134,15 @@ export default function Receivables() {
 
   const markCollected = (r, data) => updateMutation.mutate({ id: r.id, data });
 
-  const filtered = statusFilter === "all" ? receivables : receivables.filter(r => r.status === statusFilter);
+  const categoryReceivables = activeTab === "condo-sales"
+    ? receivables.filter(r => r.property_listing_id)
+    : receivables.filter(r => !r.property_listing_id);
+  const filtered = statusFilter === "all" ? categoryReceivables : categoryReceivables.filter(r => r.status === statusFilter);
 
-  const totalOutstanding = receivables.filter(r => r.status !== "paid").reduce((s, r) => s + ((r.amount || 0) - (r.amount_paid || 0)), 0);
-  const overdueCount = receivables.filter(r => r.status === "overdue").length;
-  const totalBilled = receivables.reduce((s, r) => s + (r.amount || 0), 0);
-  const totalCollected = receivables.reduce((s, r) => s + (r.amount_paid || 0), 0);
+  const totalOutstanding = categoryReceivables.filter(r => r.status !== "paid").reduce((s, r) => s + ((r.amount || 0) - (r.amount_paid || 0)), 0);
+  const overdueCount = categoryReceivables.filter(r => r.status === "overdue").length;
+  const totalBilled = categoryReceivables.reduce((s, r) => s + (r.amount || 0), 0);
+  const totalCollected = categoryReceivables.reduce((s, r) => s + (r.amount_paid || 0), 0);
   const collectionEfficiency = totalBilled > 0 ? ((totalCollected / totalBilled) * 100) : 0;
 
   // Group by client
@@ -169,17 +173,18 @@ export default function Receivables() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-      <Tabs defaultValue="receivables" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="receivables">Receivables</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-4 h-auto flex-wrap">
+          <TabsTrigger value="project-receivables">Project Receivables</TabsTrigger>
+          <TabsTrigger value="condo-sales">Condo Sales Receivables</TabsTrigger>
           <TabsTrigger value="billing-cycles">Billing Cycles</TabsTrigger>
           <TabsTrigger value="retention">Retention Receivable</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="receivables" className="space-y-6">
+        <TabsContent value={activeTab === "project-receivables" || activeTab === "condo-sales" ? activeTab : "receivables-hidden"} className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Receivables</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">{activeTab === "condo-sales" ? "Condo Sales Receivables" : "Project Receivables"}</h1>
           <p className="text-muted-foreground mt-1">
             ₱{totalOutstanding.toLocaleString()} outstanding · {overdueCount} overdue · {collectionEfficiency.toFixed(1)}% collection efficiency
           </p>
@@ -198,15 +203,15 @@ export default function Receivables() {
           <StatementOfAccountPDF
             projectName="All Projects"
             clientName="All Clients"
-            rows={receivables}
+            rows={categoryReceivables}
           />
-          <Button onClick={() => setShowAdd(true)}>
+          {activeTab === "project-receivables" && <Button onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4 mr-2" /> Add
-          </Button>
+          </Button>}
         </div>
       </div>
 
-      <AgingSummary items={receivables} />
+      <AgingSummary items={categoryReceivables} />
 
       {/* Client Aging Summary */}
       <div className="space-y-4">
