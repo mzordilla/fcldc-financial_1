@@ -221,9 +221,9 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
         ) : clientGroups.length === 0 ? (
           <p className="text-center py-12 text-muted-foreground">{salesOnly ? "No condo sales found." : "No sold or leased clients found."}</p>
         ) : salesOnly ? (
-          <div className="min-w-[980px]">
-            <div className="grid grid-cols-[1.5fr_1.25fr_1fr_1fr_1fr_7rem_2.5rem] gap-3 px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              <span>Buyer</span><span>Units</span><span className="text-right">Total Price</span><span className="text-right">Collected</span><span className="text-right">Balance</span><span className="text-center">Status</span><span />
+          <div className="min-w-[1280px]">
+            <div className="grid grid-cols-[1.5fr_1.2fr_1fr_1fr_1fr_1fr_1fr_7rem_2.5rem] gap-3 px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <span>Buyer</span><span>Units</span><span className="text-right">Closing Fees</span><span className="text-right">VAT</span><span className="text-right">Final Price</span><span className="text-right">Collected</span><span className="text-right">Balance</span><span className="text-center">Status</span><span />
             </div>
             <div className="rounded-2xl border border-border overflow-hidden divide-y divide-border max-h-[70vh] overflow-y-auto">
               {clientGroups.map((group) => (

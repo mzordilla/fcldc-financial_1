@@ -10,14 +10,18 @@ export default function CompactClientPaymentGroup({ clientName, listings, client
   const totalDue = listings.reduce((sum, item) => sum + (item.final_price || item.asking_price || 0), 0);
   const totalPaid = listings.reduce((sum, item) => sum + (item.payment_history || []).reduce((paid, payment) => paid + (payment.amount || 0), 0), 0);
   const balance = totalDue - totalPaid;
+  const closingFees = listings.reduce((sum, item) => sum + (item.price_breakdown?.closing || 0), 0);
+  const vat = listings.reduce((sum, item) => sum + (item.price_breakdown?.vat || 0), 0);
   const units = listings.flatMap((item) => item.units || []).map((unit) => unit.unit_number).filter(Boolean).join(", ") || "—";
 
   return (
     <div className="bg-card">
       <button className="w-full px-5 py-3 hover:bg-muted/50 transition-colors" onClick={() => setExpanded(!expanded)}>
-        <div className="grid grid-cols-[1.5fr_1.25fr_1fr_1fr_1fr_7rem_2.5rem] gap-3 items-center text-sm">
+        <div className="grid grid-cols-[1.5fr_1.2fr_1fr_1fr_1fr_1fr_1fr_7rem_2.5rem] gap-3 items-center text-sm">
           <span className="font-semibold text-left truncate">{clientName}</span>
           <span className="text-left text-muted-foreground truncate" title={units}>{units}</span>
+          <span className="text-right text-muted-foreground">{fmt(closingFees)}</span>
+          <span className="text-right text-muted-foreground">{fmt(vat)}</span>
           <span className="text-right font-semibold">{fmt(totalDue)}</span>
           <span className="text-right text-primary font-semibold">{fmt(totalPaid)}</span>
           <span className="text-right font-semibold">{fmt(balance)}</span>
