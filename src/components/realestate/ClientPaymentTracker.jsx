@@ -8,6 +8,18 @@ import ClientPaymentGroup from "./ClientPaymentGroup";
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
+const unitBreakdown = (units) => units.reduce((totals, unit) => {
+  const total = Number(unit.selling_price || 0);
+  const vatRate = Number(unit.vat_percentage || 12);
+  const closingRate = Number(unit.closing_fees_percentage || 7);
+  const base = total / (1 + (vatRate + closingRate) / 100);
+  totals.base += base;
+  totals.vat += base * vatRate / 100;
+  totals.closing += base * closingRate / 100;
+  totals.total += total;
+  return totals;
+}, { base: 0, vat: 0, closing: 0, total: 0 });
+
 export default function ClientPaymentTracker({ salesOnly = false }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
@@ -16,6 +28,12 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
   const { data: listings = [], isLoading } = useQuery({
     queryKey: ["property_listings"],
     queryFn: () => base44.entities.PropertyListing.list("-date_closed", 500),
+  });
+
+  const { data: condoUnits = [], isLoading: isLoadingUnits } = useQuery({
+    queryKey: ["condo-units"],
+    queryFn: () => base44.entities.CondoUnit.list("-created_date", 500),
+    enabled: salesOnly,
   });
 
   const { data: allClients = [] } = useQuery({
@@ -46,12 +64,41 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
     },
   });
 
-  const closedListings = useMemo(
-    () => listings.filter((l) => salesOnly
-      ? l.listing_type === "for_sale" && l.status === "sold"
-      : l.status === "sold" || l.status === "leased"),
-    [listings, salesOnly]
-  );
+  const closedListings = useMemo(() => {
+    if (!salesOnly) return listings.filter((listing) => listing.status === "sold" || listing.status === "leased");
+
+    const soldUnits = condoUnits.filter((unit) => unit.status === "sold");
+    const linkedUnitIds = new Set();
+    const linkedSales = listings
+      .filter((listing) => listing.listing_type === "for_sale" && listing.status === "sold")
+      .map((listing) => {
+        const units = soldUnits.filter((unit) => listing.units?.some((linked) => linked.unit_id === unit.id));
+        units.forEach((unit) => linkedUnitIds.add(unit.id));
+        if (!units.length) return null;
+        const breakdown = unitBreakdown(units);
+        return { ...listing, units, final_price: breakdown.total, price_breakdown: breakdown, can_record_payment: true };
+      })
+      .filter(Boolean);
+
+    const unlinkedSales = soldUnits
+      .filter((unit) => !linkedUnitIds.has(unit.id))
+      .map((unit) => {
+        const breakdown = unitBreakdown([unit]);
+        return {
+          id: `unit-${unit.id}`,
+          units: [unit],
+          listing_type: "for_sale",
+          status: "sold",
+          buyer_tenant_name: "Unassigned Buyer",
+          final_price: breakdown.total,
+          price_breakdown: breakdown,
+          payment_history: [],
+          can_record_payment: false,
+        };
+      });
+
+    return [...linkedSales, ...unlinkedSales];
+  }, [listings, condoUnits, salesOnly]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -72,6 +119,7 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
   }, [closedListings]);
 
   const handleAddPayment = (listing, payment) => {
+    if (listing.can_record_payment === false) return;
     const history = [...(listing.payment_history || []), payment];
     updateMutation.mutate({ id: listing.id, data: { payment_history: history } });
   };
@@ -125,7 +173,7 @@ export default function ClientPaymentTracker({ salesOnly = false }) {
       </div>
 
       <div className="space-y-3">
-        {isLoading ? (
+        {isLoading || (salesOnly && isLoadingUnits) ? (
           <p className="text-center py-12 text-muted-foreground">Loading...</p>
         ) : clientGroups.length === 0 ? (
           <p className="text-center py-12 text-muted-foreground">{salesOnly ? "No condo sales found." : "No sold or leased clients found."}</p>

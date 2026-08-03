@@ -53,12 +53,12 @@ export default function ClientPaymentRow({ listing, client, onAddPayment }) {
 
       {expanded && (
         <div className="border-t border-border p-4 space-y-3">
-          {isSale && <CondoSaleBreakdown totalPrice={totalDue} />}
+          {isSale && <CondoSaleBreakdown totalPrice={totalDue} breakdown={listing.price_breakdown} />}
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-muted-foreground uppercase">Payment History</p>
-            <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setShowAddPayment(true); }}>
+            {listing.can_record_payment !== false && <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setShowAddPayment(true); }}>
               <Plus className="w-3.5 h-3.5 mr-1" /> Add Payment
-            </Button>
+            </Button>}
           </div>
           {history.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">No payments recorded yet.</p>
