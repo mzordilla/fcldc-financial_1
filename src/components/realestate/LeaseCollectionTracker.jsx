@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { TrendingUp } from "lucide-react";
 import { format } from "date-fns";
-import LeaseCollectionMatrixTable from "./LeaseCollectionMatrixTable";
+import LeaseCollectionReceivablesTable from "./LeaseCollectionReceivablesTable";
+import LeaseCollectionAgingSummary from "./LeaseCollectionAgingSummary";
 import LeaseCollectionDetailsDialog from "./LeaseCollectionDetailsDialog";
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString()}`;
@@ -22,7 +22,7 @@ function getMonthOptions() {
 export default function LeaseCollectionTracker() {
   const queryClient = useQueryClient();
   const monthOptions = useMemo(() => getMonthOptions(), []);
-  const currentMonth = format(new Date(), "yyyy-MM");
+  const [clientGroups, setClientGroups] = useState([]);
 
   const { data: tenants = [] } = useQuery({
     queryKey: ["tenants"],
@@ -180,46 +180,29 @@ export default function LeaseCollectionTracker() {
     setGroupDialog(null);
   };
 
-  const currentMonthRecords = collections.filter((c) => c.month === currentMonth);
-  const monthCollected = currentMonthRecords.filter((r) => r.collected).reduce((s, r) => s + (r.amount || 0), 0);
-  const monthExpected = currentMonthRecords.reduce((s, r) => s + (r.amount || 0), 0);
-  const totalAccumulated = collections.filter((r) => r.collected).reduce((s, r) => s + (r.amount || 0), 0);
+  const totalBilled = collections.reduce((sum, record) => sum + (record.amount || 0), 0);
+  const totalCollected = collections.filter((record) => record.collected).reduce((sum, record) => sum + (record.amount || 0), 0);
+  const totalOutstanding = clientGroups.reduce((sum, group) => sum + group.total, 0);
+  const overdueCount = clientGroups.flatMap((group) => group.rows).filter((row) => row.balance > 0 && row.month < format(new Date(), "yyyy-MM")).length;
+  const collectionEfficiency = totalBilled > 0 ? (totalCollected / totalBilled) * 100 : 0;
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <p className="text-xs text-muted-foreground">This Month Collected</p>
-          <p className="text-xl font-bold text-primary">{fmt(monthCollected)}</p>
-          <p className="text-xs text-muted-foreground mt-1">of {fmt(monthExpected)} expected</p>
-        </div>
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <p className="text-xs text-muted-foreground">Collection Rate</p>
-          <p className="text-xl font-bold text-foreground">
-            {monthExpected > 0 ? Math.round((monthCollected / monthExpected) * 100) : 0}%
-          </p>
-        </div>
-        <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-3">
-          <div className="p-2 bg-muted rounded-lg">
-            <TrendingUp className="w-4 h-4 text-primary" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Total Accumulated Revenue</p>
-            <p className="text-xl font-bold text-primary">{fmt(totalAccumulated)}</p>
-          </div>
-        </div>
+      <div>
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Lease Receivables</h2>
+        <p className="text-muted-foreground mt-1">{fmt(totalOutstanding)} outstanding · {overdueCount} overdue · {collectionEfficiency.toFixed(1)}% collection efficiency</p>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-5">
-        <h3 className="font-semibold text-foreground mb-4">Monthly Lease Collection — Per Client</h3>
-        <LeaseCollectionMatrixTable
-          tenants={activeTenants}
-          monthOptions={monthOptions}
-          collections={collections}
-          onCellClick={handleCellClick}
-          onGroupCellClick={handleGroupCellClick}
-        />
-      </div>
+      <LeaseCollectionAgingSummary groups={clientGroups} />
+
+      <LeaseCollectionReceivablesTable
+        tenants={activeTenants}
+        monthOptions={monthOptions}
+        collections={collections}
+        onCellClick={handleCellClick}
+        onGroupCellClick={handleGroupCellClick}
+        onGroupsChange={setClientGroups}
+      />
 
       <LeaseCollectionDetailsDialog
         open={!!detailsDialog}
