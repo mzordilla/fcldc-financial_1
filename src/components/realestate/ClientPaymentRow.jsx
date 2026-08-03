@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import AddClientPaymentDialog from "./AddClientPaymentDialog";
+import CondoSaleBreakdown from "./CondoSaleBreakdown";
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
@@ -52,6 +53,7 @@ export default function ClientPaymentRow({ listing, client, onAddPayment }) {
 
       {expanded && (
         <div className="border-t border-border p-4 space-y-3">
+          {isSale && <CondoSaleBreakdown totalPrice={totalDue} />}
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-muted-foreground uppercase">Payment History</p>
             <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setShowAddPayment(true); }}>
