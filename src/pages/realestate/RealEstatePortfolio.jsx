@@ -8,6 +8,7 @@ import LeaseCollectionTracker from "../../components/realestate/LeaseCollectionT
 import ClientPaymentTracker from "../../components/realestate/ClientPaymentTracker";
 import RealEstateClients from "../../components/realestate/RealEstateClients";
 import LeaseBillingCycles from "@/components/realestate/LeaseBillingCycles";
+import BuildingMap from "@/components/realestate/BuildingMap";
 
 export default function RealEstatePortfolio() {
   const navigate = useNavigate();
@@ -22,6 +23,9 @@ export default function RealEstatePortfolio() {
         <TabsList className="mb-4 h-auto flex-wrap bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 p-1 rounded-xl">
           <TabsTrigger value="units" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600 data-[state=active]:text-white transition-all">
             🏢 Condo Units
+          </TabsTrigger>
+          <TabsTrigger value="building-map" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500 data-[state=active]:to-slate-700 data-[state=active]:text-white transition-all">
+            Building Map
           </TabsTrigger>
           <TabsTrigger value="tenants" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all">
             👥 Tenants
@@ -50,6 +54,9 @@ export default function RealEstatePortfolio() {
         </TabsList>
         <TabsContent value="units">
           <CondoUnits embedded />
+        </TabsContent>
+        <TabsContent value="building-map">
+          <BuildingMap />
         </TabsContent>
         <TabsContent value="tenants">
           <Tenants embedded />
