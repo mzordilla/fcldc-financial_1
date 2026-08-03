@@ -14,6 +14,17 @@ const groupUnits = (units) => Object.entries(units.reduce((buildings, unit) => {
   return buildings;
 }, {})).sort(([a], [b]) => a.localeCompare(b));
 
+const floorRank = (floor) => {
+  const value = floor.toLowerCase();
+  if (value.includes("penthouse")) return 10000;
+  if (value.includes("ground")) return 0;
+  if (value.includes("basement")) return -(Number(value.match(/\d+/)?.[0]) || 1);
+  if (value === "unassigned") return -10000;
+  return Number(value.match(/\d+/)?.[0]) || 0;
+};
+
+const floorLabel = (floor) => /floor/i.test(floor) || floor === "Unassigned" ? floor : `Floor ${floor}`;
+
 export default function BuildingMap() {
   const [selectedUnit, setSelectedUnit] = useState(null);
   const { data: units = [], isLoading } = useQuery({ queryKey: ["condo-units"], queryFn: () => base44.entities.CondoUnit.list("building", 200) });
@@ -28,8 +39,8 @@ export default function BuildingMap() {
       {buildings.map(([building, floors]) => (
         <section key={building} className="overflow-hidden rounded-xl border bg-card">
           <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-3"><Building2 className="h-5 w-5 text-primary" /><h2 className="font-semibold">{building}</h2></div>
-          <div className="divide-y">{Object.entries(floors).sort(([a], [b]) => b.localeCompare(a, undefined, { numeric: true })).map(([floor, floorUnits]) => (
-            <div key={floor} className="grid gap-3 p-4 md:grid-cols-[100px_1fr]"><p className="pt-3 text-sm font-semibold text-muted-foreground">Floor {floor}</p><div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">{floorUnits.sort((a, b) => String(a.unit_number).localeCompare(String(b.unit_number), undefined, { numeric: true })).map((unit) => <BuildingMapUnit key={unit.id} unit={unit} onSelect={setSelectedUnit} />)}</div></div>
+          <div className="divide-y">{Object.entries(floors).sort(([a], [b]) => floorRank(b) - floorRank(a)).map(([floor, floorUnits]) => (
+            <div key={floor} className="grid gap-3 p-4 md:grid-cols-[100px_1fr]"><p className="pt-3 text-sm font-semibold text-muted-foreground">{floorLabel(floor)}</p><div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">{floorUnits.sort((a, b) => String(a.unit_number).localeCompare(String(b.unit_number), undefined, { numeric: true })).map((unit) => <BuildingMapUnit key={unit.id} unit={unit} onSelect={setSelectedUnit} />)}</div></div>
           ))}</div>
         </section>
       ))}
