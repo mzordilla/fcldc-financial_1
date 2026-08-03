@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, List, Pencil, Trash2 } from "lucide-react";
+import { Plus, List, ChevronDown, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,6 +29,7 @@ export default function Listings() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [expandedStatuses, setExpandedStatuses] = useState(new Set());
   const queryClient = useQueryClient();
 
   const { data: listings = [], isLoading } = useQuery({
@@ -103,6 +104,17 @@ export default function Listings() {
     const matchType = typeFilter === "all" || l.listing_type === typeFilter;
     const matchStatus = statusFilter === "all" || l.status === statusFilter;
     return matchType && matchStatus;
+  });
+  const statusGroups = Object.entries(filtered.reduce((groups, listing) => {
+    const status = listing.status || "active";
+    (groups[status] ||= []).push(listing);
+    return groups;
+  }, {})).sort(([a], [b]) => a.localeCompare(b));
+
+  const toggleStatus = (status) => setExpandedStatuses((prev) => {
+    const next = new Set(prev);
+    next.has(status) ? next.delete(status) : next.add(status);
+    return next;
   });
 
   const activeForSale = listings.filter(l => l.listing_type === "for_sale" && l.status === "active").length;
@@ -184,53 +196,63 @@ export default function Listings() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filtered.map(l => (
-                <tr key={l.id} className="hover:bg-muted/20 transition-colors">
-                  <td className="px-4 py-3">
-                    {l.units?.length ? (
-                      <>
-                        <p className="font-medium">{l.units.map(u => `Unit ${u.unit_number}`).join(", ")}</p>
-                        {l.units[0]?.building && <p className="text-xs text-muted-foreground">{l.units[0].building}</p>}
-                      </>
-                    ) : (
-                      <p className="font-medium">—</p>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant="outline" className={`text-xs ${l.listing_type === "for_sale" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-blue-50 text-blue-700 border-blue-200"}`}>
-                      {l.listing_type === "for_sale" ? "For Sale" : "For Lease"}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 font-semibold">{fmt(l.asking_price)}</td>
-                  <td className="px-4 py-3">
-                    {l.buyer_tenant_name && <p>{l.buyer_tenant_name}</p>}
-                    {l.buyer_tenant_contact && <p className="text-xs text-muted-foreground">{l.buyer_tenant_contact}</p>}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{l.agent || "—"}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{l.date_listed ? format(new Date(l.date_listed), "MMM d, yyyy") : "—"}</td>
-                  <td className="px-4 py-3">
-                    <Badge variant="outline" className={`text-xs ${statusStyles[l.status]}`}>
-                      {l.status?.replace(/_/g, " ")}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-primary">
-                    {l.final_price ? fmt(l.final_price) : "—"}
-                    {l.contract_attachment_url && (
-                      <a href={l.contract_attachment_url} target="_blank" rel="noreferrer" className="block text-xs text-primary hover:underline mt-0.5 font-normal">View contract</a>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-8 w-8" onClick={() => { setEditing(l); setShowForm(true); }}>
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive h-8 w-8" onClick={() => deleteMutation.mutate(l.id)}>
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {statusGroups.map(([status, statusListings]) => {
+                const isExpanded = expandedStatuses.has(status);
+                return (
+                  <Fragment key={status}>
+                    <tr className="bg-muted/40 hover:bg-muted/60 cursor-pointer" onClick={() => toggleStatus(status)}>
+                      <td colSpan={9} className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "" : "-rotate-90"}`} />
+                          <Badge variant="outline" className={`text-xs capitalize ${statusStyles[status]}`}>{status.replace(/_/g, " ")}</Badge>
+                          <span className="text-sm font-medium text-foreground">{statusListings.length} listing{statusListings.length !== 1 ? "s" : ""}</span>
+                        </div>
+                      </td>
+                    </tr>
+                    {isExpanded && statusListings.map((l) => (
+                      <tr key={l.id} className="hover:bg-muted/20 transition-colors">
+                        <td className="px-4 py-3 pl-11">
+                          {l.units?.length ? (
+                            <>
+                              <p className="font-medium">{l.units.map(u => `Unit ${u.unit_number}`).join(", ")}</p>
+                              {l.units[0]?.building && <p className="text-xs text-muted-foreground">{l.units[0].building}</p>}
+                            </>
+                          ) : (
+                            <p className="font-medium">—</p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant="outline" className={`text-xs ${l.listing_type === "for_sale" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-blue-50 text-blue-700 border-blue-200"}`}>
+                            {l.listing_type === "for_sale" ? "For Sale" : "For Lease"}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 font-semibold">{fmt(l.asking_price)}</td>
+                        <td className="px-4 py-3">
+                          {l.buyer_tenant_name && <p>{l.buyer_tenant_name}</p>}
+                          {l.buyer_tenant_contact && <p className="text-xs text-muted-foreground">{l.buyer_tenant_contact}</p>}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">{l.agent || "—"}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{l.date_listed ? format(new Date(l.date_listed), "MMM d, yyyy") : "—"}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant="outline" className={`text-xs ${statusStyles[l.status]}`}>{l.status?.replace(/_/g, " ")}</Badge>
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-primary">
+                          {l.final_price ? fmt(l.final_price) : "—"}
+                          {l.contract_attachment_url && (
+                            <a href={l.contract_attachment_url} target="_blank" rel="noreferrer" className="block text-xs text-primary hover:underline mt-0.5 font-normal">View contract</a>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-8 w-8" onClick={() => { setEditing(l); setShowForm(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
+                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive h-8 w-8" onClick={() => deleteMutation.mutate(l.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
