@@ -1,7 +1,7 @@
 import { Fragment, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, List, ChevronDown, Pencil, Trash2 } from "lucide-react";
+import { Plus, List, ListPlus, ChevronDown, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -100,6 +100,21 @@ export default function Listings() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["property-listings"] }),
   });
 
+  const linkedUnitIds = new Set(listings.flatMap((listing) => (listing.units || []).map((unit) => unit.unit_id)));
+  const unitsReadyForListing = units.filter((unit) =>
+    ["available_for_sale", "available_for_lease"].includes(unit.status) && !linkedUnitIds.has(unit.id)
+  );
+  const createUnitListingsMutation = useMutation({
+    mutationFn: () => base44.entities.PropertyListing.bulkCreate(unitsReadyForListing.map((unit) => ({
+      units: [{ unit_id: unit.id, unit_number: unit.unit_number || "", building: unit.building || "" }],
+      listing_type: unit.status === "available_for_lease" ? "for_lease" : "for_sale",
+      asking_price: unit.status === "available_for_lease" ? Number(unit.monthly_rent || 0) : Number(unit.selling_price || 0),
+      status: "active",
+      date_listed: format(new Date(), "yyyy-MM-dd"),
+    }))),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["property-listings"] }),
+  });
+
   const filtered = listings.filter(l => {
     const matchType = typeFilter === "all" || l.listing_type === typeFilter;
     const matchStatus = statusFilter === "all" || l.status === statusFilter;
@@ -128,9 +143,19 @@ export default function Listings() {
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Listings</h1>
           <p className="text-muted-foreground mt-1">{listings.length} total listings</p>
         </div>
-        <Button onClick={() => { setEditing(null); setShowForm(true); }}>
-          <Plus className="w-4 h-4 mr-2" /> New Listing
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            disabled={!unitsReadyForListing.length || createUnitListingsMutation.isPending}
+            onClick={() => createUnitListingsMutation.mutate()}
+          >
+            <ListPlus className="w-4 h-4 mr-2" />
+            {createUnitListingsMutation.isPending ? "Creating..." : `Create Unit Listings (${unitsReadyForListing.length})`}
+          </Button>
+          <Button onClick={() => { setEditing(null); setShowForm(true); }}>
+            <Plus className="w-4 h-4 mr-2" /> New Listing
+          </Button>
+        </div>
       </div>
 
       {/* KPIs */}
