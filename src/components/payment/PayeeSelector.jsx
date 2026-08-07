@@ -15,7 +15,7 @@ export default function PayeeSelector({ value, onChange }) {
 
   const { data: payees = [] } = useQuery({
     queryKey: ["payees"],
-    queryFn: () => base44.entities.Payee.list("name", 200),
+    queryFn: () => base44.entities.Payee.list("name", 10000),
   });
 
   const createMutation = useMutation({
