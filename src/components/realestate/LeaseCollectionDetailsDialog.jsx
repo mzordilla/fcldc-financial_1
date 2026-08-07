@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -12,6 +14,7 @@ const fmt = (n) => `₱${Number(n || 0).toLocaleString(undefined, { minimumFract
 const defaultForm = {
   collected_date: format(new Date(), "yyyy-MM-dd"),
   payment_method: "bank_transfer",
+  bank_account_id: "",
   reference: "",
   notes: "",
 };
@@ -22,6 +25,11 @@ export default function LeaseCollectionDetailsDialog({
   onMarkCollected, onUndo, onMarkGroupCollected, onUndoGroup,
 }) {
   const [form, setForm] = useState(defaultForm);
+  const { data: bankAccounts = [] } = useQuery({
+    queryKey: ["bankaccounts"],
+    queryFn: () => base44.entities.BankAccount.list("-created_date", 100),
+    enabled: open,
+  });
   const isGroup = !!tenants;
   const isCollected = isGroup ? tenants.length > 0 && tenants.every((t, i) => records[i]?.collected) : !!record?.collected;
 
@@ -116,6 +124,17 @@ export default function LeaseCollectionDetailsDialog({
                 </Select>
               </div>
               <div>
+                <Label className="text-xs">Deposit To Bank *</Label>
+                <Select value={form.bank_account_id} onValueChange={(v) => setForm({ ...form, bank_account_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger>
+                  <SelectContent>
+                    {bankAccounts.filter((account) => account.status !== "closed").map((account) => (
+                      <SelectItem key={account.id} value={account.id}>{account.account_name} – {account.bank_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <Label className="text-xs">Reference</Label>
                 <Input value={form.reference} onChange={(e) => setForm({ ...form, reference: e.target.value })} placeholder="Check no., transfer ref., etc." />
               </div>
@@ -135,9 +154,9 @@ export default function LeaseCollectionDetailsDialog({
               <Button variant="outline" onClick={() => onUndo(tenant, month, record)}>Undo Collection</Button>
             )
           ) : isGroup ? (
-            <Button onClick={() => onMarkGroupCollected(tenants, month, records, form)}>Mark All Units as Collected</Button>
+            <Button disabled={!form.bank_account_id} onClick={() => onMarkGroupCollected(tenants, month, records, form)}>Mark All Units as Collected</Button>
           ) : (
-            <Button onClick={() => onMarkCollected(tenant, month, record, form)}>Mark as Collected</Button>
+            <Button disabled={!form.bank_account_id} onClick={() => onMarkCollected(tenant, month, record, form)}>Mark as Collected</Button>
           )}
         </DialogFooter>
       </DialogContent>

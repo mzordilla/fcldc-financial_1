@@ -71,6 +71,14 @@
     "receivable_id": {
       "type": "string",
       "description": "Linked lease Receivable ID"
+    },
+    "bank_account_id": {
+      "type": "string",
+      "description": "Bank account where this lease collection was deposited"
+    },
+    "bank_transaction_id": {
+      "type": "string",
+      "description": "Linked bank income transaction created for this collection"
     }
   },
   "required": [

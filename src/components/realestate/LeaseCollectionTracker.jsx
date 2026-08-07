@@ -83,7 +83,7 @@ export default function LeaseCollectionTracker() {
     const receivable = await base44.entities.Receivable.get(record.receivable_id);
     const priorHistory = receivable.payment_history || [];
     const paymentHistory = collected
-      ? [...priorHistory, { collection_date: form.collected_date, amount: record.amount || 0, reference: form.reference || "", notes: "Recorded from Lease Collections" }]
+      ? [...priorHistory, { collection_date: form.collected_date, amount: record.amount || 0, bank_account_id: form.bank_account_id || "", reference: form.reference || "", notes: "Recorded from Lease Collections" }]
       : priorHistory.filter((entry) => entry.notes !== "Recorded from Lease Collections");
     await base44.entities.Receivable.update(receivable.id, {
       amount_paid: collected ? receivable.amount : 0,
@@ -91,6 +91,31 @@ export default function LeaseCollectionTracker() {
       payment_history: paymentHistory,
     });
     queryClient.invalidateQueries({ queryKey: ["receivables"] });
+  };
+
+  const postBankCollection = async (record, form) => {
+    const transaction = await base44.entities.Transaction.create({
+      description: `Lease collection — ${record.tenant_name} · ${record.unit_number || "Unit"} · ${record.month}${form.reference ? ` · ${form.reference}` : ""}`,
+      amount: record.amount || 0,
+      type: "income",
+      category: "project_payment",
+      chart_of_account: "Cash and Cash Equivalents",
+      bank_account_id: form.bank_account_id,
+      date: form.collected_date,
+      status: "completed",
+    });
+    await base44.entities.LeaseCollection.update(record.id, {
+      bank_account_id: form.bank_account_id,
+      bank_transaction_id: transaction.id,
+    });
+    queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["bankaccounts"] });
+  };
+
+  const removeBankCollection = async (record) => {
+    if (record.bank_transaction_id) await base44.entities.Transaction.delete(record.bank_transaction_id);
+    queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["bankaccounts"] });
   };
 
   const handleCellClick = (tenant, month, record) => {
@@ -105,11 +130,12 @@ export default function LeaseCollectionTracker() {
       reference: form.reference,
       notes: form.notes,
     };
+    let savedRecord;
     if (record) {
-      await updateMutation.mutateAsync({ id: record.id, data: details });
+      savedRecord = await updateMutation.mutateAsync({ id: record.id, data: details });
       await syncReceivable(record, true, form);
     } else {
-      await createMutation.mutateAsync({
+      savedRecord = await createMutation.mutateAsync({
         tenant_id: tenant.id,
         tenant_name: tenant.full_name,
         unit_number: tenant.unit_number,
@@ -121,13 +147,15 @@ export default function LeaseCollectionTracker() {
         ...details,
       });
     }
+    await postBankCollection(savedRecord, form);
     setDetailsDialog(null);
   };
 
   const handleUndo = async (tenant, month, record) => {
+    await removeBankCollection(record);
     await updateMutation.mutateAsync({
       id: record.id,
-      data: { collected: false, collected_date: "", payment_method: "", reference: "", notes: "" },
+      data: { collected: false, collected_date: "", payment_method: "", reference: "", notes: "", bank_account_id: "", bank_transaction_id: "" },
     });
     await syncReceivable(record, false);
     setDetailsDialog(null);
@@ -149,11 +177,13 @@ export default function LeaseCollectionTracker() {
     };
     await Promise.all(tenants.map(async (t, i) => {
       const record = records[i];
+      if (record?.collected) return;
+      let savedRecord;
       if (record) {
-        await updateMutation.mutateAsync({ id: record.id, data: details });
+        savedRecord = await updateMutation.mutateAsync({ id: record.id, data: details });
         await syncReceivable(record, true, form);
       } else {
-        await createMutation.mutateAsync({
+        savedRecord = await createMutation.mutateAsync({
           tenant_id: t.id,
           tenant_name: t.full_name,
           unit_number: t.unit_number,
@@ -165,15 +195,17 @@ export default function LeaseCollectionTracker() {
           ...details,
         });
       }
+      await postBankCollection(savedRecord, form);
     }));
     setGroupDialog(null);
   };
 
   const handleUndoGroup = async (tenants, month, records) => {
     await Promise.all(records.filter(Boolean).map(async (record) => {
+      await removeBankCollection(record);
       await updateMutation.mutateAsync({
         id: record.id,
-        data: { collected: false, collected_date: "", payment_method: "", reference: "", notes: "" },
+        data: { collected: false, collected_date: "", payment_method: "", reference: "", notes: "", bank_account_id: "", bank_transaction_id: "" },
       });
       await syncReceivable(record, false);
     }));
