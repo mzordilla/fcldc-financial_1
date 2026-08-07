@@ -14,8 +14,23 @@ export default function PayeeSelector({ value, onChange }) {
   const queryClient = useQueryClient();
 
   const { data: payees = [] } = useQuery({
-    queryKey: ["payees"],
-    queryFn: () => base44.entities.Payee.list("name", 10000),
+    queryKey: ["payees", "payment-request-selector"],
+    queryFn: async () => {
+      const [payeeRecords, purchaseOrders, payables] = await Promise.all([
+        base44.entities.Payee.list("name", 10000),
+        base44.entities.PurchaseOrder.list("-created_date", 10000),
+        base44.entities.Payable.list("-created_date", 10000),
+      ]);
+      const byName = new Map();
+      payeeRecords.forEach((payee) => byName.set(payee.name.trim().toLowerCase(), payee));
+      [...purchaseOrders, ...payables].forEach((record) => {
+        const name = record.supplier_name?.trim();
+        if (name && !byName.has(name.toLowerCase())) {
+          byName.set(name.toLowerCase(), { id: `supplier-${name}`, name, category: "supplier" });
+        }
+      });
+      return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
+    },
   });
 
   const createMutation = useMutation({
