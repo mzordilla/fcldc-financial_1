@@ -1,10 +1,10 @@
 import { useState, forwardRef, useImperativeHandle } from "react";
-import { ChevronDown, ChevronUp, Plus, CheckCircle2 } from "lucide-react";
+import { ChevronDown, Plus, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const SupplierGroupedPOs = forwardRef(function SupplierGroupedPOs({ pos, onConvert, poIdsWithRequest, isAdmin, selectedIds, onToggleSelect }, ref) {
+const SupplierGroupedPOs = forwardRef(function SupplierGroupedPOs({ pos, onConvert, onCancel, poIdsWithRequest, isAdmin, selectedIds, onToggleSelect, readOnly = false }, ref) {
   const [expandedSuppliers, setExpandedSuppliers] = useState(new Set());
 
   const bySupplier = {};
@@ -29,7 +29,7 @@ const SupplierGroupedPOs = forwardRef(function SupplierGroupedPOs({ pos, onConve
   };
 
   if (pos.length === 0) {
-    return <div className="text-center py-12 text-muted-foreground">No approved purchase orders ready to pay</div>;
+    return <div className="text-center py-12 text-muted-foreground">{readOnly ? "No cancelled purchase orders" : "No approved purchase orders ready to pay"}</div>;
   }
 
   return (
@@ -68,7 +68,7 @@ const SupplierGroupedPOs = forwardRef(function SupplierGroupedPOs({ pos, onConve
                       return (
                       <tr key={po.id} className="hover:bg-muted/20 transition-colors">
                         <td className="px-2 py-0.5" onClick={(e) => e.stopPropagation()}>
-                          {!hasRequest && (
+                          {!readOnly && !hasRequest && (
                             <Checkbox
                               checked={selectedIds?.has(po.id) || false}
                               onCheckedChange={() => onToggleSelect?.(po.id)}
@@ -86,14 +86,19 @@ const SupplierGroupedPOs = forwardRef(function SupplierGroupedPOs({ pos, onConve
                         <td className="px-2 py-0.5 text-muted-foreground whitespace-nowrap">{po.required_date ? format(new Date(po.required_date), "MMM d, yyyy") : "—"}</td>
                         <td className="px-2 py-0.5 text-right font-bold text-foreground whitespace-nowrap">₱{(po.amount || 0).toLocaleString()}</td>
                         <td className="px-2 py-0.5 text-right">
-                          {hasRequest ? (
-                            <span className="inline-flex items-center gap-1 text-xs text-primary font-medium">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> PR Created
-                            </span>
+                          {readOnly ? (
+                            <span className="inline-flex items-center gap-1 text-xs text-destructive font-medium"><XCircle className="w-3.5 h-3.5" /> Cancelled</span>
                           ) : (
-                            <Button size="sm" variant="outline" onClick={() => onConvert(po)} className="h-6 px-2 text-xs">
-                              <Plus className="w-3 h-3 mr-1" /> Create PR
-                            </Button>
+                            <div className="flex items-center justify-end gap-1">
+                              {hasRequest ? (
+                                <span className="inline-flex items-center gap-1 text-xs text-primary font-medium"><CheckCircle2 className="w-3.5 h-3.5" /> PR Created</span>
+                              ) : (
+                                <Button size="sm" variant="outline" onClick={() => onConvert(po)} className="h-6 px-2 text-xs"><Plus className="w-3 h-3 mr-1" /> Create PR</Button>
+                              )}
+                              {isAdmin && (
+                                <Button size="sm" variant="ghost" onClick={() => onCancel?.(po)} className="h-6 px-2 text-xs text-destructive hover:text-destructive"><XCircle className="w-3 h-3 mr-1" /> Cancel</Button>
+                              )}
+                            </div>
                           )}
                         </td>
                       </tr>

@@ -70,6 +70,7 @@ export default function PaymentApprovals() {
   const [selectedPOIds, setSelectedPOIds] = useState(new Set());
   const queryClient = useQueryClient();
   const posGroupRef = useRef();
+  const cancelledPosGroupRef = useRef();
   const pendingGroupRef = useRef();
   const approvedGroupRef = useRef();
   const paidGroupRef = useRef();
@@ -90,6 +91,11 @@ export default function PaymentApprovals() {
   const { data: approvedPOs = [] } = useQuery({
     queryKey: ["approved_pos"],
     queryFn: () => base44.entities.PurchaseOrder.filter({ approval_status: "approved" }, "-created_date", 10000),
+  });
+
+  const { data: cancelledPOs = [] } = useQuery({
+    queryKey: ["cancelled_pos"],
+    queryFn: () => base44.entities.PurchaseOrder.filter({ approval_status: "cancelled" }, "-created_date", 10000),
   });
 
   const { data: payables = [] } = useQuery({
@@ -273,6 +279,38 @@ export default function PaymentApprovals() {
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+  };
+
+  const cancelPurchaseOrder = async (po) => {
+    if (!window.confirm(`Cancel purchase order ${po.po_number || "this PO"}? It will no longer be available for payment.`)) return;
+    const actor = currentUser?.full_name || currentUser?.email || "Administrator";
+    const timestamp = new Date().toISOString();
+    await base44.entities.PurchaseOrder.update(po.id, {
+      approval_status: "cancelled",
+      approval_notes: `Cancelled by ${actor}`,
+      approval_history: [...(po.approval_history || []), { step: "cancelled", action: "cancelled", actor, notes: "Cancelled from Payment Approvals", timestamp }],
+    });
+    const linkedRequests = requests.filter((request) => {
+      if (["paid", "rejected"].includes(request.approval_status) || !request.supporting_docs) return false;
+      const match = request.supporting_docs.match(/PO:\s*(.+)/);
+      if (!match) return false;
+      const refs = match[1].split(",").map((ref) => ref.trim());
+      return refs.includes(po.po_number) || refs.includes(po.id);
+    });
+    await Promise.all(linkedRequests.map((request) => base44.entities.PaymentRequest.update(request.id, {
+      approval_status: "rejected",
+      approval_step: "rejected",
+      approval_notes: `Purchase Order ${po.po_number || po.id} was cancelled`,
+      approval_history: [...(request.approval_history || []), { step: "rejected", action: "rejected", actor, notes: `Linked Purchase Order ${po.po_number || po.id} was cancelled`, timestamp }],
+    })));
+    setSelectedPOIds((previous) => {
+      const next = new Set(previous);
+      next.delete(po.id);
+      return next;
+    });
+    queryClient.invalidateQueries({ queryKey: ["approved_pos"] });
+    queryClient.invalidateQueries({ queryKey: ["cancelled_pos"] });
+    queryClient.invalidateQueries({ queryKey: ["payment_requests"] });
   };
 
   const selectedPOs = availablePOsInView.filter(po => selectedPOIds.has(po.id));
@@ -663,6 +701,7 @@ export default function PaymentApprovals() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="pos">Approved Purchase Orders ({availablePOs.length})</TabsTrigger>
+          <TabsTrigger value="cancelled-pos">Cancelled POs ({cancelledPOs.length})</TabsTrigger>
           <TabsTrigger value="pending">Pending ({pending.length})</TabsTrigger>
           <TabsTrigger value="approved">Approved ({approved.length})</TabsTrigger>
           <TabsTrigger value="paid">Paid ({paid.length})</TabsTrigger>
@@ -709,7 +748,20 @@ export default function PaymentApprovals() {
               </div>
             </div>
           )}
-          <SupplierGroupedPOs ref={posGroupRef} pos={availablePOsInView} onConvert={convertPOtoPaymentRequest} poIdsWithRequest={poRefsWithRequests} selectedIds={selectedPOIds} onToggleSelect={togglePOSelect} />
+          <SupplierGroupedPOs ref={posGroupRef} pos={availablePOsInView} onConvert={convertPOtoPaymentRequest} onCancel={cancelPurchaseOrder} poIdsWithRequest={poRefsWithRequests} selectedIds={selectedPOIds} onToggleSelect={togglePOSelect} isAdmin={isAdmin} />
+        </TabsContent>
+
+        <TabsContent value="cancelled-pos" className="space-y-3 mt-4">
+          {cancelledPOs.length > 0 && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-muted-foreground">{cancelledPOs.length} cancelled purchase order{cancelledPOs.length !== 1 ? "s" : ""}</p>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => cancelledPosGroupRef.current?.expandAll()} className="text-xs"><ChevronDown className="w-3 h-3 mr-1" /> Expand All</Button>
+                <Button size="sm" variant="outline" onClick={() => cancelledPosGroupRef.current?.collapseAll()} className="text-xs"><ChevronUp className="w-3 h-3 mr-1" /> Collapse All</Button>
+              </div>
+            </div>
+          )}
+          <SupplierGroupedPOs ref={cancelledPosGroupRef} pos={cancelledPOs} readOnly />
         </TabsContent>
 
         {/* Pending */}
