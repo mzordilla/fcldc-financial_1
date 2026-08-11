@@ -103,7 +103,7 @@ export default function BillingCycles() {
 
   const filtered = statusFilter === "all" ? billingCycles : billingCycles.filter(b => b.approval_status === statusFilter);
   const pending = billingCycles.filter(b => b.approval_status === "pending");
-  const totalBilled = billingCycles.filter(b => b.approval_status === "approved").reduce((s, b) => s + (b.net_billing_amount || b.billing_amount || 0), 0);
+  const totalBilled = billingCycles.filter(b => b.approval_status === "approved").reduce((s, b) => s + (b.billing_amount || 0), 0);
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">

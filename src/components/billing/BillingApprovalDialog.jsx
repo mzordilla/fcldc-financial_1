@@ -36,7 +36,8 @@ export default function BillingApprovalDialog({ open, onOpenChange, billingCycle
 
   if (!billingCycle) return null;
 
-  const net = billingCycle.net_billing_amount || billingCycle.billing_amount || 0;
+  const gross = billingCycle.billing_amount || 0;
+  const net = billingCycle.net_billing_amount || gross;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -90,7 +91,7 @@ export default function BillingApprovalDialog({ open, onOpenChange, billingCycle
             )}
 
             <div className="pt-2 bg-primary/5 border border-primary/20 rounded-lg p-3 text-xs text-primary space-y-1">
-              <p>✓ On approval, <strong>₱{net.toLocaleString()}</strong> will be recognized as <strong>income in the P&L</strong> immediately.</p>
+              <p>✓ On approval, <strong>₱{gross.toLocaleString()}</strong> gross billing will be recognized as <strong>income in the P&L</strong> immediately.</p>
               <p className="text-primary/70">A corresponding Accounts Receivable record will be created. Collections will reduce the AR balance without affecting recognized income.</p>
             </div>
           </div>
@@ -123,7 +124,7 @@ export default function BillingApprovalDialog({ open, onOpenChange, billingCycle
               />
             </div>
             <div className="bg-muted/30 rounded-lg p-3 text-xs text-muted-foreground">
-              Approving will recognize ₱{net.toLocaleString()} as income in the P&L and create a corresponding Accounts Receivable. Collections against this AR will not affect the recognized income.
+              Approving will recognize ₱{gross.toLocaleString()} gross billing as income in the P&L and create a corresponding Accounts Receivable for ₱{net.toLocaleString()}. Collections against this AR will not affect the recognized income.
             </div>
           </div>
         )}
