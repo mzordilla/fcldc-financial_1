@@ -157,6 +157,9 @@ export default function MarkReceivableAsCollectedDialog({ open, onOpenChange, re
                       <div>
                         <div className="flex items-center gap-1.5">
                           {h.reference && <span className="font-medium text-xs">{h.reference}</span>}
+                          {h.is_advance_payment && (
+                            <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary rounded px-1.5 py-0.5 font-medium">Advance applied</span>
+                          )}
                           {h.undeposited && (
                             <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 rounded px-1.5 py-0.5 font-medium">
                               📥 Undeposited

@@ -89,10 +89,13 @@ export default function BillingApprovalDialog({ open, onOpenChange, billingCycle
             {billingCycle.retention_rate > 0 && (
               <p className="text-xs text-chart-3">Retention ({billingCycle.retention_rate}%): -₱{(billingCycle.retention_amount || 0).toLocaleString()}</p>
             )}
+            {billingCycle.down_payment_deduction > 0 && (
+              <p className="text-xs text-primary">Advance payment applied to receivable: -₱{billingCycle.down_payment_deduction.toLocaleString()}</p>
+            )}
 
             <div className="pt-2 bg-primary/5 border border-primary/20 rounded-lg p-3 text-xs text-primary space-y-1">
               <p>✓ On approval, <strong>₱{gross.toLocaleString()}</strong> gross billing will be recognized as <strong>income in the P&L</strong> immediately.</p>
-              <p className="text-primary/70">A corresponding Accounts Receivable record will be created. Collections will reduce the AR balance without affecting recognized income.</p>
+              <p className="text-primary/70">A corresponding Accounts Receivable record will be created, with any project advance shown as an applied credit. Collections will reduce the AR balance without affecting recognized income.</p>
             </div>
           </div>
         )}

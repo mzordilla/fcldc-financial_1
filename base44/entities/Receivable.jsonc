@@ -20,12 +20,12 @@
     },
     "amount": {
       "type": "number",
-      "description": "Total invoice amount"
+      "description": "Invoice amount before applied advance payments"
     },
     "amount_paid": {
       "type": "number",
       "default": 0,
-      "description": "Amount already collected"
+      "description": "Amount paid or credited against the receivable"
     },
     "due_date": {
       "type": "string",
@@ -44,7 +44,7 @@
     },
     "payment_history": {
       "type": "array",
-      "description": "Log of all partial and full collections",
+      "description": "Log of advance credits and all partial and full collections",
       "items": {
         "type": "object",
         "properties": {
@@ -62,6 +62,10 @@
           },
           "notes": {
             "type": "string"
+          },
+          "is_advance_payment": {
+            "type": "boolean",
+            "description": "Whether this entry applies an advance payment already received"
           },
           "receipt_url": {
             "type": "string",

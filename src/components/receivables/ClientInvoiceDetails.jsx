@@ -44,6 +44,7 @@ export default function ClientInvoiceDetails({ rows, onCollect, onEdit, onDelete
           )}
           {rows.map((r) => {
             const remaining = (r.amount || 0) - (r.amount_paid || 0);
+            const advanceApplied = (r.payment_history || []).filter(h => h.is_advance_payment).reduce((sum, h) => sum + (h.amount || 0), 0);
             const aging = getAgingBucket(r.due_date, r.status);
             return (
               <tr key={r.id} className="hover:bg-muted/20 transition-colors">
@@ -58,7 +59,10 @@ export default function ClientInvoiceDetails({ rows, onCollect, onEdit, onDelete
                   {aging ? <Badge className={aging.style} variant="outline">{aging.label}</Badge> : <span className="text-xs text-muted-foreground">—</span>}
                 </td>
                 <td className="px-4 py-3 text-right text-xs font-semibold text-foreground">₱{(r.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                <td className="px-4 py-3 text-right text-xs text-primary">₱{(r.amount_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                <td className="px-4 py-3 text-right text-xs text-primary">
+                  <div>₱{(r.amount_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                  {advanceApplied > 0 && <div className="text-[10px] text-muted-foreground">Advance: ₱{advanceApplied.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>}
+                </td>
                 <td className="px-4 py-3 text-right text-xs font-bold text-foreground">₱{remaining.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-2">

@@ -67,19 +67,28 @@ export default function BillingCycles() {
     if (action === "approved") {
       // Retention held is still earned income (just collected later) — recognize the FULL gross billing as income
       const grossBillingAmount = bc.billing_amount || 0;
-      // The receivable is only for the net cash currently due (retention portion isn't collectible yet)
+      // The receivable shows the advance payment separately as an applied credit.
       const netBillingAmount = bc.net_billing_amount || bc.billing_amount || 0;
+      const advanceApplied = bc.down_payment_deduction || 0;
+      const receivableAmount = netBillingAmount + advanceApplied;
       const today = new Date().toISOString().split("T")[0];
 
-      // 1. Create Accounts Receivable record (net amount currently due)
+      // 1. Create Accounts Receivable record with any project advance applied to it
       const receivable = await base44.entities.Receivable.create({
         client_name: bc.client_name,
         project_name: bc.project_name,
         invoice_number: bc.billing_number || "",
-        amount: netBillingAmount,
-        amount_paid: 0,
+        amount: receivableAmount,
+        amount_paid: advanceApplied,
         due_date: bc.due_date || today,
-        status: "outstanding",
+        status: advanceApplied >= receivableAmount ? "paid" : advanceApplied > 0 ? "partially_paid" : "outstanding",
+        payment_history: advanceApplied > 0 ? [{
+          collection_date: bc.period_end || bc.period_start || today,
+          amount: advanceApplied,
+          reference: "Advance payment applied",
+          notes: "Applied from project advance payment",
+          is_advance_payment: true,
+        }] : [],
         notes: `Auto-created from Billing Cycle: ${bc.billing_number || ""} — ${bc.period_label || ""} (${bc.accomplishment_percentage}% accomplishment)`,
       });
       updateData.receivable_id = receivable.id;
