@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import MultiOtherPayableDialog from "./MultiOtherPayableDialog";
 import MarkPayableAsPaidDialog from "./MarkPayableAsPaidDialog";
+import AgingSummary from "./AgingSummary";
+import { buildAging } from "@/lib/payablesAging";
 
 const statusStyles = {
   unpaid: "bg-chart-3/10 text-chart-3 border-chart-3/20",
@@ -58,6 +60,7 @@ export default function OtherPayables() {
     return { payee, rows, outstanding };
   });
   const totalOutstanding = payeeList.reduce((s, g) => s + g.outstanding, 0);
+  const aging = buildAging(payables);
 
   const toggle = (payee) => setExpanded((prev) => {
     const next = new Set(prev);
@@ -75,6 +78,10 @@ export default function OtherPayables() {
           <Plus className="w-4 h-4 mr-2" /> Add
         </Button>
       </div>
+
+      {!isLoading && payables.length > 0 && (
+        <AgingSummary overall={aging.buckets} overallTotal={aging.total} title="Aging Analysis — Other Payables" />
+      )}
 
       {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
       {!isLoading && payeeList.length === 0 && <p className="text-center py-12 text-muted-foreground">No other payables yet</p>}

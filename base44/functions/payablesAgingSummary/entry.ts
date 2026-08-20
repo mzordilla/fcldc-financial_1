@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
     const supplierMap = {};
 
     for (const p of payables) {
+      if (p.payable_type === 'other') continue;
       if (p.status === 'overdue') overdueCount += 1;
       if (p.status === 'paid') continue;
       const bucket = agingBucketKey(p.due_date, today);
