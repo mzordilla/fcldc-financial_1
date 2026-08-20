@@ -180,7 +180,6 @@ export default function NoticeOfDeliveryPDF({ po, iconOnly }) {
     y += 10;
 
     // Signature section
-    if (y > 230) { doc.addPage(); y = 20; }
     doc.setDrawColor(220, 220, 220);
     doc.line(margin, y, margin + 65, y);
     doc.line(pageW - margin - 65, y, pageW - margin, y);
@@ -195,15 +194,15 @@ export default function NoticeOfDeliveryPDF({ po, iconOnly }) {
     doc.text("Printed Name & Date", margin, y + 5);
     doc.text("Printed Name & Date", pageW - margin - 65, y + 5);
 
+    y += 12;
+
     // Footer
     doc.setFontSize(7);
     doc.setTextColor(160, 160, 160);
-    doc.text("This is a system-generated Notice of Delivery.", pageW / 2, 285, { align: "center" });
+    doc.text("This is a system-generated Notice of Delivery.", pageW / 2, y, { align: "center" });
 
-    // ── Receiving Copy stub (5 inches / 127mm tall, on its own page, cut along dashed line) ──
-    doc.addPage();
-    const stubH = 127; // 5 inches in mm
-    let sy = 15;
+    // ── Receiving Copy stub — same page, cut along dashed line ──
+    let sy = Math.max(y + 10, 200);
 
     doc.setDrawColor(150, 150, 150);
     doc.setLineDashPattern([2, 2], 0);
@@ -248,7 +247,7 @@ export default function NoticeOfDeliveryPDF({ po, iconOnly }) {
 
     doc.setFontSize(7);
     doc.setTextColor(160, 160, 160);
-    doc.text("This stub confirms receipt of the goods/services listed above.", pageW / 2, 15 + stubH, { align: "center" });
+    doc.text("This stub confirms receipt of the goods/services listed above.", pageW / 2, sy + 14, { align: "center" });
 
     const filename = `NOD-${po.po_number || po.id}-${format(new Date(), "yyyyMMdd")}.pdf`;
     doc.save(filename);
