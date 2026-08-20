@@ -364,6 +364,7 @@ export default function Receivables() {
         onOpenChange={(v) => { if (!v) setEditingR(null); }}
         title="Edit Receivable"
         fields={editingR?.receivable_type === "funding_loan" ? fundingFields : fields}
+        showProject={editingR?.receivable_type !== "funding_loan"}
         initialData={editingR || {}}
         onSubmit={(data) => updateMutation.mutateAsync({ id: editingR.id, data })}
       />

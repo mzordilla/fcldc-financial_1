@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export default function ReceivableFormDialog({ open, onOpenChange, title, fields, onSubmit, initialData }) {
+export default function ReceivableFormDialog({ open, onOpenChange, title, fields, onSubmit, initialData, showProject = true }) {
   const [formData, setFormData] = useState(initialData || {});
   const [saving, setSaving] = useState(false);
 
@@ -36,7 +36,7 @@ export default function ReceivableFormDialog({ open, onOpenChange, title, fields
       }
     });
     // Use project_code instead of project_name
-    cleanedData.project_name = formData.project_name;
+    if (showProject) cleanedData.project_name = formData.project_name;
     await onSubmit(cleanedData);
     setSaving(false);
     setFormData({});
@@ -86,6 +86,7 @@ export default function ReceivableFormDialog({ open, onOpenChange, title, fields
             </div>
           ))}
           
+          {showProject && (
           <div className="space-y-1.5">
             <Label className="text-sm">Project Code <span className="text-destructive">*</span></Label>
             <Select
@@ -107,10 +108,11 @@ export default function ReceivableFormDialog({ open, onOpenChange, title, fields
               </SelectContent>
             </Select>
           </div>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" disabled={saving || !formData.project_name}>
+            <Button type="submit" disabled={saving || (showProject && !formData.project_name)}>
               {saving ? "Saving..." : "Save"}
             </Button>
           </DialogFooter>
