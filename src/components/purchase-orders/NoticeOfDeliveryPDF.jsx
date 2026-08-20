@@ -282,7 +282,7 @@ export default function NoticeOfDeliveryPDF({ po, iconOnly }) {
 
   return (
     <Button size="sm" variant="outline" onClick={handleGenerate} className="text-primary hover:text-primary">
-      <FileDown className="w-3.5 h-3.5 mr-1.5" /> NOD
+      <FileDown className="w-3.5 h-3.5 mr-1.5" /> Delivery Note
     </Button>
   );
 }

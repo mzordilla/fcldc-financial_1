@@ -127,48 +127,57 @@ export default function PurchaseOrders() {
           <td className="px-0.5 py-px text-right text-xs font-bold text-foreground whitespace-nowrap">
             ₱{(po.amount || (po.line_items || []).reduce((s, i) => s + (i.total || i.quantity * i.cost_per_item || 0), 0)).toLocaleString()}
           </td>
-          <td className="px-0.5 py-px" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-end gap-px">
+          <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-wrap items-center justify-end gap-1 min-w-[280px]">
               {isAdmin && po.approval_status === "pending" &&
-              <button onClick={() => setReviewPO(po)} className="text-[8px] text-chart-3 font-medium px-0.5 py-px rounded border border-chart-3/30 hover:bg-chart-3/10 transition-colors whitespace-nowrap leading-tight">Rev</button>
+                <button onClick={() => setReviewPO(po)} className="inline-flex items-center gap-1 rounded-md border border-chart-3/30 px-2 py-1 text-xs font-medium text-chart-3 hover:bg-chart-3/10">
+                  <CheckCircle className="w-3.5 h-3.5" /> Review
+                </button>
               }
               {po.approval_status === "approved" && !po.receipt_url &&
-              <button onClick={() => setUploadingReceipt(po)} className="text-[8px] text-primary font-medium px-0.5 py-px rounded border border-primary/30 hover:bg-primary/10 transition-colors whitespace-nowrap leading-tight">Rcpt</button>
+                <button onClick={() => setUploadingReceipt(po)} className="inline-flex items-center gap-1 rounded-md border border-primary/30 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10">
+                  <Package className="w-3.5 h-3.5" /> Receipt
+                </button>
               }
               {po.approval_status === "approved" &&
-              <button onClick={() => setReceivingItems(po)} className="text-[8px] text-primary font-medium px-0.5 py-px rounded border border-primary/30 hover:bg-primary/10 transition-colors whitespace-nowrap leading-tight">Recv</button>
+                <button onClick={() => setReceivingItems(po)} className="inline-flex items-center gap-1 rounded-md border border-primary/30 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10">
+                  <Package className="w-3.5 h-3.5" /> Receive
+                </button>
               }
               {po.approval_status === "approved" &&
-              <button
-                onClick={() => setConvertingPO(po)}
-                disabled={!po.receipt_url || poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number)}
-                title={!po.receipt_url ? "Upload a receipt first" : poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number) ? "Already paid" : ""}
-                className="text-[8px] text-primary font-medium px-0.5 py-px rounded border border-primary/30 hover:bg-primary/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap leading-tight">
-                Pay</button>
+                <button
+                  onClick={() => setConvertingPO(po)}
+                  disabled={!po.receipt_url || poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number)}
+                  title={!po.receipt_url ? "Upload a receipt first" : poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number) ? "Already paid" : ""}
+                  className="inline-flex items-center gap-1 rounded-md border border-primary/30 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-40">
+                  <CreditCard className="w-3.5 h-3.5" /> Pay
+                </button>
               }
               {po.approval_status === "approved" &&
-              <button onClick={() => setRequestingChangePO(po)} className="text-[8px] text-chart-3 font-medium px-0.5 py-px rounded border border-chart-3/30 hover:bg-chart-3/10 transition-colors whitespace-nowrap leading-tight">Req Chg</button>
+                <button onClick={() => setRequestingChangePO(po)} className="inline-flex items-center gap-1 rounded-md border border-chart-3/30 px-2 py-1 text-xs font-medium text-chart-3 hover:bg-chart-3/10">
+                  <GitPullRequest className="w-3.5 h-3.5" /> Change
+                </button>
               }
               {isAdmin && pendingChangeRequests > 0 &&
-              <button onClick={() => setReviewingChangesPO(po)} className="relative text-muted-foreground hover:text-foreground transition-colors" title="Review Change Requests">
-                <GitPullRequest className="w-2.5 h-2.5" />
-                <span className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-[7px] rounded-full w-3 h-3 flex items-center justify-center">{pendingChangeRequests}</span>
-              </button>
+                <button onClick={() => setReviewingChangesPO(po)} className="relative inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted">
+                  <GitPullRequest className="w-3.5 h-3.5" /> Changes
+                  <span className="-mt-3 -mr-3 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] text-destructive-foreground">{pendingChangeRequests}</span>
+                </button>
               }
-              <button onClick={() => setPrintingPO(po)} className="text-muted-foreground hover:text-foreground transition-colors" title="Print">
-                <Printer className="w-2.5 h-2.5" />
+              <button onClick={() => setPrintingPO(po)} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted">
+                <Printer className="w-3.5 h-3.5" /> Print
               </button>
-              <NoticeOfDeliveryPDF po={po} iconOnly />
-              <button onClick={() => setReviewPO(po)} className="text-muted-foreground hover:text-foreground transition-colors" title="History">
-                <History className="w-2.5 h-2.5" />
+              <NoticeOfDeliveryPDF po={po} />
+              <button onClick={() => setReviewPO(po)} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted">
+                <History className="w-3.5 h-3.5" /> History
               </button>
-              <button onClick={() => setEditingPO(po)} className="text-muted-foreground hover:text-foreground transition-colors" title="Edit">
-                <Pencil className="w-2.5 h-2.5" />
+              <button onClick={() => setEditingPO(po)} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted">
+                <Pencil className="w-3.5 h-3.5" /> Edit
               </button>
-              <button onClick={() => deleteMutation.mutate(po.id)} className="text-muted-foreground hover:text-destructive transition-colors" title="Delete">
-                <Trash2 className="w-2.5 h-2.5" />
+              <button onClick={() => deleteMutation.mutate(po.id)} className="inline-flex items-center gap-1 rounded-md border border-destructive/30 px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10">
+                <Trash2 className="w-3.5 h-3.5" /> Delete
               </button>
-              {isExpanded ? <ChevronUp className="w-2.5 h-2.5 text-muted-foreground" /> : <ChevronDown className="w-2.5 h-2.5 text-muted-foreground" />}
+              {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
             </div>
           </td>
         </tr>
