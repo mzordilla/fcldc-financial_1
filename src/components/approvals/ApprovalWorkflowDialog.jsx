@@ -17,7 +17,7 @@ const STEPS = ["Details", "Decision", "History"];
 // Statuses where no further approval action is allowed
 const FINAL_STATUSES = ["rejected", "paid"];
 
-export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summary, history = [], onDecision, currentStatus, paymentRequest }) {
+export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summary, history = [], onDecision, currentStatus, paymentRequest, historyOnly = false }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDisbursementRole, setIsDisbursementRole] = useState(false);
   const [step, setStep] = useState(0);
@@ -27,7 +27,7 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
   const [paymentReference, setPaymentReference] = useState("");
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split("T")[0]);
   const [showCheckWriter, setShowCheckWriter] = useState(false);
-  const isFinal = FINAL_STATUSES.includes(currentStatus);
+  const isFinal = historyOnly || FINAL_STATUSES.includes(currentStatus);
   const isDisbursement = currentStatus === "approved";
   // Disbursement role can only act on approved (disburse) — not approve/reject pending
   const canAct = isAdmin || (isDisbursementRole && isDisbursement);

@@ -961,7 +961,8 @@ export default function PurchaseOrders() {
       <ApprovalWorkflowDialog
         open={!!reviewPO}
         onOpenChange={(v) => !v && setReviewPO(null)}
-        title={`Review PO — ${reviewPO.supplier_name}`}
+        title={reviewPO.approval_status === "pending" ? `Review PO — ${reviewPO.supplier_name}` : `PO History — ${reviewPO.supplier_name}`}
+        historyOnly={reviewPO.approval_status !== "pending"}
         history={reviewPO.approval_history || []}
         summary={
         <div className="space-y-1">
