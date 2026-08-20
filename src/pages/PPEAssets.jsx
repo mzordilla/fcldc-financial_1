@@ -109,12 +109,10 @@ function AssetFormDialog({ open, onClose, asset, onSubmit }) {
               <Label>Asset Code</Label>
               <Input value={form.asset_code} onChange={e => set("asset_code", e.target.value)} placeholder="e.g. VHL-001" />
             </div>
-            {["land", "building"].includes(form.asset_type) && (
-              <div>
-                <Label>Area (sqm)</Label>
-                <Input type="number" step="0.01" min="0" value={form.area_sqm || ""} onChange={e => set("area_sqm", e.target.value)} placeholder="e.g. 250.5" />
-              </div>
-            )}
+            <div>
+              <Label>Area (sqm)</Label>
+              <Input type="number" step="0.01" min="0" value={form.area_sqm || ""} onChange={e => set("area_sqm", e.target.value)} placeholder="e.g. 250.5" />
+            </div>
             <div>
               <Label>Acquisition Date</Label>
               <Input type="date" value={form.acquisition_date} onChange={e => set("acquisition_date", e.target.value)} />
