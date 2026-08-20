@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pencil, Trash2, Package, Boxes } from "lucide-react";
 import { ExecutiveTabsList, ExecutiveTab } from "@/components/shared/ExecutiveTabs";
+import PPEAuditSummary from "@/components/ppe/PPEAuditSummary";
 
 const ASSET_TYPES = [
   { value: "land", label: "Land" },
@@ -222,41 +223,22 @@ export default function PPEAssets() {
   }));
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">PPE Assets</h1>
-          <p className="text-muted-foreground mt-1">Property, Plant & Equipment register</p>
+    <div className="mx-auto min-h-full max-w-[1500px] space-y-4 bg-muted/20 p-4 font-project-body md:p-6">
+      <header className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-baseline gap-x-2">
+          <h1 className="font-project-display text-xl font-semibold text-muted-foreground">PPE Assets</h1>
+          <span className="hidden text-muted-foreground sm:inline">/</span>
+          <p className="font-project-display text-xl font-semibold text-foreground">Property, Plant & Equipment register</p>
         </div>
-        <Button onClick={() => setShowForm(true)}><Plus className="w-4 h-4 mr-2" />Add Asset</Button>
-      </div>
+        <Button className="shadow-sm" onClick={() => setShowForm(true)}><Plus className="mr-2 h-4 w-4" />Add Asset</Button>
+      </header>
 
-      {/* Asset type summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {byType.map(t => (
-          <div key={t.value} className="bg-card border border-border rounded-xl p-3">
-            <p className="text-xs text-muted-foreground">{t.label}</p>
-            <p className="text-lg font-bold text-foreground mt-0.5">{t.count}</p>
-            <p className="text-xs text-primary">{fmt(t.value)}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* KPI totals */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <p className="text-xs text-muted-foreground">Total Acquisition Cost</p>
-          <p className="text-xl font-bold text-foreground mt-1">{fmt(totalCost)}</p>
-        </div>
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <p className="text-xs text-muted-foreground">Accumulated Depreciation</p>
-          <p className="text-xl font-bold text-destructive mt-1">{fmt(totalAccumDep)}</p>
-        </div>
-        <div className="bg-card border border-primary/20 rounded-2xl p-4">
-          <p className="text-xs text-muted-foreground">Net Book Value</p>
-          <p className="text-xl font-bold text-primary mt-1">{fmt(totalBookValue)}</p>
-        </div>
-      </div>
+      <PPEAuditSummary
+        totalCost={totalCost}
+        totalAccumDep={totalAccumDep}
+        totalBookValue={totalBookValue}
+        byType={byType}
+      />
 
       {/* Type tabs */}
       <Tabs value={typeFilter} onValueChange={setTypeFilter}>
@@ -267,10 +249,10 @@ export default function PPEAssets() {
       </Tabs>
 
       {/* Filters + table */}
-      <div className="bg-card border border-border rounded-2xl overflow-hidden">
-        <div className="flex flex-wrap gap-3 p-4 border-b border-border">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex flex-wrap justify-end gap-3 border-b border-border p-3">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="All Statuses" /></SelectTrigger>
+            <SelectTrigger className="h-8 w-44 bg-card text-xs"><SelectValue placeholder="All Statuses" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
               {Object.entries(STATUS_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
@@ -288,16 +270,16 @@ export default function PPEAssets() {
 
         {filtered.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Asset</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Type</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Acquired</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cost</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Accum. Dep.</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Book Value</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                <tr className="border-b border-border bg-muted/60">
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Asset</th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Type</th>
+                  <th className="hidden px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">Acquired</th>
+                  <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Cost</th>
+                  <th className="hidden px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">Accum. Dep.</th>
+                  <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Book Value</th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -306,28 +288,28 @@ export default function PPEAssets() {
                   const bookVal = a.book_value ?? ((a.acquisition_cost || 0) - (a.accumulated_depreciation || 0));
                   return (
                     <tr key={a.id} className={`border-b border-border/50 hover:bg-muted/20 transition-colors ${i % 2 === 0 ? "" : "bg-muted/5"}`}>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <p className="font-medium text-foreground">{a.asset_name}</p>
                         {a.title_no && <p className="text-xs text-muted-foreground">Title No.: {a.title_no}</p>}
                         {a.area_sqm ? <p className="text-xs text-muted-foreground">{a.area_sqm.toLocaleString()} sqm</p> : null}
                         {a.asset_code && <p className="text-xs text-muted-foreground">{a.asset_code}</p>}
                         {a.location && <p className="text-xs text-muted-foreground">{a.location}</p>}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <span className="text-sm text-foreground">{ASSET_TYPES.find(t => t.value === a.asset_type)?.label || a.asset_type}</span>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
+                      <td className="hidden px-4 py-2.5 text-muted-foreground md:table-cell">
                         {a.acquisition_date || "—"}
                       </td>
-                      <td className="px-4 py-3 text-right font-medium text-foreground">{fmt(a.acquisition_cost)}</td>
-                      <td className="px-4 py-3 text-right text-destructive hidden lg:table-cell">{fmt(a.accumulated_depreciation)}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-primary">{fmt(bookVal)}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5 text-right font-medium text-foreground">{fmt(a.acquisition_cost)}</td>
+                      <td className="hidden px-4 py-2.5 text-right text-destructive lg:table-cell">{fmt(a.accumulated_depreciation)}</td>
+                      <td className="px-4 py-2.5 text-right font-semibold text-primary">{fmt(bookVal)}</td>
+                      <td className="px-4 py-2.5">
                         <Badge variant="outline" className={`text-xs ${STATUS_STYLES[a.status] || ""}`}>
                           {STATUS_LABELS[a.status] || a.status}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <div className="flex items-center gap-1 justify-end">
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditing(a)}>
                             <Pencil className="w-3.5 h-3.5" />
