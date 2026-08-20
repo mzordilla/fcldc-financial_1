@@ -37,8 +37,10 @@ Deno.serve(async (req) => {
 
       const supplier = p.supplier_name || 'Unknown Supplier';
       if (!supplierMap[supplier]) {
-        supplierMap[supplier] = { supplier, count: 0, buckets: { current: 0, days30: 0, days60: 0, days90: 0, days90plus: 0 } };
+        supplierMap[supplier] = { supplier, count: 0, categories: [], buckets: { current: 0, days30: 0, days60: 0, days90: 0, days90plus: 0 } };
       }
+      const cat = p.category || 'other';
+      if (!supplierMap[supplier].categories.includes(cat)) supplierMap[supplier].categories.push(cat);
       supplierMap[supplier].count += 1;
       supplierMap[supplier].buckets[bucket] += remaining;
     }

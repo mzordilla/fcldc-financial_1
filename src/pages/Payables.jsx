@@ -54,6 +54,7 @@ export default function Payables() {
   const [dupesResultMsg, setDupesResultMsg] = useState("");
   const [expandedSuppliers, setExpandedSuppliers] = useState(new Set());
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [exporting, setExporting] = useState(false);
   const queryClient = useQueryClient();
   const importRef = useRef();
@@ -217,10 +218,16 @@ export default function Payables() {
   const allSuppliers = summary?.suppliers || [];
 
   const searchTerm = search.trim().toLowerCase();
-  const supplierList = (searchTerm
-    ? allSuppliers.filter((s) => s.supplier.toLowerCase().includes(searchTerm))
-    : allSuppliers
-  ).slice().sort((a, b) => a.supplier.localeCompare(b.supplier));
+  const matchesType = (s) => {
+    if (typeFilter === "all") return true;
+    const cats = s.categories || [];
+    return typeFilter === "subcontractor"
+      ? cats.includes("subcontractor")
+      : cats.some((c) => c !== "subcontractor");
+  };
+  const supplierList = allSuppliers
+    .filter((s) => (!searchTerm || s.supplier.toLowerCase().includes(searchTerm)) && matchesType(s))
+    .slice().sort((a, b) => a.supplier.localeCompare(b.supplier));
 
   const toggleSupplier = (supplier) => {
     setExpandedSuppliers((prev) => {
@@ -289,14 +296,33 @@ export default function Payables() {
 
       {activeTab === "payables" && <>
 
-      <div className="relative max-w-md">
-        <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-        <Input
-          placeholder="Search by supplier..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="relative max-w-md flex-1">
+          <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+          <Input
+            placeholder="Search by supplier..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex gap-1 bg-muted/50 rounded-lg p-1">
+          {[
+            { key: "all", label: "All" },
+            { key: "supplier", label: "Suppliers" },
+            { key: "subcontractor", label: "Subcontractors" },
+          ].map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTypeFilter(t.key)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                typeFilter === t.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {summaryLoading ? (
