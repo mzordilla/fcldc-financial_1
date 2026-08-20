@@ -5,7 +5,7 @@ export default function PurchaseOrderPrintDocument({ po, compact = false, signat
   const total = po.amount || lineItems.reduce((sum, item) => sum + (item.total || item.quantity * item.cost_per_item || 0), 0);
 
   return (
-    <div className="min-h-[267mm] p-[15mm] bg-white text-black">
+    <div className={compact ? "p-[10mm] bg-white text-black" : "min-h-[267mm] p-[15mm] bg-white text-black"}>
       <div className={`mb-6 flex items-center ${compact ? "justify-between" : "justify-center"}`}>
         <img src="https://media.base44.com/images/public/69f02f8501c3688565579a10/7a3b001fb_CONSTRUCTION_FINANCE.jpg" alt="FCL Aranang Development Corporation" className="h-20 w-auto" />
         {compact && <h1 className="text-2xl font-bold tracking-tight">PURCHASE ORDER</h1>}
