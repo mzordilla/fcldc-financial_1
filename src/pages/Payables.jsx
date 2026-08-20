@@ -11,6 +11,7 @@ import PayableCard from "../components/payables/PayableCard";
 import SupplierStatementDialog from "../components/payables/SupplierStatementDialog";
 import SupplierInvoiceDetails from "../components/payables/SupplierInvoiceDetails";
 import StatementOfPayablesReport from "../components/payables/StatementOfPayablesReport";
+import OtherPayables from "../components/payables/OtherPayables";
 
 function AgingSummary({ overall, overallTotal }) {
   const buckets = [
@@ -267,6 +268,7 @@ export default function Payables() {
       <div className="flex gap-1 border-b border-border">
         {[
           { key: "payables", label: "Payables" },
+          { key: "other", label: "Other Payables" },
           { key: "statement", label: "Statement of Payables" },
         ].map(tab => (
           <button
@@ -282,6 +284,8 @@ export default function Payables() {
       </div>
 
       {activeTab === "statement" && <StatementOfPayablesReport />}
+
+      {activeTab === "other" && <OtherPayables />}
 
       {activeTab === "payables" && <>
 

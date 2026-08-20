@@ -4,7 +4,16 @@
   "properties": {
     "supplier_name": {
       "type": "string",
-      "description": "Supplier or vendor name"
+      "description": "Supplier, vendor, or payee name"
+    },
+    "payable_type": {
+      "type": "string",
+      "enum": [
+        "supplier",
+        "other"
+      ],
+      "default": "supplier",
+      "description": "Whether this is a supplier/vendor payable or an other (non-supplier) payable"
     },
     "description": {
       "type": "string",
