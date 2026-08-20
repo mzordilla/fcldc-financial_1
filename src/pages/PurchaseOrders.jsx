@@ -79,7 +79,7 @@ export default function PurchaseOrders() {
   const [reviewingChangesPO, setReviewingChangesPO] = useState(null);
   const [expandedHistory, setExpandedHistory] = useState(null);
   const [expandedGroups, setExpandedGroups] = useState({ pending: true, approved: true, rejected: false, cancelled: false });
-  const [statusFilter, setStatusFilter] = useState("approved");
+  const [statusFilter, setStatusFilter] = useState("pending");
   const [supplierFilter, setSupplierFilter] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
