@@ -48,6 +48,7 @@ export default function ReportsTabs({ activeTab, onChange }) {
           items={group.tabs}
           activeKey={activeTab}
           onChange={onChange}
+          compact
         />
       ))}
     </div>
