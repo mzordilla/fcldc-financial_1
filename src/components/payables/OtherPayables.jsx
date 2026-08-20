@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, ChevronDown, Banknote } from "lucide-react";
+import { Plus, Trash2, ChevronDown, Banknote, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import MultiOtherPayableDialog from "./MultiOtherPayableDialog";
 import MarkPayableAsPaidDialog from "./MarkPayableAsPaidDialog";
 import AgingSummary from "./AgingSummary";
+import EditOtherPayableDialog from "./EditOtherPayableDialog";
 import { buildAging } from "@/lib/payablesAging";
 
 const statusStyles = {
@@ -20,6 +21,7 @@ const statusStyles = {
 export default function OtherPayables() {
   const [showAdd, setShowAdd] = useState(false);
   const [paying, setPaying] = useState(null);
+  const [editing, setEditing] = useState(null);
   const [expanded, setExpanded] = useState(new Set());
   const queryClient = useQueryClient();
 
@@ -136,6 +138,9 @@ export default function OtherPayables() {
                                 <Banknote className="w-4 h-4" />
                               </button>
                             )}
+                            <button onClick={() => setEditing(p)} className="text-muted-foreground hover:text-foreground" title="Edit">
+                              <Pencil className="w-4 h-4" />
+                            </button>
                             <button onClick={() => deleteMutation.mutate(p.id)} className="text-muted-foreground hover:text-destructive">
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -157,6 +162,12 @@ export default function OtherPayables() {
         onSubmit={async (items) => {
           for (const item of items) await createMutation.mutateAsync(item);
         }}
+      />
+      <EditOtherPayableDialog
+        open={!!editing}
+        onOpenChange={(v) => { if (!v) setEditing(null); }}
+        payable={editing}
+        onConfirm={(data) => updateMutation.mutateAsync({ id: editing.id, data })}
       />
       <MarkPayableAsPaidDialog
         open={!!paying}
