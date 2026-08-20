@@ -377,7 +377,7 @@ function exportToPDF({ months, txByMonth, activeLoans, rangeMonths }) {
 }
 
 export default function Reports() {
-  const [activeTab, setActiveTab] = useState("trend");
+  const [activeTab, setActiveTab] = useState("corporate_docs");
   const [rangeMonths, setRangeMonths] = useState("6");
   const [expandedMonth, setExpandedMonth] = useState(null);
   const [showAddCOA, setShowAddCOA] = useState(false);
