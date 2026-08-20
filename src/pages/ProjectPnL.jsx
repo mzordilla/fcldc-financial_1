@@ -288,32 +288,32 @@ function ProjectRow({ project }) {
 export default function ProjectPnL() {
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 500),
+    queryFn: () => base44.entities.Transaction.list("-date", 5000),
   });
 
   const { data: receivables = [] } = useQuery({
     queryKey: ["receivables"],
-    queryFn: () => base44.entities.Receivable.list("-created_date", 200),
+    queryFn: () => base44.entities.Receivable.list("-created_date", 2000),
   });
 
   const { data: billingCycles = [] } = useQuery({
     queryKey: ["billing_cycles"],
-    queryFn: () => base44.entities.BillingCycle.filter({ approval_status: "approved" }, "-created_date", 200),
+    queryFn: () => base44.entities.BillingCycle.filter({ approval_status: "approved" }, "-created_date", 2000),
   });
 
   const { data: projectsData = [] } = useQuery({
     queryKey: ["projects"],
-    queryFn: () => base44.entities.Project.list("project_name", 200),
+    queryFn: () => base44.entities.Project.list("project_name", 2000),
   });
 
   const { data: payables = [] } = useQuery({
     queryKey: ["payables_pnl"],
-    queryFn: () => base44.entities.Payable.list("-created_date", 500),
+    queryFn: () => base44.entities.Payable.list("-created_date", 5000),
   });
 
   const { data: paymentRequests = [] } = useQuery({
     queryKey: ["payment_requests_pnl"],
-    queryFn: () => base44.entities.PaymentRequest.filter({ approval_status: "paid" }, "-created_date", 500),
+    queryFn: () => base44.entities.PaymentRequest.filter({ approval_status: "paid" }, "-created_date", 5000),
   });
 
   const [classFilter, setClassFilter] = useState("all");
