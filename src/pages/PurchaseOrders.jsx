@@ -25,6 +25,7 @@ import GroupedPurchaseOrders from "../components/purchase-orders/GroupedPurchase
 import ProjectDeliverySummary from "../components/purchase-orders/ProjectDeliverySummary";
 import ChangeRequestDialog from "../components/purchase-orders/ChangeRequestDialog";
 import ChangeRequestReviewDialog from "../components/purchase-orders/ChangeRequestReviewDialog";
+import PendingChangeRequestsBanner from "../components/purchase-orders/PendingChangeRequestsBanner";
 import Payees from "./Payees";
 import InlineCategorySelect from "../components/transactions/InlineCategorySelect";
 import InlineChartOfAccountSelect from "../components/transactions/InlineChartOfAccountSelect";
@@ -664,6 +665,9 @@ export default function PurchaseOrders() {
             }
         </div>
           }
+
+      {/* Pending change requests notification */}
+      <PendingChangeRequestsBanner orders={orders} onReview={setReviewingChangesPO} />
 
       {/* Grouped PO Table */}
       {isLoading ?
