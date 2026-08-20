@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { FileCheck2 } from "lucide-react";
+import { ChevronDown, ChevronRight, FileCheck2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -18,6 +18,7 @@ const fmt = (v) =>
 
 export default function CheckMonitoring() {
   const [bankFilter, setBankFilter] = useState("all");
+  const [expandedMonths, setExpandedMonths] = useState(new Set());
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ["payment_requests_checks"],
@@ -40,6 +41,18 @@ export default function CheckMonitoring() {
     .sort((a, b) => new Date(b.check_date || b.created_date || 0) - new Date(a.check_date || a.created_date || 0));
 
   const totalAmount = checks.reduce((s, c) => s + (c.amount || 0), 0);
+  const monthGroups = checks.reduce((groups, check) => {
+    const date = check.check_date || check.created_date;
+    const month = date ? format(new Date(date), "MMMM yyyy") : "No Date";
+    if (!groups[month]) groups[month] = [];
+    groups[month].push(check);
+    return groups;
+  }, {});
+  const toggleMonth = (month) => setExpandedMonths((current) => {
+    const next = new Set(current);
+    next.has(month) ? next.delete(month) : next.add(month);
+    return next;
+  });
 
   return (
     <div className="space-y-4">
@@ -106,29 +119,41 @@ export default function CheckMonitoring() {
                 </tr>
               </thead>
               <tbody>
-                {checks.map((c) => (
-                  <tr key={c.id} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
-                    <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground whitespace-nowrap">{c.request_number || "—"}</td>
-                    <td className="px-4 py-2.5 font-semibold text-foreground">{c.check_number || "—"}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{bankLabel(c.bank_account_id)}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground">
-                      {c.check_date ? format(new Date(c.check_date), "MMM d, yyyy") : "—"}
-                    </td>
-                    <td className="px-4 py-2.5 text-foreground">{c.payee}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground truncate max-w-xs">{c.description || "—"}</td>
-                    <td className="px-4 py-2.5 text-right font-medium text-foreground">{fmt(c.amount)}</td>
-                    <td className="px-4 py-2.5 text-right font-medium text-foreground">
-                      {fmt((c.amount || 0) - (c.withholding_tax_amount || 0) + (c.vat_amount || 0))}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <Badge className={`text-xs capitalize ${statusColors[c.approval_status] || "bg-muted text-muted-foreground"}`}>
-                        {c.approval_status || "pending"}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{c.approved_by || "—"}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground truncate max-w-xs">{c.approval_notes || "—"}</td>
-                  </tr>
-                ))}
+                {Object.entries(monthGroups).map(([month, monthChecks]) => {
+                  const isExpanded = expandedMonths.has(month);
+                  const monthTotal = monthChecks.reduce((sum, check) => sum + (check.amount || 0), 0);
+                  return (
+                    <>
+                      <tr key={month} className="border-b border-border bg-muted/30">
+                        <td colSpan={11} className="p-0">
+                          <button onClick={() => toggleMonth(month)} className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors">
+                            <span className="flex items-center gap-2 font-semibold text-foreground">
+                              {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                              {month}
+                              <span className="text-xs font-normal text-muted-foreground">{monthChecks.length} check{monthChecks.length !== 1 ? "s" : ""}</span>
+                            </span>
+                            <span className="text-sm font-semibold text-foreground">{fmt(monthTotal)}</span>
+                          </button>
+                        </td>
+                      </tr>
+                      {isExpanded && monthChecks.map((c) => (
+                        <tr key={c.id} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
+                          <td className="px-4 py-2.5 pl-10 font-mono text-xs text-muted-foreground whitespace-nowrap">{c.request_number || "—"}</td>
+                          <td className="px-4 py-2.5 font-semibold text-foreground">{c.check_number || "—"}</td>
+                          <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{bankLabel(c.bank_account_id)}</td>
+                          <td className="px-4 py-2.5 text-muted-foreground">{c.check_date ? format(new Date(c.check_date), "MMM d, yyyy") : "—"}</td>
+                          <td className="px-4 py-2.5 text-foreground">{c.payee}</td>
+                          <td className="px-4 py-2.5 text-muted-foreground truncate max-w-xs">{c.description || "—"}</td>
+                          <td className="px-4 py-2.5 text-right font-medium text-foreground">{fmt(c.amount)}</td>
+                          <td className="px-4 py-2.5 text-right font-medium text-foreground">{fmt((c.amount || 0) - (c.withholding_tax_amount || 0) + (c.vat_amount || 0))}</td>
+                          <td className="px-4 py-2.5"><Badge className={`text-xs capitalize ${statusColors[c.approval_status] || "bg-muted text-muted-foreground"}`}>{c.approval_status || "pending"}</Badge></td>
+                          <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{c.approved_by || "—"}</td>
+                          <td className="px-4 py-2.5 text-muted-foreground truncate max-w-xs">{c.approval_notes || "—"}</td>
+                        </tr>
+                      ))}
+                    </>
+                  );
+                })}
               </tbody>
             </table>
           </div>
