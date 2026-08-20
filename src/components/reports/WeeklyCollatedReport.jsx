@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, CalendarDays } from "lucide-react";
 import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
+import { normalizeLoan } from "@/lib/normalizeLoan";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
@@ -79,8 +80,8 @@ export default function WeeklyCollatedReport() {
   const paidThisWeek = weekPRs.filter(pr => pr.approval_status === "paid").reduce((s, pr) => s + (pr.amount || 0), 0);
   const pendingApprovals = paymentRequests.filter(pr => pr.approval_status === "pending").length;
 
-  const allLoans = [...loans, ...wcLoans].filter(l => l.status === "active");
-  const totalLoanBalance = allLoans.reduce((s, l) => s + (l.outstanding_balance ?? l.principal_balance ?? 0), 0);
+  const allLoans = [...loans, ...wcLoans].map(normalizeLoan).filter(l => l.status === "active");
+  const totalLoanBalance = allLoans.reduce((s, l) => s + (l.outstanding_balance ?? l.principal_balance ?? Math.max(0, (l.total_amount || 0) - (l.amount_paid || 0)) ?? 0), 0);
   const weeklyLoanPayments = allLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0) / 4.33;
 
   const handleExport = () => {

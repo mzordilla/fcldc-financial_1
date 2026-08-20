@@ -15,6 +15,12 @@ const TYPE_LABELS = {
   vendor_credit: "Vendor Credit",
   mortgage: "Mortgage",
   other: "Other",
+  term_loan: "Term Loan",
+  construction_loan: "Construction Loan",
+  equipment_loan: "Equipment Loan",
+  line_of_credit: "Line of Credit",
+  sba_loan: "SBA Loan",
+  bridge_loan: "Bridge Loan",
 };
 
 const STATUS_STYLES = {

@@ -20,6 +20,7 @@ import WithholdingTaxSync from "../components/reports/WithholdingTaxSync";
 import CorporateDocuments from "../components/reports/CorporateDocuments";
 import WeeklyCollatedReport from "../components/reports/WeeklyCollatedReport";
 import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
+import { normalizeLoan } from "@/lib/normalizeLoan";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import { Badge } from "@/components/ui/badge";
@@ -425,7 +426,7 @@ export default function Reports() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chartofaccounts"] }),
   });
 
-  const allLoans = [...loans, ...wcLoans];
+  const allLoans = [...loans, ...wcLoans].map(normalizeLoan);
   const activeLoans = allLoans.filter(l => l.status === "active");
   
   const filteredCOA = coaTypeFilter === "all" ? chartOfAccounts : chartOfAccounts.filter(a => a.account_type === coaTypeFilter);
@@ -527,7 +528,7 @@ export default function Reports() {
       )}
 
       {activeTab === "wc_loans" && (
-        <WorkingCapitalLoansReport loans={[...loans, ...wcLoans]} />
+        <WorkingCapitalLoansReport loans={allLoans} />
       )}
 
       {activeTab === "bank_transactions" && (
