@@ -14,6 +14,7 @@ import ClientInvoiceDetails from "../components/receivables/ClientInvoiceDetails
 import BillingCycles from "./BillingCycles";
 import RetentionReceivables from "../components/receivables/RetentionReceivables";
 import MultiFundingLoanDialog from "../components/receivables/MultiFundingLoanDialog";
+import LongTermSummary from "../components/receivables/LongTermSummary";
 
 function AgingSummary({ items }) {
   const today = new Date();
@@ -197,6 +198,10 @@ export default function Receivables() {
     ? receivables.filter(r => !r.property_listing_id && r.receivable_type === "employee")
     : receivables.filter(r => !r.property_listing_id && !["funding_loan", "employee"].includes(r.receivable_type));
   const filtered = statusFilter === "all" ? categoryReceivables : categoryReceivables.filter(r => r.status === statusFilter);
+  const isLongTerm = activeTab === "funding-loans";
+  const gridCols = isLongTerm
+    ? "grid grid-cols-[1.6fr_1fr_2.5rem] gap-0"
+    : "grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_2.5rem] gap-0";
 
   const totalOutstanding = categoryReceivables.filter(r => r.status !== "paid").reduce((s, r) => s + ((r.amount || 0) - (r.amount_paid || 0)), 0);
   const overdueCount = categoryReceivables.filter(r => r.status === "overdue").length;
@@ -250,7 +255,7 @@ export default function Receivables() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">{activeTab === "condo-sales" ? "Condo Sales Receivables" : activeTab === "funding-loans" ? "Funding & Loans Receivables" : activeTab === "employee-receivables" ? "Employee Receivables" : "Project Receivables"}</h1>
           <p className="text-muted-foreground mt-1">
-            ₱{totalOutstanding.toLocaleString()} outstanding · {overdueCount} overdue · {collectionEfficiency.toFixed(1)}% collection efficiency
+            ₱{totalOutstanding.toLocaleString()} outstanding{isLongTerm ? " · long-term (non-current)" : ` · ${overdueCount} overdue`} · {collectionEfficiency.toFixed(1)}% collection efficiency
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -275,7 +280,7 @@ export default function Receivables() {
         </div>
       </div>
 
-      <AgingSummary items={categoryReceivables} />
+      {isLongTerm ? <LongTermSummary items={categoryReceivables} /> : <AgingSummary items={categoryReceivables} />}
 
       {/* Client Aging Summary */}
       <div className="space-y-4">
@@ -297,13 +302,15 @@ export default function Receivables() {
         {clientList.length > 0 && (
           <div className="overflow-x-auto">
             <div className="min-w-[900px]">
-              <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_2.5rem] gap-0 px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide sticky top-0 bg-background z-10">
-                <span>Client</span>
-                <span className="text-right">Current</span>
-                <span className="text-right">1-30</span>
-                <span className="text-right">31-60</span>
-                <span className="text-right">61-90</span>
-                <span className="text-right">90+</span>
+              <div className={`${gridCols} px-5 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide sticky top-0 bg-background z-10`}>
+                <span>{isLongTerm ? "Borrower / Party" : "Client"}</span>
+                {!isLongTerm && <>
+                  <span className="text-right">Current</span>
+                  <span className="text-right">1-30</span>
+                  <span className="text-right">31-60</span>
+                  <span className="text-right">61-90</span>
+                  <span className="text-right">90+</span>
+                </>}
                 <span className="text-right">Total</span>
                 <span></span>
               </div>
@@ -316,7 +323,7 @@ export default function Receivables() {
                         className="w-full px-5 py-3 bg-muted/50 hover:bg-muted/70 transition-colors"
                         onClick={() => toggleClient(client)}
                       >
-                        <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_2.5rem] gap-0 items-center">
+                        <div className={`${gridCols} items-center`}>
                           <div className="flex items-center gap-2 text-left min-w-0">
                             <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />
                             <div className="min-w-0">
@@ -324,11 +331,13 @@ export default function Receivables() {
                               <p className="text-xs text-muted-foreground mt-0.5">{count} invoice{count > 1 ? "s" : ""} · ₱{total.toLocaleString(undefined, { minimumFractionDigits: 2 })} outstanding</p>
                             </div>
                           </div>
-                          <span className="text-right text-xs font-semibold text-primary">₱{buckets.current.toLocaleString()}</span>
-                          <span className="text-right text-xs font-semibold text-chart-3">₱{buckets.days30.toLocaleString()}</span>
-                          <span className="text-right text-xs font-semibold text-orange-500">₱{buckets.days60.toLocaleString()}</span>
-                          <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90.toLocaleString()}</span>
-                          <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90plus.toLocaleString()}</span>
+                          {!isLongTerm && <>
+                            <span className="text-right text-xs font-semibold text-primary">₱{buckets.current.toLocaleString()}</span>
+                            <span className="text-right text-xs font-semibold text-chart-3">₱{buckets.days30.toLocaleString()}</span>
+                            <span className="text-right text-xs font-semibold text-orange-500">₱{buckets.days60.toLocaleString()}</span>
+                            <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90.toLocaleString()}</span>
+                            <span className="text-right text-xs font-semibold text-destructive">₱{buckets.days90plus.toLocaleString()}</span>
+                          </>}
                           <span className="text-right text-xs font-bold text-foreground">₱{total.toLocaleString()}</span>
                           <span
                             role="button"
