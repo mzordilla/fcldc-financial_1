@@ -171,6 +171,60 @@
     "delivery_notes": {
       "type": "string",
       "description": "Notes about delivery condition or inspection"
+    },
+    "change_requests": {
+      "type": "array",
+      "description": "Requests to change price, quantity, or supplier on an already-approved PO",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "enum": [
+              "price",
+              "quantity",
+              "supplier"
+            ]
+          },
+          "line_item_description": {
+            "type": "string",
+            "description": "Which line item this quantity change applies to, if any"
+          },
+          "current_value": {
+            "type": "string"
+          },
+          "requested_value": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "requested_by": {
+            "type": "string"
+          },
+          "requested_date": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "default": "pending"
+          },
+          "reviewed_by": {
+            "type": "string"
+          },
+          "review_notes": {
+            "type": "string"
+          },
+          "reviewed_date": {
+            "type": "string"
+          }
+        }
+      }
     }
   },
   "required": [

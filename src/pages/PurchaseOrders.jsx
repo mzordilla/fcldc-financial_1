@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package, ClipboardList, Printer, Search } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package, ClipboardList, Printer, Search, GitPullRequest } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -23,6 +23,8 @@ import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
 import ReceiveItemsDialog from "../components/purchase-orders/ReceiveItemsDialog";
 import GroupedPurchaseOrders from "../components/purchase-orders/GroupedPurchaseOrders";
 import ProjectDeliverySummary from "../components/purchase-orders/ProjectDeliverySummary";
+import ChangeRequestDialog from "../components/purchase-orders/ChangeRequestDialog";
+import ChangeRequestReviewDialog from "../components/purchase-orders/ChangeRequestReviewDialog";
 import Payees from "./Payees";
 import InlineCategorySelect from "../components/transactions/InlineCategorySelect";
 import InlineChartOfAccountSelect from "../components/transactions/InlineChartOfAccountSelect";
@@ -72,6 +74,8 @@ export default function PurchaseOrders() {
   const [uploadingReceipt, setUploadingReceipt] = useState(null);
   const [receivingItems, setReceivingItems] = useState(null);
   const [printingPO, setPrintingPO] = useState(null);
+  const [requestingChangePO, setRequestingChangePO] = useState(null);
+  const [reviewingChangesPO, setReviewingChangesPO] = useState(null);
   const [expandedHistory, setExpandedHistory] = useState(null);
   const [expandedGroups, setExpandedGroups] = useState({ pending: true, approved: true, rejected: false, cancelled: false });
   const [statusFilter, setStatusFilter] = useState("approved");
@@ -86,8 +90,10 @@ export default function PurchaseOrders() {
   const [isAdmin, setIsAdmin] = useState(false);
   const queryClient = useQueryClient();
 
+  const [currentUser, setCurrentUser] = useState(null);
+
   useEffect(() => {
-    base44.auth.me().then((u) => setIsAdmin(u?.role === "admin")).catch(() => {});
+    base44.auth.me().then((u) => { setIsAdmin(u?.role === "admin"); setCurrentUser(u); }).catch(() => {});
   }, []);
 
   const toggleGroup = (status) => {
@@ -98,6 +104,7 @@ export default function PurchaseOrders() {
     const StatusIcon = statusIcons[po.approval_status] || Clock;
     const isExpanded = expandedHistory === po.id;
     const hasLineItems = po.line_items && po.line_items.length > 0;
+    const pendingChangeRequests = (po.change_requests || []).filter((cr) => cr.status === "pending").length;
 
     // Calculate delivery progress for approved POs
     const deliveryProgress = po.approval_status === "approved" ? (() => {
@@ -166,6 +173,15 @@ export default function PurchaseOrders() {
                 title={!po.receipt_url ? "Upload a receipt first" : poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number) ? "Already paid" : ""}
                 className="text-[8px] text-primary font-medium px-0.5 py-px rounded border border-primary/30 hover:bg-primary/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap leading-tight">
                 Pay</button>
+              }
+              {po.approval_status === "approved" &&
+              <button onClick={() => setRequestingChangePO(po)} className="text-[8px] text-chart-3 font-medium px-0.5 py-px rounded border border-chart-3/30 hover:bg-chart-3/10 transition-colors whitespace-nowrap leading-tight">Req Chg</button>
+              }
+              {isAdmin && pendingChangeRequests > 0 &&
+              <button onClick={() => setReviewingChangesPO(po)} className="relative text-muted-foreground hover:text-foreground transition-colors" title="Review Change Requests">
+                <GitPullRequest className="w-2.5 h-2.5" />
+                <span className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-[7px] rounded-full w-3 h-3 flex items-center justify-center">{pendingChangeRequests}</span>
+              </button>
               }
               <button onClick={() => setPrintingPO(po)} className="text-muted-foreground hover:text-foreground transition-colors" title="Print">
                 <Printer className="w-2.5 h-2.5" />
@@ -361,6 +377,43 @@ export default function PurchaseOrders() {
         approval_history: history
       }
     });
+  };
+
+  const submitChangeRequest = async (po, request) => {
+    const entry = {
+      ...request,
+      requested_by: currentUser?.full_name || currentUser?.email || "Unknown",
+      requested_date: new Date().toISOString(),
+      status: "pending",
+    };
+    await updateMutation.mutateAsync({ id: po.id, data: { change_requests: [...(po.change_requests || []), entry] } });
+  };
+
+  const decideChangeRequest = async (po, idx, status) => {
+    const actor = currentUser?.full_name || currentUser?.email || "Administrator";
+    const requests = [...(po.change_requests || [])];
+    const cr = requests[idx];
+    if (!cr) return;
+    requests[idx] = { ...cr, status, reviewed_by: actor, reviewed_date: new Date().toISOString() };
+
+    const data = { change_requests: requests };
+    if (status === "approved") {
+      if (cr.field === "supplier") {
+        data.supplier_name = cr.requested_value;
+      } else if (cr.field === "price") {
+        data.amount = parseFloat(cr.requested_value) || po.amount;
+      } else if (cr.field === "quantity") {
+        const newQty = parseFloat(cr.requested_value);
+        if (!isNaN(newQty) && po.line_items?.length > 0) {
+          const lineItems = po.line_items.map((li) => li.description === cr.line_item_description ?
+            { ...li, quantity: newQty, total: newQty * (li.cost_per_item || 0) } : li);
+          data.line_items = lineItems;
+          data.amount = lineItems.reduce((s, li) => s + (li.total || 0), 0);
+        }
+      }
+    }
+    await updateMutation.mutateAsync({ id: po.id, data });
+    setReviewingChangesPO((prev) => prev && prev.id === po.id ? { ...po, ...data } : prev);
   };
 
   const poSuppliers = useMemo(() => [...new Set(orders.map((o) => o.supplier_name).filter(Boolean))].sort(), [orders]);
@@ -950,7 +1003,19 @@ export default function PurchaseOrders() {
         open={!!printingPO}
         onOpenChange={(v) => {if (!v) setPrintingPO(null);}}
         po={printingPO} />
-      
+
+      <ChangeRequestDialog
+        open={!!requestingChangePO}
+        onOpenChange={(v) => {if (!v) setRequestingChangePO(null);}}
+        po={requestingChangePO}
+        onSubmit={(request) => submitChangeRequest(requestingChangePO, request)} />
+
+      <ChangeRequestReviewDialog
+        open={!!reviewingChangesPO}
+        onOpenChange={(v) => {if (!v) setReviewingChangesPO(null);}}
+        po={reviewingChangesPO}
+        onDecision={(idx, status) => decideChangeRequest(reviewingChangesPO, idx, status)} />
+
     </div>);
 
 }
