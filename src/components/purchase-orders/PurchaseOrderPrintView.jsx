@@ -81,7 +81,7 @@ export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
         {currentUser?.role === "admin" && <Button variant="outline" size="sm" onClick={() => setSettingsOpen(true)}><Settings className="w-4 h-4 mr-2" /> Signature Settings</Button>}
         <Button variant={layout === "full" ? "default" : "outline"} size="sm" onClick={() => setLayout("full")}>Whole Page A4</Button>
         <Button variant={layout === "two" ? "default" : "outline"} size="sm" onClick={() => setLayout("two")}>Two Copies</Button>
-        <NoticeOfDeliveryPDF po={po} />
+        <NoticeOfDeliveryPDF po={po} preview />
         <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="w-4 h-4 mr-2" /> Print</Button>
         <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}><X className="w-4 h-4 mr-2" /> Close</Button>
       </div>

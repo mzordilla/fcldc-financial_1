@@ -28,8 +28,9 @@ function loadLogo() {
 const peso = (n) => `P${(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const dateOr = (d) => (d ? format(new Date(d), "MMM d, yyyy") : "—");
 
-export default function NoticeOfDeliveryPDF({ po, iconOnly }) {
+export default function NoticeOfDeliveryPDF({ po, iconOnly, preview = false }) {
   const handleGenerate = async () => {
+    const previewWindow = preview ? window.open("", "_blank") : null;
     const logo = await loadLogo();
     const doc = new jsPDF();
     const pageW = doc.internal.pageSize.getWidth();
@@ -269,7 +270,11 @@ export default function NoticeOfDeliveryPDF({ po, iconOnly }) {
     doc.setTextColor(160, 160, 160);
     doc.text("This stub confirms receipt of the goods/services listed above.", pageW / 2, sy + v(14), { align: "center" });
 
-    doc.save(`NOD-${po.po_number || po.id}-${format(new Date(), "yyyyMMdd")}.pdf`);
+    if (previewWindow) {
+      previewWindow.location.href = doc.output("bloburl");
+    } else {
+      doc.save(`NOD-${po.po_number || po.id}-${format(new Date(), "yyyyMMdd")}.pdf`);
+    }
   };
 
   if (iconOnly) {
