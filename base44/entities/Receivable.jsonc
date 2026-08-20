@@ -22,10 +22,11 @@
       "type": "string",
       "enum": [
         "project",
-        "funding_loan"
+        "funding_loan",
+        "employee"
       ],
       "default": "project",
-      "description": "Whether this is a project billing receivable or a funding/loan receivable (money advanced/loaned to a party, unrelated to project or condo billing)"
+      "description": "Whether this is a project billing receivable, a funding/loan receivable, or an employee receivable (cash advance / loan to an employee)"
     },
     "amount": {
       "type": "number",
