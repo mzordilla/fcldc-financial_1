@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, startOfMonth, eachMonthOfInterval, subMonths, parseISO, startOfDay, endOfDay } from "date-fns";
 import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, FileSpreadsheet, FileText, Plus } from "lucide-react";
+import ReportsTabs from "../components/reports/ReportsTabs";
 import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
@@ -511,36 +512,7 @@ export default function Reports() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 flex-wrap">
-        {[
-          { key: "weekly_collated", label: "Weekly Collated Report", color: "from-amber-500 to-orange-600", emoji: "🗞️" },
-          { key: "efficiency", label: "Efficiency Dashboard", color: "from-emerald-500 to-teal-600", emoji: "📊" },
-          { key: "trend", label: "Trend Analysis", color: "from-blue-500 to-indigo-600", emoji: "📈" },
-          { key: "pnl", label: "P&L / Cash Flow", color: "from-orange-500 to-amber-600", emoji: "💰" },
-          { key: "wc_loans", label: "Working Capital Loans", color: "from-purple-500 to-pink-600", emoji: "🏦" },
-          { key: "bank_transactions", label: "Bank Transactions", color: "from-cyan-500 to-blue-600", emoji: "💳" },
-          { key: "balance_sheet", label: "Balance Sheet", color: "from-green-500 to-emerald-600", emoji: "⚖️" },
-          { key: "income_statement", label: "Income Statement", color: "from-rose-500 to-red-600", emoji: "📋" },
-          { key: "comparative_income_statement", label: "Comparative Income Statement", color: "from-fuchsia-500 to-pink-600", emoji: "🗂️" },
-          { key: "daily_transactions", label: "Daily Transactions", color: "from-teal-500 to-cyan-600", emoji: "📅" },
-          { key: "monthly_transactions", label: "Monthly Transactions", color: "from-indigo-500 to-blue-600", emoji: "🗓️" },
-          { key: "chart_of_accounts", label: "Chart of Accounts", color: "from-violet-500 to-purple-600", emoji: "📚" },
-          { key: "wht_sync", label: "WHT Google Sheets Sync", color: "from-green-500 to-emerald-600", emoji: "📊" },
-          { key: "corporate_docs", label: "Corporate Documents", color: "from-slate-500 to-gray-600", emoji: "🗂️" },
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
-              activeTab === tab.key
-                ? `bg-gradient-to-r ${tab.color} text-white shadow-md`
-                : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
-            }`}
-          >
-            {tab.emoji} {tab.label}
-          </button>
-        ))}
-      </div>
+      <ReportsTabs activeTab={activeTab} onChange={setActiveTab} />
 
       {activeTab === "weekly_collated" && (
         <WeeklyCollatedReport />
