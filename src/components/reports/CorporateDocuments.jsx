@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, isPast, isWithinInterval, addDays } from "date-fns";
+import DocumentCategoryGroup from "./DocumentCategoryGroup";
 
 const CATEGORIES = [
   { value: "permits", label: "Permits", color: "bg-amber-100 text-amber-700 border-amber-200" },
@@ -167,70 +168,16 @@ export default function CorporateDocuments() {
         </div>
       ) : (
         <div className="space-y-3">
-          {CATEGORIES.filter(cat => filtered.some(d => d.category === cat.value)).map(cat => {
-            const catDocs = filtered.filter(d => d.category === cat.value);
-            const isExpanded = expandedCats.has(cat.value);
-            return (
-              <div key={cat.value} className="bg-card rounded-2xl border border-border overflow-hidden">
-                <button
-                  className="w-full flex items-center justify-between px-4 py-3 bg-muted/40 hover:bg-muted/60 transition-colors"
-                  onClick={() => toggleCat(cat.value)}
-                >
-                  <div className="flex items-center gap-2">
-                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? "" : "-rotate-90"}`} />
-                    <Badge variant="outline" className={`text-xs ${cat.color}`}>{cat.label}</Badge>
-                    <span className="text-xs text-muted-foreground">{catDocs.length} document{catDocs.length !== 1 ? "s" : ""}</span>
-                  </div>
-                </button>
-                {isExpanded && (
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left px-4 py-2 text-xs font-semibold text-muted-foreground uppercase">Document</th>
-                        <th className="text-left px-4 py-2 text-xs font-semibold text-muted-foreground uppercase hidden sm:table-cell">Issued By</th>
-                        <th className="text-left px-4 py-2 text-xs font-semibold text-muted-foreground uppercase hidden md:table-cell">Expiry</th>
-                        <th className="text-left px-4 py-2 text-xs font-semibold text-muted-foreground uppercase hidden lg:table-cell">Uploaded By</th>
-                        <th className="text-left px-4 py-2 text-xs font-semibold text-muted-foreground uppercase hidden lg:table-cell">Date</th>
-                        <th className="w-24"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {catDocs.map(doc => (
-                        <tr key={doc.id} className="hover:bg-muted/20 transition-colors">
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                              <div>
-                                <p className="font-medium text-foreground">{doc.name}</p>
-                                {doc.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{doc.description}</p>}
-                                {doc.tags && <p className="text-xs text-muted-foreground/60 mt-0.5">{doc.tags}</p>}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">{doc.issued_by || "—"}</td>
-                          <td className="px-4 py-3 hidden md:table-cell"><ExpiryBadge date={doc.expiry_date} /></td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell">{doc.uploaded_by || "—"}</td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell">{doc.created_date ? format(new Date(doc.created_date), "MMM d, yyyy") : "—"}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center justify-end gap-2">
-                              {doc.file_url && (
-                                <a href={doc.file_url} target="_blank" rel="noopener noreferrer" title="Download">
-                                  <Download className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
-                                </a>
-                              )}
-                              <button onClick={() => deleteMutation.mutate(doc.id)} title="Delete">
-                                <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive transition-colors" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            );
-          })}
+          {CATEGORIES.filter(cat => filtered.some(d => d.category === cat.value)).map(cat => (
+            <DocumentCategoryGroup
+              key={cat.value}
+              category={cat}
+              docs={filtered.filter(d => d.category === cat.value)}
+              isExpanded={expandedCats.has(cat.value)}
+              onToggle={() => toggleCat(cat.value)}
+              onDelete={(id) => deleteMutation.mutate(id)}
+            />
+          ))}
         </div>
       )}
 
