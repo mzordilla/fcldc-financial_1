@@ -1,10 +1,44 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useLayoutEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Printer, Settings, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import CompanySignatureSettingsDialog from "@/components/purchase-orders/CompanySignatureSettingsDialog";
 import PurchaseOrderPrintDocument from "@/components/purchase-orders/PurchaseOrderPrintDocument";
+
+function ScaledCopy({ po, signature, watermark, heightMm = 148 }) {
+  const containerRef = useRef(null);
+  const contentRef = useRef(null);
+  const [scale, setScale] = useState(1);
+
+  const recalcScale = useCallback(() => {
+    const container = containerRef.current;
+    const content = contentRef.current;
+    if (!container || !content) return;
+    const availableHeight = container.clientHeight;
+    const naturalHeight = content.scrollHeight;
+    const nextScale = naturalHeight > availableHeight ? availableHeight / naturalHeight : 1;
+    setScale((prev) => (Math.abs(prev - nextScale) > 0.005 ? nextScale : prev));
+  }, []);
+
+  useLayoutEffect(() => {
+    recalcScale();
+    const content = contentRef.current;
+    if (!content) return;
+    const observer = new ResizeObserver(() => recalcScale());
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [po, signature, recalcScale]);
+
+  return (
+    <div ref={containerRef} className="relative overflow-hidden" style={{ height: `${heightMm}mm` }}>
+      <div ref={contentRef} className="w-full" style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}>
+        <PurchaseOrderPrintDocument po={po} compact signature={signature} />
+      </div>
+      <span className="absolute bottom-3 right-5 text-xs font-bold uppercase tracking-wider text-gray-500">{watermark}</span>
+    </div>
+  );
+}
 
 export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
   const [layout, setLayout] = useState("full");
@@ -55,15 +89,9 @@ export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
             <PurchaseOrderPrintDocument po={po} signature={signature} />
           ) : (
             <>
-              <div className="relative h-[148mm] overflow-hidden">
-                <div style={{ width: "200%", transform: "scale(0.5)", transformOrigin: "top left" }}><PurchaseOrderPrintDocument po={po} compact signature={signature} /></div>
-                <span className="absolute bottom-3 right-5 text-xs font-bold uppercase tracking-wider text-gray-500">Vendor Copy</span>
-              </div>
+              <ScaledCopy po={po} signature={signature} watermark="Vendor Copy" />
               <div className="border-t-2 border-dashed border-gray-400" />
-              <div className="relative h-[148mm] overflow-hidden">
-                <div style={{ width: "200%", transform: "scale(0.5)", transformOrigin: "top left" }}><PurchaseOrderPrintDocument po={po} compact signature={signature} /></div>
-                <span className="absolute bottom-3 right-5 text-xs font-bold uppercase tracking-wider text-gray-500">FCL Copy</span>
-              </div>
+              <ScaledCopy po={po} signature={signature} watermark="FCL Copy" />
             </>
           )}
         </div>
