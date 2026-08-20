@@ -189,7 +189,7 @@ export default function BillingCycles() {
                     const totalRetention = rows.reduce((s, b) => s + (b.retention_amount || 0), 0);
                     const totalNet = rows.reduce((s, b) => s + (b.net_billing_amount || b.billing_amount || 0), 0);
                     const hasPending = rows.some(b => b.approval_status === "pending");
-                    const isExpanded = expandedClients[clientName] !== false;
+                    const isExpanded = expandedClients[clientName] === true;
 
                     return (
                       <>
