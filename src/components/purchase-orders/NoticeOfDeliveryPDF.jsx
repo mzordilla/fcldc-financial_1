@@ -3,8 +3,37 @@ import { FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
+const LOGO_URL = "https://media.base44.com/images/public/69f02f8501c3688565579a10/7a3b001fb_CONSTRUCTION_FINANCE.jpg";
+
+function loadLogo() {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext("2d").drawImage(img, 0, 0);
+      try {
+        resolve({ dataUrl: canvas.toDataURL("image/jpeg", 0.92), ratio: img.naturalHeight / img.naturalWidth });
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = LOGO_URL;
+  });
+}
+
 export default function NoticeOfDeliveryPDF({ po, iconOnly }) {
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
+    const logo = await loadLogo();
+    const drawLogo = (doc, x, topY, width) => {
+      if (!logo) return 0;
+      const height = width * logo.ratio;
+      doc.addImage(logo.dataUrl, "JPEG", x, topY, width, height);
+      return height;
+    };
     const doc = new jsPDF();
     const pageW = doc.internal.pageSize.getWidth();
     const margin = 20;
@@ -20,14 +49,15 @@ export default function NoticeOfDeliveryPDF({ po, iconOnly }) {
     doc.setFont("helvetica", "normal");
     doc.text(`Generated: ${format(new Date(), "MMMM d, yyyy")}`, pageW - margin, 9.5, { align: "right" });
 
-    y = 30;
+    y = 20;
+    const logoH = drawLogo(doc, margin, y, 40);
     doc.setTextColor(30, 30, 30);
 
     // Title
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("Notice of Delivery", margin, y);
-    y += 8;
+    doc.text("Notice of Delivery", pageW - margin, y + Math.max(logoH, 10) / 2 + 2, { align: "right" });
+    y += Math.max(logoH, 14) + 4;
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 100, 100);
@@ -183,7 +213,9 @@ export default function NoticeOfDeliveryPDF({ po, iconOnly }) {
     doc.setTextColor(140, 140, 140);
     doc.text("✂ Cut along this line", pageW - margin, sy - 2, { align: "right" });
 
-    sy += 10;
+    sy += 6;
+    const stubLogoH = drawLogo(doc, margin, sy, 30);
+    sy += Math.max(stubLogoH, 6) + 6;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(30, 30, 30);
