@@ -195,7 +195,10 @@ export default function Receivables() {
   });
   const clientList = Object.keys(clientMap)
     .map((client) => {
-      const rows = clientMap[client];
+      const statusOrder = { overdue: 0, outstanding: 1, partially_paid: 2, paid: 3 };
+      const rows = [...clientMap[client]].sort(
+        (x, y) => (statusOrder[x.status] ?? 1) - (statusOrder[y.status] ?? 1)
+      );
       const { buckets, total } = computeBuckets(rows);
       return { client, rows, count: rows.length, buckets, total };
     })
