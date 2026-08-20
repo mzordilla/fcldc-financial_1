@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { CalendarDays, Users } from "lucide-react";
+import { ExecutiveSegmentBar } from "@/components/shared/ExecutiveTabs";
 import EmployeesTab from "@/components/payroll/EmployeesTab";
 import PayrollPeriodsTab from "@/components/payroll/PayrollPeriodsTab";
 
@@ -12,24 +14,11 @@ export default function Payroll() {
         <p className="text-muted-foreground mt-1">Record labor costs, process payroll, and forward payables</p>
       </div>
 
-      <div className="flex gap-2 flex-wrap">
-        {[
-          { key: "periods", label: "Payroll Periods", emoji: "🗓️" },
-          { key: "employees", label: "Employees", emoji: "👤" },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
-              activeTab === tab.key
-                ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md"
-                : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
-            }`}
-          >
-            {tab.emoji} {tab.label}
-          </button>
-        ))}
-      </div>
+      <ExecutiveSegmentBar
+        items={[{ key: "periods", label: "Payroll Periods", icon: CalendarDays }, { key: "employees", label: "Employees", icon: Users }]}
+        activeKey={activeTab}
+        onChange={setActiveTab}
+      />
 
       {activeTab === "periods" && <PayrollPeriodsTab />}
       {activeTab === "employees" && <EmployeesTab />}

@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { Network, ShieldCheck, Database, Calculator } from "lucide-react";
+import { ExecutiveSegmentBar } from "@/components/shared/ExecutiveTabs";
 import RoleAccessMatrix from "@/components/workflow/RoleAccessMatrix";
 import AccountingRulesEngine from "@/components/workflow/AccountingRulesEngine";
 
@@ -184,32 +186,12 @@ export default function WorkflowDiagram() {
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-slate-800 tracking-tight">FCLDC Finance System</h1>
           <p className="text-slate-500 mt-1 text-sm">Application Workflow & Process Overview</p>
-          <div className="flex justify-center gap-2 mt-4">
-            <button
-              onClick={() => setActiveTab("flows")}
-              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === "flows" ? "bg-slate-800 text-white shadow" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}
-            >
-              Process Flows
-            </button>
-            <button
-              onClick={() => setActiveTab("roles")}
-              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === "roles" ? "bg-slate-800 text-white shadow" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}
-            >
-              Role & Access Matrix
-            </button>
-            <button
-              onClick={() => setActiveTab("entities")}
-              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === "entities" ? "bg-slate-800 text-white shadow" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}
-            >
-              Data Model
-            </button>
-            <button
-              onClick={() => setActiveTab("accounting-rules")}
-              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${activeTab === "accounting-rules" ? "bg-emerald-700 text-white shadow" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"}`}
-            >
-              Accounting Rules
-            </button>
-          </div>
+          <ExecutiveSegmentBar
+            className="mt-4 text-left"
+            items={[{ key: "flows", label: "Process Flows", icon: Network }, { key: "roles", label: "Role & Access Matrix", icon: ShieldCheck }, { key: "entities", label: "Data Model", icon: Database }, { key: "accounting-rules", label: "Accounting Rules", icon: Calculator }]}
+            activeKey={activeTab}
+            onChange={setActiveTab}
+          />
         </div>
 
         {/* Process Flows Tab */}

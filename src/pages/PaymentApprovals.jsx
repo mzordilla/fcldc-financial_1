@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart, History, ChevronDown, ChevronUp, Square, CheckSquare, Upload, Layers, CreditCard, Search, Download } from "lucide-react";
+import { ExecutiveTabsList, ExecutiveTab } from "@/components/shared/ExecutiveTabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import BillsPaymentSheet from "../components/payables/BillsPaymentSheet";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -699,13 +700,13 @@ export default function PaymentApprovals() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="pos">Approved Purchase Orders ({availablePOs.length})</TabsTrigger>
-          <TabsTrigger value="cancelled-pos">Cancelled POs ({cancelledPOs.length})</TabsTrigger>
-          <TabsTrigger value="pending">Pending ({pending.length})</TabsTrigger>
-          <TabsTrigger value="approved">Approved ({approved.length})</TabsTrigger>
-          <TabsTrigger value="paid">Paid ({paid.length})</TabsTrigger>
-        </TabsList>
+        <ExecutiveTabsList>
+          <ExecutiveTab value="pos" icon={ShoppingCart}>Approved POs ({availablePOs.length})</ExecutiveTab>
+          <ExecutiveTab value="cancelled-pos" icon={XCircle}>Cancelled POs ({cancelledPOs.length})</ExecutiveTab>
+          <ExecutiveTab value="pending" icon={Clock}>Pending ({pending.length})</ExecutiveTab>
+          <ExecutiveTab value="approved" icon={CheckCircle}>Approved ({approved.length})</ExecutiveTab>
+          <ExecutiveTab value="paid" icon={Banknote}>Paid ({paid.length})</ExecutiveTab>
+        </ExecutiveTabsList>
 
         {/* Approved Purchase Orders — Ready to Pay */}
         <TabsContent value="pos" className="space-y-3 mt-4">

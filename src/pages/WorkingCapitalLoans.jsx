@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { Plus, Trash2, CheckCircle, Pencil, ChevronDown, ChevronUp, RotateCcw, List, LayoutGrid, Paperclip } from "lucide-react";
+import { ExecutiveTabsList, ExecutiveTab } from "@/components/shared/ExecutiveTabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -157,10 +158,10 @@ export default function WorkingCapitalLoans() {
       <UpcomingMaturities items={items} />
 
       <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="comparative">Comparative Report</TabsTrigger>
-        </TabsList>
+        <ExecutiveTabsList>
+          <ExecutiveTab value="overview" icon={List}>Overview</ExecutiveTab>
+          <ExecutiveTab value="comparative" icon={LayoutGrid}>Comparative Report</ExecutiveTab>
+        </ExecutiveTabsList>
 
         <TabsContent value="comparative" className="mt-4">
           <LoanComparativeReport items={items} />

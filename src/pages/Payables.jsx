@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, addDays } from "date-fns";
-import { Plus, Trash2, CheckCircle, FileUp, Download, Banknote, ChevronDown, ChevronUp, CheckSquare, Square, Loader2, History, FileText, Search } from "lucide-react";
+import { Plus, Trash2, CheckCircle, FileUp, Download, Banknote, ChevronDown, ChevronUp, CheckSquare, Square, Loader2, History, FileText, Search, CreditCard, CircleEllipsis } from "lucide-react";
+import { ExecutiveSegmentBar } from "@/components/shared/ExecutiveTabs";
 
 import { exportToExcel, parseExcelFile } from "@/utils/excelUtils";
 import { Button } from "@/components/ui/button";
@@ -243,23 +244,11 @@ export default function Payables() {
 
       {dupesResultMsg && <p className="text-xs text-muted-foreground">{dupesResultMsg}</p>}
 
-      <div className="flex gap-1 border-b border-border">
-        {[
-          { key: "payables", label: "Payables" },
-          { key: "other", label: "Other Payables" },
-          { key: "statement", label: "Statement of Payables" },
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
-              activeTab === tab.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <ExecutiveSegmentBar
+        items={[{ key: "payables", label: "Payables", icon: CreditCard }, { key: "other", label: "Other Payables", icon: CircleEllipsis }, { key: "statement", label: "Statement of Payables", icon: FileText }]}
+        activeKey={activeTab}
+        onChange={setActiveTab}
+      />
 
       {activeTab === "statement" && <StatementOfPayablesReport />}
 

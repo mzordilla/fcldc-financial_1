@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, ArrowUpRight, ArrowDownRight, Trash2, Pencil, Building2, TableProperties, FileUp, Download, HardDriveDownload, Search } from "lucide-react";
+import { Plus, ArrowUpRight, ArrowDownRight, Trash2, Pencil, Building2, TableProperties, FileUp, Download, HardDriveDownload, Search, ArrowLeftRight, ScanLine, BookOpen, Users } from "lucide-react";
+import { ExecutiveTabsList, ExecutiveTab } from "@/components/shared/ExecutiveTabs";
 import { exportToExcel } from "@/utils/excelUtils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -146,12 +147,12 @@ export default function Transactions() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <Tabs defaultValue="transactions" className="w-full">
-        <TabsList className="mb-4 flex-wrap h-auto gap-1">
-          <TabsTrigger value="transactions">Transactions</TabsTrigger>
-          <TabsTrigger value="receipt-scanner">Receipt Scanner</TabsTrigger>
-          <TabsTrigger value="chart-of-accounts">Chart of Accounts</TabsTrigger>
-          <TabsTrigger value="suppliers">Supplier Masterlist</TabsTrigger>
-        </TabsList>
+        <ExecutiveTabsList className="mb-4">
+          <ExecutiveTab value="transactions" icon={ArrowLeftRight}>Transactions</ExecutiveTab>
+          <ExecutiveTab value="receipt-scanner" icon={ScanLine}>Receipt Scanner</ExecutiveTab>
+          <ExecutiveTab value="chart-of-accounts" icon={BookOpen}>Chart of Accounts</ExecutiveTab>
+          <ExecutiveTab value="suppliers" icon={Users}>Supplier Masterlist</ExecutiveTab>
+        </ExecutiveTabsList>
 
         <TabsContent value="transactions" className="space-y-6">
       <div className="flex flex-col gap-4">

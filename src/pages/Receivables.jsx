@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { differenceInDays } from "date-fns";
-import { Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, HardHat, Building2, HandCoins, UserRound, CalendarClock, BadgePercent } from "lucide-react";
+import { ExecutiveTabsList, ExecutiveTab } from "@/components/shared/ExecutiveTabs";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -241,14 +242,14 @@ export default function Receivables() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-4 h-auto flex-wrap">
-          <TabsTrigger value="project-receivables">Project Receivables</TabsTrigger>
-          <TabsTrigger value="condo-sales">Condo Sales Receivables</TabsTrigger>
-          <TabsTrigger value="funding-loans">Funding &amp; Loans Receivables</TabsTrigger>
-          <TabsTrigger value="employee-receivables">Employee Receivables</TabsTrigger>
-          <TabsTrigger value="billing-cycles">Billing Cycles</TabsTrigger>
-          <TabsTrigger value="retention">Retention Receivable</TabsTrigger>
-        </TabsList>
+        <ExecutiveTabsList className="mb-4">
+          <ExecutiveTab value="project-receivables" icon={HardHat}>Project Receivables</ExecutiveTab>
+          <ExecutiveTab value="condo-sales" icon={Building2}>Condo Sales Receivables</ExecutiveTab>
+          <ExecutiveTab value="funding-loans" icon={HandCoins}>Funding &amp; Loans Receivables</ExecutiveTab>
+          <ExecutiveTab value="employee-receivables" icon={UserRound}>Employee Receivables</ExecutiveTab>
+          <ExecutiveTab value="billing-cycles" icon={CalendarClock}>Billing Cycles</ExecutiveTab>
+          <ExecutiveTab value="retention" icon={BadgePercent}>Retention Receivable</ExecutiveTab>
+        </ExecutiveTabsList>
 
         <TabsContent value={["project-receivables", "condo-sales", "funding-loans", "employee-receivables"].includes(activeTab) ? activeTab : "receivables-hidden"} className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

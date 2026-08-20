@@ -9,7 +9,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Pencil, Trash2, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Boxes } from "lucide-react";
+import { ExecutiveTabsList, ExecutiveTab } from "@/components/shared/ExecutiveTabs";
 
 const ASSET_TYPES = [
   { value: "land", label: "Land" },
@@ -259,10 +260,10 @@ export default function PPEAssets() {
 
       {/* Type tabs */}
       <Tabs value={typeFilter} onValueChange={setTypeFilter}>
-        <TabsList className="flex flex-wrap h-auto">
-          <TabsTrigger value="all">All Types</TabsTrigger>
-          {ASSET_TYPES.map(t => <TabsTrigger key={t.value} value={t.value}>{t.label}</TabsTrigger>)}
-        </TabsList>
+        <ExecutiveTabsList>
+          <ExecutiveTab value="all" icon={Boxes}>All Types</ExecutiveTab>
+          {ASSET_TYPES.map(t => <ExecutiveTab key={t.value} value={t.value} icon={Package}>{t.label}</ExecutiveTab>)}
+        </ExecutiveTabsList>
       </Tabs>
 
       {/* Filters + table */}

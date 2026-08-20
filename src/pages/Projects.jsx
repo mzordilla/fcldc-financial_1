@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, Briefcase, CheckCircle2, Pencil, ExternalLink, FileUp, Download, TrendingUp, TrendingDown, ChevronDown, ChevronRight, FileText } from "lucide-react";
+import { Plus, Trash2, Briefcase, CheckCircle2, Pencil, ExternalLink, FileUp, Download, TrendingUp, TrendingDown, ChevronDown, ChevronRight, FileText, Users } from "lucide-react";
+import { ExecutiveTabsList, ExecutiveTab } from "@/components/shared/ExecutiveTabs";
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
 import { Progress } from "@/components/ui/progress";
@@ -167,11 +168,11 @@ export default function Projects() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <Tabs defaultValue="projects" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="projects">Projects</TabsTrigger>
-          <TabsTrigger value="clients">Client Masterlist</TabsTrigger>
-          <TabsTrigger value="pnl">Project P&amp;L</TabsTrigger>
-        </TabsList>
+        <ExecutiveTabsList className="mb-4">
+          <ExecutiveTab value="projects" icon={Briefcase}>Projects</ExecutiveTab>
+          <ExecutiveTab value="clients" icon={Users}>Client Masterlist</ExecutiveTab>
+          <ExecutiveTab value="pnl" icon={TrendingUp}>Project P&amp;L</ExecutiveTab>
+        </ExecutiveTabsList>
 
         <TabsContent value="projects" className="space-y-6">
       {/* Header */}

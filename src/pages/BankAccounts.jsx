@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Building2, Pencil, Trash2, TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Building2, Pencil, Trash2, TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, ChevronDown, ChevronUp, RefreshCw, FileBarChart, ClipboardCheck } from "lucide-react";
+import { ExecutiveSegmentBar } from "@/components/shared/ExecutiveTabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import AddFormDialog from "../components/shared/AddFormDialog";
@@ -203,24 +204,11 @@ export default function BankAccounts() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-border">
-        {[
-          { key: "accounts", label: "Bank Accounts" },
-          { key: "reconciliation", label: "Bank Reconciliation" },
-          { key: "summary", label: "Summary Report" },
-          { key: "checks", label: "Check Monitoring" },
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
-              activeTab === tab.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <ExecutiveSegmentBar
+        items={[{ key: "accounts", label: "Bank Accounts", icon: Building2 }, { key: "reconciliation", label: "Bank Reconciliation", icon: RefreshCw }, { key: "summary", label: "Summary Report", icon: FileBarChart }, { key: "checks", label: "Check Monitoring", icon: ClipboardCheck }]}
+        activeKey={activeTab}
+        onChange={setActiveTab}
+      />
 
       {activeTab === "reconciliation" && <BankReconciliationPage />}
 

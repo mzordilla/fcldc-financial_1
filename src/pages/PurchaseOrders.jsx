@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package, ClipboardList, Printer, Search, GitPullRequest, MoreHorizontal } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package, ClipboardList, Printer, Search, GitPullRequest, MoreHorizontal, Briefcase, Users } from "lucide-react";
+import { ExecutiveTabsList, ExecutiveTab } from "@/components/shared/ExecutiveTabs";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -522,13 +523,13 @@ export default function PurchaseOrders() {
             </div>
           </div>
 
-          <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl bg-muted/60 p-1">
-            <TabsTrigger value="orders">Purchase Orders</TabsTrigger>
-            <TabsTrigger value="receiving">Receiving Items</TabsTrigger>
-            <TabsTrigger value="materials">Materials History</TabsTrigger>
-            <TabsTrigger value="project-summary">Project Summary</TabsTrigger>
-            <TabsTrigger value="suppliers">Supplier Masterlist</TabsTrigger>
-          </TabsList>
+          <ExecutiveTabsList>
+            <ExecutiveTab value="orders" icon={ClipboardList}>Purchase Orders</ExecutiveTab>
+            <ExecutiveTab value="receiving" icon={Package}>Receiving Items</ExecutiveTab>
+            <ExecutiveTab value="materials" icon={History}>Materials History</ExecutiveTab>
+            <ExecutiveTab value="project-summary" icon={Briefcase}>Project Summary</ExecutiveTab>
+            <ExecutiveTab value="suppliers" icon={Users}>Supplier Masterlist</ExecutiveTab>
+          </ExecutiveTabsList>
 
           <div className="border-t border-border pt-4">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Filters</p>

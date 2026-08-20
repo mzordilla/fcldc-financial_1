@@ -1,4 +1,5 @@
 import { Newspaper, Gauge, LineChart, Wallet, Landmark, CreditCard, Scale, ClipboardList, FolderTree, CalendarDays, CalendarRange, BookOpen, RefreshCw, FileBox, PiggyBank } from "lucide-react";
+import { ExecutiveSegmentBar } from "@/components/shared/ExecutiveTabs";
 
 const GROUPS = [
   {
@@ -40,34 +41,10 @@ const GROUPS = [
 
 export default function ReportsTabs({ activeTab, onChange }) {
   return (
-    <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
-      {GROUPS.map((group) => (
-        <div key={group.label} className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide w-40 shrink-0">
-            {group.label}
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            {group.tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => onChange(tab.key)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                    isActive
-                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                      : "bg-transparent text-muted-foreground border-border hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
+    <ExecutiveSegmentBar
+      items={GROUPS.flatMap((group) => group.tabs)}
+      activeKey={activeTab}
+      onChange={onChange}
+    />
   );
 }
