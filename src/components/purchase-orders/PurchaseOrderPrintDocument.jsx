@@ -7,13 +7,13 @@ export default function PurchaseOrderPrintDocument({ po, compact = false, signat
 
   return (
     <div className={compact ? "px-[8mm] py-[5mm] bg-white text-black" : "min-h-[267mm] p-[15mm] bg-white text-black"}>
-      <div className={`${compact ? "mb-2" : "mb-6"} flex items-center justify-between`}>
-        <img src="https://media.base44.com/images/public/69f02f8501c3688565579a10/7a3b001fb_CONSTRUCTION_FINANCE.jpg" alt="FCL Aranang Development Corporation" className={compact ? "h-14 w-auto" : "h-20 w-auto"} />
-        <h1 className={`font-bold tracking-tight ${compact ? "text-xl" : "text-2xl"}`}>PURCHASE ORDER</h1>
-      </div>
       <div className={`flex items-start justify-between border-b-2 border-black ${compact ? "pb-2 mb-3" : "pb-4 mb-6"}`}>
-        {!compact && <p className="text-sm text-gray-600">Official purchase authorization document</p>}
-        <div className="ml-auto text-sm text-right"><p className="font-semibold">PO #: {po.po_number || "—"}</p><p className="text-gray-600">Date: {po.requested_date ? format(new Date(po.requested_date), "MMM d, yyyy") : "—"}</p></div>
+        <img src="https://media.base44.com/images/public/69f02f8501c3688565579a10/7a3b001fb_CONSTRUCTION_FINANCE.jpg" alt="FCL Aranang Development Corporation" className={compact ? "h-14 w-auto" : "h-20 w-auto"} />
+        <div className="text-right">
+          <h1 className={`font-bold tracking-tight leading-none ${compact ? "text-xl" : "text-2xl"}`}>PURCHASE ORDER</h1>
+          <p className="text-sm font-semibold leading-tight">PO #: {po.po_number || "—"}</p>
+          <p className="text-sm text-gray-600 leading-tight">Date: {po.requested_date ? format(new Date(po.requested_date), "MMM d, yyyy") : "—"}</p>
+        </div>
       </div>
       <div className={`grid grid-cols-3 ${compact ? "gap-x-4 gap-y-1" : "gap-4"} ${gap} text-sm`}>
         <div><p className="text-gray-500 font-semibold uppercase text-xs">Supplier</p><p className="font-medium">{po.supplier_name || "—"}</p></div>
