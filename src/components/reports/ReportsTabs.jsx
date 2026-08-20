@@ -41,10 +41,15 @@ const GROUPS = [
 
 export default function ReportsTabs({ activeTab, onChange }) {
   return (
-    <ExecutiveSegmentBar
-      items={GROUPS.flatMap((group) => group.tabs)}
-      activeKey={activeTab}
-      onChange={onChange}
-    />
+    <div className="space-y-2">
+      {GROUPS.map((group) => (
+        <ExecutiveSegmentBar
+          key={group.label}
+          items={group.tabs}
+          activeKey={activeTab}
+          onChange={onChange}
+        />
+      ))}
+    </div>
   );
 }
