@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, Pencil, ChevronDown, ChevronUp, RotateCcw, List, LayoutGrid, Paperclip } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Pencil, ChevronDown, ChevronUp, RotateCcw, List, LayoutGrid, Paperclip, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,6 +19,8 @@ import CreditorLoansTable from "../components/working-capital/CreditorLoansTable
 import LoanComparativeReport from "../components/working-capital/LoanComparativeReport";
 import WorkingCapitalCommandHeader from "../components/working-capital/WorkingCapitalCommandHeader";
 import LoanTypeSummary from "../components/working-capital/LoanTypeSummary";
+import LoanLedgerDialog from "../components/working-capital/LoanLedgerDialog";
+import { applyLoanLedgerEntry, getLoanBalance } from "@/lib/loanBalance";
 
 
 const typeLabels = {
@@ -40,10 +42,7 @@ const fields = [
   { name: "creditor", label: "Creditor", required: true, placeholder: "e.g. First National Bank" },
   { name: "description", label: "Description", placeholder: "e.g. Working capital for operations" },
   { name: "amount_granted", label: "Amount Granted (₱)", type: "number", placeholder: "0.00" },
-  { name: "amount_availed", label: "Amount Availed (₱)", type: "number", placeholder: "0.00" },
-  { name: "total_amount", label: "Total Amount (₱)", type: "number", required: true, placeholder: "0.00" },
-  { name: "amount_paid", label: "Amount Paid (₱)", type: "number", placeholder: "0.00" },
-  { name: "principal_balance", label: "Principal Balance (₱)", type: "number", placeholder: "0.00" },
+  { name: "total_amount", label: "Facility / Contract Amount (₱)", type: "number", required: true, placeholder: "0.00" },
   { name: "interest_rate", label: "Interest Rate (%)", type: "number", placeholder: "5.5" },
   { name: "interest_accrued_1yr", label: "1-Year Interest Accrual (₱)", type: "number", placeholder: "0.00" },
   { name: "monthly_payment", label: "Monthly Payment (₱)", type: "number", placeholder: "0.00" },
@@ -72,6 +71,7 @@ export default function WorkingCapitalLoans() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [expandedId, setExpandedId] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
+  const [ledgerLoan, setLedgerLoan] = useState(null);
   const [user, setUser] = useState(null);
   const [viewMode, setViewMode] = useState("grouped"); // "grouped" or "table"
   const queryClient = useQueryClient();
@@ -86,7 +86,7 @@ export default function WorkingCapitalLoans() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.WorkingCapitalLoan.create(data),
+    mutationFn: (data) => base44.entities.WorkingCapitalLoan.create({ ...data, amount_availed: 0, amount_paid: 0, principal_balance: 0, ledger_entries: [] }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["workingcapitalloans"] }),
   });
 
@@ -106,15 +106,16 @@ export default function WorkingCapitalLoans() {
     }
   });
 
-  const markPaidOff = (d) => updateMutation.mutate({ id: d.id, data: { status: "paid_off", amount_paid: d.total_amount } });
+  const markPaidOff = (d) => updateMutation.mutate({ id: d.id, data: { status: "paid_off", amount_paid: (d.amount_paid || 0) + getLoanBalance(d), principal_balance: 0 } });
+  const recordLedgerEntry = (entry) => updateMutation.mutateAsync({ id: ledgerLoan.id, data: applyLoanLedgerEntry(ledgerLoan, entry) });
 
   const filtered = statusFilter === "all" ? items : items.filter(d => d.status === statusFilter);
 
   const activeItems = items.filter(d => d.status === "active");
-  const totalActive = activeItems.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
+  const totalActive = activeItems.reduce((s, d) => s + getLoanBalance(d), 0);
   const monthlyPayments = activeItems.reduce((s, d) => s + (d.monthly_payment || 0), 0);
   const totalGranted = activeItems.filter(d => d.amount_granted).reduce((s, d) => s + (d.amount_granted || 0), 0);
-  const totalDrawn = activeItems.filter(d => d.amount_granted).reduce((s, d) => s + (d.amount_availed || 0), 0);
+  const totalDrawn = activeItems.filter(d => d.amount_granted).reduce((s, d) => s + getLoanBalance(d), 0);
   const availableBalance = Math.max(0, totalGranted - totalDrawn);
 
   return (
@@ -176,7 +177,7 @@ export default function WorkingCapitalLoans() {
                   const typeLoans = filtered.filter(d => d.type === type);
                   if (typeLoans.length === 0) return null;
                   const typeTotalAmount = typeLoans.reduce((s, d) => s + (d.total_amount || 0), 0);
-                  const typeOutstanding = typeLoans.reduce((s, d) => s + Math.max(0, (d.total_amount || 0) - (d.amount_paid || 0)), 0);
+                  const typeOutstanding = typeLoans.reduce((s, d) => s + getLoanBalance(d), 0);
                   const typeMonthlyPayment = typeLoans.reduce((s, d) => s + (d.monthly_payment || 0), 0);
                   return (
                     <tr key={type} className="border-b border-border hover:bg-muted/50">
@@ -221,7 +222,7 @@ export default function WorkingCapitalLoans() {
                         <td className="px-6 py-4 text-sm text-foreground">{loan.creditor}</td>
                         <td className="px-6 py-4 text-sm text-foreground">{typeLabels[loan.type] || loan.type}</td>
                         <td className="px-6 py-4 text-sm text-right text-foreground">₱{(loan.total_amount || 0).toLocaleString()}</td>
-                        <td className="px-6 py-4 text-sm text-right text-foreground">₱{Math.max(0, (loan.total_amount || 0) - (loan.amount_paid || 0)).toLocaleString()}</td>
+                        <td className="px-6 py-4 text-sm text-right text-foreground">₱{getLoanBalance(loan).toLocaleString()}</td>
                         <td className="px-6 py-4 text-sm text-right text-foreground">{loan.interest_rate || "-"}%</td>
                         <td className="px-6 py-4 text-sm text-right text-foreground">₱{(loan.monthly_payment || 0).toLocaleString()}</td>
                         <td className="px-6 py-4 text-sm text-left">
@@ -240,6 +241,7 @@ export default function WorkingCapitalLoans() {
                         </td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex items-center justify-center gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => setLedgerLoan(loan)} className="text-muted-foreground hover:text-primary" title="Record Availment or Payment"><Banknote className="w-4 h-4" /></Button>
                             {loan.status === "active" && (
                               <Button variant="ghost" size="icon" onClick={() => markPaidOff(loan)} className="text-primary hover:text-primary" title="Mark as Paid Off">
                                 <CheckCircle className="w-4 h-4" />
@@ -276,7 +278,7 @@ export default function WorkingCapitalLoans() {
 
             // Calculate totals for this type
             const typeTotalAmount = typeLoans.reduce((s, d) => s + (d.total_amount || 0), 0);
-            const typeOutstanding = typeLoans.reduce((s, d) => s + Math.max(0, (d.total_amount || 0) - (d.amount_paid || 0)), 0);
+            const typeOutstanding = typeLoans.reduce((s, d) => s + getLoanBalance(d), 0);
             const typeMonthlyPayment = typeLoans.reduce((s, d) => s + (d.monthly_payment || 0), 0);
 
             return (
@@ -309,6 +311,7 @@ export default function WorkingCapitalLoans() {
                       onEdit={setEditingItem}
                       onDelete={setDeleteItem}
                       onMarkPaidOff={markPaidOff}
+                      onRecordEntry={setLedgerLoan}
                       isLoading={isLoading}
                     />
                   ))}
@@ -342,6 +345,8 @@ export default function WorkingCapitalLoans() {
         initialData={editingItem || {}}
         onSubmit={(data) => updateMutation.mutateAsync({ id: editingItem.id, data })}
       />
+
+      <LoanLedgerDialog open={!!ledgerLoan} onOpenChange={(value) => { if (!value) setLedgerLoan(null); }} loan={ledgerLoan} onConfirm={recordLedgerEntry} />
 
       <AlertDialog open={!!deleteItem} onOpenChange={(v) => { if (!v) setDeleteItem(null); }}>
         <AlertDialogContent>

@@ -2,7 +2,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Pencil, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
-import MonthlyLoanMonitoring from "./MonthlyLoanMonitoring";
+import LoanLedgerHistory from "./LoanLedgerHistory";
+import { getLoanBalance } from "@/lib/loanBalance";
 
 const typeLabels = {
   loan: "Loan",
@@ -20,7 +21,7 @@ const statusStyles = {
 };
 
 export default function LoanTypeTable({ type, loans, expandedId, setExpandedId, onEdit, onDelete, onMarkPaidOff, isLoading }) {
-  const totalOutstanding = loans.reduce((sum, d) => sum + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
+  const totalOutstanding = loans.reduce((sum, d) => sum + getLoanBalance(d), 0);
   const totalMonthly = loans.reduce((sum, d) => sum + (d.monthly_payment || 0), 0);
 
   return (
@@ -70,7 +71,7 @@ export default function LoanTypeTable({ type, loans, expandedId, setExpandedId, 
               </TableRow>
             )}
             {loans.map((d) => {
-              const remaining = (d.total_amount || 0) - (d.amount_paid || 0);
+              const remaining = getLoanBalance(d);
               const isExpanded = expandedId === d.id;
               return (
                 <TableRow key={d.id} className="border-border hover:bg-secondary/30 transition-colors">
@@ -79,7 +80,7 @@ export default function LoanTypeTable({ type, loans, expandedId, setExpandedId, 
                     ₱{(d.amount_granted || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </TableCell>
                   <TableCell className="text-right text-sm">
-                    {d.amount_granted ? `${Math.round(((d.amount_availed || 0) / d.amount_granted) * 100)}%` : "-"}
+                    {d.amount_granted ? `${Math.round((getLoanBalance(d) / d.amount_granted) * 100)}%` : "-"}
                   </TableCell>
                   <TableCell className="text-right text-sm">
                     ₱{(d.amount_paid || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
@@ -129,7 +130,7 @@ export default function LoanTypeTable({ type, loans, expandedId, setExpandedId, 
         </Table>
         {!isLoading && loans.length > 0 && expandedId && (
           <div className="border-t border-border px-6 py-4 bg-secondary/30">
-            <MonthlyLoanMonitoring loan={loans.find(d => d.id === expandedId)} />
+            <LoanLedgerHistory loan={loans.find(d => d.id === expandedId)} />
           </div>
         )}
       </div>

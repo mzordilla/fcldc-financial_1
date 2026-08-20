@@ -1,3 +1,5 @@
+import { getLoanBalance } from "@/lib/loanBalance";
+
 const labels = { loan: "Loan", credit_line: "Credit Line", equipment_financing: "Equipment", vendor_credit: "Vendor Credit", mortgage: "Mortgage", other: "Other" };
 
 export default function LoanTypeSummary({ items }) {
@@ -7,7 +9,7 @@ export default function LoanTypeSummary({ items }) {
       type,
       count: loans.length,
       total: loans.reduce((sum, loan) => sum + (loan.total_amount || 0), 0),
-      outstanding: loans.reduce((sum, loan) => sum + Math.max(0, (loan.total_amount || 0) - (loan.amount_paid || 0)), 0),
+      outstanding: loans.reduce((sum, loan) => sum + getLoanBalance(loan), 0),
       monthly: loans.reduce((sum, loan) => sum + (loan.monthly_payment || 0), 0),
     };
   }).filter((row) => row.count > 0);

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getLoanBalance } from "@/lib/loanBalance";
 
 export default function DebtServiceCoverageRatio({ items }) {
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
@@ -9,7 +10,7 @@ export default function DebtServiceCoverageRatio({ items }) {
   const totalMonthlyDebt = items
     .filter(d => d.status === "active")
     .reduce((sum, loan) => {
-      const principal = (loan.principal_balance || 0) || ((loan.total_amount || 0) - (loan.amount_paid || 0));
+      const principal = getLoanBalance(loan);
       const monthlyInterest = principal > 0 ? (principal * (loan.interest_rate || 0) / 12 / 100) : 0;
       return sum + (loan.monthly_payment || 0) + monthlyInterest;
     }, 0);

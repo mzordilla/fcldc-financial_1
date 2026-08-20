@@ -1,5 +1,6 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { Card } from "@/components/ui/card";
+import { getLoanBalance } from "@/lib/loanBalance";
 
 export default function OutstandingVsGranted({ items }) {
   const creditLines = items.filter((d) => d.status === "active" && d.type === "credit_line" && d.amount_granted);
@@ -7,10 +8,10 @@ export default function OutstandingVsGranted({ items }) {
   const allItems = [...creditLines, ...mortgages];
 
   const creditLineGranted = creditLines.reduce((s, d) => s + (d.amount_granted || 0), 0);
-  const creditLineOutstanding = creditLines.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
+  const creditLineOutstanding = creditLines.reduce((s, d) => s + getLoanBalance(d), 0);
   const creditLineAvailable = creditLineGranted - creditLineOutstanding;
 
-  const totalOutstanding = allItems.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
+  const totalOutstanding = allItems.reduce((s, d) => s + getLoanBalance(d), 0);
   const totalGranted = allItems.reduce((s, d) => s + (d.amount_granted || 0), 0);
 
   const pieData = [

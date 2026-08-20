@@ -17,21 +17,50 @@
     "amount_availed": {
       "type": "number",
       "default": 0,
-      "description": "Amount that has been drawn/utilized"
+      "description": "Cumulative amount drawn or availed"
     },
     "total_amount": {
       "type": "number",
-      "description": "Total loan amount"
+      "description": "Total loan or facility amount"
     },
     "amount_paid": {
       "type": "number",
       "default": 0,
-      "description": "Amount already paid off"
+      "description": "Cumulative principal payments"
     },
     "principal_balance": {
       "type": "number",
       "default": 0,
-      "description": "Remaining principal balance"
+      "description": "Outstanding balance increased by availments and decreased by payments"
+    },
+    "ledger_entries": {
+      "type": "array",
+      "description": "Manual loan availment and payment ledger",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entry_type": {
+            "type": "string",
+            "enum": [
+              "availment",
+              "payment"
+            ]
+          },
+          "entry_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
     },
     "interest_rate": {
       "type": "number",

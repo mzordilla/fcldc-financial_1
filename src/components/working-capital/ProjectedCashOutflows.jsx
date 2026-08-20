@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { getLoanBalance } from "@/lib/loanBalance";
 
 export default function ProjectedCashOutflows({ items }) {
   const [rateAdjustment, setRateAdjustment] = useState(0);
@@ -25,7 +26,7 @@ export default function ProjectedCashOutflows({ items }) {
     // Initialize remaining principal for each loan
     activeLoans.forEach((loan) => {
       if (!remainingPrincipal[loan.id]) {
-        remainingPrincipal[loan.id] = loan.principal_balance || 0 || (loan.total_amount || 0) - (loan.amount_paid || 0);
+        remainingPrincipal[loan.id] = getLoanBalance(loan);
       }
     });
 

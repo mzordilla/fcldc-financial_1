@@ -1,10 +1,11 @@
-import { ChevronDown, ChevronUp, Pencil, Trash2, CheckCircle, Paperclip } from "lucide-react";
+import { ChevronDown, ChevronUp, Pencil, Trash2, CheckCircle, Paperclip, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
-import MonthlyLoanMonitoring from "./MonthlyLoanMonitoring";
+import LoanLedgerHistory from "./LoanLedgerHistory";
+import { getLoanBalance } from "@/lib/loanBalance";
 
 const statusStyles = {
   active: "bg-chart-2/10 text-chart-2 border-chart-2/20",
@@ -20,9 +21,10 @@ export default function CreditorLoansTable({
   onEdit,
   onDelete,
   onMarkPaidOff,
+  onRecordEntry,
   isLoading
 }) {
-  const totalOutstanding = loans.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
+  const totalOutstanding = loans.reduce((s, d) => s + getLoanBalance(d), 0);
   const totalMonthlyPayment = loans.reduce((s, d) => s + (d.monthly_payment || 0), 0);
 
   return (
@@ -71,7 +73,7 @@ export default function CreditorLoansTable({
                     </TableCell>
                     <TableCell className="font-medium">{loan.description || "—"}</TableCell>
                     <TableCell className="text-right font-mono">₱{(loan.total_amount || 0).toLocaleString()}</TableCell>
-                    <TableCell className="text-right font-mono">₱{((loan.total_amount || 0) - (loan.amount_paid || 0)).toLocaleString()}</TableCell>
+                    <TableCell className="text-right font-mono">₱{getLoanBalance(loan).toLocaleString()}</TableCell>
                     <TableCell className="text-right">{loan.interest_rate || 0}%</TableCell>
                     <TableCell className="text-right">{loan.due_date ? format(new Date(loan.due_date), "MMM d, yyyy") : "—"}</TableCell>
                     <TableCell className="text-right">
@@ -90,6 +92,7 @@ export default function CreditorLoansTable({
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex gap-1 justify-center">
+                        <Button size="icon" variant="ghost" onClick={() => onRecordEntry(loan)} title="Record Availment or Payment"><Banknote className="w-4 h-4 text-primary" /></Button>
                         {loan.status === "active" &&
                     <Button size="icon" variant="ghost" onClick={() => onMarkPaidOff(loan)} title="Mark Paid Off">
                             <CheckCircle className="w-4 h-4 text-primary" />
@@ -107,7 +110,7 @@ export default function CreditorLoansTable({
                   {expandedId === loan.id &&
               <TableRow key={`${loan.id}-expanded`}>
                       <TableCell colSpan={9} className="bg-muted/50 p-4">
-                        <MonthlyLoanMonitoring loan={loan} />
+                        <LoanLedgerHistory loan={loan} />
                       </TableCell>
                     </TableRow>
               }

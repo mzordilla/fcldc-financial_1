@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { differenceInDays, format, addMonths, startOfMonth, endOfMonth } from "date-fns";
+import { getLoanBalance } from "@/lib/loanBalance";
 
 const typeLabels = {
   equipment_financing: "Equipment Financing",
@@ -46,7 +47,7 @@ export default function UpcomingMaturities({ items }) {
     }));
 
     const loansToDisplay = monthlyLoans.filter(m => m.loans.length > 0);
-    const totalOutstanding = loans.reduce((sum, loan) => sum + ((loan.total_amount || 0) - (loan.amount_paid || 0)), 0);
+    const totalOutstanding = loans.reduce((sum, loan) => sum + getLoanBalance(loan), 0);
 
     return (
       <div key={type} className="space-y-3">
@@ -89,7 +90,7 @@ export default function UpcomingMaturities({ items }) {
                         )}
                         <TableCell className="text-foreground text-xs">{loan.creditor}</TableCell>
                         <TableCell className="text-right font-semibold text-xs">
-                          ₱{((loan.total_amount || 0) - (loan.amount_paid || 0)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          ₱{getLoanBalance(loan).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                         </TableCell>
                         <TableCell className="text-xs">{format(new Date(loan.due_date), "MMM d, yyyy")}</TableCell>
                         <TableCell className="text-center text-xs">{daysUntilDue}</TableCell>
