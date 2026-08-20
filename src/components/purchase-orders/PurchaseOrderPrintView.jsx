@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import CompanySignatureSettingsDialog from "@/components/purchase-orders/CompanySignatureSettingsDialog";
 import PurchaseOrderPrintDocument from "@/components/purchase-orders/PurchaseOrderPrintDocument";
 
-function ScaledCopy({ po, signature, watermark, heightMm = 148 }) {
+function ScaledCopy({ po, signature, watermark, heightMm = 148, compact = true, allowUpscale = true }) {
   const containerRef = useRef(null);
   const contentRef = useRef(null);
   const [scale, setScale] = useState(1);
@@ -17,9 +17,10 @@ function ScaledCopy({ po, signature, watermark, heightMm = 148 }) {
     if (!container || !content) return;
     const availableHeight = container.clientHeight;
     const naturalHeight = content.scrollHeight;
-    const nextScale = naturalHeight > 0 ? availableHeight / naturalHeight : 1;
+    let nextScale = naturalHeight > 0 ? availableHeight / naturalHeight : 1;
+    if (!allowUpscale) nextScale = Math.min(1, nextScale);
     setScale((prev) => (Math.abs(prev - nextScale) > 0.005 ? nextScale : prev));
-  }, []);
+  }, [allowUpscale]);
 
   useLayoutEffect(() => {
     recalcScale();
@@ -33,9 +34,9 @@ function ScaledCopy({ po, signature, watermark, heightMm = 148 }) {
   return (
     <div ref={containerRef} className="relative overflow-hidden" style={{ height: `${heightMm}mm` }}>
       <div ref={contentRef} className="w-full" style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}>
-        <PurchaseOrderPrintDocument po={po} compact signature={signature} />
+        <PurchaseOrderPrintDocument po={po} compact={compact} signature={signature} />
       </div>
-      <span className="absolute bottom-3 right-5 text-xs font-bold uppercase tracking-wider text-gray-500">{watermark}</span>
+      {watermark && <span className="absolute bottom-3 right-5 text-xs font-bold uppercase tracking-wider text-gray-500">{watermark}</span>}
     </div>
   );
 }
@@ -86,7 +87,7 @@ export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
       <div className="flex justify-center py-8 px-4">
         <div id="po-print-content" className="w-[210mm] h-[297mm] bg-white text-black shadow-lg overflow-hidden">
           {layout === "full" ? (
-            <PurchaseOrderPrintDocument po={po} signature={signature} />
+            <ScaledCopy po={po} signature={signature} watermark={null} heightMm={297} compact={false} allowUpscale={false} />
           ) : (
             <>
               <ScaledCopy po={po} signature={signature} watermark="FCL Copy" />
