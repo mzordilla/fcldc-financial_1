@@ -15,15 +15,15 @@ export default function PurchaseOrderPrintDocument({ po, compact = false, signat
         {!compact && <p className="text-sm text-gray-600">Official purchase authorization document</p>}
         <div className="ml-auto text-sm text-right"><p className="font-semibold">PO #: {po.po_number || "—"}</p><p className="text-gray-600">Date: {po.requested_date ? format(new Date(po.requested_date), "MMM d, yyyy") : "—"}</p></div>
       </div>
-      <div className={`grid grid-cols-2 ${compact ? "gap-x-4 gap-y-1" : "gap-4"} ${gap} text-sm`}>
+      <div className={`grid grid-cols-3 ${compact ? "gap-x-4 gap-y-1" : "gap-4"} ${gap} text-sm`}>
         <div><p className="text-gray-500 font-semibold uppercase text-xs">Supplier</p><p className="font-medium">{po.supplier_name || "—"}</p></div>
         <div><p className="text-gray-500 font-semibold uppercase text-xs">Project</p><p className="font-medium">{po.project_name || "—"}</p></div>
-        <div><p className="text-gray-500 font-semibold uppercase text-xs">Category</p><p className="font-medium capitalize">{(po.category || "—").replace(/_/g, " ")}</p></div>
         <div><p className="text-gray-500 font-semibold uppercase text-xs">Priority</p><p className="font-medium capitalize">{po.priority || "normal"}</p></div>
+        <div><p className="text-gray-500 font-semibold uppercase text-xs">Category</p><p className="font-medium capitalize">{(po.category || "—").replace(/_/g, " ")}</p></div>
+        <div><p className="text-gray-500 font-semibold uppercase text-xs">Required Date</p><p className="font-medium">{po.required_date ? format(new Date(po.required_date), "MMM d, yyyy") : "—"}</p></div>
+        <div><p className="text-gray-500 font-semibold uppercase text-xs">Description</p><p className="font-medium">{po.description || "No description provided"}</p></div>
         {po.requested_by && <div><p className="text-gray-500 font-semibold uppercase text-xs">Requested By</p><p className="font-medium">{po.requested_by}</p></div>}
-        {po.required_date && <div><p className="text-gray-500 font-semibold uppercase text-xs">Required Date</p><p className="font-medium">{format(new Date(po.required_date), "MMM d, yyyy")}</p></div>}
       </div>
-      <div className={gap}><p className="text-gray-500 font-semibold uppercase text-xs mb-1">Description</p><p className="text-sm">{po.description || "No description provided"}</p></div>
       <table className={`w-full text-sm border-collapse ${gap}`}>
         <thead><tr className="border-b-2 border-black"><th className="text-left py-2">#</th><th className="text-left py-2">Description</th><th className="text-right py-2">Qty</th><th className="text-right py-2">Unit</th><th className="text-right py-2">Unit Price</th><th className="text-right py-2">Total</th></tr></thead>
         <tbody>
