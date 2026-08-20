@@ -13,6 +13,7 @@ import StatementOfAccountPDF from "../components/receivables/StatementOfAccountP
 import ClientInvoiceDetails from "../components/receivables/ClientInvoiceDetails";
 import BillingCycles from "./BillingCycles";
 import RetentionReceivables from "../components/receivables/RetentionReceivables";
+import MultiFundingLoanDialog from "../components/receivables/MultiFundingLoanDialog";
 
 function AgingSummary({ items }) {
   const today = new Date();
@@ -341,13 +342,23 @@ export default function Receivables() {
         )}
       </div>
 
-      <ReceivableFormDialog
-        open={showAdd}
-        onOpenChange={setShowAdd}
-        title={activeTab === "funding-loans" ? "Add Funding / Loan Receivable" : "Add Receivable"}
-        fields={activeTab === "funding-loans" ? fundingFields : fields}
-        onSubmit={(data) => createMutation.mutateAsync(activeTab === "funding-loans" ? { ...data, receivable_type: "funding_loan" } : data)}
-      />
+      {activeTab === "funding-loans" ? (
+        <MultiFundingLoanDialog
+          open={showAdd}
+          onOpenChange={setShowAdd}
+          onSubmit={async (rows) => {
+            for (const row of rows) await createMutation.mutateAsync(row);
+          }}
+        />
+      ) : (
+        <ReceivableFormDialog
+          open={showAdd}
+          onOpenChange={setShowAdd}
+          title="Add Receivable"
+          fields={fields}
+          onSubmit={(data) => createMutation.mutateAsync(data)}
+        />
+      )}
       <ReceivableFormDialog
         open={!!editingR}
         onOpenChange={(v) => { if (!v) setEditingR(null); }}
