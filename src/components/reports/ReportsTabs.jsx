@@ -1,4 +1,4 @@
-import { Newspaper, Gauge, LineChart, Wallet, Landmark, CreditCard, Scale, ClipboardList, FolderTree, CalendarDays, CalendarRange, BookOpen, RefreshCw, FileBox } from "lucide-react";
+import { Newspaper, Gauge, LineChart, Wallet, Landmark, CreditCard, Scale, ClipboardList, FolderTree, CalendarDays, CalendarRange, BookOpen, RefreshCw, FileBox, PiggyBank } from "lucide-react";
 
 const GROUPS = [
   {
@@ -16,6 +16,7 @@ const GROUPS = [
       { key: "balance_sheet", label: "Balance Sheet", icon: Scale },
       { key: "income_statement", label: "Income Statement", icon: ClipboardList },
       { key: "comparative_income_statement", label: "Comparative Income", icon: FolderTree },
+      { key: "changes_in_equity", label: "Changes in Equity", icon: PiggyBank },
     ],
   },
   {

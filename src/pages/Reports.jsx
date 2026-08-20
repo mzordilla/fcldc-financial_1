@@ -13,6 +13,7 @@ import IncomeTrendChart from "../components/reports/IncomeTrendChart";
 import BalanceSheetReport from "../components/reports/BalanceSheetReport";
 import IncomeStatementReport from "../components/reports/IncomeStatementReport";
 import ComparativeIncomeStatement from "../components/reports/ComparativeIncomeStatement";
+import StatementOfChangesInEquity from "../components/reports/StatementOfChangesInEquity";
 import EfficiencyReport from "../components/reports/EfficiencyReport";
 import DailyTransactionsReport from "../components/reports/DailyTransactionsReport";
 import MonthlyTransactionsReport from "../components/reports/MonthlyTransactionsReport";
@@ -548,6 +549,10 @@ export default function Reports() {
 
       {activeTab === "comparative_income_statement" && (
         <ComparativeIncomeStatement />
+      )}
+
+      {activeTab === "changes_in_equity" && (
+        <StatementOfChangesInEquity dateFrom={dateFrom} dateTo={dateTo} />
       )}
 
       {activeTab === "daily_transactions" && (
