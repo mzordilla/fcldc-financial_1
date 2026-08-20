@@ -21,6 +21,7 @@ import CorporateDocuments from "../components/reports/CorporateDocuments";
 import WeeklyCollatedReport from "../components/reports/WeeklyCollatedReport";
 import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
 import { normalizeLoan } from "@/lib/normalizeLoan";
+import { bankOnly } from "@/lib/bankCashFlow";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import { Badge } from "@/components/ui/badge";
@@ -167,8 +168,9 @@ function PnLStatement({ transactions, monthLabel }) {
 }
 
 function CashFlowStatement({ transactions, loans, monthLabel }) {
-  const income = transactions.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
-  const expenses = transactions.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
+  const bankTx = bankOnly(transactions);
+  const income = bankTx.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
+  const expenses = bankTx.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
   const operatingCF = income - expenses;
 
   // Financing: loan payments this month
@@ -177,9 +179,10 @@ function CashFlowStatement({ transactions, loans, monthLabel }) {
 
   return (
     <div className="bg-card border border-border rounded-2xl p-5">
-      <h3 className="text-base font-semibold text-foreground mb-4">
+      <h3 className="text-base font-semibold text-foreground mb-1">
         Cash Flow Statement — {monthLabel}
       </h3>
+      <p className="text-xs text-muted-foreground mb-4">Bank account movements only</p>
 
       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Operating Activities</p>
       <SectionRow label="Cash received from clients" value={fmt(income)} isSub />
@@ -239,7 +242,7 @@ function exportToExcel({ months, txByMonth, activeLoans, rangeMonths }) {
   [...months].reverse().forEach(m => {
     const key = format(m, "yyyy-MM");
     const label = format(m, "MMMM yyyy");
-    const mTx = txByMonth[key] || [];
+    const mTx = bankOnly(txByMonth[key] || []);
     const income = mTx.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
     const expenses = mTx.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
     const opCF = income - expenses;
@@ -350,7 +353,7 @@ function exportToPDF({ months, txByMonth, activeLoans, rangeMonths }) {
     if (y > 270) { doc.addPage(); y = 20; }
     const key = format(m, "yyyy-MM");
     const label = format(m, "MMMM yyyy");
-    const mTx = txByMonth[key] || [];
+    const mTx = bankOnly(txByMonth[key] || []);
     const inc = mTx.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
     const exp = mTx.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
     const opCF = inc - exp;
