@@ -535,83 +535,48 @@ export default function PurchaseOrders() {
 
   return (
     <div className="p-4 md:p-8 w-full mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">Purchase Orders</h1>
-          <p className="text-muted-foreground mt-1">
-            {pending.length} pending approval · ₱{totalPendingValue.toLocaleString()} pending value
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search PO#, supplier, project..." className="pl-9 w-56" value={poSearch} onChange={(e) => setPoSearch(e.target.value)} />
+      <Tabs defaultValue="orders" className="w-full space-y-5">
+        <section className="rounded-2xl border border-border bg-card p-4 md:p-5 space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">Purchase Orders</h1>
+              <p className="text-sm text-muted-foreground mt-1">{pending.length} pending approval · ₱{totalPendingValue.toLocaleString()} pending value</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {approved.length > 0 && <Button variant="outline" onClick={() => setShowApprovedSummary(true)}><ClipboardList className="w-4 h-4 mr-2" /> Approved Summary</Button>}
+              <Button variant="outline" onClick={() => window.print()}><Printer className="w-4 h-4 mr-2" /> Print</Button>
+              <Button variant="outline" onClick={() => setShowImport(true)}><FileUp className="w-4 h-4 mr-2" /> Import Excel</Button>
+              <Button onClick={() => setShowAdd(true)}><Plus className="w-4 h-4 mr-2" /> New PO</Button>
+            </div>
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={supplierFilter} onValueChange={setSupplierFilter}>
-            <SelectTrigger className="w-44"><SelectValue placeholder="All Suppliers" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Suppliers</SelectItem>
-              {poSuppliers.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={projectFilter} onValueChange={setProjectFilter}>
-            <SelectTrigger className="w-44"><SelectValue placeholder="All Projects" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Projects</SelectItem>
-              {poProjects.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-44"><SelectValue placeholder="All Categories" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {PO_CATEGORY_OPTIONS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={coaFilter} onValueChange={setCoaFilter}>
-            <SelectTrigger className="w-44"><SelectValue placeholder="All Chart of Accts" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Chart of Accts</SelectItem>
-              {poCoas.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Input type="date" className="w-36" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} title="From date" />
-          <Input type="date" className="w-36" value={dateTo} onChange={(e) => setDateTo(e.target.value)} title="To date" />
-          {approved.length > 0 &&
-          <Button variant="outline" onClick={() => setShowApprovedSummary(true)}>
-              <ClipboardList className="w-4 h-4 mr-2" /> Approved Summary
-            </Button>
-          }
-          <Button variant="outline" onClick={() => window.print()}>
-            <Printer className="w-4 h-4 mr-2" /> Print
-          </Button>
-          <Button variant="outline" onClick={() => setShowImport(true)}>
-            <FileUp className="w-4 h-4 mr-2" /> Import Excel
-          </Button>
-          <Button onClick={() => setShowAdd(true)}>
-            <Plus className="w-4 h-4 mr-2" /> New PO
-          </Button>
-        </div>
-      </div>
 
-      <Tabs defaultValue="orders" className="w-full">
-        <TabsList className="mb-2">
-          <TabsTrigger value="orders">Purchase Orders</TabsTrigger>
-          <TabsTrigger value="receiving">Receiving Items</TabsTrigger>
-          <TabsTrigger value="materials">Materials History</TabsTrigger>
-          <TabsTrigger value="project-summary">Project Summary</TabsTrigger>
-          <TabsTrigger value="suppliers">Supplier Masterlist</TabsTrigger>
-        </TabsList>
+          <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl bg-muted/60 p-1">
+            <TabsTrigger value="orders">Purchase Orders</TabsTrigger>
+            <TabsTrigger value="receiving">Receiving Items</TabsTrigger>
+            <TabsTrigger value="materials">Materials History</TabsTrigger>
+            <TabsTrigger value="project-summary">Project Summary</TabsTrigger>
+            <TabsTrigger value="suppliers">Supplier Masterlist</TabsTrigger>
+          </TabsList>
+
+          <div className="border-t border-border pt-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Filters</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-2">
+              <div className="relative sm:col-span-2 xl:col-span-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input placeholder="Search PO#, supplier, project..." className="pl-9" value={poSearch} onChange={(e) => setPoSearch(e.target.value)} />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All Status</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="rejected">Rejected</SelectItem><SelectItem value="cancelled">Cancelled</SelectItem></SelectContent></Select>
+              <Select value={supplierFilter} onValueChange={setSupplierFilter}><SelectTrigger><SelectValue placeholder="All Suppliers" /></SelectTrigger><SelectContent><SelectItem value="all">All Suppliers</SelectItem>{poSuppliers.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
+              <Select value={projectFilter} onValueChange={setProjectFilter}><SelectTrigger><SelectValue placeholder="All Projects" /></SelectTrigger><SelectContent><SelectItem value="all">All Projects</SelectItem>{poProjects.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}><SelectTrigger><SelectValue placeholder="All Categories" /></SelectTrigger><SelectContent><SelectItem value="all">All Categories</SelectItem>{PO_CATEGORY_OPTIONS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent></Select>
+              <Select value={coaFilter} onValueChange={setCoaFilter}><SelectTrigger><SelectValue placeholder="All Chart of Accounts" /></SelectTrigger><SelectContent><SelectItem value="all">All Chart of Accounts</SelectItem>{poCoas.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
+              <div className="flex gap-2 sm:col-span-2 lg:col-span-1 xl:col-span-1">
+                <Input type="date" className="min-w-0" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} title="From date" />
+                <Input type="date" className="min-w-0" value={dateTo} onChange={(e) => setDateTo(e.target.value)} title="To date" />
+              </div>
+            </div>
+          </div>
+        </section>
 
         <TabsContent value="orders" className="space-y-6">
 
