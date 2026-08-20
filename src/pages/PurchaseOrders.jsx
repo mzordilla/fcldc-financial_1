@@ -153,8 +153,8 @@ export default function PurchaseOrders() {
                 </DropdownMenu>
               }
               {po.approval_status === "approved" &&
-                <button onClick={() => setRequestingChangePO(po)} className="inline-flex items-center gap-1 rounded-md border border-chart-3/30 px-2 py-1 text-xs font-medium text-chart-3 hover:bg-chart-3/10">
-                  <GitPullRequest className="w-3.5 h-3.5" /> Change
+                <button onClick={() => setRequestingChangePO(po)} title="Request change" aria-label="Request change" className="inline-flex items-center rounded-md border border-chart-3/30 p-1.5 text-chart-3 hover:bg-chart-3/10">
+                  <GitPullRequest className="w-3.5 h-3.5" />
                 </button>
               }
               {isAdmin && pendingChangeRequests > 0 &&
@@ -168,8 +168,8 @@ export default function PurchaseOrders() {
               </button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted">
-                    <MoreHorizontal className="w-3.5 h-3.5" /> Actions
+                  <button title="Actions" aria-label="Actions" className="inline-flex items-center rounded-md border border-border p-1.5 text-muted-foreground hover:bg-muted">
+                    <MoreHorizontal className="w-3.5 h-3.5" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
