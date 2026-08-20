@@ -67,6 +67,21 @@ const fields = [
   { name: "notes", label: "Notes", placeholder: "Optional notes" },
 ];
 
+const fundingFields = [
+  { name: "client_name", label: "Borrower / Party Name", required: true, placeholder: "e.g. Juan Dela Cruz" },
+  { name: "invoice_number", label: "Reference #", placeholder: "REF-001" },
+  { name: "amount", label: "Total Amount (₱)", type: "number", required: true, placeholder: "0.00" },
+  { name: "amount_paid", label: "Amount Paid (₱)", type: "number", placeholder: "0.00" },
+  { name: "due_date", label: "Due Date", type: "date", required: true },
+  { name: "status", label: "Status", type: "select", options: [
+    { value: "outstanding", label: "Outstanding" },
+    { value: "partially_paid", label: "Partially Paid" },
+    { value: "paid", label: "Paid" },
+    { value: "overdue", label: "Overdue" },
+  ]},
+  { name: "notes", label: "Notes", placeholder: "Details of the funding/loan" },
+];
+
 function computeBuckets(rows) {
   const today = new Date();
   const buckets = { current: 0, days30: 0, days60: 0, days90: 0, days90plus: 0 };
@@ -102,6 +117,7 @@ export default function Receivables() {
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const receivable = await base44.entities.Receivable.create(data);
+      if (data.receivable_type === "funding_loan") return receivable;
       // Revenue recognition — record income when receivable is created (accrual basis)
       // DR Accounts Receivable (tracked on the Receivable record) / CR Revenue
       await base44.entities.Transaction.create({
@@ -159,7 +175,9 @@ export default function Receivables() {
 
   const categoryReceivables = activeTab === "condo-sales"
     ? receivables.filter(r => r.property_listing_id)
-    : receivables.filter(r => !r.property_listing_id);
+    : activeTab === "funding-loans"
+    ? receivables.filter(r => !r.property_listing_id && r.receivable_type === "funding_loan")
+    : receivables.filter(r => !r.property_listing_id && r.receivable_type !== "funding_loan");
   const filtered = statusFilter === "all" ? categoryReceivables : categoryReceivables.filter(r => r.status === statusFilter);
 
   const totalOutstanding = categoryReceivables.filter(r => r.status !== "paid").reduce((s, r) => s + ((r.amount || 0) - (r.amount_paid || 0)), 0);
@@ -200,14 +218,15 @@ export default function Receivables() {
         <TabsList className="mb-4 h-auto flex-wrap">
           <TabsTrigger value="project-receivables">Project Receivables</TabsTrigger>
           <TabsTrigger value="condo-sales">Condo Sales Receivables</TabsTrigger>
+          <TabsTrigger value="funding-loans">Funding &amp; Loans Receivables</TabsTrigger>
           <TabsTrigger value="billing-cycles">Billing Cycles</TabsTrigger>
           <TabsTrigger value="retention">Retention Receivable</TabsTrigger>
         </TabsList>
 
-        <TabsContent value={activeTab === "project-receivables" || activeTab === "condo-sales" ? activeTab : "receivables-hidden"} className="space-y-6">
+        <TabsContent value={["project-receivables", "condo-sales", "funding-loans"].includes(activeTab) ? activeTab : "receivables-hidden"} className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">{activeTab === "condo-sales" ? "Condo Sales Receivables" : "Project Receivables"}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">{activeTab === "condo-sales" ? "Condo Sales Receivables" : activeTab === "funding-loans" ? "Funding & Loans Receivables" : "Project Receivables"}</h1>
           <p className="text-muted-foreground mt-1">
             ₱{totalOutstanding.toLocaleString()} outstanding · {overdueCount} overdue · {collectionEfficiency.toFixed(1)}% collection efficiency
           </p>
@@ -228,7 +247,7 @@ export default function Receivables() {
             clientName="All Clients"
             rows={categoryReceivables}
           />
-          {activeTab === "project-receivables" && <Button onClick={() => setShowAdd(true)}>
+          {(activeTab === "project-receivables" || activeTab === "funding-loans") && <Button onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4 mr-2" /> Add
           </Button>}
         </div>
@@ -322,15 +341,15 @@ export default function Receivables() {
       <ReceivableFormDialog
         open={showAdd}
         onOpenChange={setShowAdd}
-        title="Add Receivable"
-        fields={fields}
-        onSubmit={(data) => createMutation.mutateAsync(data)}
+        title={activeTab === "funding-loans" ? "Add Funding / Loan Receivable" : "Add Receivable"}
+        fields={activeTab === "funding-loans" ? fundingFields : fields}
+        onSubmit={(data) => createMutation.mutateAsync(activeTab === "funding-loans" ? { ...data, receivable_type: "funding_loan" } : data)}
       />
       <ReceivableFormDialog
         open={!!editingR}
         onOpenChange={(v) => { if (!v) setEditingR(null); }}
         title="Edit Receivable"
-        fields={fields}
+        fields={editingR?.receivable_type === "funding_loan" ? fundingFields : fields}
         initialData={editingR || {}}
         onSubmit={(data) => updateMutation.mutateAsync({ id: editingR.id, data })}
       />

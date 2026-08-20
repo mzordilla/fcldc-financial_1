@@ -18,6 +18,15 @@
       "type": "string",
       "description": "Linked sold PropertyListing ID"
     },
+    "receivable_type": {
+      "type": "string",
+      "enum": [
+        "project",
+        "funding_loan"
+      ],
+      "default": "project",
+      "description": "Whether this is a project billing receivable or a funding/loan receivable (money advanced/loaned to a party, unrelated to project or condo billing)"
+    },
     "amount": {
       "type": "number",
       "description": "Invoice amount before applied advance payments"
