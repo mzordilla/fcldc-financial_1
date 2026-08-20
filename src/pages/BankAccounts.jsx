@@ -54,43 +54,23 @@ function MonthGroup({ monthKey, monthTransactions }) {
   const expense = monthTransactions.filter((t) => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
 
   return (
-    <div className="border border-border/50 rounded-lg overflow-hidden">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-2.5 py-2 bg-muted/30 hover:bg-muted/50 transition-colors">
-        <div className="flex items-center gap-1.5">
-          {open ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
+    <div className="overflow-hidden border border-border bg-card">
+      <button onClick={() => setOpen(!open)} className="flex w-full items-center justify-between bg-muted/60 px-4 py-2 text-left transition-colors hover:bg-muted">
+        <div className="flex items-center gap-2">
+          {open ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
           <span className="text-xs font-semibold text-foreground">{monthKey}</span>
-          <span className="text-[10px] text-muted-foreground">({monthTransactions.length})</span>
+          <span className="text-[10px] text-muted-foreground">{monthTransactions.length} transaction{monthTransactions.length !== 1 ? "s" : ""}</span>
         </div>
-        <div className="flex gap-2 text-[10px]">
-          <span className="text-primary font-medium">+{fmt(income)}</span>
-          <span className="text-destructive font-medium">-{fmt(expense)}</span>
-        </div>
+        <div className="flex gap-3 text-[10px] font-semibold"><span className="text-primary">+{fmt(income)}</span><span className="text-destructive">-{fmt(expense)}</span></div>
       </button>
-      {open &&
-      <div className="px-2.5 py-1.5 space-y-1">
-          {monthTransactions.map((t) =>
-        <div key={t.id} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${t.type === "income" ? "bg-primary/10" : "bg-destructive/10"}`}>
-                  {t.type === "income" ?
-              <ArrowUpRight className="w-3 h-3 text-primary" /> :
-              <ArrowDownRight className="w-3 h-3 text-destructive" />
-              }
-                </div>
-                <span className="text-xs text-foreground truncate">{t.description}</span>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                <span className="text-[10px] text-muted-foreground">{t.date ? format(new Date(t.date), "MMM d") : ""}</span>
-                <span className={`text-xs font-semibold ${t.type === "income" ? "text-primary" : "text-destructive"}`}>
-                  {t.type === "income" ? "+" : "-"}₱{(t.amount || 0).toLocaleString()}
-                </span>
-              </div>
-            </div>
-        )}
-        </div>
-      }
+      {open && <div className="divide-y divide-border">
+        <div className="grid grid-cols-[minmax(0,1fr)_90px_120px] bg-muted/20 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"><span>Description</span><span>Date</span><span className="text-right">Amount</span></div>
+        {monthTransactions.map((t) => <div key={t.id} className="grid grid-cols-[minmax(0,1fr)_90px_120px] items-center px-4 py-2.5 text-xs hover:bg-muted/20">
+          <div className="flex min-w-0 items-center gap-2"><div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${t.type === "income" ? "bg-primary/10" : "bg-destructive/10"}`}>{t.type === "income" ? <ArrowUpRight className="h-3.5 w-3.5 text-primary" /> : <ArrowDownRight className="h-3.5 w-3.5 text-destructive" />}</div><span className="truncate text-foreground">{t.description}</span></div>
+          <span className="text-muted-foreground">{t.date ? format(new Date(t.date), "MMM d, yyyy") : "—"}</span>
+          <span className={`text-right font-semibold ${t.type === "income" ? "text-primary" : "text-destructive"}`}>{t.type === "income" ? "+" : "-"}₱{(t.amount || 0).toLocaleString()}</span>
+        </div>)}
+      </div>}
     </div>);
 
 }
@@ -117,16 +97,13 @@ function AccountTransactions({ accountId, transactions }) {
   });
 
   return (
-    <div className="space-y-2">
-      {/* Mini summary */}
-      <div className="flex gap-3 text-xs">
-        <span className="text-primary font-medium">+{fmt(totalIncome)} in</span>
-        <span className="text-destructive font-medium">-{fmt(totalExpense)} out</span>
-        <span className="text-muted-foreground">({allLinked.length} txn{allLinked.length !== 1 ? "s" : ""})</span>
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 divide-x divide-border border-y border-border py-3">
+        <div className="px-3 first:pl-0"><p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Total inflow</p><p className="mt-1 text-sm font-bold text-primary">+{fmt(totalIncome)}</p></div>
+        <div className="px-3"><p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Total outflow</p><p className="mt-1 text-sm font-bold text-destructive">-{fmt(totalExpense)}</p></div>
+        <div className="px-3"><p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Transaction count</p><p className="mt-1 text-sm font-bold text-foreground">{allLinked.length}</p></div>
       </div>
-
-      {/* Grouped by month */}
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {Object.entries(groups).map(([monthKey, monthTransactions]) =>
         <MonthGroup key={monthKey} monthKey={monthKey} monthTransactions={monthTransactions} />
         )}
@@ -189,22 +166,27 @@ export default function BankAccounts() {
   const negativeCount = activeAccounts.filter((a) => (a.current_balance ?? 0) < 0).length;
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Bank Accounts</h1>
-          <p className="text-muted-foreground mt-1">Track balances across all your bank accounts</p>
+    <div className="mx-auto max-w-none space-y-0 font-project-body">
+      <section className="bg-slate-950 px-5 pb-8 pt-3 text-white shadow-xl md:px-7">
+        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-teal-400">Treasury Command</p>
+            <h1 className="mt-1 font-project-display text-xs font-medium text-slate-300">Total Balance</h1>
+            <p className={`font-project-display text-3xl font-bold tracking-tight ${totalBalance >= 0 ? "text-teal-400" : "text-rose-400"}`}>{totalBalance < 0 ? "-" : ""}{fmt(totalBalance)}</p>
+            <p className="text-xs text-slate-400">Track balances across all your bank accounts</p>
+          </div>
+          {activeTab === "accounts" && <Button onClick={() => setShowAdd(true)} className="bg-teal-500 text-white hover:bg-teal-600"><Plus className="mr-2 h-4 w-4" /> Add Account</Button>}
         </div>
-        {activeTab === "accounts" && (
-          <Button onClick={() => setShowAdd(true)}>
-            <Plus className="w-4 h-4 mr-2" /> Add Account
-          </Button>
-        )}
-      </div>
+        {activeTab === "accounts" && <div className="mt-2 grid gap-3 sm:grid-cols-[1.35fr_1fr_1fr]">
+          <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/70 p-3"><div className="rounded-lg bg-amber-500/15 p-2.5"><Building2 className="h-5 w-5 text-amber-400" /></div><div className="min-w-0 flex-1"><p className="text-[10px] uppercase tracking-wide text-slate-400">Undeposited Collections</p><p className="truncate text-lg font-bold text-white">{fmt(undepositedCollections)}</p></div><Button size="sm" variant="outline" className="border-slate-700 text-[10px] text-slate-200 hover:bg-slate-800 hover:text-white" disabled={undepositedCollections <= 0} onClick={() => setShowDeposit(true)}>Deposit Collections</Button></div>
+          <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/70 p-3"><div className="rounded-lg bg-teal-500/15 p-2.5"><TrendingUp className="h-5 w-5 text-teal-400" /></div><div><p className="text-[10px] uppercase tracking-wide text-slate-400">Positive Accounts</p><p className="text-xl font-bold text-white">{positiveCount}</p></div></div>
+          <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/70 p-3"><div className="rounded-lg bg-rose-500/15 p-2.5"><TrendingDown className="h-5 w-5 text-rose-400" /></div><div><p className="text-[10px] uppercase tracking-wide text-slate-400">Overdrawn / Negative</p><p className="text-xl font-bold text-white">{negativeCount}</p></div></div>
+        </div>}
+      </section>
 
       {/* Tabs */}
       <ExecutiveSegmentBar
+        className="relative -mt-9 mx-3 bg-card md:mx-6"
         items={[{ key: "accounts", label: "Bank Accounts", icon: Building2 }, { key: "reconciliation", label: "Bank Reconciliation", icon: RefreshCw }, { key: "summary", label: "Summary Report", icon: FileBarChart }, { key: "checks", label: "Check Monitoring", icon: ClipboardCheck }]}
         activeKey={activeTab}
         onChange={setActiveTab}
@@ -218,144 +200,37 @@ export default function BankAccounts() {
 
       {activeTab === "accounts" && <>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="bg-card rounded-2xl border border-border p-5 flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-primary/10">
-            <Wallet className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Total Balance</p>
-            <p className={`text-3xl font-bold ${totalBalance >= 0 ? "text-primary" : "text-destructive"}`}>
-              {totalBalance < 0 ? "-" : ""}{fmt(totalBalance)}
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-card rounded-2xl border border-border p-5 space-y-3 sm:col-span-2">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-chart-3/10">
-              <Building2 className="w-5 h-5 text-chart-3" />
-            </div>
-            <div className="flex-1">
-              <p className="text-xs text-muted-foreground">Undeposited Collections</p>
-              <p className="text-3xl font-bold text-chart-3">{fmt(undepositedCollections)}</p>
-            </div>
-          </div>
-          <Button size="sm" variant="outline" disabled={undepositedCollections <= 0} onClick={() => setShowDeposit(true)}>
-            Deposit Collections
-          </Button>
-        </div>
-
-        <div className="bg-card rounded-2xl border border-border p-5 flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-primary/10">
-            <TrendingUp className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Positive Accounts</p>
-            <p className="text-3xl font-bold text-foreground">{positiveCount}</p>
-          </div>
-        </div>
-
-        <div className="bg-card rounded-2xl border border-border p-5 flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-destructive/10">
-            <TrendingDown className="w-5 h-5 text-destructive" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Overdrawn / Negative</p>
-            <p className="text-3xl font-bold text-foreground">{negativeCount}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Account Cards */}
+      {/* Account portfolio and transaction ledger */}
       {isLoading ?
-      <div className="text-center py-16 text-muted-foreground">Loading...</div> :
+      <div className="rounded-2xl border border-border bg-card py-16 text-center text-muted-foreground">Loading...</div> :
       accounts.length === 0 ?
-      <div className="text-center py-16 text-muted-foreground">
-          <Building2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
+      <div className="rounded-2xl border border-border bg-card py-16 text-center text-muted-foreground">
+          <Building2 className="mx-auto mb-3 h-10 w-10 opacity-30" />
           <p className="font-medium">No bank accounts added yet</p>
-          <p className="text-sm mt-1">Add your first account to start tracking balances</p>
+          <p className="mt-1 text-sm">Add your first account to start tracking balances</p>
         </div> :
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid gap-3 rounded-2xl border border-border bg-muted/30 p-3 shadow-lg xl:grid-cols-[300px_minmax(0,1fr)]">
+        <aside className="space-y-3">
           {accounts.map((account) => {
-          const bal = account.current_balance ?? 0;
-          const isNeg = bal < 0;
-          return (
-            <div
-              key={account.id}
-              className="bg-card rounded-2xl border border-border p-5 space-y-4 hover:shadow-md transition-shadow">
-              
-                {/* Top Row */}
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-primary/10">
-                      <Building2 className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground leading-tight">{account.account_name}</p>
-                      <p className="text-2xl underline uppercase text-[#0d9121]">{account.bank_name}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                    onClick={() => setEditing(account)}
-                    className="text-muted-foreground hover:text-foreground transition-colors p-1">
-                    
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                    onClick={() => deleteMutation.mutate(account.id)}
-                    className="text-muted-foreground hover:text-destructive transition-colors p-1">
-                    
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Balance */}
-                <div className={`rounded-xl p-4 text-center ${isNeg ? "bg-destructive/5" : "bg-primary/5"}`}>
-                  <p className="text-xs text-muted-foreground mb-1">Current Balance</p>
-                  <p className={`text-2xl font-bold ${isNeg ? "text-destructive" : "text-primary"}`}>
-                    {isNeg ? "-" : ""}{fmt(bal)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">{account.currency || "PHP"}</p>
-                </div>
-
-                {/* Meta */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {account.account_type &&
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[account.account_type] || typeColors.other}`}>
-                        {account.account_type.replace(/_/g, " ")}
-                      </span>
-                  }
-                    {account.account_number &&
-                  <span className="text-xs text-muted-foreground">•••• {account.account_number}</span>
-                  }
-                  </div>
-                  <Badge
-                  variant={account.status === "active" ? "default" : "secondary"}
-                  className="text-xs capitalize">
-                  
-                    {account.status || "active"}
-                  </Badge>
-                </div>
-
-                {/* Linked Transactions */}
-                <div className="border-t border-border pt-3">
-                  <p className="text-xs font-semibold text-muted-foreground mb-2">Linked Transactions</p>
-                  <AccountTransactions accountId={account.id} transactions={transactions} />
-                </div>
-
-                {account.notes &&
-              <p className="text-xs text-muted-foreground border-t border-border pt-3">{account.notes}</p>
-              }
-              </div>);
-
-        })}
-        </div>
+            const bal = account.current_balance ?? 0;
+            const isNeg = bal < 0;
+            return <article key={account.id} className="rounded-xl border border-border bg-card p-4 shadow-sm first:border-primary">
+              <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-2.5"><div className="rounded-lg bg-primary/10 p-2"><Building2 className="h-4 w-4 text-primary" /></div><div className="min-w-0"><p className="truncate text-sm font-bold text-foreground">{account.account_name}</p><p className="truncate text-xs font-semibold uppercase tracking-wide text-primary">{account.bank_name}</p></div></div><div className="flex items-center"><button onClick={() => setEditing(account)} className="p-1 text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button><button onClick={() => deleteMutation.mutate(account.id)} className="p-1 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button></div></div>
+              <div className="mt-3"><p className="text-[10px] uppercase tracking-wide text-muted-foreground">Current Balance</p><p className={`font-project-display text-xl font-bold ${isNeg ? "text-destructive" : "text-foreground"}`}>{isNeg ? "-" : ""}{fmt(bal)}</p></div>
+              <div className="mt-3 flex items-end justify-between gap-2"><div><p className="text-[10px] text-muted-foreground">Account Type</p><p className="text-xs font-medium capitalize text-foreground">{(account.account_type || "other").replace(/_/g, " ")}</p>{account.account_number && <p className="mt-0.5 text-[10px] text-muted-foreground">•••• {account.account_number}</p>}</div><Badge variant={account.status === "active" ? "default" : "secondary"} className="text-[10px] capitalize">{account.status || "active"}</Badge></div>
+              {account.notes && <p className="mt-3 border-t border-border pt-2 text-[10px] text-muted-foreground">{account.notes}</p>}
+            </article>;
+          })}
+        </aside>
+        <section className="min-w-0 rounded-xl border border-border bg-card p-4 md:p-5">
+          <div className="space-y-6">
+            {accounts.map((account) => <article key={account.id} className="space-y-3 border-b border-border pb-6 last:border-0 last:pb-0">
+              <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start"><div><p className="text-sm font-bold text-foreground">{account.account_name}</p><p className="text-xs font-semibold uppercase tracking-wide text-primary">{account.bank_name}</p></div><div className="text-left sm:text-right"><p className="text-[10px] uppercase tracking-wide text-muted-foreground">Current Balance</p><p className="text-sm font-bold text-foreground">{account.current_balance < 0 ? "-" : ""}{fmt(account.current_balance)}</p></div></div>
+              <AccountTransactions accountId={account.id} transactions={transactions} />
+            </article>)}
+          </div>
+        </section>
+      </div>
       }
 
       <AddFormDialog

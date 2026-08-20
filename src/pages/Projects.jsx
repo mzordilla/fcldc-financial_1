@@ -165,6 +165,7 @@ export default function Projects() {
 
   const approvedProjects = projects.filter((p) => ["approved", "active"].includes(p.contract_status));
   const totalApprovedValue = approvedProjects.reduce((s, p) => s + (p.contract_amount || 0), 0);
+  const remainingWorksValue = approvedProjects.reduce((s, p) => s + (p.contract_amount || 0) * (1 - (p.completed_percentage || 0) / 100), 0);
   const activeCount = projects.filter((p) => p.contract_status === "active").length;
   const pendingCount = projects.filter((p) => p.contract_status === "pending").length;
 
@@ -195,7 +196,7 @@ export default function Projects() {
       />
 
       {/* KPI Summary */}
-      <ProjectKpiStrip total={projects.length} approvedValue={totalApprovedValue} approvedCount={approvedProjects.length} active={activeCount} pending={pendingCount} />
+      <ProjectKpiStrip total={projects.length} approvedValue={totalApprovedValue} approvedCount={approvedProjects.length} active={activeCount} pending={pendingCount} remainingWorksValue={remainingWorksValue} />
 
       {/* Approved Contracts Summary, grouped by classification with subtotals */}
       {approvedProjects.length > 0 &&
