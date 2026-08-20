@@ -15,6 +15,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AddFormDialog from "../components/shared/AddFormDialog";
 import ProjectPnL from "./ProjectPnL";
 import ClientMasterlist from "../components/projects/ClientMasterlist";
+import ProjectCommandHeader from "@/components/projects/ProjectCommandHeader";
+import ProjectKpiStrip from "@/components/projects/ProjectKpiStrip";
+import ApprovedProjectCard from "@/components/projects/ApprovedProjectCard";
 
 
 const contractStatusStyles = {
@@ -166,7 +169,7 @@ export default function Projects() {
   const pendingCount = projects.filter((p) => p.contract_status === "pending").length;
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="mx-auto max-w-[1500px] space-y-6 p-4 font-project-body md:p-8">
       <Tabs defaultValue="projects" className="w-full">
         <ExecutiveTabsList className="mb-4">
           <ExecutiveTab value="projects" icon={Briefcase}>Projects</ExecutiveTab>
@@ -175,169 +178,47 @@ export default function Projects() {
         </ExecutiveTabsList>
 
         <TabsContent value="projects" className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Projects</h1>
-          <p className="text-muted-foreground mt-1">
-            {projects.length} total · {activeCount} active · {pendingCount} pending contract
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="on_hold">On Hold</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={classificationFilter} onValueChange={setClassificationFilter}>
-            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Classifications</SelectItem>
-              <SelectItem value="owned_project">Project Owned Project</SelectItem>
-              <SelectItem value="client_project">Client Project</SelectItem>
-              <SelectItem value="monitoring_project">Monitoring Project</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm" onClick={() => handleExport(projects)}>
-            <Download className="w-4 h-4 mr-2" /> Export
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => importRef.current.click()}>
-            <FileUp className="w-4 h-4 mr-2" /> Import
-          </Button>
-          <input ref={importRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportFile} />
-          <Button onClick={() => setShowAdd(true)}>
-            <Plus className="w-4 h-4 mr-2" /> New Project
-          </Button>
-        </div>
-      </div>
+      <ProjectCommandHeader
+        projects={projects}
+        activeCount={activeCount}
+        pendingCount={pendingCount}
+        totalApprovedValue={totalApprovedValue}
+        approvedCount={approvedProjects.length}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        classificationFilter={classificationFilter}
+        setClassificationFilter={setClassificationFilter}
+        onExport={() => handleExport(projects)}
+        importRef={importRef}
+        onImport={handleImportFile}
+        onNew={() => setShowAdd(true)}
+      />
 
       {/* KPI Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Total Projects</p>
-          <p className="text-2xl font-bold text-foreground">{projects.length}</p>
-        </div>
-        <div className="bg-card border border-primary/20 rounded-2xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Approved Contract Value</p>
-          <p className="text-2xl font-bold text-primary">₱{totalApprovedValue.toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{approvedProjects.length} contracts</p>
-        </div>
-        <div className="bg-card border border-chart-2/20 rounded-2xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Active Projects</p>
-          <p className="text-2xl font-bold text-chart-2">{activeCount}</p>
-        </div>
-        <div className="bg-card border border-chart-3/20 rounded-2xl p-4">
-          <p className="text-xs text-muted-foreground mb-1">Pending Contracts</p>
-          <p className="text-2xl font-bold text-chart-3">{pendingCount}</p>
-        </div>
-      </div>
+      <ProjectKpiStrip total={projects.length} approvedValue={totalApprovedValue} approvedCount={approvedProjects.length} active={activeCount} pending={pendingCount} />
 
       {/* Approved Contracts Summary, grouped by classification with subtotals */}
       {approvedProjects.length > 0 &&
-      <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-[#000000]">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-primary" />
-              <h3 className="text-sm font-semibold text-primary">Approved Contracts</h3>
-            </div>
+        <section className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-sky-700" /><h3 className="font-project-display text-base font-bold text-slate-950 dark:text-white">Approved Contracts</h3></div>
             <Select value={approvedClassificationFilter} onValueChange={setApprovedClassificationFilter}>
-              <SelectTrigger className="w-48 h-8 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Classifications</SelectItem>
-                <SelectItem value="owned_project">Project Owned Project</SelectItem>
-                <SelectItem value="client_project">Client Project</SelectItem>
-                <SelectItem value="monitoring_project">Monitoring Project</SelectItem>
-              </SelectContent>
+              <SelectTrigger className="h-9 w-48 bg-white text-xs dark:bg-slate-950"><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All Classifications</SelectItem><SelectItem value="owned_project">Project Owned Project</SelectItem><SelectItem value="client_project">Client Project</SelectItem><SelectItem value="monitoring_project">Monitoring Project</SelectItem></SelectContent>
             </Select>
           </div>
-          <div className="overflow-x-auto space-y-6">
-            {Object.entries(
-              approvedProjects.filter(p => approvedClassificationFilter === "all" || (p.project_classification || "unclassified") === approvedClassificationFilter).reduce((acc, p) => {
-                const key = p.project_classification || "unclassified";
-                if (!acc[key]) acc[key] = [];
-                acc[key].push(p);
-                return acc;
-              }, {})
-            ).map(([classification, groupProjects]) => {
-              const groupTotal = groupProjects.reduce((s, p) => s + (p.contract_amount || 0), 0);
-              const groupCompleted = groupProjects.reduce((s, p) => s + (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100), 0);
-              const groupRetention = groupProjects.reduce((s, p) => {const c = (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100);return s + c * ((p.retention_rate || 0) / 100);}, 0);
-              const groupBalance = groupProjects.reduce((s, p) => s + (p.contract_amount || 0) * (1 - (p.completed_percentage || 0) / 100), 0);
-              return (
-                <div key={classification}>
-                  <h4 className="text-xs font-semibold text-foreground mb-2">
-                    {classificationLabels[classification] || "Unclassified"}
-                    <span className="text-muted-foreground font-normal ml-1">({groupProjects.length})</span>
-                  </h4>
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-xs text-muted-foreground border-b border-border">
-                        <th className="text-left py-2 pr-4">Project</th>
-                        <th className="text-left py-2 pr-4">Client</th>
-                        <th className="text-left py-2 pr-4">Status</th>
-                        <th className="text-right py-2 pr-4">Contract Amt</th>
-                        <th className="text-right py-2 pr-4">Completed</th>
-                        <th className="text-right py-2 pr-4">Retention</th>
-                        <th className="text-right py-2">Balance</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {groupProjects.map((p) => {
-                      const completedAmt = (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100);
-                      const remainingAmt = (p.contract_amount || 0) - completedAmt;
-                      const retentionAmt = completedAmt * ((p.retention_rate || 0) / 100);
-                      return (
-                        <tr key={p.id} className="border-b border-border/50 last:border-0">
-                            <td className="py-2.5 pr-4 font-medium"><button onClick={() => navigate(`/projects/${p.id}`)} className="text-primary hover:underline flex items-center gap-1">{p.project_name} <ExternalLink className="w-3 h-3" /></button></td>
-                            <td className="py-2.5 pr-4 text-muted-foreground">{p.client_name}</td>
-                            <td className="py-2.5 pr-4">
-                              <Badge variant="outline" className={`text-xs ${contractStatusStyles[p.contract_status]}`}>
-                                {p.contract_status}
-                              </Badge>
-                            </td>
-                            <td className="py-2.5 pr-4 text-right font-bold text-foreground">₱{(p.contract_amount || 0).toLocaleString()}</td>
-                            <td className="py-2.5 pr-4 text-right text-primary">₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                            <td className="py-2.5 pr-4 text-right text-chart-3">₱{retentionAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                            <td className="py-2.5 text-right text-muted-foreground">₱{remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                          </tr>);
-
-                    })}
-                    </tbody>
-                    <tfoot>
-                      <tr className="border-t border-border">
-                        <td colSpan={3} className="pt-3 text-sm font-semibold text-foreground">Subtotal</td>
-                        <td className="pt-3 text-right font-bold text-primary">₱{groupTotal.toLocaleString()}</td>
-                        <td className="pt-3 text-right font-bold text-primary">
-                          ₱{groupCompleted.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                        </td>
-                        <td className="pt-3 text-right font-bold text-chart-3">
-                          ₱{groupRetention.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                        </td>
-                        <td className="pt-3 text-right font-bold text-muted-foreground">
-                          ₱{groupBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              );
-            })}
-            <div className="pt-3 border-t-2 border-primary/30 flex justify-end">
-              <p className="text-sm font-bold text-foreground">Grand Total: <span className="text-primary">₱{totalApprovedValue.toLocaleString()}</span></p>
-            </div>
+          <div className="grid gap-3 lg:grid-cols-4">
+            {["owned_project", "client_project", "monitoring_project", "unclassified"].filter(classification => approvedClassificationFilter === "all" || classification === approvedClassificationFilter).map(classification =>
+              <ApprovedProjectCard key={classification} label={classificationLabels[classification] || "Unclassified"} projects={approvedProjects.filter(project => (project.project_classification || "unclassified") === classification)} onOpen={(id) => navigate(`/projects/${id}`)} statusStyles={contractStatusStyles} />
+            )}
           </div>
-        </div>
+          <div className="flex items-center gap-3 pt-2"><span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Portfolio Health Rail</span><div className="h-px flex-1 bg-slate-300 dark:bg-slate-700" /><div className="h-2 w-2 rounded-full bg-sky-600" /><div className="h-px w-1/3 bg-teal-600" /></div>
+        </section>
       }
 
       {/* All Projects List, grouped by classification with subtotals */}
-      <div className="space-y-8">
+      <div className="space-y-6 border-t border-slate-200 pt-6 dark:border-slate-700">
+        <div><h2 className="font-project-display text-xl font-bold text-slate-950 dark:text-white">Project Register</h2><p className="text-sm text-slate-500">Complete portfolio grouped by project classification</p></div>
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
         {!isLoading && filtered.length === 0 &&
         <div className="text-center py-16">
@@ -356,7 +237,7 @@ export default function Projects() {
           const groupTotal = groupProjects.reduce((s, p) => s + (p.contract_amount || 0), 0);
           const groupCompleted = groupProjects.reduce((s, p) => s + (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100), 0);
           return (
-            <div key={classification} className="space-y-4">
+            <div key={classification} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-[0_8px_20px_-12px_rgba(15,23,42,0.35)] dark:border-slate-700 dark:bg-slate-900">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <h3 className="text-sm font-semibold text-foreground">
                   {classificationLabels[classification] || "Unclassified"}
@@ -368,10 +249,10 @@ export default function Projects() {
                   <p className="text-xs text-muted-foreground">Completed: ₱{groupCompleted.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                 </div>
               </div>
-              <div className="bg-card rounded-2xl border border-border overflow-hidden">
+              <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-xs text-muted-foreground border-b border-border bg-muted/30">
+                    <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:bg-slate-950">
                       <th className="text-left py-2 px-4">Project</th>
                       <th className="text-left py-2 px-4">Client</th>
                       <th className="text-left py-2 px-4">Status</th>
