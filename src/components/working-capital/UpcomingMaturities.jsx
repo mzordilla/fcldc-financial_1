@@ -112,16 +112,16 @@ export default function UpcomingMaturities({ items }) {
   const typesWithLoans = Object.keys(typeLabels).filter(type => loansByType[type].length > 0);
 
   return (
-    <Card className="p-6">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-foreground mb-1">Monthly Loan Maturities by Type</h3>
-        <p className="text-sm text-muted-foreground">12-month repayment schedule organized by loan type</p>
+    <Card className="max-h-[330px] overflow-y-auto rounded-xl p-4 shadow-sm">
+      <div className="mb-4">
+        <h3 className="font-project-display text-base font-bold leading-tight text-foreground">Monthly Loan Maturities by Type</h3>
+        <p className="mt-1 text-[10px] text-muted-foreground">12-month repayment schedule organized by loan type</p>
       </div>
 
       {typesWithLoans.length === 0 ? (
         <p className="text-center py-8 text-muted-foreground">No loans due in the next 12 months</p>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {typesWithLoans.map(type => renderTypeTable(type, loansByType[type]))}
         </div>
       )}

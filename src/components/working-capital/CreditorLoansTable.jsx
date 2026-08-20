@@ -26,15 +26,15 @@ export default function CreditorLoansTable({
   const totalMonthlyPayment = loans.reduce((s, d) => s + (d.monthly_payment || 0), 0);
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">{creditor}</CardTitle>
-        <p className="text-sm text-muted-foreground mt-1">
+    <Card className="rounded-xl shadow-sm">
+      <CardHeader className="px-4 pb-2 pt-4">
+        <CardTitle className="text-sm">{creditor}</CardTitle>
+        <p className="mt-1 text-[11px] text-muted-foreground">
           ₱{totalOutstanding.toLocaleString()} outstanding · ₱{totalMonthlyPayment.toLocaleString()}/mo
         </p>
       </CardHeader>
-      <CardContent>
-        <Table>
+      <CardContent className="px-4 pb-3">
+        <Table className="text-xs">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-12"></TableHead>

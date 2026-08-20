@@ -19,13 +19,12 @@ export default function DebtServiceCoverageRatio({ items }) {
   const statusColor = dscr >= 1.25 ? "text-primary" : dscr >= 1 ? "text-chart-3" : "text-destructive";
 
   return (
-    <Card className="p-6">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-foreground mb-1">Debt Service Coverage Ratio</h3>
-        <p className="text-sm text-muted-foreground">Ability to service debt from operating income</p>
+    <Card className="rounded-xl p-4 shadow-sm">
+      <div className="mb-3">
+        <h3 className="font-project-display text-base font-bold leading-tight text-foreground">Debt Service Coverage Ratio (DSCR)</h3>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div>
           <Label htmlFor="revenue" className="text-sm">Monthly Revenue (₱)</Label>
           <Input
@@ -34,11 +33,11 @@ export default function DebtServiceCoverageRatio({ items }) {
             placeholder="Enter monthly revenue"
             value={monthlyRevenue || ""}
             onChange={(e) => setMonthlyRevenue(parseFloat(e.target.value) || 0)}
-            className="mt-2"
+            className="mt-1 h-8 text-xs"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
+        <div className="grid grid-cols-2 gap-3 border-t border-border pt-3">
           <div>
             <p className="text-xs text-muted-foreground">Monthly Debt Service</p>
             <p className="text-lg font-bold text-destructive">₱{totalMonthlyDebt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
@@ -49,7 +48,7 @@ export default function DebtServiceCoverageRatio({ items }) {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-border">
+        <div className="border-t border-border pt-3">
           <p className="text-xs font-semibold text-muted-foreground mb-2">Status</p>
           <p className={`text-sm font-semibold ${statusColor}`}>{healthStatus}</p>
           <p className="text-xs text-muted-foreground mt-2">

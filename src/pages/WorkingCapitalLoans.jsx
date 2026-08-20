@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { Plus, Trash2, CheckCircle, Pencil, ChevronDown, ChevronUp, RotateCcw, List, LayoutGrid, Paperclip } from "lucide-react";
-import { ExecutiveTabsList, ExecutiveTab } from "@/components/shared/ExecutiveTabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +17,8 @@ import UpcomingMaturities from "../components/working-capital/UpcomingMaturities
 import LoanTypeTable from "../components/working-capital/LoanTypeTable";
 import CreditorLoansTable from "../components/working-capital/CreditorLoansTable";
 import LoanComparativeReport from "../components/working-capital/LoanComparativeReport";
+import WorkingCapitalCommandHeader from "../components/working-capital/WorkingCapitalCommandHeader";
+import LoanTypeSummary from "../components/working-capital/LoanTypeSummary";
 
 
 const typeLabels = {
@@ -117,57 +118,44 @@ export default function WorkingCapitalLoans() {
   const availableBalance = Math.max(0, totalGranted - totalDrawn);
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Working Capital Loans</h1>
-          <p className="text-muted-foreground mt-1">
-            ₱{totalActive.toLocaleString()} outstanding · ₱{availableBalance.toLocaleString()} available · ₱{monthlyPayments.toLocaleString()}/mo payments
-          </p>
+    <div className="mx-auto max-w-[1500px] space-y-4 bg-muted/30 p-4 font-project-body md:p-6">
+      <WorkingCapitalCommandHeader
+        outstanding={totalActive}
+        available={availableBalance}
+        monthlyPayments={monthlyPayments}
+        controls={<>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-9 w-32 bg-card"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="all">All Status</SelectItem><SelectItem value="active">Active</SelectItem><SelectItem value="paid_off">Paid Off</SelectItem><SelectItem value="defaulted">Defaulted</SelectItem></SelectContent>
+          </Select>
+          <Button variant="outline" size="icon" onClick={() => setViewMode(viewMode === "grouped" ? "table" : "grouped")} title={viewMode === "grouped" ? "Table View" : "Grouped View"}>{viewMode === "grouped" ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}</Button>
+          <Button variant="outline" size="icon" onClick={() => queryClient.invalidateQueries({ queryKey: ["workingcapitalloans"] })} title="Refresh"><RotateCcw className="h-4 w-4" /></Button>
+          <Button onClick={() => setShowAdd(true)}><Plus className="mr-1.5 h-4 w-4" /> Add</Button>
+        </>}
+      />
+
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[240px_minmax(0,1fr)_270px]">
+        <div className="space-y-4 lg:col-start-1 lg:row-start-1">
+          <OutstandingVsGranted items={items} />
+          <ProjectedCashOutflows items={items} />
+          <DebtServiceCoverageRatio items={items} />
         </div>
-        <div className="flex items-center gap-3">
-           <Select value={statusFilter} onValueChange={setStatusFilter}>
-             <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-             <SelectContent>
-               <SelectItem value="all">All Status</SelectItem>
-               <SelectItem value="active">Active</SelectItem>
-               <SelectItem value="paid_off">Paid Off</SelectItem>
-               <SelectItem value="defaulted">Defaulted</SelectItem>
-             </SelectContent>
-           </Select>
-           <Button variant="outline" size="icon" onClick={() => setViewMode(viewMode === "grouped" ? "table" : "grouped")} title={viewMode === "grouped" ? "Table View" : "Grouped View"}>
-             {viewMode === "grouped" ? <List className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
-           </Button>
-           <Button variant="outline" size="icon" onClick={() => queryClient.invalidateQueries({ queryKey: ["workingcapitalloans"] })} title="Refresh">
-             <RotateCcw className="w-4 h-4" />
-           </Button>
-           <Button onClick={() => setShowAdd(true)}>
-             <Plus className="w-4 h-4 mr-2" /> Add
-           </Button>
-         </div>
-      </div>
+        <div className="space-y-4 lg:col-start-3 lg:row-start-1">
+          <UpcomingMaturities items={items} />
+          <LoanTypeSummary items={filtered} />
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-         <OutstandingVsGranted items={items} />
-       </div>
-
-       <ProjectedCashOutflows items={items} />
-
-      <DebtServiceCoverageRatio items={items} />
-
-      <UpcomingMaturities items={items} />
-
-      <Tabs defaultValue="overview">
-        <ExecutiveTabsList>
-          <ExecutiveTab value="overview" icon={List}>Overview</ExecutiveTab>
-          <ExecutiveTab value="comparative" icon={LayoutGrid}>Comparative Report</ExecutiveTab>
-        </ExecutiveTabsList>
+       <Tabs defaultValue="overview" className="min-w-0 lg:col-start-2 lg:row-start-1">
+         <TabsList className="h-10 w-full justify-start rounded-none border-b border-border bg-transparent p-0">
+           <TabsTrigger value="overview" className="h-10 rounded-none border-b-2 border-transparent px-3 text-xs shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Overview</TabsTrigger>
+           <TabsTrigger value="comparative" className="h-10 rounded-none border-b-2 border-transparent px-3 text-xs shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Comparative Report</TabsTrigger>
+         </TabsList>
 
         <TabsContent value="comparative" className="mt-4">
           <LoanComparativeReport items={items} />
         </TabsContent>
 
-        <TabsContent value="overview" className="mt-4 space-y-6">
+        <TabsContent value="overview" className="mt-4 max-h-[560px] space-y-4 overflow-y-auto pr-1">
 
       {viewMode === "table" ? (
         <>
@@ -274,7 +262,7 @@ export default function WorkingCapitalLoans() {
           </div>
         </>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-4">
           {Object.keys(typeLabels).map(type => {
             const typeLoans = filtered.filter(d => d.type === type);
             if (typeLoans.length === 0) return null;
@@ -292,10 +280,10 @@ export default function WorkingCapitalLoans() {
             const typeMonthlyPayment = typeLoans.reduce((s, d) => s + (d.monthly_payment || 0), 0);
 
             return (
-              <div key={type} className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-foreground">{typeLabels[type]}</h2>
-                  <div className="flex gap-6 text-sm">
+              <div key={type} className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="font-project-display text-lg font-bold text-foreground">{typeLabels[type]}</h2>
+                  <div className="flex gap-4 text-[11px]">
                     <div className="text-right">
                       <p className="text-muted-foreground text-xs">Total Amount</p>
                       <p className="font-semibold">₱{typeTotalAmount.toLocaleString()}</p>
@@ -336,9 +324,10 @@ export default function WorkingCapitalLoans() {
         </div>
       )}
         </TabsContent>
-      </Tabs>
+        </Tabs>
+        </div>
 
-      <AddFormDialog
+        <AddFormDialog
         open={showAdd}
         onOpenChange={setShowAdd}
         title="Add Working Capital Loan"
