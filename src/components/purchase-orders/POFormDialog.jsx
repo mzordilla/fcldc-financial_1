@@ -41,6 +41,7 @@ const OTHER_VALUE = "__other__";
 export default function POFormDialog({ open, onOpenChange, title, initialData, onSubmit }) {
   const [form, setForm] = useState(defaultForm);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState("");
   const [supplierMode, setSupplierMode] = useState("select"); // "select" | "manual"
 
   const { data: payees = [] } = useQuery({
@@ -84,6 +85,7 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
     if (open) {
       const data = { ...defaultForm, ...initialData };
       setForm(data);
+      setFormError("");
       // if editing and the supplier isn't in the list, start in manual mode
       if (initialData?.supplier_name) {
         const inList = payees.some(p => p.name === initialData.supplier_name);
@@ -107,6 +109,11 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.category || !form.chart_of_account) {
+      setFormError("Category and Chart of Account are required before saving.");
+      return;
+    }
+    setFormError("");
     setSaving(true);
     const amount = form.line_items?.length > 0 
       ? form.line_items.reduce((sum, item) => sum + (item.total || 0), 0)
@@ -248,9 +255,11 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
             )}
           </div>
 
+          {formError && <p className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</p>}
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Category</Label>
+              <Label>Category <span className="text-destructive">*</span></Label>
               <Select value={form.category} onValueChange={v => set("category", v)}>
                 <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                 <SelectContent>
@@ -291,7 +300,7 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
           </div>
 
           <div className="space-y-1.5">
-            <Label>Chart of Account</Label>
+            <Label>Chart of Account <span className="text-destructive">*</span></Label>
             <Select value={form.chart_of_account} onValueChange={v => set("chart_of_account", v)}>
               <SelectTrigger><SelectValue placeholder="Select an account..." /></SelectTrigger>
               <SelectContent>
