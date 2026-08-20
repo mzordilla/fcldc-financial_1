@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import CompanySignatureSettingsDialog from "@/components/purchase-orders/CompanySignatureSettingsDialog";
 import PurchaseOrderPrintDocument from "@/components/purchase-orders/PurchaseOrderPrintDocument";
-import NoticeOfDeliveryPDF from "@/components/purchase-orders/NoticeOfDeliveryPDF";
+import NoticeOfDeliveryPrintView from "@/components/purchase-orders/NoticeOfDeliveryPrintView";
 
 function ScaledCopy({ po, signature, watermark, heightMm = 148, compact = true, allowUpscale = true }) {
   const containerRef = useRef(null);
@@ -46,6 +46,7 @@ export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
   const [layout, setLayout] = useState("full");
   const [signatureId, setSignatureId] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [deliveryNoteOpen, setDeliveryNoteOpen] = useState(false);
   const { data: signatures = [], refetch } = useQuery({ queryKey: ["company-signatures"], queryFn: () => base44.entities.CompanySignature.list("-created_date"), enabled: open });
   const { data: currentUser } = useQuery({ queryKey: ["current-user"], queryFn: () => base44.auth.me(), enabled: open });
   const signature = signatures.find((item) => item.id === signatureId) || null;
@@ -81,7 +82,7 @@ export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
         {currentUser?.role === "admin" && <Button variant="outline" size="sm" onClick={() => setSettingsOpen(true)}><Settings className="w-4 h-4 mr-2" /> Signature Settings</Button>}
         <Button variant={layout === "full" ? "default" : "outline"} size="sm" onClick={() => setLayout("full")}>Whole Page A4</Button>
         <Button variant={layout === "two" ? "default" : "outline"} size="sm" onClick={() => setLayout("two")}>Two Copies</Button>
-        <NoticeOfDeliveryPDF po={po} preview />
+        <Button variant="outline" size="sm" onClick={() => setDeliveryNoteOpen(true)}>Delivery Note</Button>
         <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="w-4 h-4 mr-2" /> Print</Button>
         <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}><X className="w-4 h-4 mr-2" /> Close</Button>
       </div>
@@ -100,6 +101,7 @@ export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
         </div>
       </div>
       <CompanySignatureSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} signatures={signatures} onChanged={refetch} />
+      <NoticeOfDeliveryPrintView po={po} open={deliveryNoteOpen} onOpenChange={setDeliveryNoteOpen} />
     </div>
   );
 }
