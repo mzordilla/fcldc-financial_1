@@ -17,7 +17,7 @@ function ScaledCopy({ po, signature, watermark, heightMm = 148 }) {
     if (!container || !content) return;
     const availableHeight = container.clientHeight;
     const naturalHeight = content.scrollHeight;
-    const nextScale = naturalHeight > availableHeight ? availableHeight / naturalHeight : 1;
+    const nextScale = naturalHeight > 0 ? availableHeight / naturalHeight : 1;
     setScale((prev) => (Math.abs(prev - nextScale) > 0.005 ? nextScale : prev));
   }, []);
 
@@ -89,9 +89,9 @@ export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
             <PurchaseOrderPrintDocument po={po} signature={signature} />
           ) : (
             <>
-              <ScaledCopy po={po} signature={signature} watermark="Vendor Copy" />
-              <div className="border-t-2 border-dashed border-gray-400" />
               <ScaledCopy po={po} signature={signature} watermark="FCL Copy" />
+              <div className="border-t-2 border-dashed border-gray-400" />
+              <ScaledCopy po={po} signature={signature} watermark="Vendor Copy" />
             </>
           )}
         </div>
