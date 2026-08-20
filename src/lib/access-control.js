@@ -1,7 +1,7 @@
 const STORAGE_KEY = "fcldc_role_access_v1";
 
 const DEFAULT_ACCESS = {
-  disbursement: ["/", "/bank-accounts", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/payables", "/chart-of-accounts", "/billing-cycles", "/receiving-items"],
+  disbursement: ["/", "/receivables", "/bank-accounts", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/payables", "/chart-of-accounts", "/billing-cycles", "/receiving-items"],
   accounting: ["/", "/projects", "/project-pnl", "/billing-cycles", "/receivables", "/payables", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/chart-of-accounts", "/receiving-items", "/payroll"],
   procurement: ["/", "/purchase-orders", "/payment-approvals", "/payees", "/receiving-items", "/materials-history"],
   marketing: ["/re/portfolio", "/re/units", "/re/tenants", "/re/listings", "/re/reports"],
@@ -10,7 +10,12 @@ const DEFAULT_ACCESS = {
 function getAccessConfig() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : DEFAULT_ACCESS;
+    if (!saved) return DEFAULT_ACCESS;
+    const config = JSON.parse(saved);
+    if (config.disbursement && !config.disbursement.includes("/receivables")) {
+      config.disbursement = ["/receivables", ...config.disbursement];
+    }
+    return config;
   } catch {
     return DEFAULT_ACCESS;
   }
