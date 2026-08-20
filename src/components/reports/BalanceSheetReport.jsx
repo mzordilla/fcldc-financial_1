@@ -91,10 +91,13 @@ export default function BalanceSheetReport({ asOfDate }) {
     const activeBankAccounts = bankAccounts.filter(a => a.status === "active");
     const cashAndBank = activeBankAccounts.reduce((s, a) => s + (a.current_balance || 0), 0);
 
-    const outstandingReceivables = receivables.filter(r => r.status !== "paid");
+    const outstandingReceivables = receivables.filter(r => r.status !== "paid" && r.receivable_type !== "funding_loan");
     const totalReceivables = outstandingReceivables.reduce((s, r) => s + ((r.amount || 0) - (r.amount_paid || 0)), 0);
 
-    const totalCurrentAssets = cashAndBank + totalReceivables;
+    const outstandingFundingLoanReceivables = receivables.filter(r => r.status !== "paid" && r.receivable_type === "funding_loan");
+    const totalFundingLoanReceivables = outstandingFundingLoanReceivables.reduce((s, r) => s + ((r.amount || 0) - (r.amount_paid || 0)), 0);
+
+    const totalCurrentAssets = cashAndBank + totalReceivables + totalFundingLoanReceivables;
 
     const nonCurrentAssetTxList = transactions.filter(t => t.category === "non_current_assets" && t.type === "expense");
     const nonCurrentAssetTx = nonCurrentAssetTxList.reduce((s, t) => s + (t.amount || 0), 0);
@@ -137,6 +140,7 @@ export default function BalanceSheetReport({ asOfDate }) {
     return {
       cashAndBank, activeBankAccounts,
       totalReceivables, outstandingReceivables,
+      totalFundingLoanReceivables, outstandingFundingLoanReceivables,
       totalCurrentAssets,
       nonCurrentAssetTx, nonCurrentAssetTxList,
       equipmentTx, equipmentTxList,
@@ -160,6 +164,7 @@ export default function BalanceSheetReport({ asOfDate }) {
       ["Current Assets"],
       ["  Cash & Bank Balances", bs.cashAndBank],
       ["  Accounts Receivable", bs.totalReceivables],
+      ["  Funding & Loans Receivable", bs.totalFundingLoanReceivables],
       ["  Total Current Assets", bs.totalCurrentAssets],
       [],
       ["Non-Current Assets"],
@@ -232,6 +237,17 @@ export default function BalanceSheetReport({ asOfDate }) {
               <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
                 <td className="pl-10 pr-3 py-1.5 text-foreground">{r.client_name}</td>
                 <td className="px-3 py-1.5 text-muted-foreground">{r.project_name || r.invoice_number || "—"}</td>
+                <td className="px-3 py-1.5 text-right font-medium">{fmt((r.amount || 0) - (r.amount_paid || 0))}</td>
+              </tr>
+            )}
+          />
+          <ExpandableBSRow
+            label="Funding & Loans Receivable" value={bs.totalFundingLoanReceivables} isSub
+            items={bs.outstandingFundingLoanReceivables}
+            renderItem={(r, i) => (
+              <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
+                <td className="pl-10 pr-3 py-1.5 text-foreground">{r.client_name}</td>
+                <td className="px-3 py-1.5 text-muted-foreground">{r.invoice_number || "—"}</td>
                 <td className="px-3 py-1.5 text-right font-medium">{fmt((r.amount || 0) - (r.amount_paid || 0))}</td>
               </tr>
             )}
