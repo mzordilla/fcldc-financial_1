@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package, ClipboardList, Printer, Search, GitPullRequest } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package, ClipboardList, Printer, Search, GitPullRequest, MoreHorizontal } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -11,11 +11,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import POFormDialog from "../components/purchase-orders/POFormDialog";
 import POExcelImportDialog from "../components/purchase-orders/POExcelImportDialog";
 import POToPayableDialog from "../components/purchase-orders/POToPayableDialog";
 import ReceiptUploadDialog from "../components/purchase-orders/ReceiptUploadDialog";
-import NoticeOfDeliveryPDF from "../components/purchase-orders/NoticeOfDeliveryPDF";
 import PurchaseOrderPDF from "../components/purchase-orders/PurchaseOrderPDF";
 import PurchaseOrderPrintView from "../components/purchase-orders/PurchaseOrderPrintView";
 import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDialog";
@@ -167,16 +167,18 @@ export default function PurchaseOrders() {
               <button onClick={() => setPrintingPO(po)} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted">
                 <Printer className="w-3.5 h-3.5" /> Print
               </button>
-              <NoticeOfDeliveryPDF po={po} />
-              <button onClick={() => setReviewPO(po)} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted">
-                <History className="w-3.5 h-3.5" /> History
-              </button>
-              <button onClick={() => setEditingPO(po)} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted">
-                <Pencil className="w-3.5 h-3.5" /> Edit
-              </button>
-              <button onClick={() => deleteMutation.mutate(po.id)} className="inline-flex items-center gap-1 rounded-md border border-destructive/30 px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10">
-                <Trash2 className="w-3.5 h-3.5" /> Delete
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted">
+                    <MoreHorizontal className="w-3.5 h-3.5" /> Actions
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setReviewPO(po)}><History /> History</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setEditingPO(po)}><Pencil /> Edit</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => deleteMutation.mutate(po.id)} className="text-destructive focus:text-destructive"><Trash2 /> Delete</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
             </div>
           </td>
