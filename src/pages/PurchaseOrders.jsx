@@ -27,19 +27,6 @@ import ChangeRequestDialog from "../components/purchase-orders/ChangeRequestDial
 import ChangeRequestReviewDialog from "../components/purchase-orders/ChangeRequestReviewDialog";
 import PendingChangeRequestsBanner from "../components/purchase-orders/PendingChangeRequestsBanner";
 import Payees from "./Payees";
-import InlineCategorySelect from "../components/transactions/InlineCategorySelect";
-import InlineChartOfAccountSelect from "../components/transactions/InlineChartOfAccountSelect";
-
-const COA_CATEGORY_LABELS = {
-  project_payment: "Project Payment", material_cost: "Material Cost", labor: "Labor",
-  equipment: "Equipment", subcontractor: "Subcontractor", overhead: "Overhead",
-  permits: "Permits", insurance: "Insurance", bank_reconciliation: "Bank Reconciliation",
-  non_current_assets: "Non-Current Assets", current_assets: "Current Assets",
-  current_liabilities: "Current Liabilities", non_current_liabilities: "Non-Current Liabilities",
-  repair_and_maintenance: "Repair & Maintenance", fixtures: "Fixtures", other: "Other",
-};
-const PO_CATEGORY_OPTIONS = Object.entries(COA_CATEGORY_LABELS).map(([value, label]) => ({ value, label }));
-
 const statusStyles = {
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
   approved: "bg-primary/10 text-primary border-primary/20",
@@ -82,8 +69,6 @@ export default function PurchaseOrders() {
   const [statusFilter, setStatusFilter] = useState("pending");
   const [supplierFilter, setSupplierFilter] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [coaFilter, setCoaFilter] = useState("all");
   const [poSearch, setPoSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -136,20 +121,6 @@ export default function PurchaseOrders() {
           <td className="px-0.5 py-px font-mono text-[10px] text-muted-foreground whitespace-nowrap">{po.po_number || "—"}</td>
           <td className="px-0.5 py-px text-xs font-medium text-foreground max-w-[180px] truncate">{po.supplier_name}</td>
           <td className="px-0.5 py-px text-xs text-muted-foreground max-w-[96px] truncate">{po.project_name || "—"}</td>
-          <td className="px-0.5 py-px max-w-[110px]" onClick={(e) => e.stopPropagation()}>
-            <InlineCategorySelect
-              value={po.category}
-              categories={PO_CATEGORY_OPTIONS}
-              onChange={(v) => updateMutation.mutate({ id: po.id, data: { category: v } })}
-            />
-          </td>
-          <td className="px-0.5 py-px max-w-[130px]" onClick={(e) => e.stopPropagation()}>
-            <InlineChartOfAccountSelect
-              value={po.chart_of_account}
-              accounts={chartOfAccounts}
-              onChange={(v) => updateMutation.mutate({ id: po.id, data: { chart_of_account: v } })}
-            />
-          </td>
           <td className="px-0.5 py-px text-xs text-muted-foreground whitespace-nowrap">
             {po.requested_date ? format(new Date(po.requested_date), "MMM d, yy") : "—"}
           </td>
@@ -203,14 +174,13 @@ export default function PurchaseOrders() {
         </tr>
         {isExpanded &&
         <tr key={`${po.id}-expanded`} className="bg-muted/20">
-            <td colSpan={10} className="px-6 py-4">
+            <td colSpan={7} className="px-6 py-4">
               <div className="space-y-3">
                 <div>
                   <span className="text-xs font-semibold text-muted-foreground uppercase">Description:</span>
                   <p className="text-sm text-foreground mt-1">{po.description}</p>
                 </div>
                 <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-                  {po.chart_of_account && <span>Chart of Account: <span className="text-foreground font-medium">{po.chart_of_account}</span></span>}
                   {po.requested_by && <span>Requested by: <span className="text-foreground font-medium">{po.requested_by}</span></span>}
                   {po.required_date && <span>Required by: <span className="text-foreground font-medium">{format(new Date(po.required_date), "MMM d, yyyy")}</span></span>}
                   {po.approved_by && <span>Reviewed by: <span className="text-foreground font-medium">{po.approved_by}</span></span>}
@@ -310,11 +280,6 @@ export default function PurchaseOrders() {
   const { data: receivingRecords = [] } = useQuery({
     queryKey: ["receiving_items"],
     queryFn: () => base44.entities.ReceivingItem.list("-received_date", 500)
-  });
-
-  const { data: chartOfAccounts = [] } = useQuery({
-    queryKey: ["chartofaccounts"],
-    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 200)
   });
 
   // Build a map of po_id -> { count, isComplete }
@@ -419,14 +384,11 @@ export default function PurchaseOrders() {
 
   const poSuppliers = useMemo(() => [...new Set(orders.map((o) => o.supplier_name).filter(Boolean))].sort(), [orders]);
   const poProjects = useMemo(() => [...new Set(orders.map((o) => o.project_name).filter(Boolean))].sort(), [orders]);
-  const poCoas = useMemo(() => [...new Set(orders.map((o) => o.chart_of_account).filter(Boolean))].sort(), [orders]);
 
   const filtered = orders.filter((o) => {
     if (statusFilter !== "all" && o.approval_status !== statusFilter) return false;
     if (supplierFilter !== "all" && o.supplier_name !== supplierFilter) return false;
     if (projectFilter !== "all" && o.project_name !== projectFilter) return false;
-    if (categoryFilter !== "all" && o.category !== categoryFilter) return false;
-    if (coaFilter !== "all" && o.chart_of_account !== coaFilter) return false;
     if (dateFrom && (!o.requested_date || o.requested_date < dateFrom)) return false;
     if (dateTo && (!o.requested_date || o.requested_date > dateTo)) return false;
     const q = poSearch.toLowerCase();
@@ -568,8 +530,6 @@ export default function PurchaseOrders() {
               <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All Status</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="rejected">Rejected</SelectItem><SelectItem value="cancelled">Cancelled</SelectItem></SelectContent></Select>
               <Select value={supplierFilter} onValueChange={setSupplierFilter}><SelectTrigger><SelectValue placeholder="All Suppliers" /></SelectTrigger><SelectContent><SelectItem value="all">All Suppliers</SelectItem>{poSuppliers.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
               <Select value={projectFilter} onValueChange={setProjectFilter}><SelectTrigger><SelectValue placeholder="All Projects" /></SelectTrigger><SelectContent><SelectItem value="all">All Projects</SelectItem>{poProjects.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}><SelectTrigger><SelectValue placeholder="All Categories" /></SelectTrigger><SelectContent><SelectItem value="all">All Categories</SelectItem>{PO_CATEGORY_OPTIONS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent></Select>
-              <Select value={coaFilter} onValueChange={setCoaFilter}><SelectTrigger><SelectValue placeholder="All Chart of Accounts" /></SelectTrigger><SelectContent><SelectItem value="all">All Chart of Accounts</SelectItem>{poCoas.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
               <div className="flex gap-2 sm:col-span-2 lg:col-span-1 xl:col-span-1">
                 <Input type="date" className="min-w-0" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} title="From date" />
                 <Input type="date" className="min-w-0" value={dateTo} onChange={(e) => setDateTo(e.target.value)} title="To date" />
