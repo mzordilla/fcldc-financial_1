@@ -6,13 +6,13 @@ export default function PurchaseOrderPrintDocument({ po, compact = false, signat
 
   return (
     <div className={compact ? "p-[10mm] bg-white text-black" : "min-h-[267mm] p-[15mm] bg-white text-black"}>
-      <div className={`mb-6 flex items-center ${compact ? "justify-between" : "justify-center"}`}>
+      <div className="mb-6 flex items-center justify-between">
         <img src="https://media.base44.com/images/public/69f02f8501c3688565579a10/7a3b001fb_CONSTRUCTION_FINANCE.jpg" alt="FCL Aranang Development Corporation" className="h-20 w-auto" />
-        {compact && <h1 className="text-2xl font-bold tracking-tight">PURCHASE ORDER</h1>}
+        <h1 className="text-2xl font-bold tracking-tight">PURCHASE ORDER</h1>
       </div>
       <div className="flex items-start justify-between border-b-2 border-black pb-4 mb-6">
-        {!compact && <div><h1 className="text-2xl font-bold tracking-tight">PURCHASE ORDER</h1><p className="text-sm text-gray-600 mt-1">Official purchase authorization document</p></div>}
-        <div className={`text-sm ${compact ? "ml-auto" : "text-right"}`}><p className="font-semibold">PO #: {po.po_number || "—"}</p><p className="text-gray-600">Date: {po.requested_date ? format(new Date(po.requested_date), "MMM d, yyyy") : "—"}</p></div>
+        {!compact && <p className="text-sm text-gray-600">Official purchase authorization document</p>}
+        <div className={`text-sm ${compact ? "ml-auto" : "ml-auto text-right"}`}><p className="font-semibold">PO #: {po.po_number || "—"}</p><p className="text-gray-600">Date: {po.requested_date ? format(new Date(po.requested_date), "MMM d, yyyy") : "—"}</p></div>
       </div>
       <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
         <div><p className="text-gray-500 font-semibold uppercase text-xs">Supplier</p><p className="font-medium">{po.supplier_name || "—"}</p></div>
