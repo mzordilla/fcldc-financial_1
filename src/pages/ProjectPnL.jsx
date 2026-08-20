@@ -126,8 +126,9 @@ function buildProjectData(transactions, receivables = [], billingCycles = [], pr
     projects[key].billed += bc.net_billing_amount || bc.billing_amount || 0;
   });
 
-  // Add collected receivables
+  // Add collected receivables (exclude condo sale receivables, which are not project billings)
   receivables.forEach((r) => {
+    if (r.property_listing_id) return;
     const key = r.project_name || "Unassigned";
     ensure(key);
     projects[key].collected += r.amount_paid || 0;
