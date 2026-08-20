@@ -1,7 +1,7 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Building2, MapPinned, Users, ClipboardList, ShoppingCart, PieChart, CalendarClock, HandCoins, CreditCard, UserRoundCog } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import CondoUnits from "./CondoUnits";
+import CondoSales from "./CondoSales";
 import Tenants from "./Tenants";
 import Listings from "./Listings";
 import PortfolioReports from "./PortfolioReports";
@@ -12,8 +12,6 @@ import LeaseBillingCycles from "@/components/realestate/LeaseBillingCycles";
 import BuildingMap from "@/components/realestate/BuildingMap";
 
 export default function RealEstatePortfolio() {
-  const navigate = useNavigate();
-
   return (
     <div className="w-full p-4 md:p-8">
       <div className="mb-6">
@@ -39,7 +37,7 @@ export default function RealEstatePortfolio() {
               <ClipboardList className="h-6 w-6 text-slate-800 group-data-[state=active]:text-white dark:text-slate-200" />
               <span>Listings</span>
             </TabsTrigger>
-            <TabsTrigger value="condo-sales" onClick={() => navigate("/re/condo-sales")} className="group h-full flex-col gap-1.5 rounded-none border-r border-slate-200 px-2 text-xs font-medium leading-tight text-teal-700 shadow-none data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-md dark:border-slate-700 dark:text-teal-400 dark:data-[state=active]:bg-slate-800">
+            <TabsTrigger value="condo-sales" className="group h-full flex-col gap-1.5 rounded-none border-r border-slate-200 px-2 text-xs font-medium leading-tight text-teal-700 shadow-none data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-md dark:border-slate-700 dark:text-teal-400 dark:data-[state=active]:bg-slate-800">
               <ShoppingCart className="h-6 w-6 text-slate-800 group-data-[state=active]:text-white dark:text-slate-200" />
               <span>Condo<br />Sales</span>
             </TabsTrigger>
@@ -76,6 +74,9 @@ export default function RealEstatePortfolio() {
         </TabsContent>
         <TabsContent value="listings">
           <Listings embedded />
+        </TabsContent>
+        <TabsContent value="condo-sales">
+          <CondoSales />
         </TabsContent>
         <TabsContent value="reports">
           <PortfolioReports embedded />
