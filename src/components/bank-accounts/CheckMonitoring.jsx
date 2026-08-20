@@ -37,8 +37,10 @@ export default function CheckMonitoring() {
 
   const checks = requests
     .filter((r) => r.payment_method === "check")
-    .filter((r) => bankFilter === "all" || r.bank_account_id === bankFilter)
+    .filter((r) => bankFilter === "all" || (bankFilter === "missing" ? !r.bank_account_id : r.bank_account_id === bankFilter))
     .sort((a, b) => new Date(b.check_date || b.created_date || 0) - new Date(a.check_date || a.created_date || 0));
+
+  const missingBankCount = requests.filter((r) => r.payment_method === "check" && !r.bank_account_id).length;
 
   const totalAmount = checks.reduce((s, c) => s + (c.amount || 0), 0);
   const monthGroups = checks.reduce((groups, check) => {
@@ -84,6 +86,9 @@ export default function CheckMonitoring() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Banks</SelectItem>
+            {missingBankCount > 0 && (
+              <SelectItem value="missing">⚠️ Missing Bank Account ({missingBankCount})</SelectItem>
+            )}
             {bankAccounts.map((a) => (
               <SelectItem key={a.id} value={a.id}>{a.account_name} — {a.bank_name}</SelectItem>
             ))}
@@ -140,7 +145,9 @@ export default function CheckMonitoring() {
                         <tr key={c.id} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
                           <td className="px-4 py-2.5 pl-10 font-mono text-xs text-muted-foreground whitespace-nowrap">{c.request_number || "—"}</td>
                           <td className="px-4 py-2.5 font-semibold text-foreground">{c.check_number || "—"}</td>
-                          <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">{bankLabel(c.bank_account_id)}</td>
+                          <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
+                            {c.bank_account_id ? bankLabel(c.bank_account_id) : <span className="text-destructive font-medium">⚠️ Missing</span>}
+                          </td>
                           <td className="px-4 py-2.5 text-muted-foreground">{c.check_date ? format(new Date(c.check_date), "MMM d, yyyy") : "—"}</td>
                           <td className="px-4 py-2.5 text-foreground">{c.payee}</td>
                           <td className="px-4 py-2.5 text-muted-foreground truncate max-w-xs">{c.description || "—"}</td>
