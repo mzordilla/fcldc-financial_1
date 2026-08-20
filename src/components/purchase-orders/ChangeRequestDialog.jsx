@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import PayeeSelector from "@/components/payment/PayeeSelector";
 
 export default function ChangeRequestDialog({ open, onOpenChange, po, onSubmit }) {
   const [field, setField] = useState("price");
@@ -77,7 +78,11 @@ export default function ChangeRequestDialog({ open, onOpenChange, po, onSubmit }
 
           <div>
             <Label>Requested New Value</Label>
-            <Input value={newValue} onChange={(e) => setNewValue(e.target.value)} placeholder={field === "supplier" ? "New supplier name" : field === "price" ? "New total amount" : "New quantity"} />
+            {field === "supplier" ? (
+              <PayeeSelector value={newValue} onChange={setNewValue} />
+            ) : (
+              <Input value={newValue} onChange={(e) => setNewValue(e.target.value)} placeholder={field === "price" ? "New total amount" : "New quantity"} />
+            )}
           </div>
 
           <div>
