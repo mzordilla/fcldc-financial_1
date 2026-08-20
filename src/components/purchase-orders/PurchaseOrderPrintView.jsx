@@ -90,9 +90,9 @@ export default function PurchaseOrderPrintView({ po, open, onOpenChange }) {
             <ScaledCopy po={po} signature={signature} watermark={null} heightMm={297} compact={false} allowUpscale={false} />
           ) : (
             <>
-              <ScaledCopy po={po} signature={signature} watermark="FCL Copy" />
+              <ScaledCopy po={po} signature={signature} watermark="FCL Copy" heightMm={147} allowUpscale={false} />
               <div className="border-t-2 border-dashed border-gray-400" />
-              <ScaledCopy po={po} signature={signature} watermark="Vendor Copy" />
+              <ScaledCopy po={po} signature={signature} watermark="Vendor Copy" heightMm={147} allowUpscale={false} />
             </>
           )}
         </div>
