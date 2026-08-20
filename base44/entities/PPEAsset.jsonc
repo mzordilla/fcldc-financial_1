@@ -23,6 +23,14 @@
       "type": "string",
       "description": "Internal asset reference code"
     },
+    "title_no": {
+      "type": "string",
+      "description": "Land/property title number"
+    },
+    "area_sqm": {
+      "type": "number",
+      "description": "Area in square meters (for land and building assets)"
+    },
     "acquisition_date": {
       "type": "string",
       "format": "date",

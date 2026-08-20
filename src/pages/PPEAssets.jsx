@@ -46,6 +46,7 @@ const EMPTY_FORM = {
   asset_type: "land",
   asset_code: "",
   title_no: "",
+  area_sqm: "",
   acquisition_date: "",
   acquisition_cost: "",
   useful_life_years: "",
@@ -73,6 +74,7 @@ function AssetFormDialog({ open, onClose, asset, onSubmit }) {
       acquisition_cost: parseFloat(form.acquisition_cost) || 0,
       useful_life_years: form.useful_life_years ? parseFloat(form.useful_life_years) : undefined,
       accumulated_depreciation: parseFloat(form.accumulated_depreciation) || 0,
+      area_sqm: form.area_sqm ? parseFloat(form.area_sqm) : undefined,
       book_value: form.book_value ? parseFloat(form.book_value) : (parseFloat(form.acquisition_cost) || 0) - (parseFloat(form.accumulated_depreciation) || 0),
     };
     onSubmit(data);
@@ -107,6 +109,12 @@ function AssetFormDialog({ open, onClose, asset, onSubmit }) {
               <Label>Asset Code</Label>
               <Input value={form.asset_code} onChange={e => set("asset_code", e.target.value)} placeholder="e.g. VHL-001" />
             </div>
+            {["land", "building"].includes(form.asset_type) && (
+              <div>
+                <Label>Area (sqm)</Label>
+                <Input type="number" step="0.01" min="0" value={form.area_sqm || ""} onChange={e => set("area_sqm", e.target.value)} placeholder="e.g. 250.5" />
+              </div>
+            )}
             <div>
               <Label>Acquisition Date</Label>
               <Input type="date" value={form.acquisition_date} onChange={e => set("acquisition_date", e.target.value)} />
@@ -302,6 +310,7 @@ export default function PPEAssets() {
                       <td className="px-4 py-3">
                         <p className="font-medium text-foreground">{a.asset_name}</p>
                         {a.title_no && <p className="text-xs text-muted-foreground">Title No.: {a.title_no}</p>}
+                        {a.area_sqm ? <p className="text-xs text-muted-foreground">{a.area_sqm.toLocaleString()} sqm</p> : null}
                         {a.asset_code && <p className="text-xs text-muted-foreground">{a.asset_code}</p>}
                         {a.location && <p className="text-xs text-muted-foreground">{a.location}</p>}
                       </td>
