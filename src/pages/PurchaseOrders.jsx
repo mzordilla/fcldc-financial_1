@@ -134,24 +134,23 @@ export default function PurchaseOrders() {
                   <CheckCircle className="w-3.5 h-3.5" /> Review
                 </button>
               }
-              {po.approval_status === "approved" && !po.receipt_url &&
-                <button onClick={() => setUploadingReceipt(po)} className="inline-flex items-center gap-1 rounded-md border border-primary/30 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10">
-                  <Package className="w-3.5 h-3.5" /> Receipt
-                </button>
-              }
               {po.approval_status === "approved" &&
-                <button onClick={() => setReceivingItems(po)} className="inline-flex items-center gap-1 rounded-md border border-primary/30 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10">
-                  <Package className="w-3.5 h-3.5" /> Receive
-                </button>
-              }
-              {po.approval_status === "approved" &&
-                <button
-                  onClick={() => setConvertingPO(po)}
-                  disabled={!po.receipt_url || poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number)}
-                  title={!po.receipt_url ? "Upload a receipt first" : poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number) ? "Already paid" : ""}
-                  className="inline-flex items-center gap-1 rounded-md border border-primary/30 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-40">
-                  <CreditCard className="w-3.5 h-3.5" /> Pay
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="inline-flex items-center gap-1 rounded-md border border-primary/30 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10">
+                      <MoreHorizontal className="w-3.5 h-3.5" /> Processing
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {!po.receipt_url && <DropdownMenuItem onClick={() => setUploadingReceipt(po)}><Package /> Receipt</DropdownMenuItem>}
+                    <DropdownMenuItem onClick={() => setReceivingItems(po)}><Package /> Receive</DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={!po.receipt_url || poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number)}
+                      onClick={() => setConvertingPO(po)}>
+                      <CreditCard /> Pay
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               }
               {po.approval_status === "approved" &&
                 <button onClick={() => setRequestingChangePO(po)} className="inline-flex items-center gap-1 rounded-md border border-chart-3/30 px-2 py-1 text-xs font-medium text-chart-3 hover:bg-chart-3/10">
