@@ -11,7 +11,7 @@ function agingBucketKey(dueDateStr, today) {
   return 'days90plus';
 }
 
-Deno.serve(async (req) => {
+export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
@@ -26,13 +26,13 @@ Deno.serve(async (req) => {
     const supplierMap = {};
 
     for (const p of payables) {
-      if (p.payable_type === 'other') continue;
+      if (p.payable_type === 'other' || p.status === 'paid') continue;
+      const net = (p.amount || 0) - (p.withholding_tax_amount || 0) + (p.vat_amount || 0);
+      const remaining = Math.max(0, net - (p.amount_paid || 0));
+      if (remaining <= 0.01) continue;
       if (p.status === 'overdue') overdueCount += 1;
-      if (p.status === 'paid') continue;
       const bucket = agingBucketKey(p.due_date, today);
       if (!bucket) continue;
-      const net = (p.amount || 0) - (p.withholding_tax_amount || 0) + (p.vat_amount || 0);
-      const remaining = net - (p.amount_paid || 0);
 
       overall[bucket] += remaining;
 
@@ -57,4 +57,4 @@ Deno.serve(async (req) => {
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
-});
+}

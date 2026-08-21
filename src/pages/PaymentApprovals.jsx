@@ -432,18 +432,19 @@ export default function PaymentApprovals() {
         }
       }
       if (linkedPayable && linkedPayable.status !== "paid") {
-        const linkedNet = (linkedPayable.amount || 0) - (linkedPayable.withholding_tax_amount || 0) + (linkedPayable.vat_amount || 0);
-        const currentPaid = linkedPayable.amount_paid || 0;
+        const currentPayable = await base44.entities.Payable.get(linkedPayable.id);
+        const linkedNet = (currentPayable.amount || 0) - (currentPayable.withholding_tax_amount || 0) + (currentPayable.vat_amount || 0);
+        const currentPaid = currentPayable.amount_paid || 0;
         const newAmountPaid = Math.min(currentPaid + netCashOut, linkedNet);
-        const newStatus = newAmountPaid >= linkedNet ? "paid" : "partially_paid";
-        const newHistory = [...(linkedPayable.payment_history || []), {
+        const newStatus = newAmountPaid >= linkedNet - 0.01 ? "paid" : "partially_paid";
+        const newHistory = [...(currentPayable.payment_history || []), {
           payment_date: disbursedDate,
           amount: netCashOut,
           payment_method: pr.payment_method || "bank_transfer",
           reference: paymentReference || "",
-          notes: `Auto-settled via Payment Approval disbursement by ${actor}`,
+          notes: `Auto-settled via Payment Request ${pr.id} by ${actor}`,
         }];
-        await base44.entities.Payable.update(linkedPayable.id, {
+        await base44.entities.Payable.update(currentPayable.id, {
           status: newStatus,
           amount_paid: newAmountPaid,
           payment_date: disbursedDate,

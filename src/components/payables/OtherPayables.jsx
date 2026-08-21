@@ -48,8 +48,9 @@ export default function OtherPayables() {
     onSuccess: invalidate,
   });
 
+  const outstandingPayables = payables.filter((p) => p.status !== "paid");
   const groups = {};
-  payables.forEach((p) => {
+  outstandingPayables.forEach((p) => {
     const key = p.supplier_name || "No Payee";
     if (!groups[key]) groups[key] = [];
     groups[key].push(p);
@@ -62,7 +63,7 @@ export default function OtherPayables() {
     return { payee, rows, outstanding };
   });
   const totalOutstanding = payeeList.reduce((s, g) => s + g.outstanding, 0);
-  const aging = buildAging(payables);
+  const aging = buildAging(outstandingPayables);
 
   const toggle = (payee) => setExpanded((prev) => {
     const next = new Set(prev);
@@ -81,7 +82,7 @@ export default function OtherPayables() {
         </Button>
       </div>
 
-      {!isLoading && payables.length > 0 && (
+      {!isLoading && outstandingPayables.length > 0 && (
         <AgingSummary overall={aging.buckets} overallTotal={aging.total} title="Aging Analysis — Other Payables" />
       )}
 
