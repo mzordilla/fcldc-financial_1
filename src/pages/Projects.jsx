@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -18,6 +18,8 @@ import ClientMasterlist from "../components/projects/ClientMasterlist";
 import ProjectCommandHeader from "@/components/projects/ProjectCommandHeader";
 import ProjectKpiStrip from "@/components/projects/ProjectKpiStrip";
 import ApprovedProjectCard from "@/components/projects/ApprovedProjectCard";
+import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
+import { calculateProjectCost, usesCostIncurred } from "@/lib/projectCost";
 
 
 const contractStatusStyles = {
@@ -63,7 +65,7 @@ const fields = (clients) => [
   { value: "client_project", label: "Client Project" },
   { value: "monitoring_project", label: "Monitoring Project" }]
 },
-{ name: "contract_amount", label: "Contract Amount ($)", type: "number", required: true, placeholder: "0.00" },
+{ name: "contract_amount", label: "Contract Amount ($)", type: "number", required: true, placeholder: "0.00", showWhen: { field: "project_classification", values: ["client_project"] } },
 { name: "completed_percentage", label: "Completed (%)", type: "number", placeholder: "e.g. 45" },
 { name: "retention_rate", label: "Retention Rate (%)", type: "number", placeholder: "e.g. 5" },
 { name: "contract_status", label: "Contract Status", type: "select", options: [
@@ -136,6 +138,20 @@ export default function Projects() {
     queryKey: ["clients"],
     queryFn: () => base44.entities.Client.list()
   });
+
+  const { data: transactions = [] } = useQuery({
+    queryKey: ["project_cost_transactions"],
+    queryFn: () => fetchAllTransactions()
+  });
+
+  const { data: receivingItems = [] } = useQuery({
+    queryKey: ["project_cost_receiving_items"],
+    queryFn: () => base44.entities.ReceivingItem.list("-received_date", 5000)
+  });
+
+  const projectCosts = useMemo(() => Object.fromEntries(
+    projects.map((project) => [project.id, calculateProjectCost(project, transactions, receivingItems)])
+  ), [projects, transactions, receivingItems]);
 
 
 
@@ -211,7 +227,7 @@ export default function Projects() {
           </div>
           <div className="grid gap-3 lg:grid-cols-4">
             {["owned_project", "client_project", "monitoring_project", "unclassified"].filter(classification => approvedClassificationFilter === "all" || classification === approvedClassificationFilter).map(classification =>
-              <ApprovedProjectCard key={classification} label={classificationLabels[classification] || "Unclassified"} projects={approvedProjects.filter(project => (project.project_classification || "unclassified") === classification)} onOpen={(id) => navigate(`/projects/${id}`)} statusStyles={contractStatusStyles} />
+              <ApprovedProjectCard key={classification} label={classificationLabels[classification] || "Unclassified"} projects={approvedProjects.filter(project => (project.project_classification || "unclassified") === classification)} projectCosts={projectCosts} costBased={["owned_project", "monitoring_project"].includes(classification)} onOpen={(id) => navigate(`/projects/${id}`)} statusStyles={contractStatusStyles} />
             )}
           </div>
           <div className="flex items-center gap-3 pt-2"><span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Portfolio Health Rail</span><div className="h-px flex-1 bg-slate-300 dark:bg-slate-700" /><div className="h-2 w-2 rounded-full bg-sky-600" /><div className="h-px w-1/3 bg-teal-600" /></div>
@@ -236,8 +252,9 @@ export default function Projects() {
             return acc;
           }, {})
         ).map(([classification, groupProjects]) => {
-          const groupTotal = groupProjects.reduce((s, p) => s + (p.contract_amount || 0), 0);
-          const groupCompleted = groupProjects.reduce((s, p) => s + (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100), 0);
+          const costBased = ["owned_project", "monitoring_project"].includes(classification);
+          const groupTotal = groupProjects.reduce((s, p) => s + (costBased ? (projectCosts[p.id] || 0) : (p.contract_amount || 0)), 0);
+          const groupCompleted = costBased ? 0 : groupProjects.reduce((s, p) => s + (p.contract_amount || 0) * ((p.completed_percentage || 0) / 100), 0);
           return (
             <div key={classification} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-[0_8px_20px_-12px_rgba(15,23,42,0.35)] dark:border-slate-700 dark:bg-slate-900">
               <div className="flex items-center justify-between border-b border-border pb-2">
@@ -246,9 +263,9 @@ export default function Projects() {
                   <span className="text-muted-foreground font-normal ml-2">({groupProjects.length})</span>
                 </h3>
                 <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Subtotal Contract Amt</p>
+                  <p className="text-xs text-muted-foreground">{costBased ? "Total Cost Incurred" : "Subtotal Contract Amt"}</p>
                   <p className="text-sm font-bold text-primary">₱{groupTotal.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">Completed: ₱{groupCompleted.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                  {!costBased && <p className="text-xs text-muted-foreground">Completed: ₱{groupCompleted.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>}
                 </div>
               </div>
               <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
@@ -258,9 +275,9 @@ export default function Projects() {
                       <th className="text-left py-2 px-4">Project</th>
                       <th className="text-left py-2 px-4">Client</th>
                       <th className="text-left py-2 px-4">Status</th>
-                      <th className="text-right py-2 px-4">Contract Amt</th>
-                      <th className="text-right py-2 px-4">Completed</th>
-                      <th className="text-right py-2 px-4">Balance</th>
+                      <th className="text-right py-2 px-4">{costBased ? "Cost Incurred" : "Contract Amt"}</th>
+                      {!costBased && <th className="text-right py-2 px-4">Completed</th>}
+                      {!costBased && <th className="text-right py-2 px-4">Balance</th>}
                       <th className="text-right py-2 px-4">Actions</th>
                     </tr>
                   </thead>
@@ -283,9 +300,9 @@ export default function Projects() {
                               {(p.contract_status || "pending").replace(/_/g, " ")}
                             </Badge>
                           </td>
-                          <td className="py-2 px-4 text-right font-semibold text-foreground">₱{(p.contract_amount || 0).toLocaleString()}</td>
-                          <td className="py-2 px-4 text-right text-primary">{completedPct}% · ₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                          <td className="py-2 px-4 text-right font-semibold text-foreground">₱{remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          <td className="py-2 px-4 text-right font-semibold text-foreground">₱{(costBased ? (projectCosts[p.id] || 0) : (p.contract_amount || 0)).toLocaleString()}</td>
+                          {!costBased && <td className="py-2 px-4 text-right text-primary">{completedPct}% · ₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>}
+                          {!costBased && <td className="py-2 px-4 text-right font-semibold text-foreground">₱{remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>}
                           <td className="py-2 px-4">
                             <div className="flex items-center justify-end gap-1">
                               {p.contract_status === "approved" &&
@@ -327,7 +344,8 @@ export default function Projects() {
         fields={fields(clients)}
         onSubmit={(data) => {
           const client = clients.find(c => c.id === data.client_id);
-          return createMutation.mutateAsync({ ...data, client_name: client?.client_name || "" });
+          const projectData = data.project_classification === "client_project" ? data : { ...data, contract_amount: 0 };
+          return createMutation.mutateAsync({ ...projectData, client_name: client?.client_name || "" });
         }} />
 
       <AddFormDialog
@@ -338,7 +356,8 @@ export default function Projects() {
         initialData={editingProject || {}}
         onSubmit={(data) => {
           const client = clients.find(c => c.id === data.client_id);
-          return updateMutation.mutateAsync({ id: editingProject.id, data: { ...data, client_name: client?.client_name || data.client_name || "" } });
+          const projectData = data.project_classification === "client_project" ? data : { ...data, contract_amount: 0 };
+          return updateMutation.mutateAsync({ id: editingProject.id, data: { ...projectData, client_name: client?.client_name || data.client_name || "" } });
         }} />
 
         </TabsContent>

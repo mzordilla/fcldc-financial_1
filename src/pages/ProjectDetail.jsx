@@ -11,6 +11,7 @@ import AddFormDialog from "../components/shared/AddFormDialog";
 import ChangeOrderFormDialog from "../components/projects/ChangeOrderFormDialog";
 import ContractFormDialog from "../components/projects/ContractFormDialog";
 import { useState } from "react";
+import { calculateProjectCost, usesCostIncurred } from "@/lib/projectCost";
 
 const contractStatusStyles = {
   pending: "bg-muted text-muted-foreground border-border",
@@ -31,7 +32,7 @@ const projectTypeLabels = {
 };
 
 const classificationLabels = {
-  owned_project: "Project Owned Project",
+  owned_project: "Owned Project",
   client_project: "Client Project",
   monitoring_project: "Monitoring Project"
 };
@@ -55,7 +56,7 @@ const fields = [
     { value: "client_project", label: "Client Project" },
     { value: "monitoring_project", label: "Monitoring Project" }]
   },
-  { name: "contract_amount", label: "Contract Amount ($)", type: "number", required: true, placeholder: "0.00" },
+  { name: "contract_amount", label: "Contract Amount ($)", type: "number", required: true, placeholder: "0.00", showWhen: { field: "project_classification", values: ["client_project"] } },
   { name: "completed_percentage", label: "Completed (%)", type: "number", placeholder: "e.g. 45" },
   { name: "retention_rate", label: "Retention Rate (%)", type: "number", placeholder: "e.g. 5" },
   { name: "contract_status", label: "Contract Status", type: "select", options: [
@@ -119,6 +120,18 @@ export default function ProjectDetail() {
     enabled: !!project?.client_id,
   });
 
+  const { data: projectTransactions = [] } = useQuery({
+    queryKey: ["project_cost_transactions", project?.project_code],
+    queryFn: () => base44.entities.Transaction.filter({ project_code: project.project_code, type: "expense", status: "completed" }, "-date", 5000),
+    enabled: !!project?.project_code,
+  });
+
+  const { data: projectReceivingItems = [] } = useQuery({
+    queryKey: ["project_cost_receiving_items", project?.project_name],
+    queryFn: () => base44.entities.ReceivingItem.filter({ project_name: project.project_name }, "-received_date", 5000),
+    enabled: !!project?.project_name,
+  });
+
   const createContractMutation = useMutation({
     mutationFn: (data) => base44.entities.Contract.create({ ...data, project_id: id, project_name: project?.project_name, client_name: project?.client_name, client_id: project?.client_id }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["contracts", id] }),
@@ -168,6 +181,8 @@ export default function ProjectDetail() {
   if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading...</div>;
   if (!project) return <div className="p-8 text-center text-muted-foreground">Project not found</div>;
 
+  const costBased = usesCostIncurred(project);
+  const projectCost = calculateProjectCost(project, projectTransactions, projectReceivingItems);
   const completedPct = project.completed_percentage || 0;
 
   // Change Order consolidation — only approved COs affect the adjusted contract amount
@@ -263,44 +278,27 @@ export default function ProjectDetail() {
         )}
 
         <div className="border-t border-border pt-6 space-y-4">
-          <div>
-            <div className="flex justify-between mb-2">
-              <span className="text-sm text-muted-foreground">Completion</span>
-              <span className="text-sm font-semibold text-foreground">{completedPct}%</span>
+          {costBased ? (
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <p className="text-xs text-muted-foreground">Total Cost Incurred</p>
+              <p className="mt-1 text-2xl font-bold text-primary">₱{projectCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Completed expenses and received purchase-order items</p>
             </div>
-            <Progress value={completedPct} className="h-2" />
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-muted/40 rounded-lg p-3 border border-border">
-              <p className="text-xs text-muted-foreground mb-1">Main Contract</p>
-              <p className="font-semibold text-foreground">₱{(project.contract_amount || 0).toLocaleString()}</p>
-              {changeOrders.length > 0 && (
-                <p className="text-xs text-muted-foreground mt-0.5">(immutable baseline)</p>
-              )}
-            </div>
-            {changeOrders.length > 0 && (
-              <div className={`rounded-lg p-3 border ${netCOAdjustment >= 0 ? "bg-primary/5 border-primary/20" : "bg-destructive/5 border-destructive/20"}`}>
-                <p className="text-xs text-muted-foreground mb-1">Adjusted Contract</p>
-                <p className={`font-semibold ${netCOAdjustment >= 0 ? "text-primary" : "text-destructive"}`}>₱{adjustedContractAmount.toLocaleString()}</p>
-                <p className={`text-xs mt-0.5 ${netCOAdjustment >= 0 ? "text-primary/70" : "text-destructive/70"}`}>
-                  {netCOAdjustment >= 0 ? "+" : ""}₱{netCOAdjustment.toLocaleString()} from {approvedCOs.length} CO{approvedCOs.length !== 1 ? "s" : ""}
-                </p>
+          ) : (
+            <>
+              <div>
+                <div className="flex justify-between mb-2"><span className="text-sm text-muted-foreground">Completion</span><span className="text-sm font-semibold text-foreground">{completedPct}%</span></div>
+                <Progress value={completedPct} className="h-2" />
               </div>
-            )}
-            <div className="bg-primary/5 rounded-lg p-3 border border-primary/20">
-              <p className="text-xs text-muted-foreground mb-1">Completed</p>
-              <p className="font-semibold text-primary">₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-            </div>
-            <div className="bg-chart-3/5 rounded-lg p-3 border border-chart-3/20">
-              <p className="text-xs text-muted-foreground mb-1">Retention ({project.retention_rate || 0}%)</p>
-              <p className="font-semibold text-chart-3">₱{retentionAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-            </div>
-            <div className="bg-muted/40 rounded-lg p-3 border border-border">
-              <p className="text-xs text-muted-foreground mb-1">Remaining</p>
-              <p className="font-semibold text-foreground">₱{remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-            </div>
-          </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-muted/40 rounded-lg p-3 border border-border"><p className="text-xs text-muted-foreground mb-1">Main Contract</p><p className="font-semibold text-foreground">₱{(project.contract_amount || 0).toLocaleString()}</p>{changeOrders.length > 0 && <p className="text-xs text-muted-foreground mt-0.5">(immutable baseline)</p>}</div>
+                {changeOrders.length > 0 && <div className={`rounded-lg p-3 border ${netCOAdjustment >= 0 ? "bg-primary/5 border-primary/20" : "bg-destructive/5 border-destructive/20"}`}><p className="text-xs text-muted-foreground mb-1">Adjusted Contract</p><p className={`font-semibold ${netCOAdjustment >= 0 ? "text-primary" : "text-destructive"}`}>₱{adjustedContractAmount.toLocaleString()}</p><p className={`text-xs mt-0.5 ${netCOAdjustment >= 0 ? "text-primary/70" : "text-destructive/70"}`}>{netCOAdjustment >= 0 ? "+" : ""}₱{netCOAdjustment.toLocaleString()} from {approvedCOs.length} CO{approvedCOs.length !== 1 ? "s" : ""}</p></div>}
+                <div className="bg-primary/5 rounded-lg p-3 border border-primary/20"><p className="text-xs text-muted-foreground mb-1">Completed</p><p className="font-semibold text-primary">₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p></div>
+                <div className="bg-chart-3/5 rounded-lg p-3 border border-chart-3/20"><p className="text-xs text-muted-foreground mb-1">Retention ({project.retention_rate || 0}%)</p><p className="font-semibold text-chart-3">₱{retentionAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p></div>
+                <div className="bg-muted/40 rounded-lg p-3 border border-border"><p className="text-xs text-muted-foreground mb-1">Remaining</p><p className="font-semibold text-foreground">₱{remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p></div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -719,7 +717,7 @@ export default function ProjectDetail() {
         title="Edit Project"
         fields={fields}
         initialData={editingProject || {}}
-        onSubmit={(data) => updateMutation.mutateAsync({ id: editingProject.id, data })}
+        onSubmit={(data) => updateMutation.mutateAsync({ id: editingProject.id, data: data.project_classification === "client_project" ? data : { ...data, contract_amount: 0 } })}
       />
 
       <ChangeOrderFormDialog

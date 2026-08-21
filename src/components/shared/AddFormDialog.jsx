@@ -25,11 +25,13 @@ export default function AddFormDialog({ open, onOpenChange, title, fields, onSub
     if (open) setFormData(initialData || {});
   }, [open, initialData]);
 
+  const isVisible = (field) => !field.showWhen || field.showWhen.values.includes(formData[field.showWhen.field]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     const cleanedData = {};
-    fields.forEach(field => {
+    fields.filter(isVisible).forEach(field => {
       let value = formData[field.name];
       if (field.type === "number" && value !== "" && value !== null && value !== undefined) {
         value = parseFloat(value) || 0;
@@ -51,7 +53,7 @@ export default function AddFormDialog({ open, onOpenChange, title, fields, onSub
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {fields.map((field) => (
+          {fields.filter(isVisible).map((field) => (
             <div key={field.name} className="space-y-1.5">
               <Label className="text-sm">{field.label}</Label>
               {field.type === "file" ? (
