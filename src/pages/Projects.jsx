@@ -39,7 +39,7 @@ const projectTypeLabels = {
 };
 
 const classificationLabels = {
-  owned_project: "Project Owned Project",
+  owned_project: "Owned Project",
   client_project: "Client Project",
   monitoring_project: "Monitoring Project"
 };
@@ -59,7 +59,7 @@ const fields = (clients) => [
   { value: "other", label: "Other" }]
 },
 { name: "project_classification", label: "Classification", type: "select", options: [
-  { value: "owned_project", label: "Project Owned Project" },
+  { value: "owned_project", label: "Owned Project" },
   { value: "client_project", label: "Client Project" },
   { value: "monitoring_project", label: "Monitoring Project" }]
 },
@@ -205,7 +205,7 @@ export default function Projects() {
             <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-sky-700" /><h3 className="font-project-display text-base font-bold text-slate-950 dark:text-white">Approved Contracts</h3></div>
             <Select value={approvedClassificationFilter} onValueChange={setApprovedClassificationFilter}>
               <SelectTrigger className="h-9 w-48 bg-white text-xs dark:bg-slate-950"><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="all">All Classifications</SelectItem><SelectItem value="owned_project">Project Owned Project</SelectItem><SelectItem value="client_project">Client Project</SelectItem><SelectItem value="monitoring_project">Monitoring Project</SelectItem></SelectContent>
+              <SelectContent><SelectItem value="all">All Classifications</SelectItem><SelectItem value="owned_project">Owned Project</SelectItem><SelectItem value="client_project">Client Project</SelectItem><SelectItem value="monitoring_project">Monitoring Project</SelectItem></SelectContent>
             </Select>
           </div>
           <div className="grid gap-3 lg:grid-cols-4">
