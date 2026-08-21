@@ -164,8 +164,9 @@ export default function Projects() {
 
 
   const approvedProjects = projects.filter((p) => ["approved", "active"].includes(p.contract_status));
-  const totalApprovedValue = approvedProjects.reduce((s, p) => s + (p.contract_amount || 0), 0);
-  const remainingWorksValue = approvedProjects.reduce((s, p) => s + (p.contract_amount || 0) * (1 - (p.completed_percentage || 0) / 100), 0);
+  const approvedClientProjects = approvedProjects.filter((p) => p.project_classification === "client_project");
+  const totalApprovedValue = approvedClientProjects.reduce((s, p) => s + (p.contract_amount || 0), 0);
+  const remainingWorksValue = approvedClientProjects.reduce((s, p) => s + (p.contract_amount || 0) * (1 - (p.completed_percentage || 0) / 100), 0);
   const activeCount = projects.filter((p) => p.contract_status === "active").length;
   const pendingCount = projects.filter((p) => p.contract_status === "pending").length;
 
@@ -184,7 +185,7 @@ export default function Projects() {
         activeCount={activeCount}
         pendingCount={pendingCount}
         totalApprovedValue={totalApprovedValue}
-        approvedCount={approvedProjects.length}
+        approvedCount={approvedClientProjects.length}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
         classificationFilter={classificationFilter}
@@ -196,7 +197,7 @@ export default function Projects() {
       />
 
       {/* KPI Summary */}
-      <ProjectKpiStrip total={projects.length} approvedValue={totalApprovedValue} approvedCount={approvedProjects.length} active={activeCount} pending={pendingCount} remainingWorksValue={remainingWorksValue} />
+      <ProjectKpiStrip total={projects.length} approvedValue={totalApprovedValue} approvedCount={approvedClientProjects.length} active={activeCount} pending={pendingCount} remainingWorksValue={remainingWorksValue} />
 
       {/* Approved Contracts Summary, grouped by classification with subtotals */}
       {approvedProjects.length > 0 &&

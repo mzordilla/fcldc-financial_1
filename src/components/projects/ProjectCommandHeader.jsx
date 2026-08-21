@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const statuses = [["all", "All Status"], ["pending", "Pending"], ["approved", "Approved"], ["active", "Active"], ["completed", "Completed"], ["on_hold", "On Hold"], ["cancelled", "Cancelled"]];
-const classes = [["all", "All Classifications"], ["owned_project", "Project Owned Project"], ["client_project", "Client Project"], ["monitoring_project", "Monitoring Project"]];
+const classes = [["all", "All Classifications"], ["owned_project", "Owned Project"], ["client_project", "Client Project"], ["monitoring_project", "Monitoring Project"]];
 
 export default function ProjectCommandHeader({ projects, activeCount, pendingCount, totalApprovedValue, approvedCount, statusFilter, setStatusFilter, classificationFilter, setClassificationFilter, onExport, importRef, onImport, onNew }) {
   return (
