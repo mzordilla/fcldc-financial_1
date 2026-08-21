@@ -17,7 +17,8 @@ import ProjectPnL from "./ProjectPnL";
 import ClientMasterlist from "../components/projects/ClientMasterlist";
 import ProjectCommandHeader from "@/components/projects/ProjectCommandHeader";
 import ProjectKpiStrip from "@/components/projects/ProjectKpiStrip";
-import ApprovedProjectCard from "@/components/projects/ApprovedProjectCard";
+import ApprovedProjectCards from "@/components/projects/ApprovedProjectCards";
+import ProjectRegisterBody from "@/components/projects/ProjectRegisterBody";
 import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
 import { calculateProjectCost, usesCostIncurred } from "@/lib/projectCost";
 
@@ -227,7 +228,7 @@ export default function Projects() {
           </div>
           <div className="grid gap-3 lg:grid-cols-4">
             {["owned_project", "client_project", "monitoring_project", "unclassified"].filter(classification => approvedClassificationFilter === "all" || classification === approvedClassificationFilter).map(classification =>
-              <ApprovedProjectCard key={classification} label={classificationLabels[classification] || "Unclassified"} projects={approvedProjects.filter(project => (project.project_classification || "unclassified") === classification)} projectCosts={projectCosts} costBased={["owned_project", "monitoring_project"].includes(classification)} onOpen={(id) => navigate(`/projects/${id}`)} statusStyles={contractStatusStyles} />
+              <ApprovedProjectCards key={classification} classification={classification} label={classificationLabels[classification] || "Unclassified"} projects={approvedProjects.filter(project => (project.project_classification || "unclassified") === classification)} projectCosts={projectCosts} costBased={["owned_project", "monitoring_project"].includes(classification)} onOpen={(id) => navigate(`/projects/${id}`)} statusStyles={contractStatusStyles} />
             )}
           </div>
           <div className="flex items-center gap-3 pt-2"><span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Portfolio Health Rail</span><div className="h-px flex-1 bg-slate-300 dark:bg-slate-700" /><div className="h-2 w-2 rounded-full bg-sky-600" /><div className="h-px w-1/3 bg-teal-600" /></div>
@@ -282,53 +283,17 @@ export default function Projects() {
                     </tr>
                   </thead>
                   <tbody>
-                    {groupProjects.map((p) => {
-                      const completedPct = p.completed_percentage || 0;
-                      const completedAmt = (p.contract_amount || 0) * (completedPct / 100);
-                      const remainingAmt = (p.contract_amount || 0) - completedAmt;
-                      return (
-                        <tr key={p.id} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
-                          <td className="py-2 px-4">
-                            <button onClick={() => navigate(`/projects/${p.id}`)} className="font-medium text-primary hover:underline flex items-center gap-1">
-                              {p.project_name} <ExternalLink className="w-3 h-3" />
-                            </button>
-                            {p.project_number && <span className="text-xs text-muted-foreground ml-1">({p.project_number})</span>}
-                          </td>
-                          <td className="py-2 px-4 text-muted-foreground">{p.client_name}</td>
-                          <td className="py-2 px-4">
-                            <Badge variant="outline" className={`text-xs ${contractStatusStyles[p.contract_status] || ""}`}>
-                              {(p.contract_status || "pending").replace(/_/g, " ")}
-                            </Badge>
-                          </td>
-                          <td className="py-2 px-4 text-right font-semibold text-foreground">₱{(costBased ? (projectCosts[p.id] || 0) : (p.contract_amount || 0)).toLocaleString()}</td>
-                          {!costBased && <td className="py-2 px-4 text-right text-primary">{completedPct}% · ₱{completedAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>}
-                          {!costBased && <td className="py-2 px-4 text-right font-semibold text-foreground">₱{remainingAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>}
-                          <td className="py-2 px-4">
-                            <div className="flex items-center justify-end gap-1">
-                              {p.contract_status === "approved" &&
-                              <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: p.id, data: { contract_status: "active" } })}>
-                                  Set Active
-                                </Button>
-                              }
-                              {p.contract_status === "pending" &&
-                              <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: p.id, data: { contract_status: "approved" } })}>
-                                  Approve
-                                </Button>
-                              }
-                              <Button variant="ghost" size="icon" onClick={() => navigate(`/projects/${p.id}?tab=change_orders`)} className="text-muted-foreground hover:text-foreground" title="Change Orders">
-                                <FileText className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => setEditingProject(p)} className="text-muted-foreground hover:text-foreground">
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(p.id)} className="text-muted-foreground hover:text-destructive">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    <ProjectRegisterBody
+                      classification={classification}
+                      projects={groupProjects}
+                      costBased={costBased}
+                      projectCosts={projectCosts}
+                      statusStyles={contractStatusStyles}
+                      navigate={navigate}
+                      setEditingProject={setEditingProject}
+                      deleteProject={(id) => deleteMutation.mutate(id)}
+                      updateStatus={(id, status) => updateMutation.mutate({ id, data: { contract_status: status } })}
+                    />
                   </tbody>
                 </table>
               </div>
