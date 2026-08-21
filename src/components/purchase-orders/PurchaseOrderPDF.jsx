@@ -77,18 +77,16 @@ export default function PurchaseOrderPDF({ po }) {
     doc.text(descLines, margin, y);
     y += descLines.length * 5 + 8;
 
-    // Requested By & Required Date
-    if (po.requested_by || po.required_date) {
+    // Purchaser department & Required Date
+    {
       doc.setDrawColor(220, 220, 220);
       doc.line(margin, y - 3, pageW - margin, y - 3);
       y += 3;
-      
-      if (po.requested_by) {
-        doc.setFont("helvetica", "bold");
-        doc.text("Requested By:", margin, y);
-        doc.setFont("helvetica", "normal");
-        doc.text(po.requested_by, margin + 25, y);
-      }
+
+      doc.setFont("helvetica", "bold");
+      doc.text("Purchaser:", margin, y);
+      doc.setFont("helvetica", "normal");
+      doc.text("PROCUREMENT AND LOGISTIC", margin + 25, y);
       if (po.required_date) {
         const reqDate = format(new Date(po.required_date), "MMMM d, yyyy");
         doc.setFont("helvetica", "bold");

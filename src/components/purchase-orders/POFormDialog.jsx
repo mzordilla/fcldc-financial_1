@@ -118,7 +118,7 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
     const amount = form.line_items?.length > 0 
       ? form.line_items.reduce((sum, item) => sum + (item.total || 0), 0)
       : parseFloat(form.amount) || 0;
-    await onSubmit({ ...form, amount });
+    await onSubmit({ ...form, requested_by: "", amount });
     setSaving(false);
     onOpenChange(false);
   };
@@ -314,8 +314,10 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
           </div>
 
           <div className="space-y-1.5">
-            <Label>Requested By</Label>
-            <Input placeholder="Your name" value={form.requested_by} onChange={e => set("requested_by", e.target.value)} />
+            <Label>Purchaser</Label>
+            <div className="flex h-9 w-full items-center rounded-md border border-input bg-muted px-3 py-2 text-sm font-medium text-foreground">
+              PROCUREMENT AND LOGISTIC
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
