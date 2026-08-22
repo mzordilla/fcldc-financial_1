@@ -29,7 +29,7 @@ export default function useCheckWriter() {
     },
   });
   const printOne = async check => { printChecks([check]); await markPrinted([check]); };
-  const deleteCheck = async check => { if (check.status !== "saved" || !window.confirm(`Delete saved check ${check.check_number}?`)) return; await deleteMutation.mutateAsync(check); };
+  const deleteCheck = async check => { if (!window.confirm(`Delete check ${check.check_number}?`)) return; await deleteMutation.mutateAsync(check); };
   const batchPrint = async () => { const records = checks.filter(c => selected.has(c.id) && c.status !== "voided"); if (!records.length) return; printChecks(records); await markPrinted(records); setSelected(new Set()); };
   const toggle = id => setSelected(current => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next; });
   return { bankAccounts, checks, isLoading, selected, toggle, printOne, deleteCheck, deletingId: deleteMutation.isPending ? deleteMutation.variables?.id : null, batchPrint, save: (form, print, printWindow) => createMutation.mutateAsync({ form, print, printWindow }), saving: createMutation.isPending };
