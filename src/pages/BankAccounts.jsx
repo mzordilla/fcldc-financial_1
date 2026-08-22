@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Building2, Pencil, Trash2, TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, ChevronDown, ChevronUp, RefreshCw, FileBarChart, ClipboardCheck } from "lucide-react";
+import { Plus, Building2, Pencil, Trash2, TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, ArrowLeftRight, ChevronDown, ChevronUp, RefreshCw, FileBarChart, ClipboardCheck } from "lucide-react";
 import { ExecutiveSegmentBar } from "@/components/shared/ExecutiveTabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import BankReconciliationPage from "./BankReconciliation";
 import DepositUndepositedDialog from "../components/bank-accounts/DepositUndepositedDialog";
 import BankAccountSummaryReport from "../components/bank-accounts/BankAccountSummaryReport";
 import CheckMonitoring from "../components/bank-accounts/CheckMonitoring";
+import BankTransferDialog from "../components/bank-accounts/BankTransferDialog";
 
 const ACCOUNT_TYPES = [
 { value: "checking", label: "Checking" },
@@ -47,11 +48,13 @@ const typeColors = {
 
 const fmt = (v) =>
 `₱${Math.abs(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const isInflow = (transaction) => transaction.type === "income" || (transaction.type === "fund_transfer" && transaction.amount >= 0);
+const transactionValue = (transaction) => Math.abs(transaction.amount || 0);
 
 function MonthGroup({ monthKey, monthTransactions }) {
   const [open, setOpen] = useState(false);
-  const income = monthTransactions.filter((t) => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
-  const expense = monthTransactions.filter((t) => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
+  const income = monthTransactions.filter(isInflow).reduce((sum, transaction) => sum + transactionValue(transaction), 0);
+  const expense = monthTransactions.filter((transaction) => !isInflow(transaction)).reduce((sum, transaction) => sum + transactionValue(transaction), 0);
 
   return (
     <div className="overflow-hidden border border-border bg-card">
@@ -66,9 +69,9 @@ function MonthGroup({ monthKey, monthTransactions }) {
       {open && <div className="divide-y divide-border">
         <div className="grid grid-cols-[minmax(0,1fr)_90px_120px] bg-muted/20 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"><span>Description</span><span>Date</span><span className="text-right">Amount</span></div>
         {monthTransactions.map((t) => <div key={t.id} className="grid grid-cols-[minmax(0,1fr)_90px_120px] items-center px-4 py-2.5 text-xs hover:bg-muted/20">
-          <div className="flex min-w-0 items-center gap-2"><div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${t.type === "income" ? "bg-primary/10" : "bg-destructive/10"}`}>{t.type === "income" ? <ArrowUpRight className="h-3.5 w-3.5 text-primary" /> : <ArrowDownRight className="h-3.5 w-3.5 text-destructive" />}</div><span className="truncate text-foreground">{t.description}</span></div>
+          <div className="flex min-w-0 items-center gap-2"><div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${isInflow(t) ? "bg-primary/10" : "bg-destructive/10"}`}>{isInflow(t) ? <ArrowUpRight className="h-3.5 w-3.5 text-primary" /> : <ArrowDownRight className="h-3.5 w-3.5 text-destructive" />}</div><span className="truncate text-foreground">{t.description}</span></div>
           <span className="text-muted-foreground">{t.date ? format(new Date(t.date), "MMM d, yyyy") : "—"}</span>
-          <span className={`text-right font-semibold ${t.type === "income" ? "text-primary" : "text-destructive"}`}>{t.type === "income" ? "+" : "-"}₱{(t.amount || 0).toLocaleString()}</span>
+          <span className={`text-right font-semibold ${isInflow(t) ? "text-primary" : "text-destructive"}`}>{isInflow(t) ? "+" : "-"}{fmt(transactionValue(t))}</span>
         </div>)}
       </div>}
     </div>);
@@ -80,8 +83,8 @@ function AccountTransactions({ accountId, transactions }) {
   filter((t) => t.bank_account_id === accountId).
   sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  const totalIncome = allLinked.filter((t) => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
-  const totalExpense = allLinked.filter((t) => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
+  const totalIncome = allLinked.filter(isInflow).reduce((sum, transaction) => sum + transactionValue(transaction), 0);
+  const totalExpense = allLinked.filter((transaction) => !isInflow(transaction)).reduce((sum, transaction) => sum + transactionValue(transaction), 0);
 
   if (allLinked.length === 0) {
     return (
@@ -117,6 +120,7 @@ export default function BankAccounts() {
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState(null);
   const [showDeposit, setShowDeposit] = useState(false);
+  const [showTransfer, setShowTransfer] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: accounts = [], isLoading } = useQuery({
@@ -160,6 +164,22 @@ export default function BankAccounts() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bankaccounts"] })
   });
 
+  const handleTransfer = async ({ fromId, toId, amount, date, reference }) => {
+    const from = accounts.find((account) => account.id === fromId);
+    const to = accounts.find((account) => account.id === toId);
+    const suffix = reference ? ` · ${reference}` : "";
+    await base44.entities.Transaction.bulkCreate([
+      { description: `Transfer to ${to.account_name}${suffix}`, amount: -amount, type: "fund_transfer", category: "fund_transfer", chart_of_account: "Cash and Cash Equivalents", bank_account_id: fromId, date, status: "completed" },
+      { description: `Transfer from ${from.account_name}${suffix}`, amount, type: "fund_transfer", category: "fund_transfer", chart_of_account: "Cash and Cash Equivalents", bank_account_id: toId, date, status: "completed" },
+    ]);
+    await base44.entities.BankAccount.bulkUpdate([
+      { id: fromId, current_balance: (from.current_balance || 0) - amount },
+      { id: toId, current_balance: (to.current_balance || 0) + amount },
+    ]);
+    queryClient.invalidateQueries({ queryKey: ["bankaccounts"] });
+    queryClient.invalidateQueries({ queryKey: ["transactions"] });
+  };
+
   const activeAccounts = accounts.filter((a) => a.status !== "closed");
   const totalBalance = activeAccounts.reduce((s, a) => s + (a.current_balance ?? 0), 0);
   const positiveCount = activeAccounts.filter((a) => (a.current_balance ?? 0) >= 0).length;
@@ -175,7 +195,7 @@ export default function BankAccounts() {
             <p className={`font-project-display text-3xl font-bold tracking-tight ${totalBalance >= 0 ? "text-teal-400" : "text-rose-400"}`}>{totalBalance < 0 ? "-" : ""}{fmt(totalBalance)}</p>
             <p className="text-xs text-slate-400">Track balances across all your bank accounts</p>
           </div>
-          {activeTab === "accounts" && <Button onClick={() => setShowAdd(true)} className="bg-teal-500 text-white hover:bg-teal-600"><Plus className="mr-2 h-4 w-4" /> Add Account</Button>}
+          {activeTab === "accounts" && <div className="flex gap-2"><Button onClick={() => setShowTransfer(true)} variant="outline" className="border-slate-700 bg-slate-900 text-white hover:bg-slate-800 hover:text-white" disabled={activeAccounts.length < 2}><ArrowLeftRight className="mr-2 h-4 w-4" /> Transfer Between Banks</Button><Button onClick={() => setShowAdd(true)} className="bg-teal-500 text-white hover:bg-teal-600"><Plus className="mr-2 h-4 w-4" /> Add Account</Button></div>}
         </div>
         {activeTab === "accounts" && <div className="mt-2 grid gap-3 sm:grid-cols-[1.35fr_1fr_1fr]">
           <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/70 p-3"><div className="rounded-lg bg-amber-500/15 p-2.5"><Building2 className="h-5 w-5 text-amber-400" /></div><div className="min-w-0 flex-1"><p className="text-[10px] uppercase tracking-wide text-slate-400">Undeposited Collections</p><p className="truncate text-lg font-bold text-white">{fmt(undepositedCollections)}</p></div><Button size="sm" variant="outline" className="border-slate-700 text-[10px] text-slate-200 hover:bg-slate-800 hover:text-white" disabled={undepositedCollections <= 0} onClick={() => setShowDeposit(true)}>Deposit Collections</Button></div>
@@ -247,6 +267,13 @@ export default function BankAccounts() {
         fields={fields}
         initialData={editing || {}}
         onSubmit={(data) => updateMutation.mutateAsync({ id: editing.id, data })} />
+
+      <BankTransferDialog
+        open={showTransfer}
+        onOpenChange={setShowTransfer}
+        accounts={accounts}
+        onSubmit={handleTransfer}
+      />
 
       <DepositUndepositedDialog
         open={showDeposit}
