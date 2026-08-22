@@ -63,23 +63,40 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
 
   const { data: historicalPOs = [] } = useQuery({
     queryKey: ["purchase_orders_for_autocomplete"],
-    queryFn: () => base44.entities.PurchaseOrder.list("-requested_date", 500),
+    queryFn: () => base44.entities.PurchaseOrder.list("-requested_date", 10000),
     enabled: open,
   });
 
-  // Build deduplicated material suggestions from all historical line items
-  // Keep the most recent entry per description (lowest index = most recent since sorted by -requested_date)
+  // Build suggestions from current line items and legacy PO descriptions/items.
   const materialSuggestions = useMemo(() => {
     const seen = new Map();
-    historicalPOs.forEach((po) => {
-      (po.line_items || []).forEach((item) => {
-        const key = (item.description || "").toLowerCase().trim();
-        if (key && !seen.has(key)) {
-          seen.set(key, { ...item, supplier_name: po.supplier_name });
-        }
+    const addSuggestion = (description, details, po) => {
+      const cleanDescription = String(description || "").trim();
+      const key = cleanDescription.toLowerCase();
+      if (!key || seen.has(key)) return;
+      seen.set(key, {
+        description: cleanDescription,
+        quantity: details?.quantity,
+        unit_of_measure: details?.unit_of_measure || "pcs",
+        cost_per_item: details?.cost_per_item || 0,
+        supplier_name: po.supplier_name || "Previous supplier",
       });
+    };
+
+    historicalPOs.forEach((po) => {
+      const lineItems = po.line_items || [];
+      lineItems.forEach((item) => addSuggestion(item.description, item, po));
+
+      String(po.items || "")
+        .split(/\r?\n|,/)
+        .forEach((description) => addSuggestion(description, null, po));
+
+      if (lineItems.length === 0 && !po.items) {
+        addSuggestion(po.description, null, po);
+      }
     });
-    return Array.from(seen.values()).sort((a, b) => (a.description || "").localeCompare(b.description || ""));
+
+    return Array.from(seen.values()).sort((a, b) => a.description.localeCompare(b.description));
   }, [historicalPOs]);
 
   useEffect(() => {

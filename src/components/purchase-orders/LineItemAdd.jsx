@@ -76,7 +76,8 @@ export default function LineItemAdd({ onAdd, suggestions = [] }) {
   const handleSelect = (suggestion) => {
     setItem({
       description: suggestion.description,
-      quantity: item.quantity || "",
+      quantity: item.quantity || (suggestion.quantity ? String(suggestion.quantity) : ""),
+      unit_of_measure: suggestion.unit_of_measure || item.unit_of_measure || "pcs",
       cost_per_item: suggestion.cost_per_item ? String(suggestion.cost_per_item) : ""
     });
     setShowSuggestions(false);
