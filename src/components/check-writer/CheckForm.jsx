@@ -20,7 +20,8 @@ export default function CheckForm({ bankAccounts, approvedRequests, loadingReque
     if (!selected.length) return setForm(current => ({ ...initial, bank_account_id: current.bank_account_id, check_number: current.check_number, check_date: current.check_date }));
     const amount = selected.reduce((sum, item) => sum + (item.amount || 0) - (item.withholding_tax_amount || 0) + (item.vat_amount || 0), 0);
     const numbers = selected.map(item => item.request_number || item.invoice_number || item.id);
-    setForm(current => ({ ...current, payee: selected[0].payee, amount: String(amount), memo: `Combined payment for ${numbers.join(", ")}`, source: "payment_approval", payment_request_ids: nextIds, payment_request_numbers: numbers }));
+    const payees = new Set(selected.map(item => item.payee));
+    setForm(current => ({ ...current, payee: payees.size > 1 ? "CASH" : selected[0].payee, amount: String(amount), memo: `Combined payment for ${numbers.join(", ")}`, source: "payment_approval", payment_request_ids: nextIds, payment_request_numbers: numbers }));
   };
   const submit = async print => {
     if (!form.bank_account_id || !form.payee || !Number(form.amount) || !form.check_number || !form.check_date) return setError("Complete all required fields.");
