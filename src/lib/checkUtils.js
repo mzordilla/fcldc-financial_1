@@ -11,7 +11,7 @@ export function numberToWords(amount) {
 }
 
 function checkMarkup(check) {
-  const date = check.check_date ? `${check.check_date.slice(5, 7)}  ${check.check_date.slice(8, 10)}  <span class="date-year">${check.check_date.slice(0, 4)}</span>` : "";
+  const date = check.check_date ? `${check.check_date.slice(5, 7)}  ${check.check_date.slice(8, 10)}  <span class="date-year">${check.check_date.slice(0, 2)}<span class="date-year-last">${check.check_date.slice(2, 4)}</span></span>` : "";
   const amount = Number(check.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return `<section class="check"><div class="date">${date}</div><div class="payee">${escapeHtml(check.payee)}</div><div class="amount">₱ ${amount}</div><div class="words">${escapeHtml(check.amount_in_words || numberToWords(check.amount))}</div><div class="memo">${escapeHtml(check.memo || "")}</div></section>`;
 }
@@ -19,7 +19,7 @@ function checkMarkup(check) {
 export function printChecks(checks, targetWindow) {
   const win = targetWindow || window.open("", "_blank", "width=950,height=650");
   if (!win) throw new Error("Please allow pop-ups to print checks.");
-  win.document.write(`<html><head><title>Check Print</title><style>*{box-sizing:border-box}body{margin:0;font-family:'Courier New',monospace}.check{width:8.5in;height:3.5in;position:relative;page-break-after:always}.date{position:absolute;top:.60in;right:.37in;font-size:17px;font-weight:bold;letter-spacing:6.75px}.date-year{position:relative;left:.02in;letter-spacing:7.7625px}.payee{position:absolute;top:1.02in;left:1.55in;right:2.15in;font-size:17px;font-weight:bold;white-space:nowrap;overflow:hidden}.amount{position:absolute;top:.98in;right:.42in;font-size:18px;font-weight:bold}.words{position:absolute;top:1.38in;left:.55in;right:.45in;font-size:14px;font-weight:bold}.memo{position:absolute;bottom:.48in;left:.55in;max-width:4.5in;font-size:13px}@page{size:8.5in 3.5in;margin:0}@media print{.check:last-child{page-break-after:auto}}</style></head><body>${checks.map(checkMarkup).join("")}</body></html>`);
+  win.document.write(`<html><head><title>Check Print</title><style>*{box-sizing:border-box}body{margin:0;font-family:'Courier New',monospace}.check{width:8.5in;height:3.5in;position:relative;page-break-after:always}.date{position:absolute;top:.60in;right:.37in;font-size:17px;font-weight:bold;letter-spacing:6.75px}.date-year{position:relative;left:.02in;letter-spacing:7.7625px}.date-year-last{position:relative;left:.03in}.payee{position:absolute;top:1.02in;left:1.55in;right:2.15in;font-size:17px;font-weight:bold;white-space:nowrap;overflow:hidden}.amount{position:absolute;top:.98in;right:.42in;font-size:18px;font-weight:bold}.words{position:absolute;top:1.38in;left:.55in;right:.45in;font-size:14px;font-weight:bold}.memo{position:absolute;bottom:.48in;left:.55in;max-width:4.5in;font-size:13px}@page{size:8.5in 3.5in;margin:0}@media print{.check:last-child{page-break-after:auto}}</style></head><body>${checks.map(checkMarkup).join("")}</body></html>`);
   win.document.close(); win.focus(); setTimeout(() => win.print(), 250);
   return win;
 }
