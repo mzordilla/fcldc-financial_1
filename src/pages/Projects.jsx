@@ -186,7 +186,7 @@ export default function Projects() {
   const approvedClientProjects = approvedProjects.filter((p) => p.project_classification === "client_project");
   const totalApprovedValue = approvedClientProjects.reduce((s, p) => s + (p.contract_amount || 0), 0);
   const remainingWorksValue = approvedClientProjects.reduce((s, p) => s + (p.contract_amount || 0) * (1 - (p.completed_percentage || 0) / 100), 0);
-  const activeCount = projects.filter((p) => p.contract_status === "active").length;
+  const activeCount = projects.filter((p) => p.project_classification === "client_project" && p.contract_status === "active").length;
   const pendingCount = projects.filter((p) => p.contract_status === "pending").length;
 
   return (
