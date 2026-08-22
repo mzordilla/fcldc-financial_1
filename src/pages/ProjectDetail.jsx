@@ -36,7 +36,7 @@ const projectTypeLabels = {
 const classificationLabels = {
   owned_project: "Owned Project",
   client_project: "Client Project",
-  monitoring_project: "Monitoring Project"
+  monitoring_project: "Division"
 };
 
 const fields = [
@@ -56,7 +56,7 @@ const fields = [
   { name: "project_classification", label: "Classification", type: "select", options: [
     { value: "owned_project", label: "Project Owned Project" },
     { value: "client_project", label: "Client Project" },
-    { value: "monitoring_project", label: "Monitoring Project" }]
+    { value: "monitoring_project", label: "Division" }]
   },
   { name: "contract_amount", label: "Contract Amount (₱)", type: "number", required: true, placeholder: "0.00", showWhen: { field: "project_classification", values: ["client_project"] } },
   ...PROJECT_BUDGET_FORM_FIELDS,

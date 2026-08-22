@@ -5,7 +5,7 @@ import ProjectDeliveryCard from "@/components/purchase-orders/ProjectDeliveryCar
 const LABELS = {
   owned_project: "Owned Projects",
   client_project: "Client Projects",
-  monitoring_project: "Monitoring Projects",
+  monitoring_project: "Division",
   unclassified: "Unclassified Projects",
 };
 
