@@ -220,7 +220,7 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
 
             <div className="space-y-2">
               <Label className="text-xs font-semibold text-slate-700">Itemized Line Items</Label>
-              <div className="overflow-hidden rounded-sm border border-slate-300">
+              <div className="rounded-sm border border-slate-300">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-slate-300 bg-slate-100 text-slate-800">

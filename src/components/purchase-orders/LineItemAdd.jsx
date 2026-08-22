@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 const UNIT_OPTIONS = [
   { value: "pcs", label: "Pieces (pcs)" },
@@ -102,12 +102,13 @@ export default function LineItemAdd({ onAdd, suggestions = [] }) {
     <div className="border-t border-slate-300 bg-white p-2">
       <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_64px_80px_112px_36px]">
         <div className="relative" ref={wrapperRef}>
+          <Search className="pointer-events-none absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" />
           <Input
             placeholder="Search previous purchases or enter an item"
             value={item.description}
             onChange={(e) => {setItem({ ...item, description: e.target.value });setShowSuggestions(true);}}
             onFocus={() => setShowSuggestions(true)}
-            className="h-8 rounded-sm border-slate-300 px-2 text-xs shadow-none"
+            className="h-8 rounded-sm border-slate-300 pl-8 pr-2 text-xs shadow-none"
             autoComplete="off" />
           {showSuggestions &&
           <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-52 overflow-y-auto rounded-sm border border-slate-300 bg-popover shadow-lg">
