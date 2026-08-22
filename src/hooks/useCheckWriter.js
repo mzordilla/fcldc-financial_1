@@ -20,8 +20,17 @@ export default function useCheckWriter() {
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["checks"] }); queryClient.invalidateQueries({ queryKey: ["transactions"] }); },
   });
+  const deleteMutation = useMutation({
+    mutationFn: check => base44.entities.Check.delete(check.id),
+    onSuccess: (_, check) => {
+      setSelected(current => { const next = new Set(current); next.delete(check.id); return next; });
+      queryClient.invalidateQueries({ queryKey: ["checks"] });
+      queryClient.invalidateQueries({ queryKey: ["approved_payment_requests_for_checks"] });
+    },
+  });
   const printOne = async check => { printChecks([check]); await markPrinted([check]); };
+  const deleteCheck = async check => { if (check.status !== "saved" || !window.confirm(`Delete saved check ${check.check_number}?`)) return; await deleteMutation.mutateAsync(check); };
   const batchPrint = async () => { const records = checks.filter(c => selected.has(c.id) && c.status !== "voided"); if (!records.length) return; printChecks(records); await markPrinted(records); setSelected(new Set()); };
   const toggle = id => setSelected(current => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next; });
-  return { bankAccounts, checks, isLoading, selected, toggle, printOne, batchPrint, save: (form, print, printWindow) => createMutation.mutateAsync({ form, print, printWindow }), saving: createMutation.isPending };
+  return { bankAccounts, checks, isLoading, selected, toggle, printOne, deleteCheck, deletingId: deleteMutation.isPending ? deleteMutation.variables?.id : null, batchPrint, save: (form, print, printWindow) => createMutation.mutateAsync({ form, print, printWindow }), saving: createMutation.isPending };
 }
