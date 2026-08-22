@@ -37,7 +37,6 @@ import WorkflowDiagram from './pages/WorkflowDiagram';
 import Clients from './pages/Clients';
 import Payroll from './pages/Payroll';
 import PayrollRegister from './pages/PayrollRegister';
-import CheckWriter from './pages/CheckWriter';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -73,7 +72,6 @@ const AuthenticatedApp = () => {
         <Route path="/project-pnl" element={<ProjectPnL />} />
         <Route path="/purchase-orders" element={<PurchaseOrders />} />
         <Route path="/payment-approvals" element={<PaymentApprovals />} />
-        <Route path="/check-writer" element={<CheckWriter />} />
         <Route path="/receivables" element={<Receivables />} />
         <Route path="/payables" element={<Payables />} />
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ClipboardList, Boxes, Home, GitBranch, Wallet, PanelLeftClose, PanelLeftOpen, Printer } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ClipboardList, Boxes, Home, GitBranch, Wallet, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { navItemsByRole, canAccess } from "@/lib/access-control";
@@ -14,7 +14,6 @@ const allNavItems = [
 { label: "Receivables", icon: FileText, path: "/receivables" },
 { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },
 { label: "Payment Approvals", icon: CircleDollarSign, path: "/payment-approvals" },
-  { label: "Check Writer", icon: Printer, path: "/check-writer" },
 { label: "Payroll", icon: Wallet, path: "/payroll" },
 { label: "Transactions", icon: ArrowLeftRight, path: "/transactions" },
 { label: "Payables", icon: CreditCard, path: "/payables" },

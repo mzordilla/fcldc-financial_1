@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
-import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart, History, ChevronDown, ChevronUp, Square, CheckSquare, Upload, Layers, CreditCard, Search, Download } from "lucide-react";
+import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Banknote, Pencil, Paperclip, ShoppingCart, History, ChevronDown, ChevronUp, Square, CheckSquare, Upload, Layers, CreditCard, Search, Download, Printer } from "lucide-react";
 import { ExecutiveTabsList, ExecutiveTab } from "@/components/shared/ExecutiveTabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import BillsPaymentSheet from "../components/payables/BillsPaymentSheet";
@@ -21,6 +21,7 @@ import ApprovalWorkflowDialog from "../components/approvals/ApprovalWorkflowDial
 import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
 import SupplierGroupedRequests from "../components/payment/SupplierGroupedRequests";
 import SupplierGroupedPOs from "../components/payment/SupplierGroupedPOs";
+import CheckWriterWorkspace from "@/components/check-writer/CheckWriterWorkspace";
 
 const statusStyles = {
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
@@ -707,6 +708,7 @@ export default function PaymentApprovals() {
           <ExecutiveTab value="pending" icon={Clock}>Pending ({pending.length})</ExecutiveTab>
           <ExecutiveTab value="approved" icon={CheckCircle}>Approved ({approved.length})</ExecutiveTab>
           <ExecutiveTab value="paid" icon={Banknote}>Paid ({paid.length})</ExecutiveTab>
+          {(isAdmin || isDisbursementRole) && <ExecutiveTab value="checks" icon={Printer}>Check Writer</ExecutiveTab>}
         </ExecutiveTabsList>
 
         {/* Approved Purchase Orders — Ready to Pay */}
@@ -879,6 +881,12 @@ export default function PaymentApprovals() {
             </>
           )}
         </TabsContent>
+
+        {(isAdmin || isDisbursementRole) && (
+          <TabsContent value="checks" className="mt-4">
+            <CheckWriterWorkspace />
+          </TabsContent>
+        )}
       </Tabs>
 
       <BillsPaymentSheet open={showBillsPayment} onOpenChange={setShowBillsPayment} />
