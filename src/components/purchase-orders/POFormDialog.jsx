@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Plus } from "lucide-react";
 import LineItemAdd from "./LineItemAdd";
+import POBudgetWarning from "@/components/purchase-orders/POBudgetWarning";
 
 const COA_CATEGORY_LABELS = {
   project_payment: "Project Payment", material_cost: "Material Cost", labor: "Labor",
@@ -97,6 +98,8 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
   }, [open, initialData]);
 
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+  const currentAmount = form.line_items?.length > 0 ? form.line_items.reduce((sum, item) => sum + (item.total || 0), 0) : parseFloat(form.amount) || 0;
+  const selectedProject = projects.find((project) => project.project_name === form.project_name);
 
   const handleSupplierSelect = (value) => {
     if (value === OTHER_VALUE) {
@@ -298,6 +301,8 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
               </Select>
             </div>
           </div>
+
+          <POBudgetWarning project={selectedProject} orders={historicalPOs} category={form.category} amount={currentAmount} currentPOId={initialData?.id} />
 
           <div className="space-y-1.5">
             <Label>Chart of Account <span className="text-destructive">*</span></Label>

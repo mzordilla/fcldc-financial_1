@@ -12,6 +12,8 @@ import ChangeOrderFormDialog from "../components/projects/ChangeOrderFormDialog"
 import ContractFormDialog from "../components/projects/ContractFormDialog";
 import { useState } from "react";
 import { calculateProjectCost, usesCostIncurred } from "@/lib/projectCost";
+import { PROJECT_BUDGET_FORM_FIELDS, clearProjectBudget } from "@/lib/projectBudget";
+import ProjectBudgetPanel from "@/components/projects/ProjectBudgetPanel";
 
 const contractStatusStyles = {
   pending: "bg-muted text-muted-foreground border-border",
@@ -56,7 +58,8 @@ const fields = [
     { value: "client_project", label: "Client Project" },
     { value: "monitoring_project", label: "Monitoring Project" }]
   },
-  { name: "contract_amount", label: "Contract Amount ($)", type: "number", required: true, placeholder: "0.00", showWhen: { field: "project_classification", values: ["client_project"] } },
+  { name: "contract_amount", label: "Contract Amount (₱)", type: "number", required: true, placeholder: "0.00", showWhen: { field: "project_classification", values: ["client_project"] } },
+  ...PROJECT_BUDGET_FORM_FIELDS,
   { name: "completed_percentage", label: "Completed (%)", type: "number", placeholder: "e.g. 45" },
   { name: "retention_rate", label: "Retention Rate (%)", type: "number", placeholder: "e.g. 5" },
   { name: "contract_status", label: "Contract Status", type: "select", options: [
@@ -225,6 +228,7 @@ export default function ProjectDetail() {
       <Tabs defaultValue={initialTab} className="w-full">
         <TabsList className="mb-4 flex w-full overflow-x-auto">
           <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
+          {project.project_classification === "client_project" && <TabsTrigger value="budget" className="flex-1">Cost Budget</TabsTrigger>}
           <TabsTrigger value="client" className="flex-1">Client</TabsTrigger>
           <TabsTrigger value="contracts" className="flex-1">Contracts ({contracts.length})</TabsTrigger>
           <TabsTrigger value="billings" className="flex-1">Progress Billings ({billingCycles.length})</TabsTrigger>
@@ -303,6 +307,8 @@ export default function ProjectDetail() {
       </div>
 
         </TabsContent>
+
+        {project.project_classification === "client_project" && <TabsContent value="budget"><ProjectBudgetPanel project={project} actualCost={projectCost} /></TabsContent>}
 
         {/* CLIENT TAB */}
         <TabsContent value="client">
@@ -717,7 +723,7 @@ export default function ProjectDetail() {
         title="Edit Project"
         fields={fields}
         initialData={editingProject || {}}
-        onSubmit={(data) => updateMutation.mutateAsync({ id: editingProject.id, data: data.project_classification === "client_project" ? data : { ...data, contract_amount: 0 } })}
+        onSubmit={(data) => updateMutation.mutateAsync({ id: editingProject.id, data: data.project_classification === "client_project" ? data : clearProjectBudget({ ...data, contract_amount: 0 }) })}
       />
 
       <ChangeOrderFormDialog

@@ -21,6 +21,7 @@ import ApprovedProjectCards from "@/components/projects/ApprovedProjectCards";
 import ProjectRegisterBody from "@/components/projects/ProjectRegisterBody";
 import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
 import { calculateProjectCost, usesCostIncurred } from "@/lib/projectCost";
+import { PROJECT_BUDGET_FORM_FIELDS, clearProjectBudget } from "@/lib/projectBudget";
 
 
 const contractStatusStyles = {
@@ -66,7 +67,8 @@ const fields = (clients) => [
   { value: "client_project", label: "Client Project" },
   { value: "monitoring_project", label: "Monitoring Project" }]
 },
-{ name: "contract_amount", label: "Contract Amount ($)", type: "number", required: true, placeholder: "0.00", showWhen: { field: "project_classification", values: ["client_project"] } },
+{ name: "contract_amount", label: "Contract Amount (₱)", type: "number", required: true, placeholder: "0.00", showWhen: { field: "project_classification", values: ["client_project"] } },
+...PROJECT_BUDGET_FORM_FIELDS,
 { name: "completed_percentage", label: "Completed (%)", type: "number", placeholder: "e.g. 45" },
 { name: "retention_rate", label: "Retention Rate (%)", type: "number", placeholder: "e.g. 5" },
 { name: "contract_status", label: "Contract Status", type: "select", options: [
@@ -309,7 +311,7 @@ export default function Projects() {
         fields={fields(clients)}
         onSubmit={(data) => {
           const client = clients.find(c => c.id === data.client_id);
-          const projectData = data.project_classification === "client_project" ? data : { ...data, contract_amount: 0 };
+          const projectData = data.project_classification === "client_project" ? data : clearProjectBudget({ ...data, contract_amount: 0 });
           return createMutation.mutateAsync({ ...projectData, client_name: client?.client_name || "" });
         }} />
 
@@ -321,7 +323,7 @@ export default function Projects() {
         initialData={editingProject || {}}
         onSubmit={(data) => {
           const client = clients.find(c => c.id === data.client_id);
-          const projectData = data.project_classification === "client_project" ? data : { ...data, contract_amount: 0 };
+          const projectData = data.project_classification === "client_project" ? data : clearProjectBudget({ ...data, contract_amount: 0 });
           return updateMutation.mutateAsync({ id: editingProject.id, data: { ...projectData, client_name: client?.client_name || data.client_name || "" } });
         }} />
 

@@ -26,13 +26,14 @@ export default function AddFormDialog({ open, onOpenChange, title, fields, onSub
   }, [open, initialData]);
 
   const isVisible = (field) => !field.showWhen || field.showWhen.values.includes(formData[field.showWhen.field]);
+  const fieldValue = (field) => field.calculatedFrom ? field.calculatedFrom.reduce((sum, name) => sum + (Number(formData[name]) || 0), 0) : formData[field.name];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     const cleanedData = {};
     fields.filter(isVisible).forEach(field => {
-      let value = formData[field.name];
+      let value = fieldValue(field);
       if (field.type === "number" && value !== "" && value !== null && value !== undefined) {
         value = parseFloat(value) || 0;
       }
@@ -48,7 +49,7 @@ export default function AddFormDialog({ open, onOpenChange, title, fields, onSub
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -97,8 +98,10 @@ export default function AddFormDialog({ open, onOpenChange, title, fields, onSub
                   type={field.type || "text"}
                   step={field.type === "number" ? "0.01" : undefined}
                   placeholder={field.placeholder}
-                  value={formData[field.name] ?? ""}
+                  value={fieldValue(field) ?? ""}
                   onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: field.type === "number" ? parseFloat(e.target.value) || "" : e.target.value }))}
+                  readOnly={!!field.calculatedFrom}
+                  className={field.calculatedFrom ? "bg-muted font-semibold" : ""}
                   required={field.required}
                 />
               )}

@@ -27,6 +27,7 @@ import ProjectDeliverySummary from "../components/purchase-orders/ProjectDeliver
 import ChangeRequestDialog from "../components/purchase-orders/ChangeRequestDialog";
 import ChangeRequestReviewDialog from "../components/purchase-orders/ChangeRequestReviewDialog";
 import PendingChangeRequestsBanner from "../components/purchase-orders/PendingChangeRequestsBanner";
+import POBudgetWarning from "@/components/purchase-orders/POBudgetWarning";
 import Payees from "./Payees";
 const statusStyles = {
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
@@ -415,6 +416,7 @@ export default function PurchaseOrders() {
     acc[key] = (acc[key] || 0) + (o.amount || 0);
     return acc;
   }, {});
+  const reviewProject = projects.find((project) => project.project_code === reviewPO?.project_code || project.project_name === reviewPO?.project_name);
 
 
 
@@ -909,6 +911,7 @@ export default function PurchaseOrders() {
               <p className="text-sm text-muted-foreground">{reviewPO.description}</p>
               {reviewPO.project_name && <p className="text-xs text-muted-foreground">Project: {reviewPO.project_name}</p>}
               <p className="text-2xl font-bold text-foreground mt-1">₱{(reviewPO.amount || 0).toLocaleString()}</p>
+              <POBudgetWarning project={reviewProject} orders={orders} category={reviewPO.category} amount={reviewPO.amount} currentPOId={reviewPO.id} />
               <Badge variant="outline" className={`text-xs mt-1 ${statusStyles[reviewPO.approval_status] || ""}`}>
                 {(reviewPO.approval_status || "pending").replace(/_/g, " ")}
               </Badge>

@@ -68,7 +68,7 @@ function buildProjectData(transactions, receivables = [], billingCycles = [], pr
   transactions.forEach((t) => {
     if (t.category === "fund_transfer") return;
     if (t.category === "bank_reconciliation") return;
-    const key = t.project_name || "Unassigned";
+    const key = resolveKey(t.project_name, t.project_code);
     ensure(key);
     if (t.type === "income") {
       projects[key].income += t.amount || 0;
@@ -335,14 +335,14 @@ export default function ProjectPnL() {
     Loss: Math.max(p.expenses - p.income, 0),
   }));
 
-  // Budget vs Actual: only projects with a contract_amount (budget)
+  // Cost estimate vs actual for client projects with a configured budget
   const budgetChartData = projectsData
-    .filter(p => p.contract_amount > 0 && (p.contract_status === "active" || p.contract_status === "approved" || p.contract_status === "completed"))
+    .filter(p => p.project_classification === "client_project" && p.project_budget_total > 0 && (p.contract_status === "active" || p.contract_status === "approved" || p.contract_status === "completed"))
     .map(p => {
       const pData = allProjects.find(ap => ap.name === p.project_name);
       return {
         name: p.project_name.length > 14 ? p.project_name.slice(0, 14) + "…" : p.project_name,
-        Budget: p.contract_amount,
+        Budget: p.project_budget_total,
         Actual: pData ? pData.expenses : 0,
       };
     })
@@ -376,7 +376,7 @@ export default function ProjectPnL() {
           <div className="flex items-center justify-between mb-1">
             <h3 className="text-base font-semibold">Budget vs Actual Cost — Active Projects</h3>
           </div>
-          <p className="text-xs text-muted-foreground mb-4">Contract amount vs actual expenses per project</p>
+          <p className="text-xs text-muted-foreground mb-4">Internal cost estimate vs actual expenses per client project</p>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={budgetChartData} margin={{ top: 0, right: 10, left: -10, bottom: 0 }} barSize={22} barCategoryGap="30%">
@@ -388,7 +388,7 @@ export default function ProjectPnL() {
                   contentStyle={{ borderRadius: 10, fontSize: 12 }}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="Budget" fill="hsl(199, 89%, 48%)" radius={[3, 3, 0, 0]} name="Budget (Contract)" />
+                <Bar dataKey="Budget" fill="hsl(199, 89%, 48%)" radius={[3, 3, 0, 0]} name="Cost Estimate" />
                 <Bar dataKey="Actual" fill="hsl(0, 84%, 60%)" radius={[3, 3, 0, 0]} name="Actual Cost">
                   {budgetChartData.map((entry, index) => (
                     <Cell

@@ -50,6 +50,46 @@
       "type": "number",
       "description": "Primary/original contract value for Client Projects only"
     },
+    "project_budget_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Total internal cost estimate for a client project, calculated from budget categories"
+    },
+    "budget_materials": {
+      "type": "number",
+      "default": 0,
+      "description": "Estimated materials cost"
+    },
+    "budget_labor": {
+      "type": "number",
+      "default": 0,
+      "description": "Estimated labor cost"
+    },
+    "budget_equipment": {
+      "type": "number",
+      "default": 0,
+      "description": "Estimated equipment cost"
+    },
+    "budget_subcontractor": {
+      "type": "number",
+      "default": 0,
+      "description": "Estimated subcontractor cost"
+    },
+    "budget_services": {
+      "type": "number",
+      "default": 0,
+      "description": "Estimated services cost"
+    },
+    "budget_overhead": {
+      "type": "number",
+      "default": 0,
+      "description": "Estimated overhead cost"
+    },
+    "budget_other": {
+      "type": "number",
+      "default": 0,
+      "description": "Estimated other project costs"
+    },
     "completed_percentage": {
       "type": "number",
       "description": "Percentage of work completed (0-100)",
