@@ -31,12 +31,12 @@ export default function CheckForm({ bankAccounts, approvedRequests, payees, load
     try { await onSave({ ...form, amount: Number(form.amount), amount_in_words: words }, print, printWindow); setForm(initial); setSelectedRequestIds([]); }
     catch (e) { printWindow?.close(); setError(e.message || "Unable to save check."); }
   };
-  return <section className="bg-card border border-border rounded-2xl p-5 space-y-4">
-    <div><p className="text-xs font-semibold uppercase tracking-widest text-primary">New instrument</p><h2 className="text-xl font-bold">Write a Check</h2></div>
+  return <section className="bg-card border border-border rounded-xl p-3 space-y-2.5">
+    <div><p className="text-[10px] font-semibold uppercase tracking-widest text-primary">New instrument</p><h2 className="text-lg font-bold">Write a Check</h2></div>
     <ApprovedPRSelect requests={approvedRequests} selectedIds={selectedRequestIds} onToggle={toggleRequest} loading={loadingRequests} />
     <div className="space-y-1.5"><Label>Source Bank *</Label><Select value={form.bank_account_id} onValueChange={v => set("bank_account_id", v)}><SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger><SelectContent>{bankAccounts.map(a => <SelectItem key={a.id} value={a.id}>{a.account_name} — {a.bank_name}</SelectItem>)}</SelectContent></Select></div>
     <div className="space-y-1.5"><Label>Pay to the Order of *</Label><Input value={form.payee} onChange={e => set("payee", e.target.value)} disabled={selectedRequestIds.length > 0} /></div>
-    <div className="grid grid-cols-2 gap-3"><div className="space-y-1.5"><Label>Amount *</Label><Input type="number" min="0" step="0.01" value={form.amount} onChange={e => set("amount", e.target.value)} disabled={selectedRequestIds.length > 0} /></div><div className="space-y-1.5"><Label>Check Number *</Label><Input value={form.check_number} onChange={e => set("check_number", e.target.value)} /></div></div>
+    <div className="grid grid-cols-2 gap-2"><div className="space-y-1"><Label>Amount *</Label><Input type="number" min="0" step="0.01" value={form.amount} onChange={e => set("amount", e.target.value)} disabled={selectedRequestIds.length > 0} /></div><div className="space-y-1.5"><Label>Check Number *</Label><Input value={form.check_number} onChange={e => set("check_number", e.target.value)} /></div></div>
     <div className="space-y-1.5"><Label>Check Date *</Label><Input type="date" value={form.check_date} onChange={e => set("check_date", e.target.value)} /></div>
     <div className="space-y-1.5"><Label>Memo</Label><Input value={form.memo} onChange={e => set("memo", e.target.value)} /></div>
     <div className="rounded-xl bg-muted/50 border border-border p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Amount in words</p><p className="text-xs font-mono font-semibold leading-relaxed">{words}</p></div>
