@@ -218,7 +218,7 @@ export default function BankAccounts() {
   };
 
   const activeAccounts = accounts.filter((a) => a.status !== "closed");
-  const totalBalance = activeAccounts.reduce((s, a) => s + (a.current_balance ?? 0), 0);
+  const totalBalance = activeAccounts.filter((a) => a.bank_name?.trim().toUpperCase() !== "OFFSET BANK ACCOUNT").reduce((s, a) => s + (a.current_balance ?? 0), 0);
   const positiveCount = activeAccounts.filter((a) => (a.current_balance ?? 0) >= 0).length;
   const negativeCount = activeAccounts.filter((a) => (a.current_balance ?? 0) < 0).length;
 
