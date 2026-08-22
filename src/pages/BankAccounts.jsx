@@ -171,13 +171,17 @@ export default function BankAccounts() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bankaccounts"] })
   });
 
-  const handleTransfer = async ({ fromId, toId, amount, date, reference }) => {
-    const from = accounts.find((account) => account.id === fromId);
-    const to = accounts.find((account) => account.id === toId);
+  const handleTransfer = async ({ transfers, date, reference }) => {
+    const detailedTransfers = transfers.map((line) => {
+      const from = accounts.find((account) => account.id === line.fromId);
+      const to = accounts.find((account) => account.id === line.toId);
+      return { from_bank_account_id: line.fromId, from_bank_name: `${from.account_name} — ${from.bank_name}`, to_bank_account_id: line.toId, to_bank_name: `${to.account_name} — ${to.bank_name}`, amount: line.amount };
+    });
+    const first = detailedTransfers[0];
     await base44.entities.BankTransferRequest.create({
-      from_bank_account_id: fromId, from_bank_name: `${from.account_name} — ${from.bank_name}`,
-      to_bank_account_id: toId, to_bank_name: `${to.account_name} — ${to.bank_name}`,
-      amount, transfer_date: date, reference, requested_by_name: currentUser?.full_name || currentUser?.email, status: "pending"
+      transfers: detailedTransfers, ...first,
+      amount: detailedTransfers.reduce((sum, line) => sum + line.amount, 0), transfer_date: date, reference,
+      requested_by_name: currentUser?.full_name || currentUser?.email, status: "pending"
     });
     queryClient.invalidateQueries({ queryKey: ["bankTransferRequests"] });
   };
@@ -185,14 +189,23 @@ export default function BankAccounts() {
   const approveTransfer = async (request) => {
     const latest = await base44.entities.BankTransferRequest.get(request.id);
     if (latest.status !== "pending") throw new Error("This request has already been reviewed.");
-    const [from, to] = await Promise.all([base44.entities.BankAccount.get(latest.from_bank_account_id), base44.entities.BankAccount.get(latest.to_bank_account_id)]);
-    if ((from.current_balance || 0) < latest.amount) throw new Error("The source account has insufficient funds.");
+    const lines = latest.transfers?.length ? latest.transfers : [{ from_bank_account_id: latest.from_bank_account_id, to_bank_account_id: latest.to_bank_account_id, amount: latest.amount }];
+    const accountIds = [...new Set(lines.flatMap((line) => [line.from_bank_account_id, line.to_bank_account_id]))];
+    const fetched = await Promise.all(accountIds.map((id) => base44.entities.BankAccount.get(id)));
+    const accountMap = Object.fromEntries(fetched.map((account) => [account.id, account]));
+    const outgoing = lines.reduce((totals, line) => ({ ...totals, [line.from_bank_account_id]: (totals[line.from_bank_account_id] || 0) + line.amount }), {});
+    if (Object.entries(outgoing).some(([id, amount]) => amount > (accountMap[id]?.current_balance || 0))) throw new Error("A source account has insufficient funds for this request.");
     const suffix = latest.reference ? ` · ${latest.reference}` : "";
-    await base44.entities.Transaction.bulkCreate([
-      { description: `Transfer to ${to.account_name}${suffix}`, amount: -latest.amount, type: "fund_transfer", category: "fund_transfer", chart_of_account: "Cash and Cash Equivalents", bank_account_id: from.id, date: latest.transfer_date, status: "completed" },
-      { description: `Transfer from ${from.account_name}${suffix}`, amount: latest.amount, type: "fund_transfer", category: "fund_transfer", chart_of_account: "Cash and Cash Equivalents", bank_account_id: to.id, date: latest.transfer_date, status: "completed" }
-    ]);
-    await base44.entities.BankAccount.bulkUpdate([{ id: from.id, current_balance: from.current_balance - latest.amount }, { id: to.id, current_balance: (to.current_balance || 0) + latest.amount }]);
+    await base44.entities.Transaction.bulkCreate(lines.flatMap((line) => {
+      const from = accountMap[line.from_bank_account_id];
+      const to = accountMap[line.to_bank_account_id];
+      return [
+        { description: `Transfer to ${to.account_name}${suffix}`, amount: -line.amount, type: "fund_transfer", category: "fund_transfer", chart_of_account: "Cash and Cash Equivalents", bank_account_id: from.id, date: latest.transfer_date, status: "completed" },
+        { description: `Transfer from ${from.account_name}${suffix}`, amount: line.amount, type: "fund_transfer", category: "fund_transfer", chart_of_account: "Cash and Cash Equivalents", bank_account_id: to.id, date: latest.transfer_date, status: "completed" }
+      ];
+    }));
+    const deltas = lines.reduce((totals, line) => ({ ...totals, [line.from_bank_account_id]: (totals[line.from_bank_account_id] || 0) - line.amount, [line.to_bank_account_id]: (totals[line.to_bank_account_id] || 0) + line.amount }), {});
+    await base44.entities.BankAccount.bulkUpdate(accountIds.map((id) => ({ id, current_balance: (accountMap[id].current_balance || 0) + deltas[id] })));
     await base44.entities.BankTransferRequest.update(latest.id, { status: "approved", reviewed_by: currentUser?.full_name || currentUser?.email, reviewed_date: new Date().toISOString() });
     queryClient.invalidateQueries({ queryKey: ["bankaccounts"] });
     queryClient.invalidateQueries({ queryKey: ["transactions"] });

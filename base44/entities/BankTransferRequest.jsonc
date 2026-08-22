@@ -2,25 +2,54 @@
   "name": "BankTransferRequest",
   "type": "object",
   "properties": {
+    "transfers": {
+      "type": "array",
+      "description": "Bank-to-bank transfer lines included in this approval request",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from_bank_account_id": {
+            "type": "string"
+          },
+          "from_bank_name": {
+            "type": "string"
+          },
+          "to_bank_account_id": {
+            "type": "string"
+          },
+          "to_bank_name": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "from_bank_account_id",
+          "to_bank_account_id",
+          "amount"
+        ]
+      }
+    },
     "from_bank_account_id": {
       "type": "string",
-      "description": "Source bank account ID"
+      "description": "Legacy source bank account ID"
     },
     "from_bank_name": {
       "type": "string",
-      "description": "Source account display name"
+      "description": "Legacy source account display name"
     },
     "to_bank_account_id": {
       "type": "string",
-      "description": "Destination bank account ID"
+      "description": "Legacy destination bank account ID"
     },
     "to_bank_name": {
       "type": "string",
-      "description": "Destination account display name"
+      "description": "Legacy destination account display name"
     },
     "amount": {
       "type": "number",
-      "description": "Requested transfer amount"
+      "description": "Total requested transfer amount"
     },
     "transfer_date": {
       "type": "string",
@@ -52,8 +81,6 @@
     }
   },
   "required": [
-    "from_bank_account_id",
-    "to_bank_account_id",
     "amount",
     "transfer_date",
     "status"
