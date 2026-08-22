@@ -98,74 +98,35 @@ export default function LineItemAdd({ onAdd, suggestions = [] }) {
   };
 
   return (
-    <div className="space-y-2 p-3 bg-muted/30 rounded-lg">
-      <div className="grid grid-cols-[1fr_80px_100px_120px] gap-2">
-        {/* Description with autocomplete */}
+    <div className="border-t border-slate-300 bg-white p-2">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_64px_80px_112px_36px]">
         <div className="relative" ref={wrapperRef}>
           <Input
             placeholder="Item description"
             value={item.description}
             onChange={(e) => {setItem({ ...item, description: e.target.value });setShowSuggestions(true);}}
             onFocus={() => setShowSuggestions(true)}
-            className="text-xs h-8 pt-1 pr-3 pb-1 pl-2"
+            className="h-8 rounded-sm border-slate-300 px-2 text-xs shadow-none"
             autoComplete="off" />
-          
           {showSuggestions && filteredSuggestions.length > 0 &&
-          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-lg max-h-52 overflow-y-auto">
+          <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-52 overflow-y-auto rounded-sm border border-slate-300 bg-popover shadow-lg">
               {filteredSuggestions.map((s, i) =>
-            <button
-              key={i}
-              type="button"
-              className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors border-b border-border/50 last:border-0"
-              onMouseDown={() => handleSelect(s)}>
-              
-                  <div className="font-medium text-foreground truncate">{s.description}</div>
-                  <div className="text-muted-foreground">
-                    Last cost: ₱{(s.cost_per_item || 0).toLocaleString()} · {s.supplier_name}
-                  </div>
+            <button key={i} type="button" className="w-full border-b border-border/50 px-3 py-2 text-left text-xs transition-colors last:border-0 hover:bg-muted" onMouseDown={() => handleSelect(s)}>
+                  <div className="truncate font-medium text-foreground">{s.description}</div>
+                  <div className="text-muted-foreground">Last cost: ₱{(s.cost_per_item || 0).toLocaleString()} · {s.supplier_name}</div>
                 </button>
             )}
             </div>
           }
         </div>
-        <Input
-          placeholder="Qty"
-          type="number"
-          step="0.01"
-          value={item.quantity}
-          onChange={(e) => setItem({ ...item, quantity: e.target.value })}
-          className="text-xs h-8" />
-        
+        <Input placeholder="Qty" type="number" step="0.01" value={item.quantity} onChange={(e) => setItem({ ...item, quantity: e.target.value })} className="h-8 rounded-sm border-slate-300 text-xs shadow-none" />
         <Select value={item.unit_of_measure} onValueChange={(v) => setItem({ ...item, unit_of_measure: v })}>
-          <SelectTrigger className="text-xs h-8">
-            <SelectValue placeholder="Unit" />
-          </SelectTrigger>
-          <SelectContent className="max-h-60">
-            {UNIT_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
+          <SelectTrigger className="h-8 rounded-sm border-slate-300 text-xs shadow-none"><SelectValue placeholder="Unit" /></SelectTrigger>
+          <SelectContent className="max-h-60">{UNIT_OPTIONS.map((opt) => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
         </Select>
-        
-        <Input
-          placeholder="Cost per item"
-          type="number"
-          step="0.01"
-          value={item.cost_per_item}
-          onChange={(e) => setItem({ ...item, cost_per_item: e.target.value })}
-          className="text-xs h-8" />
-        
+        <Input placeholder="Cost/Item" type="number" step="0.01" value={item.cost_per_item} onChange={(e) => setItem({ ...item, cost_per_item: e.target.value })} className="h-8 rounded-sm border-slate-300 text-xs shadow-none" />
+        <Button type="button" size="icon" onClick={handleAdd} className="h-8 w-8 rounded-sm" title="Add item" aria-label="Add item"><Plus className="h-3.5 w-3.5" /></Button>
       </div>
-      <Button
-        type="button"
-        size="sm"
-        onClick={handleAdd}
-        className="w-full text-xs h-8">
-        
-        <Plus className="w-3 h-3 mr-1" /> Add Item
-      </Button>
     </div>);
 
 }
