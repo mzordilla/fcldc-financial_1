@@ -1,13 +1,20 @@
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 
 const netAmount = request => (request.amount || 0) - (request.withholding_tax_amount || 0) + (request.vat_amount || 0);
 
 export default function ApprovedPRSelect({ requests, selectedIds, onToggle, loading }) {
+  const [search, setSearch] = useState("");
+  const term = search.trim().toLowerCase();
+  const filteredRequests = requests.filter(request => !term || [request.request_number, request.invoice_number, request.payee].some(value => value?.toLowerCase().includes(term)));
+
   return <div className="space-y-1.5">
     <Label>Approved Payment Requests <span className="font-normal text-muted-foreground">(optional)</span></Label>
+    <Input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search PR number, invoice, or supplier..." />
     <div className="max-h-52 overflow-y-auto rounded-md border border-input divide-y divide-border">
-      {loading ? <p className="p-3 text-sm text-muted-foreground">Loading approved PRs...</p> : requests.length === 0 ? <p className="p-3 text-sm text-muted-foreground">No approved, unlinked payment requests available.</p> : requests.map(request => {
+      {loading ? <p className="p-3 text-sm text-muted-foreground">Loading approved PRs...</p> : requests.length === 0 ? <p className="p-3 text-sm text-muted-foreground">No approved, unlinked payment requests available.</p> : filteredRequests.length === 0 ? <p className="p-3 text-sm text-muted-foreground">No matching payment requests.</p> : filteredRequests.map(request => {
         const checked = selectedIds.includes(request.id);
         return <label key={request.id} className="flex items-start gap-3 p-3 cursor-pointer hover:bg-muted/40">
           <Checkbox checked={checked} onCheckedChange={value => onToggle(request, value === true)} />
