@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ClipboardList, Boxes, Home, GitBranch, Wallet, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
-import { navItemsByRole } from "@/lib/access-control";
+import { navItemsByRole, canAccess } from "@/lib/access-control";
 import GlobalSearch from "./GlobalSearch";
 
 // Groups define sidebar sections. Items without a group go ungrouped at the top.
@@ -33,7 +33,7 @@ export default function Sidebar() {
 
   const role = user?.role?.toLowerCase();
   const allowed = navItemsByRole[role];
-  const navItems = allowed === "all" ? allNavItems : allNavItems.filter((item) => allowed.includes(item.path));
+  const navItems = allowed === "all" ? allNavItems : allNavItems.filter((item) => canAccess(role, item.path));
 
   if (collapsed) {
     return (
