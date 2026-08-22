@@ -1,12 +1,8 @@
 import { statusLabels } from "@/components/realestate/buildingMapConfig";
 
 const statusClasses = {
-  sold: "border-slate-400 bg-slate-100 text-slate-700",
-  leased: "border-purple-300 bg-purple-50 text-purple-700",
-  available_for_sale: "border-emerald-300 bg-emerald-50 text-emerald-700",
-  available_for_lease: "border-blue-300 bg-blue-50 text-blue-700",
-  reserved: "border-amber-300 bg-amber-50 text-amber-700",
-  under_renovation: "border-orange-300 bg-orange-50 text-orange-700",
+  sold: "text-slate-600", leased: "text-violet-600", available_for_sale: "text-emerald-600",
+  available_for_lease: "text-blue-600", reserved: "text-amber-600", under_renovation: "text-orange-600",
 };
 
 export default function BuildingMapUnit({ unit, onSelect }) {
@@ -14,11 +10,11 @@ export default function BuildingMapUnit({ unit, onSelect }) {
     <button
       type="button"
       onClick={() => onSelect(unit)}
-      className={`min-h-20 min-w-0 rounded-lg border p-3 text-left transition-shadow hover:shadow-md ${statusClasses[unit.status] || "border-border bg-muted text-foreground"}`}
+      className="grid min-h-16 min-w-0 grid-cols-2 items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-left shadow-sm transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-slate-900"
       aria-label={`Unit ${unit.unit_number}, ${statusLabels[unit.status] || unit.status}`}
     >
-      <p className="font-bold">Unit {unit.unit_number}</p>
-      <p className="mt-1 text-xs font-medium">{statusLabels[unit.status] || unit.status}</p>
+      <span className="min-w-0 border-r border-slate-200 pr-2 dark:border-slate-700"><span className="block text-[10px] text-muted-foreground">Unit number</span><span className="block truncate text-base font-medium text-foreground">{unit.unit_number}</span></span>
+      <span className="min-w-0 pl-2"><span className="block text-[10px] text-muted-foreground">Unit status</span><span className={`block text-[11px] font-semibold leading-tight sm:text-sm ${statusClasses[unit.status] || "text-foreground"}`}>{statusLabels[unit.status] || unit.status}</span></span>
     </button>
   );
 }
