@@ -45,12 +45,13 @@ export default function Dashboard() {
   const { data: debts = [] } = useQuery({ queryKey: ["workingcapitalloans"], queryFn: () => base44.entities.WorkingCapitalLoan.list("-created_date", 200) });
   const { data: loans = [] } = useQuery({ queryKey: ["bankloans"], queryFn: () => base44.entities.BankLoan.list("-created_date", 200) });
   const { data: projects = [] } = useQuery({ queryKey: ["projects"], queryFn: () => base44.entities.Project.list("-created_date", 300) });
-  const { data: bankAccounts = [] } = useQuery({ queryKey: ["bankaccounts"], queryFn: () => base44.entities.BankAccount.list("-created_date", 100) });
+  const { data: bankAccountsData = [] } = useQuery({ queryKey: ["bankaccounts"], queryFn: () => base44.entities.BankAccount.list("-created_date", 100) });
   const { data: purchaseOrders = [] } = useQuery({ queryKey: ["purchaseorders"], queryFn: () => base44.entities.PurchaseOrder.list("-created_date", 300) });
   const { data: paymentRequests = [] } = useQuery({ queryKey: ["paymentrequests"], queryFn: () => base44.entities.PaymentRequest.list("-created_date", 300) });
   const { data: currentUser } = useQuery({ queryKey: ["currentUser"], queryFn: () => base44.auth.me() });
   const { data: bankTransferRequests = [] } = useQuery({ queryKey: ["bankTransferRequests"], queryFn: () => base44.entities.BankTransferRequest.list("-created_date", 200) });
 
+  const bankAccounts = Array.isArray(bankAccountsData) ? bankAccountsData : [];
   const span = Number(months);
   const metrics = useMemo(() => {
     const currentKeys = monthKeysBack(span);
