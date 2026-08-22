@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Plus } from "lucide-react";
 import LineItemAdd from "./LineItemAdd";
 import POBudgetWarning from "@/components/purchase-orders/POBudgetWarning";
+import POVatBreakdown from "@/components/purchase-orders/POVatBreakdown";
+import { calculatePurchaseOrderVat, VAT_RATE } from "@/lib/purchaseOrderVat";
 
 const COA_CATEGORY_LABELS = {
   project_payment: "Project Payment", material_cost: "Material Cost", labor: "Labor",
@@ -29,6 +31,7 @@ const defaultForm = {
   items: "",
   line_items: [],
   amount: "",
+  vat_treatment: "non_vat",
   category: "",
   chart_of_account: "",
   priority: "normal",
@@ -102,6 +105,9 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
   useEffect(() => {
     if (open) {
       const data = { ...defaultForm, ...initialData };
+      if (!data.line_items?.length && data.vat_treatment === "vat_exclusive" && data.subtotal != null) {
+        data.amount = data.subtotal;
+      }
       setForm(data);
       setFormError("");
       // if editing and the supplier isn't in the list, start in manual mode
@@ -115,7 +121,9 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
   }, [open, initialData]);
 
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
-  const currentAmount = form.line_items?.length > 0 ? form.line_items.reduce((sum, item) => sum + (item.total || 0), 0) : parseFloat(form.amount) || 0;
+  const baseAmount = form.line_items?.length > 0 ? form.line_items.reduce((sum, item) => sum + (item.total || 0), 0) : parseFloat(form.amount) || 0;
+  const vatBreakdown = calculatePurchaseOrderVat(baseAmount, form.vat_treatment);
+  const currentAmount = vatBreakdown.total;
   const selectedProject = projects.find((project) => project.project_name === form.project_name);
 
   const handleSupplierSelect = (value) => {
@@ -135,10 +143,11 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
     }
     setFormError("");
     setSaving(true);
-    const amount = form.line_items?.length > 0 
+    const enteredAmount = form.line_items?.length > 0
       ? form.line_items.reduce((sum, item) => sum + (item.total || 0), 0)
       : parseFloat(form.amount) || 0;
-    await onSubmit({ ...form, requested_by: "", amount });
+    const breakdown = calculatePurchaseOrderVat(enteredAmount, form.vat_treatment);
+    await onSubmit({ ...form, requested_by: "", amount: breakdown.total, subtotal: breakdown.subtotal, vat_amount: breakdown.vatAmount, vat_percentage: VAT_RATE });
     setSaving(false);
     onOpenChange(false);
   };
@@ -249,16 +258,15 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
               <Textarea rows={2} placeholder="e.g. Additional line items, specs..." value={form.items} onChange={e => set("items", e.target.value)} className="min-h-16 rounded-sm border-slate-300 shadow-none" />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-slate-700">Total Amount <span className="text-destructive">*</span></Label>
-                {form.line_items?.length > 0 ? (
-                  <div className="flex h-9 items-center rounded-sm border border-slate-200 bg-slate-100 px-3 text-sm font-semibold">₱{form.line_items.reduce((sum, item) => sum + (item.total || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                ) : (
-                  <Input required type="number" step="0.01" placeholder="0.00" value={form.amount} onChange={e => set("amount", e.target.value)} className="h-9 rounded-sm border-slate-300 shadow-none" />
-                )}
-                <p className="text-[11px] leading-tight text-slate-500">auto-calculated from line items</p>
-              </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
+              <POVatBreakdown
+                baseAmount={baseAmount}
+                treatment={form.vat_treatment}
+                onTreatmentChange={value => set("vat_treatment", value)}
+                hasLineItems={form.line_items?.length > 0}
+                manualAmount={form.amount}
+                onManualAmountChange={e => set("amount", e.target.value)}
+              />
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-slate-700">Category <span className="text-destructive">*</span></Label>

@@ -2,9 +2,13 @@ import { jsPDF } from "jspdf";
 import { FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { calculatePurchaseOrderVat, vatTreatmentLabel } from "@/lib/purchaseOrderVat";
 
 export default function PurchaseOrderPDF({ po }) {
   const handleDownload = () => {
+    const enteredAmount = (po.line_items || []).reduce((sum, item) => sum + (item.total || 0), 0) || po.amount || 0;
+    const calculated = calculatePurchaseOrderVat(enteredAmount, po.vat_treatment);
+    const totals = po.subtotal != null ? { subtotal: po.subtotal, vatAmount: po.vat_amount || 0, total: po.amount || 0 } : calculated;
     const doc = new jsPDF();
     const pageW = doc.internal.pageSize.getWidth();
     const margin = 20;
@@ -144,12 +148,19 @@ export default function PurchaseOrderPDF({ po }) {
       y += 8 + (descLines.length - 1) * 4;
     });
 
-    // Totals
+    // VAT breakdown and totals
     y += 3;
+    doc.setFont("helvetica", "normal");
+    doc.text("Subtotal:", pageW - margin - 35, y, { align: "right" });
+    doc.text(`₱${totals.subtotal.toLocaleString()}`, pageW - margin - 3, y, { align: "right" });
+    y += 5;
+    doc.text(`VAT (12%) · ${vatTreatmentLabel(po.vat_treatment)}:`, pageW - margin - 35, y, { align: "right" });
+    doc.text(`₱${totals.vatAmount.toLocaleString()}`, pageW - margin - 3, y, { align: "right" });
+    y += 5;
     doc.setFont("helvetica", "bold");
-    doc.text("TOTAL AMOUNT:", pageW - margin - 35, y, { align: "right" });
+    doc.text("GRAND TOTAL:", pageW - margin - 35, y, { align: "right" });
     doc.setTextColor(16, 185, 129);
-    doc.text(`₱${(po.amount || 0).toLocaleString()}`, pageW - margin - 3, y, { align: "right" });
+    doc.text(`₱${totals.total.toLocaleString()}`, pageW - margin - 3, y, { align: "right" });
     doc.setTextColor(30, 30, 30);
     y += 10;
 

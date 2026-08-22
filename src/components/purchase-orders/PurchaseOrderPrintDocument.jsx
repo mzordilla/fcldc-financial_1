@@ -1,8 +1,11 @@
 import { format } from "date-fns";
+import { calculatePurchaseOrderVat, vatTreatmentLabel } from "@/lib/purchaseOrderVat";
 
 export default function PurchaseOrderPrintDocument({ po, compact = false, signature = null }) {
   const lineItems = po.line_items || [];
-  const total = po.amount || lineItems.reduce((sum, item) => sum + (item.total || item.quantity * item.cost_per_item || 0), 0);
+  const enteredAmount = lineItems.reduce((sum, item) => sum + (item.total || item.quantity * item.cost_per_item || 0), 0) || po.amount || 0;
+  const calculated = calculatePurchaseOrderVat(enteredAmount, po.vat_treatment);
+  const totals = po.subtotal != null ? { subtotal: po.subtotal, vatAmount: po.vat_amount || 0, total: po.amount || 0 } : calculated;
   const gap = compact ? "mb-3" : "mb-6";
 
   return (
@@ -30,7 +33,11 @@ export default function PurchaseOrderPrintDocument({ po, compact = false, signat
             <tr key={index} className="border-b border-gray-300"><td className="py-1">{index + 1}</td><td className="py-1">{item.description || "—"}</td><td className="py-1 text-right">{item.quantity ?? "—"}</td><td className="py-1 text-right">{item.unit_of_measure || "—"}</td><td className="py-1 text-right">₱{(item.cost_per_item || 0).toLocaleString()}</td><td className="py-1 text-right font-semibold">₱{(item.total || 0).toLocaleString()}</td></tr>
           )) : <tr><td colSpan={6} className="py-1 text-gray-500">{po.items || "No line items"}</td></tr>}
         </tbody>
-        <tfoot><tr><td colSpan={5} className={`${compact ? "py-1" : "py-3"} text-right font-bold`}>TOTAL AMOUNT:</td><td className={`${compact ? "py-1" : "py-3"} text-right font-bold`}>₱{total.toLocaleString()}</td></tr></tfoot>
+        <tfoot className="border-t-2 border-black">
+          <tr><td colSpan={5} className="pt-2 text-right">Subtotal:</td><td className="pt-2 text-right">₱{totals.subtotal.toLocaleString()}</td></tr>
+          <tr><td colSpan={5} className="py-1 text-right">VAT (12%) · {vatTreatmentLabel(po.vat_treatment)}:</td><td className="py-1 text-right">₱{totals.vatAmount.toLocaleString()}</td></tr>
+          <tr><td colSpan={5} className={`${compact ? "pb-1" : "pb-3"} text-right font-bold`}>GRAND TOTAL:</td><td className={`${compact ? "pb-1" : "pb-3"} text-right font-bold`}>₱{totals.total.toLocaleString()}</td></tr>
+        </tfoot>
       </table>
       <div className={`${compact ? "mb-4" : "mb-8"} text-sm`}><p className="text-gray-500 font-semibold uppercase text-xs mb-1">Approval Status</p><p className="font-semibold capitalize">{po.approval_status || "pending"}</p>{po.approved_by && <p className="text-gray-600 mt-1">Approved By: {po.approved_by}</p>}{po.approval_notes && <p className="text-gray-600 italic mt-1">Notes: {po.approval_notes}</p>}</div>
       <div className={`grid grid-cols-2 gap-8 ${compact ? "mt-6" : "mt-16"} text-sm`}><div><div className="border-t border-black pt-1 text-center"><p>&nbsp;</p><p className="text-xs text-gray-500">PROCUREMENT AND LOGISTIC</p></div></div><div>{signature && <img src={signature.signature_url} alt={`${signature.signatory_name} signature`} className={`${compact ? "h-10" : "h-12"} max-w-40 object-contain mx-auto`} />}<div className="border-t border-black pt-1 text-center"><p>{signature?.signatory_name || po.approved_by || "Approved By"}</p><p className="text-xs text-gray-500">{signature?.signatory_title || "Approved By"}</p></div></div></div>

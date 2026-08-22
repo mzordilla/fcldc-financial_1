@@ -53,7 +53,32 @@
     },
     "amount": {
       "type": "number",
-      "description": "Total PO amount"
+      "description": "Grand total PO amount including VAT when applicable"
+    },
+    "vat_treatment": {
+      "type": "string",
+      "enum": [
+        "vat_inclusive",
+        "vat_exclusive",
+        "non_vat"
+      ],
+      "default": "non_vat",
+      "description": "Whether entered purchase prices include VAT, exclude VAT, or are non-VAT"
+    },
+    "vat_percentage": {
+      "type": "number",
+      "default": 12,
+      "description": "VAT rate applied to this purchase order"
+    },
+    "subtotal": {
+      "type": "number",
+      "default": 0,
+      "description": "Purchase amount before VAT"
+    },
+    "vat_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "VAT portion of the purchase order"
     },
     "category": {
       "type": "string",
