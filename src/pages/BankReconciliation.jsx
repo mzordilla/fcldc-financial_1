@@ -6,6 +6,7 @@ import { Plus, CheckCircle2, AlertTriangle, Clock, Pencil, Trash2, ChevronDown, 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ReconciliationDialog from "../components/reconciliation/ReconciliationDialog";
+import ReconciliationMonthGroup from "../components/reconciliation/ReconciliationMonthGroup";
 
 const fmt = (v) => `₱${(v ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -162,6 +163,14 @@ export default function BankReconciliationPage() {
     return { total, reconciled, discrepancy, inProgress };
   }, [reconciliations]);
 
+  const monthlyGroups = useMemo(() => reconciliations.reduce((groups, rec) => {
+    const date = rec.period_end || rec.period_start;
+    const month = date ? format(parseISO(date), "MMMM yyyy") : rec.period_label || "No Period";
+    if (!groups[month]) groups[month] = [];
+    groups[month].push(rec);
+    return groups;
+  }, {}), [reconciliations]);
+
   function handleEdit(rec) {
     setEditing(rec);
   }
@@ -199,7 +208,7 @@ export default function BankReconciliationPage() {
         </div>
       </div>
 
-      {/* Cards */}
+      {/* Monthly reconciliation groups */}
       {isLoading ? (
         <div className="text-center py-16 text-muted-foreground">Loading...</div>
       ) : reconciliations.length === 0 ? (
@@ -209,14 +218,18 @@ export default function BankReconciliationPage() {
           <p className="text-sm mt-1">Create one to start matching your bank statements</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {reconciliations.map(rec => (
-            <ReconciliationCard
-              key={rec.id}
-              rec={rec}
-              onEdit={handleEdit}
-              onDelete={(id) => deleteMutation.mutate(id)}
-            />
+        <div className="space-y-3">
+          {Object.entries(monthlyGroups).map(([month, records]) => (
+            <ReconciliationMonthGroup key={month} month={month} records={records}>
+              {records.map(rec => (
+                <ReconciliationCard
+                  key={rec.id}
+                  rec={rec}
+                  onEdit={handleEdit}
+                  onDelete={(id) => deleteMutation.mutate(id)}
+                />
+              ))}
+            </ReconciliationMonthGroup>
           ))}
         </div>
       )}
