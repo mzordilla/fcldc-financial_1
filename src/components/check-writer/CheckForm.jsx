@@ -8,7 +8,7 @@ import { numberToWords } from "@/lib/checkUtils";
 import ApprovedPRSelect from "@/components/check-writer/ApprovedPRSelect";
 
 const initial = { bank_account_id: "", payee: "", amount: "", check_number: "", check_date: new Date().toISOString().split("T")[0], memo: "" };
-export default function CheckForm({ bankAccounts, approvedRequests, loadingRequests, onSave, saving }) {
+export default function CheckForm({ bankAccounts, approvedRequests, payees, loadingRequests, onSave, saving }) {
   const [form, setForm] = useState(initial); const [error, setError] = useState("");
   const [selectedRequestIds, setSelectedRequestIds] = useState([]);
   const words = useMemo(() => numberToWords(Number(form.amount || 0)), [form.amount]);
@@ -20,8 +20,10 @@ export default function CheckForm({ bankAccounts, approvedRequests, loadingReque
     if (!selected.length) return setForm(current => ({ ...initial, bank_account_id: current.bank_account_id, check_number: current.check_number, check_date: current.check_date }));
     const amount = selected.reduce((sum, item) => sum + (item.amount || 0) - (item.withholding_tax_amount || 0) + (item.vat_amount || 0), 0);
     const numbers = selected.map(item => item.request_number || item.invoice_number || item.id);
-    const payees = new Set(selected.map(item => item.payee));
-    setForm(current => ({ ...current, payee: payees.size > 1 ? "CASH" : selected[0].payee, amount: String(amount), memo: `Combined payment for ${numbers.join(", ")}`, source: "payment_approval", payment_request_ids: nextIds, payment_request_numbers: numbers }));
+    const selectedPayees = new Set(selected.map(item => item.payee));
+    const supplier = payees.find(item => item.name?.trim().toLowerCase() === selected[0].payee?.trim().toLowerCase());
+    const checkPayee = selectedPayees.size > 1 ? "CASH" : supplier?.bank_account_name || selected[0].payee;
+    setForm(current => ({ ...current, payee: checkPayee, amount: String(amount), memo: `Combined payment for ${numbers.join(", ")}`, source: "payment_approval", payment_request_ids: nextIds, payment_request_numbers: numbers }));
   };
   const submit = async print => {
     if (!form.bank_account_id || !form.payee || !Number(form.amount) || !form.check_number || !form.check_date) return setError("Complete all required fields.");
