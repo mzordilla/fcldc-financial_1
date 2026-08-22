@@ -3,39 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Printer, X } from "lucide-react";
 import { format } from "date-fns";
-
-// Convert number to words for the amount line
-function numberToWords(amount) {
-  if (!amount || isNaN(amount)) return "ZERO PESOS";
-  const ones = ["", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE",
-    "TEN", "ELEVEN", "TWELVE", "THIRTEEN", "FOURTEEN", "FIFTEEN", "SIXTEEN", "SEVENTEEN", "EIGHTEEN", "NINETEEN"];
-  const tens = ["", "", "TWENTY", "THIRTY", "FORTY", "FIFTY", "SIXTY", "SEVENTY", "EIGHTY", "NINETY"];
-
-  function convertHundreds(n) {
-    let result = "";
-    if (n >= 100) { result += ones[Math.floor(n / 100)] + " HUNDRED "; n %= 100; }
-    if (n >= 20) { result += tens[Math.floor(n / 10)] + " "; n %= 10; }
-    if (n > 0) result += ones[n] + " ";
-    return result.trim();
-  }
-
-  function convert(n) {
-    if (n === 0) return "ZERO";
-    let result = "";
-    if (n >= 1000000000) { result += convertHundreds(Math.floor(n / 1000000000)) + " BILLION "; n %= 1000000000; }
-    if (n >= 1000000) { result += convertHundreds(Math.floor(n / 1000000)) + " MILLION "; n %= 1000000; }
-    if (n >= 1000) { result += convertHundreds(Math.floor(n / 1000)) + " THOUSAND "; n %= 1000; }
-    if (n > 0) result += convertHundreds(n);
-    return result.trim();
-  }
-
-  const pesos = Math.floor(amount);
-  const centavos = Math.round((amount - pesos) * 100);
-  let words = convert(pesos) + " PESOS";
-  if (centavos > 0) words += ` AND ${centavos}/100`;
-  else words += " ONLY";
-  return words;
-}
+import { numberToWords } from "@/lib/checkUtils";
 
 export default function CheckWriterDialog({ open, onOpenChange, paymentRequest, bankAccount, paymentDate, paymentReference }) {
   const checkRef = useRef();

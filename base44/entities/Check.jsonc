@@ -1,0 +1,115 @@
+{
+  "name": "Check",
+  "type": "object",
+  "properties": {
+    "check_number": {
+      "type": "string",
+      "description": "Bank check number"
+    },
+    "payee": {
+      "type": "string",
+      "description": "Payee printed on the check"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Check amount"
+    },
+    "amount_in_words": {
+      "type": "string",
+      "description": "Check amount written in words"
+    },
+    "bank_account_id": {
+      "type": "string",
+      "description": "Linked source BankAccount ID"
+    },
+    "bank_name": {
+      "type": "string",
+      "description": "Source bank name"
+    },
+    "account_name": {
+      "type": "string",
+      "description": "Source account name"
+    },
+    "account_number": {
+      "type": "string",
+      "description": "Source account number"
+    },
+    "check_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "memo": {
+      "type": "string",
+      "description": "Check memo or payment purpose"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "saved",
+        "printed",
+        "voided"
+      ],
+      "default": "saved"
+    },
+    "printed_date": {
+      "type": "string",
+      "description": "ISO timestamp of the latest print"
+    }
+  },
+  "required": [
+    "check_number",
+    "payee",
+    "amount",
+    "bank_account_id",
+    "check_date"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "disbursement"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "disbursement"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "disbursement"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
