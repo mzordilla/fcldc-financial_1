@@ -77,6 +77,43 @@
     "printed_date": {
       "type": "string",
       "description": "ISO timestamp of the latest print"
+    },
+    "deletion_request_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "description": "Admin review status for removing a printed check"
+    },
+    "deletion_action": {
+      "type": "string",
+      "enum": [
+        "void",
+        "delete"
+      ],
+      "description": "Requested removal action"
+    },
+    "deletion_reason": {
+      "type": "string",
+      "description": "Reason for removing the printed check"
+    },
+    "deletion_requested_by": {
+      "type": "string",
+      "description": "Name of the requesting user"
+    },
+    "deletion_requested_date": {
+      "type": "string",
+      "description": "ISO timestamp of the request"
+    },
+    "deletion_reviewed_by": {
+      "type": "string",
+      "description": "Name of the admin reviewer"
+    },
+    "deletion_reviewed_date": {
+      "type": "string",
+      "description": "ISO timestamp of the review"
     }
   },
   "required": [
