@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import UnitFormDialog from "@/components/realestate/UnitFormDialog";
 import BulkEditDialog from "@/components/realestate/BulkEditDialog";
+import UnitStatusBreakdown from "@/components/realestate/UnitStatusBreakdown";
 
 const statusStyles = {
   available_for_sale: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -108,37 +109,23 @@ export default function CondoUnits() {
   const totalMonthlyRent = filtered.reduce((s, u) => s + (u.monthly_rent || 0), 0);
   const totalParking = filtered.reduce((s, u) => s + (u.parking_slots || 0), 0);
 
-  const forSale = units.filter(u => u.status === "available_for_sale").length;
-  const forLease = units.filter(u => u.status === "available_for_lease").length;
-  const sold = units.filter(u => u.status === "sold").length;
-  const leased = units.filter(u => u.status === "leased").length;
+  const parkingUnits = units.filter(u => u.unit_type === "parking");
+  const regularUnits = units.filter(u => u.unit_type !== "parking");
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Condo Units</h1>
-          <p className="text-muted-foreground mt-1">{units.length} total units</p>
+          <p className="text-muted-foreground mt-1">{regularUnits.length} units · {parkingUnits.length} parking</p>
         </div>
         <Button onClick={() => { setEditing(null); setShowForm(true); }}>
           <Plus className="w-4 h-4 mr-2" /> Add Unit
         </Button>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { label: "For Sale", value: forSale, color: "text-emerald-600" },
-          { label: "For Lease", value: forLease, color: "text-blue-600" },
-          { label: "Sold", value: sold, color: "text-slate-500" },
-          { label: "Leased", value: leased, color: "text-purple-600" },
-        ].map(k => (
-          <div key={k.label} className="bg-card border border-border rounded-2xl p-4">
-            <p className="text-xs text-muted-foreground mb-1">{k.label}</p>
-            <p className={`text-2xl font-bold ${k.color}`}>{k.value}</p>
-          </div>
-        ))}
-      </div>
+      {/* Unit status breakdown */}
+      <UnitStatusBreakdown units={regularUnits} parking={parkingUnits} />
 
       {/* Filter and Bulk Actions */}
       <div className="flex items-center justify-between gap-3">
