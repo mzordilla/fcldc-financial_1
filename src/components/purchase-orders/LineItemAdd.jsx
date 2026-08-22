@@ -102,20 +102,21 @@ export default function LineItemAdd({ onAdd, suggestions = [] }) {
       <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_64px_80px_112px_36px]">
         <div className="relative" ref={wrapperRef}>
           <Input
-            placeholder="Item description"
+            placeholder="Search previous purchases or enter an item"
             value={item.description}
             onChange={(e) => {setItem({ ...item, description: e.target.value });setShowSuggestions(true);}}
             onFocus={() => setShowSuggestions(true)}
             className="h-8 rounded-sm border-slate-300 px-2 text-xs shadow-none"
             autoComplete="off" />
-          {showSuggestions && filteredSuggestions.length > 0 &&
+          {showSuggestions &&
           <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-52 overflow-y-auto rounded-sm border border-slate-300 bg-popover shadow-lg">
-              {filteredSuggestions.map((s, i) =>
+              <div className="border-b border-border bg-muted/60 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Previous purchases</div>
+              {filteredSuggestions.length > 0 ? filteredSuggestions.map((s, i) =>
             <button key={i} type="button" className="w-full border-b border-border/50 px-3 py-2 text-left text-xs transition-colors last:border-0 hover:bg-muted" onMouseDown={() => handleSelect(s)}>
                   <div className="truncate font-medium text-foreground">{s.description}</div>
                   <div className="text-muted-foreground">Last cost: ₱{(s.cost_per_item || 0).toLocaleString()} · {s.supplier_name}</div>
                 </button>
-            )}
+            ) : <div className="px-3 py-2 text-xs text-muted-foreground">No matching previous purchases. Continue typing to add a new item.</div>}
             </div>
           }
         </div>
