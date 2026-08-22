@@ -11,7 +11,7 @@ export function numberToWords(amount) {
 }
 
 function checkMarkup(check) {
-  const date = check.check_date ? `${check.check_date.slice(5, 7)}${check.check_date.slice(8, 10)}${check.check_date.slice(0, 4)}` : "";
+  const date = check.check_date ? `${check.check_date.slice(5, 7)}  ${check.check_date.slice(8, 10)}  ${check.check_date.slice(0, 4)}` : "";
   const amount = Number(check.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return `<section class="check"><div class="date">${date}</div><div class="payee">${escapeHtml(check.payee)}</div><div class="amount">₱ ${amount}</div><div class="words">${escapeHtml(check.amount_in_words || numberToWords(check.amount))}</div><div class="memo">${escapeHtml(check.memo || "")}</div></section>`;
 }
