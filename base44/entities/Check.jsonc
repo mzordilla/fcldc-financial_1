@@ -42,6 +42,29 @@
       "type": "string",
       "description": "Check memo or payment purpose"
     },
+    "source": {
+      "type": "string",
+      "enum": [
+        "independent",
+        "payment_approval"
+      ],
+      "default": "independent",
+      "description": "Where the check was created"
+    },
+    "payment_request_ids": {
+      "type": "array",
+      "description": "Payment Requests paid by this check",
+      "items": {
+        "type": "string"
+      }
+    },
+    "payment_request_numbers": {
+      "type": "array",
+      "description": "Payment Request references for register display",
+      "items": {
+        "type": "string"
+      }
+    },
     "status": {
       "type": "string",
       "enum": [

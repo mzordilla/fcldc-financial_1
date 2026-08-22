@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle, XCircle, ChevronRight, User, FileText, History, Banknote, Printer } from "lucide-react";
 import ApprovalHistoryLog from "./ApprovalHistoryLog";
-import CheckWriterDialog from "../payment/CheckWriterDialog";
+import useCheckWriter from "@/hooks/useCheckWriter";
+import { numberToWords } from "@/lib/checkUtils";
 
 const STEPS = ["Details", "Decision", "History"];
 
@@ -26,7 +27,10 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
   const [bankAccountId, setBankAccountId] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split("T")[0]);
-  const [showCheckWriter, setShowCheckWriter] = useState(false);
+  const [printedCheck, setPrintedCheck] = useState(null);
+  const checkWriter = useCheckWriter();
+  const linkedPrintedCheck = printedCheck || checkWriter.checks.find(check => check.status === "printed" && check.payment_request_ids?.includes(paymentRequest?.id));
+  const bankAccounts = checkWriter.bankAccounts;
   const isFinal = historyOnly || FINAL_STATUSES.includes(currentStatus);
   const isDisbursement = currentStatus === "approved";
   // Disbursement role can only act on approved (disburse) — not approve/reject pending
@@ -49,17 +53,37 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
     enabled: open,
   });
 
-  const { data: bankAccounts = [] } = useQuery({
-    queryKey: ["bankaccounts"],
-    queryFn: () => base44.entities.BankAccount.list("-created_date", 100),
-    enabled: open && isDisbursement,
-  });
-
-  const reset = () => { setStep(0); setActor(""); setNotes(""); setBankAccountId(""); setPaymentReference(""); setPaymentDate(new Date().toISOString().split("T")[0]); setShowCheckWriter(false); };
+  const reset = () => { setStep(0); setActor(""); setNotes(""); setBankAccountId(""); setPaymentReference(""); setPaymentDate(new Date().toISOString().split("T")[0]); setPrintedCheck(null); };
 
   const handleClose = (v) => {
     if (!v) reset();
     onOpenChange(v);
+  };
+
+  const handlePrintCheck = async () => {
+    if (!bankAccountId || !paymentReference.trim()) return toast.error("Select a bank account and enter the check number first.");
+    const amount = (paymentRequest.amount || 0) - (paymentRequest.withholding_tax_amount || 0) + (paymentRequest.vat_amount || 0);
+    const printWindow = window.open("", "_blank", "width=950,height=650");
+    if (!printWindow) return toast.error("Please allow pop-ups to print checks.");
+    try {
+      const check = await checkWriter.save({
+        bank_account_id: bankAccountId,
+        payee: paymentRequest.payee,
+        amount,
+        amount_in_words: numberToWords(amount),
+        check_number: paymentReference.trim(),
+        check_date: paymentDate,
+        memo: paymentRequest.description || "Payment approval disbursement",
+        source: "payment_approval",
+        payment_request_ids: [paymentRequest.id],
+        payment_request_numbers: [paymentRequest.request_number || paymentRequest.invoice_number || paymentRequest.id],
+      }, true, printWindow);
+      setPrintedCheck(check);
+      toast.success("Check saved and sent to print. Disbursement is now unlocked.");
+    } catch (error) {
+      printWindow?.close();
+      toast.error(error?.message || "Unable to save and print the check.");
+    }
   };
 
   const [deciding, setDeciding] = useState(false);
@@ -67,7 +91,15 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
   const handleDecide = async (action) => {
     setDeciding(true);
     try {
-      await onDecision({ action, actor, notes, bankAccountId, paymentReference, paymentDate });
+      const checkNote = action === "paid" && linkedPrintedCheck ? `Printed check ${linkedPrintedCheck.check_number}` : "";
+      await onDecision({
+        action,
+        actor,
+        notes: [notes, checkNote].filter(Boolean).join(" — "),
+        bankAccountId: linkedPrintedCheck?.bank_account_id || bankAccountId,
+        paymentReference: linkedPrintedCheck?.check_number || paymentReference,
+        paymentDate: linkedPrintedCheck?.check_date || paymentDate,
+      });
       handleClose(false);
     } catch (err) {
       toast.error(err?.message || "Something went wrong. Please try again.");
@@ -162,13 +194,14 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
                   <label className="text-sm font-medium">Payment Date</label>
                   <Input
                     type="date"
-                    value={paymentDate}
+                    value={linkedPrintedCheck?.check_date || paymentDate}
                     onChange={e => setPaymentDate(e.target.value)}
+                    disabled={!!linkedPrintedCheck}
                   />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium">Bank Account <span className="text-muted-foreground font-normal">(for transaction)</span></label>
-                  <Select value={bankAccountId} onValueChange={setBankAccountId}>
+                  <Select value={linkedPrintedCheck?.bank_account_id || bankAccountId} onValueChange={setBankAccountId} disabled={!!linkedPrintedCheck}>
                     <SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger>
                     <SelectContent>
                       {bankAccounts.filter(a => a.status !== "closed").map(a => (
@@ -180,19 +213,22 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium">Reference # <span className="text-muted-foreground font-normal">(check no., transfer ref., etc.)</span></label>
                   <Input
-                    value={paymentReference}
+                    value={linkedPrintedCheck?.check_number || paymentReference}
                     onChange={e => setPaymentReference(e.target.value)}
-                    placeholder="e.g. CHK-00123 or TRF-2026-0501"
+                    placeholder="e.g. CHK-00123"
+                    disabled={!!linkedPrintedCheck}
                   />
                 </div>
                 {paymentRequest && (
                   <Button
                     type="button"
-                    variant="outline"
+                    variant={linkedPrintedCheck ? "secondary" : "outline"}
                     className="w-full gap-2"
-                    onClick={() => setShowCheckWriter(true)}
+                    onClick={handlePrintCheck}
+                    disabled={!!linkedPrintedCheck || checkWriter.saving}
                   >
-                    <Printer className="w-4 h-4" /> Preview & Print Check
+                    {linkedPrintedCheck ? <CheckCircle className="w-4 h-4" /> : <Printer className="w-4 h-4" />}
+                    {linkedPrintedCheck ? `Printed — Check ${linkedPrintedCheck.check_number}` : checkWriter.saving ? "Saving Check..." : "Save & Print Check"}
                   </Button>
                 )}
               </div>
@@ -228,7 +264,7 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
                 </Button>
               )}
               {currentStatus === "approved" ? (
-                <Button className="bg-chart-2 hover:bg-chart-2/90 text-white" onClick={() => handleDecide("paid")} disabled={!actor.trim() || deciding}>
+                <Button className="bg-chart-2 hover:bg-chart-2/90 text-white" onClick={() => handleDecide("paid")} disabled={!actor.trim() || !linkedPrintedCheck || deciding} title={!linkedPrintedCheck ? "Save and print the check first" : undefined}>
                   <Banknote className="w-4 h-4 mr-1" /> {deciding ? "Processing..." : "Confirm Disbursement"}
                 </Button>
               ) : (
@@ -243,16 +279,6 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
           )}
         </DialogFooter>
       </DialogContent>
-      {showCheckWriter && (
-        <CheckWriterDialog
-          open={showCheckWriter}
-          onOpenChange={setShowCheckWriter}
-          paymentRequest={paymentRequest}
-          bankAccount={bankAccounts.find(a => a.id === bankAccountId)}
-          paymentDate={paymentDate}
-          paymentReference={paymentReference}
-        />
-      )}
     </Dialog>
   );
 }

@@ -11,9 +11,11 @@ export default function useCheckWriter() {
   const createMutation = useMutation({
     mutationFn: async ({ form, print, printWindow }) => {
       const bank = bankAccounts.find(a => a.id === form.bank_account_id);
-      const check = await base44.entities.Check.create({ ...form, bank_name: bank.bank_name, account_name: bank.account_name, account_number: bank.account_number || "", status: "saved" });
-      await base44.entities.Transaction.create({ description: `Check ${form.check_number} – ${form.payee}${form.memo ? `: ${form.memo}` : ""}`, amount: form.amount, type: "expense", category: "other", chart_of_account: `${bank.account_name} – ${bank.bank_name}`, bank_account_id: bank.id, date: form.check_date, status: "completed" });
-      if (print) { printChecks([check], printWindow); await markPrinted([check]); }
+      const check = await base44.entities.Check.create({ ...form, source: form.source || "independent", bank_name: bank.bank_name, account_name: bank.account_name, account_number: bank.account_number || "", status: "saved" });
+      if (form.source !== "payment_approval") {
+        await base44.entities.Transaction.create({ description: `Check ${form.check_number} – ${form.payee}${form.memo ? `: ${form.memo}` : ""}`, amount: form.amount, type: "expense", category: "other", chart_of_account: `${bank.account_name} – ${bank.bank_name}`, bank_account_id: bank.id, date: form.check_date, status: "completed" });
+      }
+      if (print) { printChecks([check], printWindow); await markPrinted([check]); return { ...check, status: "printed", printed_date: new Date().toISOString() }; }
       return check;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["checks"] }); queryClient.invalidateQueries({ queryKey: ["transactions"] }); },
