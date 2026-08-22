@@ -18,9 +18,9 @@ function getAgingBucket(dueDateStr, status) {
 
 const netPayable = (p) => (p.amount || 0) - (p.withholding_tax_amount || 0) + (p.vat_amount || 0);
 
-export default function SupplierInvoiceDetails({ supplier, isExpanded, onDelete }) {
+export default function SupplierInvoiceDetails({ supplier, typeFilter, isExpanded, onDelete }) {
   const { data: invoices = [], isLoading } = useQuery({
-    queryKey: ["payablesSupplier", supplier],
+    queryKey: ["payablesSupplier", supplier, typeFilter],
     queryFn: () => base44.entities.Payable.filter({ supplier_name: supplier }, "-due_date", 1000),
     enabled: isExpanded,
   });
@@ -35,7 +35,10 @@ export default function SupplierInvoiceDetails({ supplier, isExpanded, onDelete 
     );
   }
 
-  const unpaidInvoices = invoices.filter((p) => p.status !== "paid");
+  const unpaidInvoices = invoices.filter((p) =>
+    p.status !== "paid" &&
+    (typeFilter === "all" || (typeFilter === "subcontractor" ? p.category === "subcontractor" : p.category !== "subcontractor"))
+  );
 
   return (
     <div className="overflow-x-auto">

@@ -16,6 +16,7 @@ export default async function(req) {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const { typeFilter = 'all' } = await req.json();
 
     const payables = await base44.entities.Payable.list('-due_date', 5000);
     const today = new Date();
@@ -27,6 +28,8 @@ export default async function(req) {
 
     for (const p of payables) {
       if (p.payable_type === 'other' || p.status === 'paid') continue;
+      if (typeFilter === 'subcontractor' && p.category !== 'subcontractor') continue;
+      if (typeFilter === 'supplier' && p.category === 'subcontractor') continue;
       const net = (p.amount || 0) - (p.withholding_tax_amount || 0) + (p.vat_amount || 0);
       const remaining = Math.max(0, net - (p.amount_paid || 0));
       if (remaining <= 0.01) continue;

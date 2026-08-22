@@ -36,8 +36,8 @@ export default function Payables() {
 
   // Lightweight, server-computed summary: only aggregates load up-front
   const { data: summary, isLoading: summaryLoading } = useQuery({
-    queryKey: ["payablesAgingSummary"],
-    queryFn: async () => (await base44.functions.invoke("payablesAgingSummary", {})).data,
+    queryKey: ["payablesAgingSummary", typeFilter],
+    queryFn: async () => (await base44.functions.invoke("payablesAgingSummary", { typeFilter })).data,
   });
 
   const { data: paymentRequests = [] } = useQuery({
@@ -190,15 +190,8 @@ export default function Payables() {
   const allSuppliers = summary?.suppliers || [];
 
   const searchTerm = search.trim().toLowerCase();
-  const matchesType = (s) => {
-    if (typeFilter === "all") return true;
-    const cats = s.categories || [];
-    return typeFilter === "subcontractor"
-      ? cats.includes("subcontractor")
-      : cats.some((c) => c !== "subcontractor");
-  };
   const supplierList = allSuppliers
-    .filter((s) => (!searchTerm || s.supplier.toLowerCase().includes(searchTerm)) && matchesType(s))
+    .filter((s) => !searchTerm || s.supplier.toLowerCase().includes(searchTerm))
     .slice().sort((a, b) => a.supplier.localeCompare(b.supplier));
 
   const toggleSupplier = (supplier) => {
@@ -422,7 +415,7 @@ export default function Payables() {
                   </Button>
                 </div>
               </button>
-              <SupplierInvoiceDetails supplier={supplier} isExpanded={isExpanded} onDelete={handleDeleteInvoice} />
+              <SupplierInvoiceDetails supplier={supplier} typeFilter={typeFilter} isExpanded={isExpanded} onDelete={handleDeleteInvoice} />
             </div>
           );
         })}
