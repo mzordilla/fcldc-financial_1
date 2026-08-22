@@ -12,6 +12,7 @@ import DepositUndepositedDialog from "../components/bank-accounts/DepositUndepos
 import BankAccountSummaryReport from "../components/bank-accounts/BankAccountSummaryReport";
 import CheckMonitoring from "../components/bank-accounts/CheckMonitoring";
 import BankTransferDialog from "../components/bank-accounts/BankTransferDialog";
+import BankTransferApprovals from "../components/bank-accounts/BankTransferApprovals";
 
 const ACCOUNT_TYPES = [
 { value: "checking", label: "Checking" },
@@ -133,6 +134,12 @@ export default function BankAccounts() {
     queryFn: () => base44.entities.Transaction.list("-date", 1000)
   });
 
+  const { data: currentUser } = useQuery({ queryKey: ["currentUser"], queryFn: () => base44.auth.me() });
+  const { data: transferRequests = [] } = useQuery({
+    queryKey: ["bankTransferRequests"],
+    queryFn: () => base44.entities.BankTransferRequest.list("-created_date", 200)
+  });
+
   const { data: receivables = [] } = useQuery({
     queryKey: ["receivables_undeposited"],
     queryFn: () => base44.entities.Receivable.list("-created_date", 500)
@@ -167,17 +174,34 @@ export default function BankAccounts() {
   const handleTransfer = async ({ fromId, toId, amount, date, reference }) => {
     const from = accounts.find((account) => account.id === fromId);
     const to = accounts.find((account) => account.id === toId);
-    const suffix = reference ? ` · ${reference}` : "";
+    await base44.entities.BankTransferRequest.create({
+      from_bank_account_id: fromId, from_bank_name: `${from.account_name} — ${from.bank_name}`,
+      to_bank_account_id: toId, to_bank_name: `${to.account_name} — ${to.bank_name}`,
+      amount, transfer_date: date, reference, requested_by_name: currentUser?.full_name || currentUser?.email, status: "pending"
+    });
+    queryClient.invalidateQueries({ queryKey: ["bankTransferRequests"] });
+  };
+
+  const approveTransfer = async (request) => {
+    const latest = await base44.entities.BankTransferRequest.get(request.id);
+    if (latest.status !== "pending") throw new Error("This request has already been reviewed.");
+    const [from, to] = await Promise.all([base44.entities.BankAccount.get(latest.from_bank_account_id), base44.entities.BankAccount.get(latest.to_bank_account_id)]);
+    if ((from.current_balance || 0) < latest.amount) throw new Error("The source account has insufficient funds.");
+    const suffix = latest.reference ? ` · ${latest.reference}` : "";
     await base44.entities.Transaction.bulkCreate([
-      { description: `Transfer to ${to.account_name}${suffix}`, amount: -amount, type: "fund_transfer", category: "fund_transfer", chart_of_account: "Cash and Cash Equivalents", bank_account_id: fromId, date, status: "completed" },
-      { description: `Transfer from ${from.account_name}${suffix}`, amount, type: "fund_transfer", category: "fund_transfer", chart_of_account: "Cash and Cash Equivalents", bank_account_id: toId, date, status: "completed" },
+      { description: `Transfer to ${to.account_name}${suffix}`, amount: -latest.amount, type: "fund_transfer", category: "fund_transfer", chart_of_account: "Cash and Cash Equivalents", bank_account_id: from.id, date: latest.transfer_date, status: "completed" },
+      { description: `Transfer from ${from.account_name}${suffix}`, amount: latest.amount, type: "fund_transfer", category: "fund_transfer", chart_of_account: "Cash and Cash Equivalents", bank_account_id: to.id, date: latest.transfer_date, status: "completed" }
     ]);
-    await base44.entities.BankAccount.bulkUpdate([
-      { id: fromId, current_balance: (from.current_balance || 0) - amount },
-      { id: toId, current_balance: (to.current_balance || 0) + amount },
-    ]);
+    await base44.entities.BankAccount.bulkUpdate([{ id: from.id, current_balance: from.current_balance - latest.amount }, { id: to.id, current_balance: (to.current_balance || 0) + latest.amount }]);
+    await base44.entities.BankTransferRequest.update(latest.id, { status: "approved", reviewed_by: currentUser?.full_name || currentUser?.email, reviewed_date: new Date().toISOString() });
     queryClient.invalidateQueries({ queryKey: ["bankaccounts"] });
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["bankTransferRequests"] });
+  };
+
+  const rejectTransfer = async (request) => {
+    await base44.entities.BankTransferRequest.update(request.id, { status: "rejected", reviewed_by: currentUser?.full_name || currentUser?.email, reviewed_date: new Date().toISOString() });
+    queryClient.invalidateQueries({ queryKey: ["bankTransferRequests"] });
   };
 
   const activeAccounts = accounts.filter((a) => a.status !== "closed");
@@ -195,7 +219,7 @@ export default function BankAccounts() {
             <p className={`font-project-display text-3xl font-bold tracking-tight ${totalBalance >= 0 ? "text-teal-400" : "text-rose-400"}`}>{totalBalance < 0 ? "-" : ""}{fmt(totalBalance)}</p>
             <p className="text-xs text-slate-400">Track balances across all your bank accounts</p>
           </div>
-          {activeTab === "accounts" && <div className="flex gap-2"><Button onClick={() => setShowTransfer(true)} variant="outline" className="border-slate-700 bg-slate-900 text-white hover:bg-slate-800 hover:text-white" disabled={activeAccounts.length < 2}><ArrowLeftRight className="mr-2 h-4 w-4" /> Transfer Between Banks</Button><Button onClick={() => setShowAdd(true)} className="bg-teal-500 text-white hover:bg-teal-600"><Plus className="mr-2 h-4 w-4" /> Add Account</Button></div>}
+          {activeTab === "accounts" && <div className="flex gap-2"><Button onClick={() => setShowTransfer(true)} variant="outline" className="border-slate-700 bg-slate-900 text-white hover:bg-slate-800 hover:text-white" disabled={activeAccounts.length < 2}><ArrowLeftRight className="mr-2 h-4 w-4" /> Request Bank Transfer</Button><Button onClick={() => setShowAdd(true)} className="bg-teal-500 text-white hover:bg-teal-600"><Plus className="mr-2 h-4 w-4" /> Add Account</Button></div>}
         </div>
         {activeTab === "accounts" && <div className="mt-2 grid gap-3 sm:grid-cols-[1.35fr_1fr_1fr]">
           <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/70 p-3"><div className="rounded-lg bg-amber-500/15 p-2.5"><Building2 className="h-5 w-5 text-amber-400" /></div><div className="min-w-0 flex-1"><p className="text-[10px] uppercase tracking-wide text-slate-400">Undeposited Collections</p><p className="truncate text-lg font-bold text-white">{fmt(undepositedCollections)}</p></div><Button size="sm" variant="outline" className="border-slate-700 text-[10px] text-slate-200 hover:bg-slate-800 hover:text-white" disabled={undepositedCollections <= 0} onClick={() => setShowDeposit(true)}>Deposit Collections</Button></div>
@@ -219,6 +243,8 @@ export default function BankAccounts() {
       {activeTab === "checks" && <CheckMonitoring />}
 
       {activeTab === "accounts" && <>
+
+      {currentUser?.role === "admin" && <BankTransferApprovals requests={transferRequests.filter((request) => request.status === "pending")} onApprove={approveTransfer} onReject={rejectTransfer} />}
 
       {/* Account portfolio and transaction ledger */}
       {isLoading ?

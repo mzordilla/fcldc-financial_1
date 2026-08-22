@@ -43,7 +43,7 @@ export default function BankTransferDialog({ open, onOpenChange, accounts, onSub
 
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="sm:max-w-lg">
-      <DialogHeader><DialogTitle>Transfer Between Banks</DialogTitle></DialogHeader>
+      <DialogHeader><DialogTitle>Request Bank Transfer</DialogTitle></DialogHeader>
       <form onSubmit={submit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5"><Label>From Bank *</Label><Select value={form.fromId} onValueChange={(value) => set("fromId", value)}><SelectTrigger><SelectValue placeholder="Source account" /></SelectTrigger><SelectContent>{accountOptions(form.toId)}</SelectContent></Select></div>
@@ -55,7 +55,7 @@ export default function BankTransferDialog({ open, onOpenChange, accounts, onSub
         </div>
         <div className="space-y-1.5"><Label>Reference / Notes</Label><Input value={form.reference} onChange={(event) => set("reference", event.target.value)} placeholder="Transfer reference" /></div>
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="submit" disabled={saving || !form.fromId || !form.toId}>{saving ? "Transferring..." : "Confirm Transfer"}</Button></DialogFooter>
+        <DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button type="submit" disabled={saving || !form.fromId || !form.toId}>{saving ? "Submitting..." : "Submit for Approval"}</Button></DialogFooter>
       </form>
     </DialogContent>
   </Dialog>;

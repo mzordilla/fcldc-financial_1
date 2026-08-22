@@ -48,6 +48,8 @@ export default function Dashboard() {
   const { data: bankAccounts = [] } = useQuery({ queryKey: ["bankaccounts"], queryFn: () => base44.entities.BankAccount.list("-created_date", 100) });
   const { data: purchaseOrders = [] } = useQuery({ queryKey: ["purchaseorders"], queryFn: () => base44.entities.PurchaseOrder.list("-created_date", 300) });
   const { data: paymentRequests = [] } = useQuery({ queryKey: ["paymentrequests"], queryFn: () => base44.entities.PaymentRequest.list("-created_date", 300) });
+  const { data: currentUser } = useQuery({ queryKey: ["currentUser"], queryFn: () => base44.auth.me() });
+  const { data: bankTransferRequests = [] } = useQuery({ queryKey: ["bankTransferRequests"], queryFn: () => base44.entities.BankTransferRequest.list("-created_date", 200) });
 
   const span = Number(months);
   const metrics = useMemo(() => {
@@ -87,8 +89,10 @@ export default function Dashboard() {
     if (pendingPOs.length > 0) list.push({ severity: "info", title: `${pendingPOs.length} purchase orders awaiting approval`, detail: `Committed value ${money(pendingPOs.reduce((s, p) => s + (p.amount || 0), 0))}`, to: "/purchase-orders" });
     const pendingPayments = paymentRequests.filter((p) => p.approval_status === "pending");
     if (pendingPayments.length > 0) list.push({ severity: "info", title: `${pendingPayments.length} payment requests awaiting approval`, detail: `Total ${money(pendingPayments.reduce((s, p) => s + (p.amount || 0), 0))}`, to: "/payment-approvals" });
+    const pendingTransfers = bankTransferRequests.filter((request) => request.status === "pending");
+    if (currentUser?.role === "admin" && pendingTransfers.length > 0) list.push({ severity: "info", title: `${pendingTransfers.length} bank transfer request${pendingTransfers.length > 1 ? "s" : ""} awaiting approval`, detail: `Total ${money(pendingTransfers.reduce((sum, request) => sum + (request.amount || 0), 0))}`, to: "/bank-accounts" });
     return list;
-  }, [ar, ap, metrics, projects, transactions, allLoans, cashOnHand, purchaseOrders, paymentRequests, span]);
+  }, [ar, ap, metrics, projects, transactions, allLoans, cashOnHand, purchaseOrders, paymentRequests, bankTransferRequests, currentUser, span]);
 
   const periodLabel = `Last ${span} month${span > 1 ? "s" : ""}`;
 
