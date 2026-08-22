@@ -341,7 +341,7 @@ export default function ClientMasterlist() {
               <tbody>
                 {clients.map(client => {
                   const clientProjects = projectsByClient[client.id] || [];
-                  const isExpanded = expandedClients[client.id] !== false;
+                  const isExpanded = expandedClients[client.id] === true;
                   const ccv = getClientCCV(clientProjects);
                   const origTotal = clientProjects.reduce((s, p) => {
                     const pContracts = contractsByProject[p.id] || [];
