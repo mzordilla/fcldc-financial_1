@@ -18,7 +18,16 @@ export default async function(req) {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     const { typeFilter = 'all' } = await req.json();
 
-    const payables = await base44.entities.Payable.list('-due_date', 5000);
+    const [payables, payees] = await Promise.all([
+      base44.entities.Payable.list('-due_date', 5000),
+      base44.entities.Payee.list('name', 5000),
+    ]);
+    const payeeTypes = new Map();
+    for (const payee of payees) {
+      if (['supplier', 'subcontractor'].includes(payee.category)) {
+        payeeTypes.set((payee.name || '').trim().toLowerCase(), payee.category);
+      }
+    }
     const today = new Date();
 
     const overall = { current: 0, days30: 0, days60: 0, days90: 0, days90plus: 0 };
@@ -28,8 +37,8 @@ export default async function(req) {
 
     for (const p of payables) {
       if (p.payable_type === 'other' || p.status === 'paid') continue;
-      if (typeFilter === 'subcontractor' && p.category !== 'subcontractor') continue;
-      if (typeFilter === 'supplier' && p.category === 'subcontractor') continue;
+      const payeeType = payeeTypes.get((p.supplier_name || '').trim().toLowerCase()) || (p.category === 'subcontractor' ? 'subcontractor' : 'supplier');
+      if (typeFilter !== 'all' && payeeType !== typeFilter) continue;
       const net = (p.amount || 0) - (p.withholding_tax_amount || 0) + (p.vat_amount || 0);
       const remaining = Math.max(0, net - (p.amount_paid || 0));
       if (remaining <= 0.01) continue;

@@ -35,10 +35,7 @@ export default function SupplierInvoiceDetails({ supplier, typeFilter, isExpande
     );
   }
 
-  const unpaidInvoices = invoices.filter((p) =>
-    p.status !== "paid" &&
-    (typeFilter === "all" || (typeFilter === "subcontractor" ? p.category === "subcontractor" : p.category !== "subcontractor"))
-  );
+  const unpaidInvoices = invoices.filter((p) => p.status !== "paid");
 
   return (
     <div className="overflow-x-auto">
