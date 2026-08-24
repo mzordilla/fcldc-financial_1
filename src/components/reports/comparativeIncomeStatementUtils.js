@@ -1,21 +1,26 @@
-// Only Chart of Account entries typed as income or expense belong on the income statement
+const COGS_GROUPS = ["material_cost", "labor", "direct_labor", "equipment", "subcontractor"];
+const OPEX_GROUPS = ["overhead", "operating_expense", "permits", "insurance", "repair_and_maintenance", "fixtures"];
+
+// Only Chart of Account entries typed as income or expense belong on the income statement.
+// Section placement follows the account's own group, not the transaction category.
 export function incomeStatementAccountNames(chartOfAccounts = []) {
-  return new Set(
-    chartOfAccounts
-      .filter(a => ["income", "expense"].includes(a.account_type))
-      .map(a => a.account_name)
-  );
+  const map = new Map();
+  chartOfAccounts
+    .filter(a => ["income", "expense"].includes(a.account_type))
+    .forEach(a => map.set(a.account_name, a));
+  return map;
 }
 
 function classify(t, allowedAccounts) {
-  if (!t.chart_of_account || !allowedAccounts.has(t.chart_of_account)) return null;
-  if (t.type === "income") return "revenue";
-  if (["material_cost", "labor", "direct_labor", "equipment", "subcontractor"].includes(t.category)) return "cogs";
-  if (["overhead", "operating_expense", "permits", "insurance"].includes(t.category)) return "opex";
+  const account = t.chart_of_account ? allowedAccounts.get(t.chart_of_account) : null;
+  if (!account) return null;
+  if (account.account_type === "income") return "revenue";
+  if (COGS_GROUPS.includes(account.category)) return "cogs";
+  if (OPEX_GROUPS.includes(account.category)) return "opex";
   return "otherExpense";
 }
 
-export function buildPeriod(transactions, from, to, allowedAccounts = new Set()) {
+export function buildPeriod(transactions, from, to, allowedAccounts = new Map()) {
   const txs = transactions.filter(t => t.date && t.date >= from && t.date <= to);
   const buckets = { revenue: {}, cogs: {}, opex: {}, otherIncome: {}, otherExpense: {} };
   const bucketTx = { revenue: {}, cogs: {}, opex: {}, otherIncome: {}, otherExpense: {} };
