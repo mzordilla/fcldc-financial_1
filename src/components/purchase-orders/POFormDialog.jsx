@@ -159,9 +159,14 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
       <DialogContent className="max-h-[92vh] overflow-y-auto border-slate-300 bg-white p-0 text-slate-900 shadow-2xl sm:max-w-3xl [&>button]:text-white [&>button]:opacity-80">
         <DialogHeader className="space-y-3 bg-slate-900 px-6 py-5 text-left text-white">
           <DialogTitle className="font-project-display text-2xl font-medium tracking-tight text-white">{title}</DialogTitle>
-          <div className="space-y-0.5 text-xs leading-tight text-slate-200">
-            <p className="font-medium">PO Number</p>
-            <p className="font-mono text-sm text-white">{form.po_number || "PO-2026-001"}</p>
+          <div className="space-y-1 text-xs leading-tight text-slate-200">
+            <Label className="font-medium text-slate-200">PO Number</Label>
+            <Input
+              value={form.po_number}
+              onChange={e => set("po_number", e.target.value)}
+              placeholder="PO-2026-001"
+              className="h-9 max-w-56 rounded-sm border-slate-600 bg-slate-800 font-mono text-sm text-white shadow-none placeholder:text-slate-500"
+            />
           </div>
         </DialogHeader>
 
