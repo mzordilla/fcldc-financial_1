@@ -460,11 +460,19 @@ export default function PaymentApprovals() {
   };
 
   const searchTerm = search.trim().toLowerCase();
+  const searchAmount = parseFloat(searchTerm.replace(/[₱,\s]/g, ""));
+  const amountMatches = (amt) => {
+    if (isNaN(searchAmount) || amt == null) return false;
+    if (Math.abs(amt - searchAmount) < 0.01) return true;
+    return amt.toFixed(2).includes(searchTerm.replace(/[₱,\s]/g, "")) || Math.round(amt).toString().includes(searchTerm.replace(/[₱,\s]/g, ""));
+  };
   const matchesSearch = (r) => !searchTerm ||
     (r.request_number || "").toLowerCase().includes(searchTerm) ||
     (r.payee || "").toLowerCase().includes(searchTerm) ||
     (r.invoice_number || "").toLowerCase().includes(searchTerm) ||
     (r.description || "").toLowerCase().includes(searchTerm) ||
+    amountMatches(r.amount) ||
+    amountMatches((r.amount || 0) - (r.withholding_tax_amount || 0) + (r.vat_amount || 0)) ||
     (r.project_allocations || []).some(a => (a.project_name || "").toLowerCase().includes(searchTerm));
 
   const handleExport = () => {
@@ -649,7 +657,7 @@ export default function PaymentApprovals() {
           <div className="relative">
             <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
             <Input
-              placeholder="Search request #, payee, invoice, project..."
+              placeholder="Search payee, invoice, amount..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 w-64"
