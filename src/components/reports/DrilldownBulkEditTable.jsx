@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TRANSACTION_CATEGORIES } from "@/lib/transactionCategories";
@@ -57,7 +58,13 @@ export default function DrilldownBulkEditTable({ transactions, onSave, isSaving 
                 <Input type="date" className="h-8 w-36 text-xs" value={row.date || ""} onChange={e => setField(row.id, "date", e.target.value)} />
               </td>
               <td className="py-1.5 pr-2">
-                <Input className="h-8 text-xs" value={row.description || ""} onChange={e => setField(row.id, "description", e.target.value)} />
+                <Textarea
+                  rows={1}
+                  title={row.description || ""}
+                  className="min-h-8 h-8 py-1.5 text-xs resize-none overflow-hidden focus:h-24 focus:overflow-auto"
+                  value={row.description || ""}
+                  onChange={e => setField(row.id, "description", e.target.value)}
+                />
               </td>
               <td className="py-1.5 pr-2">
                 <Select value={row.type || ""} onValueChange={v => setField(row.id, "type", v)}>
@@ -69,16 +76,16 @@ export default function DrilldownBulkEditTable({ transactions, onSave, isSaving 
               </td>
               <td className="py-1.5 pr-2">
                 <Select value={row.category || ""} onValueChange={v => setField(row.id, "category", v)}>
-                  <SelectTrigger className="h-8 w-40 text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="h-8 w-40 text-xs" title={row.category || ""}><SelectValue placeholder="Category" /></SelectTrigger>
+                  <SelectContent className="max-h-72">
                     {TRANSACTION_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </td>
               <td className="py-1.5 pr-2">
                 <Select value={row.chart_of_account || ""} onValueChange={v => setField(row.id, "chart_of_account", v)}>
-                  <SelectTrigger className="h-8 w-48 text-xs"><SelectValue placeholder="Account" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="h-8 w-48 text-xs" title={row.chart_of_account || ""}><SelectValue placeholder="Account" /></SelectTrigger>
+                  <SelectContent className="max-h-72">
                     {chartOfAccounts.map(a => <SelectItem key={a.id} value={a.account_name}>{a.account_name}</SelectItem>)}
                   </SelectContent>
                 </Select>
