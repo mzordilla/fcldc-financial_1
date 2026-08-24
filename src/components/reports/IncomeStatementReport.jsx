@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import * as XLSX from "xlsx";
 import { format, parseISO, startOfMonth, endOfMonth, addMonths } from "date-fns";
 import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
@@ -13,6 +14,7 @@ const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDig
 const fmtSigned = (v) => (v < 0 ? `-₱${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : `₱${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`);
 
 export default function IncomeStatementReport({ dateFrom, dateTo }) {
+  const [selectedMonth, setSelectedMonth] = useState("all");
   const [drilldown, setDrilldown] = useState(null);
 
   const { data: transactions = [] } = useQuery({
@@ -32,17 +34,19 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
       const from = mStart < rangeStart ? dateFrom : format(mStart, "yyyy-MM-dd");
       const to = mEnd > rangeEnd ? dateTo : format(mEnd, "yyyy-MM-dd");
       months.push({
+        key: format(mStart, "yyyy-MM"),
         label: format(mStart, "MMM yyyy"),
         ...buildPeriod(transactions, from, to),
       });
       cursor = addMonths(cursor, 1);
     }
+    if (selectedMonth !== "all") return months.filter(month => month.key === selectedMonth);
     const total = {
       label: "Total",
       ...buildPeriod(transactions, dateFrom, dateTo),
     };
     return [...months, total];
-  }, [transactions, dateFrom, dateTo]);
+  }, [transactions, dateFrom, dateTo, selectedMonth]);
 
   const totalPeriod = periods[periods.length - 1];
   const totalIncome = totalPeriod?.totalRevenue + totalPeriod?.totalOtherIncome || 0;
@@ -90,6 +94,16 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
           <FileSpreadsheet className="w-4 h-4 mr-2" /> Export Excel
         </Button>
       </div>
+
+      <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+        <SelectTrigger className="w-48"><SelectValue placeholder="Select Month" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Months</SelectItem>
+          {dateFrom && dateTo && Array.from({ length: Math.max(0, (parseISO(dateTo).getFullYear() - parseISO(dateFrom).getFullYear()) * 12 + parseISO(dateTo).getMonth() - parseISO(dateFrom).getMonth() + 1) }, (_, index) => addMonths(startOfMonth(parseISO(dateFrom)), index)).map(month => (
+            <SelectItem key={format(month, "yyyy-MM")} value={format(month, "yyyy-MM")}>{format(month, "MMMM yyyy")}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-card border border-primary/20 rounded-2xl p-4">
