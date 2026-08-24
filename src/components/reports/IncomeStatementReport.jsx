@@ -57,8 +57,8 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
   }, [transactions, dateFrom, dateTo, selectedMonth, bsAccounts]);
 
   const totalPeriod = periods[periods.length - 1];
-  const totalIncome = totalPeriod?.totalRevenue + totalPeriod?.totalOtherIncome || 0;
-  const totalExpenses = totalPeriod?.totalCOGS + totalPeriod?.totalOpex + totalPeriod?.totalOtherExpense || 0;
+  const totalIncome = totalPeriod?.totalRevenue || 0;
+  const totalExpenses = (totalPeriod?.totalCOGS || 0) + (totalPeriod?.totalOpex || 0);
   const netIncome = totalPeriod?.incomeBeforeTax || 0;
 
   const periodLabel = dateFrom && dateTo
@@ -80,8 +80,6 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
     rows.push(["Gross Profit", ...periods.map(p => p.grossProfit)]);
     addSection("Operating Expenses", "opex", "totalOpex");
     rows.push(["Operating Income", ...periods.map(p => p.operatingIncome)]);
-    addSection("Other Income", "otherIncome", "totalOtherIncome");
-    addSection("Other Expenses", "otherExpense", "totalOtherExpense");
     rows.push(["Income Before Tax", ...periods.map(p => p.incomeBeforeTax)]);
     rows.push(["Net Income", ...periods.map(p => p.incomeBeforeTax)]);
 

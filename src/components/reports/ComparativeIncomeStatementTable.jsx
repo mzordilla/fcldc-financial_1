@@ -69,8 +69,6 @@ export default function ComparativeIncomeStatementTable({ periods, taxRate, onDr
             <SummaryRow label="Gross Profit" values={periods.map(p => p.grossProfit)} colorForValue={v => v >= 0 ? "text-primary" : "text-destructive"} />
             <AccountRows title="Operating Expenses" sectionKey="opex" totalKey="totalOpex" periods={periods} colorClass="text-destructive" onDrilldown={onDrilldown} />
             <SummaryRow label="Operating Income" values={periods.map(p => p.operatingIncome)} colorForValue={v => v >= 0 ? "text-primary" : "text-destructive"} />
-            <AccountRows title="Other Income" sectionKey="otherIncome" totalKey="totalOtherIncome" periods={periods} colorClass="text-primary" onDrilldown={onDrilldown} />
-            <AccountRows title="Other Expenses" sectionKey="otherExpense" totalKey="totalOtherExpense" periods={periods} colorClass="text-destructive" onDrilldown={onDrilldown} />
             <SummaryRow label="Income Before Tax" values={periods.map(p => p.incomeBeforeTax)} colorForValue={v => v >= 0 ? "text-primary" : "text-destructive"} />
             <SummaryRow label="Income Tax" values={taxValues} />
             <SummaryRow label="Net Income" values={netValues} bold colorForValue={v => v >= 0 ? "text-primary" : "text-destructive"} />

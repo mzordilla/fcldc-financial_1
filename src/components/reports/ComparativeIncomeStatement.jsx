@@ -82,8 +82,6 @@ export default function ComparativeIncomeStatement() {
     rows.push(["Gross Profit", ...periods.map(p => p.grossProfit)]);
     addSection("Operating Expenses", "opex", "totalOpex");
     rows.push(["Operating Income", ...periods.map(p => p.operatingIncome)]);
-    addSection("Other Income", "otherIncome", "totalOtherIncome");
-    addSection("Other Expenses", "otherExpense", "totalOtherExpense");
     rows.push(["Income Before Tax", ...periods.map(p => p.incomeBeforeTax)]);
     rows.push(["Income Tax", ...periods.map(p => Math.max(0, p.incomeBeforeTax) * taxRate / 100)]);
     rows.push(["Net Income", ...periods.map(p => p.incomeBeforeTax - Math.max(0, p.incomeBeforeTax) * taxRate / 100)]);

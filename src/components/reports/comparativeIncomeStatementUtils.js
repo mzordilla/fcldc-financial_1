@@ -16,14 +16,13 @@ function classify(t, allowedAccounts) {
   if (!account) return null;
   if (account.account_type === "income") return "revenue";
   if (COGS_GROUPS.includes(account.category)) return "cogs";
-  if (OPEX_GROUPS.includes(account.category)) return "opex";
-  return "otherExpense";
+  return "opex";
 }
 
 export function buildPeriod(transactions, from, to, allowedAccounts = new Map()) {
   const txs = transactions.filter(t => t.date && t.date >= from && t.date <= to);
-  const buckets = { revenue: {}, cogs: {}, opex: {}, otherIncome: {}, otherExpense: {} };
-  const bucketTx = { revenue: {}, cogs: {}, opex: {}, otherIncome: {}, otherExpense: {} };
+  const buckets = { revenue: {}, cogs: {}, opex: {} };
+  const bucketTx = { revenue: {}, cogs: {}, opex: {} };
 
   txs.forEach(t => {
     const section = classify(t, allowedAccounts);
@@ -40,15 +39,12 @@ export function buildPeriod(transactions, from, to, allowedAccounts = new Map())
   const grossProfit = totalRevenue - totalCOGS;
   const totalOpex = sum(buckets.opex);
   const operatingIncome = grossProfit - totalOpex;
-  const totalOtherIncome = sum(buckets.otherIncome);
-  const totalOtherExpense = sum(buckets.otherExpense);
-  const incomeBeforeTax = operatingIncome + totalOtherIncome - totalOtherExpense;
+  const incomeBeforeTax = operatingIncome;
 
   return {
     buckets, bucketTx,
     totalRevenue, totalCOGS, grossProfit,
     totalOpex, operatingIncome,
-    totalOtherIncome, totalOtherExpense,
     incomeBeforeTax,
   };
 }
