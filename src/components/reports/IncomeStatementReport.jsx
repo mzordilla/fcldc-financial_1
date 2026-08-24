@@ -28,6 +28,11 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
     queryFn: () => base44.entities.ChartOfAccount.list("account_code", 1000),
   });
 
+  const { data: ppeAssets = [] } = useQuery({
+    queryKey: ["ppe_assets"],
+    queryFn: () => base44.entities.PPEAsset.list("-acquisition_date", 500),
+  });
+
   const bsAccounts = useMemo(() => incomeStatementAccountNames(chartOfAccounts), [chartOfAccounts]);
 
   const periods = useMemo(() => {
@@ -44,17 +49,17 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
       months.push({
         key: format(mStart, "yyyy-MM"),
         label: format(mStart, "MMM yyyy"),
-        ...buildPeriod(transactions, from, to, bsAccounts),
+        ...buildPeriod(transactions, from, to, bsAccounts, ppeAssets),
       });
       cursor = addMonths(cursor, 1);
     }
     if (selectedMonth !== "all") return months.filter(month => month.key === selectedMonth);
     const total = {
       label: "Total",
-      ...buildPeriod(transactions, dateFrom, dateTo, bsAccounts),
+      ...buildPeriod(transactions, dateFrom, dateTo, bsAccounts, ppeAssets),
     };
     return [...months, total];
-  }, [transactions, dateFrom, dateTo, selectedMonth, bsAccounts]);
+  }, [transactions, dateFrom, dateTo, selectedMonth, bsAccounts, ppeAssets]);
 
   const totalPeriod = periods[periods.length - 1];
   const totalIncome = totalPeriod?.totalRevenue || 0;

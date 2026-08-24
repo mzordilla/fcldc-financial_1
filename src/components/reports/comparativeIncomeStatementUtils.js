@@ -1,3 +1,5 @@
+import { depreciationExpenseForPeriod } from "@/lib/ppeDepreciation";
+
 const COGS_GROUPS = ["material_cost", "labor", "direct_labor", "equipment", "subcontractor"];
 const OPEX_GROUPS = ["overhead", "operating_expense", "permits", "insurance", "repair_and_maintenance", "fixtures"];
 
@@ -19,7 +21,7 @@ function classify(t, allowedAccounts) {
   return "opex";
 }
 
-export function buildPeriod(transactions, from, to, allowedAccounts = new Map()) {
+export function buildPeriod(transactions, from, to, allowedAccounts = new Map(), ppeAssets = []) {
   const txs = transactions.filter(t => t.date && t.date >= from && t.date <= to);
   const buckets = { revenue: {}, cogs: {}, opex: {} };
   const bucketTx = { revenue: {}, cogs: {}, opex: {} };
@@ -32,6 +34,12 @@ export function buildPeriod(transactions, from, to, allowedAccounts = new Map())
     if (!bucketTx[section][acct]) bucketTx[section][acct] = [];
     bucketTx[section][acct].push(t);
   });
+
+  const depreciation = depreciationExpenseForPeriod(ppeAssets, from, to);
+  if (depreciation > 0) {
+    buckets.opex["Depreciation Expense"] = depreciation;
+    bucketTx.opex["Depreciation Expense"] = [];
+  }
 
   const sum = (obj) => Object.values(obj).reduce((s, v) => s + v, 0);
   const totalRevenue = sum(buckets.revenue);

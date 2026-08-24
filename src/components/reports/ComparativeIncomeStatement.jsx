@@ -35,6 +35,11 @@ export default function ComparativeIncomeStatement() {
     queryFn: () => base44.entities.ChartOfAccount.list("account_code", 1000),
   });
 
+  const { data: ppeAssets = [] } = useQuery({
+    queryKey: ["ppe_assets"],
+    queryFn: () => base44.entities.PPEAsset.list("-acquisition_date", 500),
+  });
+
   const bsAccounts = useMemo(() => incomeStatementAccountNames(chartOfAccounts), [chartOfAccounts]);
 
   const years = useMemo(() => {
@@ -55,17 +60,17 @@ export default function ComparativeIncomeStatement() {
       const mEnd = endOfMonth(mStart);
       return {
         label: MONTH_LABELS[i],
-        ...buildPeriod(filteredTx, format(mStart, "yyyy-MM-dd"), format(mEnd, "yyyy-MM-dd"), bsAccounts),
+        ...buildPeriod(filteredTx, format(mStart, "yyyy-MM-dd"), format(mEnd, "yyyy-MM-dd"), bsAccounts, ppeAssets),
       };
     });
     const today = new Date();
     const ytdEnd = fiscalYear === today.getFullYear() ? today : endOfYear(yearStart);
     const ytd = {
       label: "YTD",
-      ...buildPeriod(filteredTx, format(yearStart, "yyyy-MM-dd"), format(ytdEnd, "yyyy-MM-dd"), bsAccounts),
+      ...buildPeriod(filteredTx, format(yearStart, "yyyy-MM-dd"), format(ytdEnd, "yyyy-MM-dd"), bsAccounts, ppeAssets),
     };
     return selectedMonth === "all" ? [...months, ytd] : [months[Number(selectedMonth)], ytd];
-  }, [filteredTx, fiscalYear, selectedMonth, bsAccounts]);
+  }, [filteredTx, fiscalYear, selectedMonth, bsAccounts, ppeAssets]);
 
   const handleExport = () => {
     const rows = [["Line Item", ...periods.map(p => p.label)]];
