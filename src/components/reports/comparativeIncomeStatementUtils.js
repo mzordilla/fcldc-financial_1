@@ -1,8 +1,6 @@
 function classify(t) {
   if (t.category === "bank_reconciliation" || t.category === "fund_transfer") return null;
-  if (t.type === "income") {
-    return (!t.category || t.category === "project_payment") ? "revenue" : "otherIncome";
-  }
+  if (t.type === "income") return "revenue";
   if (["material_cost", "labor", "direct_labor", "equipment", "subcontractor"].includes(t.category)) return "cogs";
   if (["overhead", "operating_expense", "permits", "insurance"].includes(t.category)) return "opex";
   return "otherExpense";
