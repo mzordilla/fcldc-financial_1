@@ -2,6 +2,10 @@ import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Label } from "@/components/ui/label";
 import { Paperclip, Trash2, Loader2 } from "lucide-react";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+
+const isImage = (name = "") => /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name);
+const isPdf = (name = "") => /\.pdf$/i.test(name);
 
 export default function POAttachmentsField({ attachments = [], onChange }) {
   const [uploading, setUploading] = useState(false);
@@ -28,9 +32,22 @@ export default function POAttachmentsField({ attachments = [], onChange }) {
           <ul className="mb-2 space-y-1">
             {attachments.map((doc, index) => (
               <li key={index} className="flex items-center justify-between gap-2 text-xs">
-                <a href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 truncate text-primary underline underline-offset-2">
-                  <Paperclip className="h-3.5 w-3.5 shrink-0" /> {doc.name || "Attachment"}
-                </a>
+                <HoverCard openDelay={150}>
+                  <HoverCardTrigger asChild>
+                    <a href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 truncate text-primary underline underline-offset-2">
+                      <Paperclip className="h-3.5 w-3.5 shrink-0" /> {doc.name || "Attachment"}
+                    </a>
+                  </HoverCardTrigger>
+                  <HoverCardContent side="right" className="w-96 p-2">
+                    {isImage(doc.name) ? (
+                      <img src={doc.url} alt={doc.name} className="max-h-72 w-full rounded-sm object-contain" />
+                    ) : isPdf(doc.name) ? (
+                      <iframe src={doc.url} title={doc.name} className="h-72 w-full rounded-sm border border-border" />
+                    ) : (
+                      <p className="text-xs text-muted-foreground">No inline preview available — click to open {doc.name}.</p>
+                    )}
+                  </HoverCardContent>
+                </HoverCard>
                 <button type="button" onClick={() => onChange(attachments.filter((_, i) => i !== index))} className="text-destructive hover:text-destructive/80">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
