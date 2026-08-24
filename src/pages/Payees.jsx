@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Plus, Trash2, Pencil, Users, List, FileUp, Download, ShieldCheck, ShieldOff, ClipboardCheck, Star } from "lucide-react";
+import { Plus, Trash2, Pencil, Users, List, FileUp, Download, ShieldCheck, ShieldOff, ClipboardCheck, Star, History } from "lucide-react";
+import { diffFields, logSupplierChange } from "@/lib/supplierChangeLog";
+import SupplierChangeHistoryDialog from "../components/payees/SupplierChangeHistoryDialog";
 import { exportToExcel, parseExcelFile, downloadTemplate } from "@/utils/excelUtils";
 import { useRef } from "react";
 import BatchPayeeDialog from "../components/payees/BatchPayeeDialog";
@@ -180,6 +182,7 @@ export default function Payees() {
   const [editingPayee, setEditingPayee] = useState(null);
   const [accreditingPayee, setAccreditingPayee] = useState(null);
   const [evaluatingPayee, setEvaluatingPayee] = useState(null);
+  const [historyPayee, setHistoryPayee] = useState(null);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const queryClient = useQueryClient();
@@ -254,8 +257,18 @@ export default function Payees() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Payee.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["payees"] }),
+    mutationFn: async ({ id, data, before }) => {
+      const changes = before ? diffFields(before, { ...before, ...data }) : [];
+      const saved = await base44.entities.Payee.update(id, data);
+      if (changes.length > 0) {
+        await logSupplierChange({ payee: before, record_type: "profile", record_id: id, action: "updated", changes, summary: "Supplier details updated" });
+      }
+      return saved;
+    },
+    onSuccess: (_r, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["payees"] });
+      queryClient.invalidateQueries({ queryKey: ["supplier-change-logs", vars?.id] });
+    },
   });
 
   const deleteMutation = useMutation({
@@ -389,7 +402,7 @@ export default function Payees() {
                   </td>
                   <td className="px-4 py-3 hidden md:table-cell">
                     <button
-                      onClick={() => updateMutation.mutate({ id: p.id, data: { is_accredited: !p.is_accredited } })}
+                      onClick={() => updateMutation.mutate({ id: p.id, data: { is_accredited: !p.is_accredited }, before: p })}
                        title={p.is_accredited ? "Accredited — click to revoke" : "Not Accredited — click to accredit"}
                        className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-medium transition-colors ${p.is_accredited ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "bg-muted text-muted-foreground border-border hover:bg-accent"}`}
                      >
@@ -420,7 +433,10 @@ export default function Payees() {
                       <Button variant="ghost" size="icon" title="Supplier Evaluation" onClick={() => setEvaluatingPayee(p)} className="text-muted-foreground hover:text-chart-3 h-8 w-8">
                         <Star className="w-3.5 h-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setEditingPayee(p)} className="text-muted-foreground hover:text-foreground h-8 w-8">
+                      <Button variant="ghost" size="icon" title="Change History" onClick={() => setHistoryPayee(p)} className="text-muted-foreground hover:text-chart-2 h-8 w-8">
+                        <History className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" title="Edit Supplier" onClick={() => setEditingPayee(p)} className="text-muted-foreground hover:text-foreground h-8 w-8">
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(p.id)} className="text-muted-foreground hover:text-destructive h-8 w-8">
@@ -453,7 +469,12 @@ export default function Payees() {
         onOpenChange={(v) => { if (!v) setEditingPayee(null); }}
         title="Edit Payee"
         initialData={editingPayee || defaultForm}
-        onSubmit={(data) => updateMutation.mutateAsync({ id: editingPayee.id, data })}
+        onSubmit={(data) => updateMutation.mutateAsync({ id: editingPayee.id, data, before: editingPayee })}
+      />
+      <SupplierChangeHistoryDialog
+        open={!!historyPayee}
+        onOpenChange={(v) => { if (!v) setHistoryPayee(null); }}
+        payee={historyPayee}
       />
       <SupplierAccreditationDialog
         open={!!accreditingPayee}

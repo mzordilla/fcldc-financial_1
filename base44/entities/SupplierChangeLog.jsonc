@@ -1,0 +1,65 @@
+{
+  "name": "SupplierChangeLog",
+  "type": "object",
+  "properties": {
+    "payee_id": {
+      "type": "string",
+      "description": "Linked Payee ID"
+    },
+    "supplier_name": {
+      "type": "string"
+    },
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "profile",
+        "accreditation",
+        "evaluation"
+      ],
+      "description": "Which supplier record was changed"
+    },
+    "record_id": {
+      "type": "string",
+      "description": "ID of the changed accreditation/evaluation record"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "created",
+        "updated",
+        "deleted"
+      ],
+      "default": "updated"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Short human-readable summary of the change"
+    },
+    "changes": {
+      "type": "array",
+      "description": "Field-level before/after values",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "actor": {
+      "type": "string",
+      "description": "Who made the change"
+    }
+  },
+  "required": [
+    "record_type",
+    "action"
+  ]
+}

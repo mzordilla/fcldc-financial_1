@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { Pencil } from "lucide-react";
+import { diffFields, logSupplierChange } from "@/lib/supplierChangeLog";
 
 const scoreFields = [
   { key: "quality_score", label: "Quality" },
@@ -50,11 +52,21 @@ const defaultForm = (payee) => ({
 export default function SupplierEvaluationDialog({ open, onOpenChange, payee }) {
   const [form, setForm] = useState(defaultForm(payee));
   const [saving, setSaving] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (open) setForm(defaultForm(payee));
+    if (open) {
+      setForm(defaultForm(payee));
+      setEditingRecord(null);
+    }
   }, [open, payee]);
+
+  const startEditing = (record) => {
+    const { id, created_date, updated_date, created_by_id, created_by, ...rest } = record;
+    setEditingRecord(record);
+    setForm({ ...defaultForm(payee), ...rest });
+  };
 
   const { data: history = [] } = useQuery({
     queryKey: ["supplier-evaluations", payee?.id],
@@ -62,9 +74,22 @@ export default function SupplierEvaluationDialog({ open, onOpenChange, payee }) 
     enabled: open && !!payee?.id,
   });
 
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.SupplierEvaluation.create(data),
+  const saveMutation = useMutation({
+    mutationFn: async (data) => {
+      if (editingRecord) {
+        const changes = diffFields(editingRecord, data);
+        const saved = await base44.entities.SupplierEvaluation.update(editingRecord.id, data);
+        if (changes.length > 0) {
+          await logSupplierChange({ payee, record_type: "evaluation", record_id: editingRecord.id, action: "updated", changes, summary: `Evaluation ${data.evaluation_period || data.evaluation_date || ""} updated` });
+        }
+        return saved;
+      }
+      const created = await base44.entities.SupplierEvaluation.create(data);
+      await logSupplierChange({ payee, record_type: "evaluation", record_id: created.id, action: "created", summary: `Evaluation ${data.evaluation_period || data.evaluation_date || ""} rated ${data.overall_rating}` });
+      return created;
+    },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["supplier-change-logs", payee?.id] });
       queryClient.invalidateQueries({ queryKey: ["supplier-evaluations", payee?.id] });
       queryClient.invalidateQueries({ queryKey: ["supplier-evaluations-all"] });
     },
@@ -80,7 +105,7 @@ export default function SupplierEvaluationDialog({ open, onOpenChange, payee }) 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await createMutation.mutateAsync({
+    await saveMutation.mutateAsync({
       ...form,
       total_score: Math.round(avg * scoreFields.length),
       overall_rating: overallRating,
@@ -98,15 +123,28 @@ export default function SupplierEvaluationDialog({ open, onOpenChange, payee }) 
 
         {history.length > 0 && (
           <div className="space-y-1.5 border border-border rounded-lg p-3 bg-muted/30">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Past Evaluations</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Past Evaluations — click to edit</p>
             {history.map(h => (
-              <div key={h.id} className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{h.evaluation_period || h.evaluation_date}</span>
+              <button
+                type="button"
+                key={h.id}
+                onClick={() => startEditing(h)}
+                className={`flex w-full items-center justify-between gap-2 rounded-md px-2 py-1 text-sm transition-colors hover:bg-accent ${editingRecord?.id === h.id ? "bg-accent" : ""}`}
+              >
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <Pencil className="h-3 w-3" />
+                  {h.evaluation_period || h.evaluation_date}
+                </span>
                 <Badge variant="outline" className={ratingStyles[h.overall_rating] || "bg-muted text-muted-foreground border-border"}>
                   {h.overall_rating} ({h.total_score}/25)
                 </Badge>
-              </div>
+              </button>
             ))}
+            {editingRecord && (
+              <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => { setEditingRecord(null); setForm(defaultForm(payee)); }}>
+                Cancel editing — start a new evaluation
+              </Button>
+            )}
           </div>
         )}
 
@@ -167,7 +205,7 @@ export default function SupplierEvaluationDialog({ open, onOpenChange, payee }) 
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Evaluation"}</Button>
+            <Button type="submit" disabled={saving}>{saving ? "Saving..." : editingRecord ? "Update Evaluation" : "Save Evaluation"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
