@@ -11,6 +11,7 @@ import { Trash2, Plus } from "lucide-react";
 import LineItemAdd from "./LineItemAdd";
 import POBudgetWarning from "@/components/purchase-orders/POBudgetWarning";
 import POVatBreakdown from "@/components/purchase-orders/POVatBreakdown";
+import POAttachmentsField from "@/components/purchase-orders/POAttachmentsField";
 import { calculatePurchaseOrderVat, VAT_RATE } from "@/lib/purchaseOrderVat";
 
 const COA_CATEGORY_LABELS = {
@@ -38,6 +39,7 @@ const defaultForm = {
   requested_by: "",
   requested_date: "",
   required_date: "",
+  attachments: [],
 };
 
 const OTHER_VALUE = "__other__";
@@ -252,6 +254,8 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
                 <LineItemAdd onAdd={(item) => setForm(prev => ({ ...prev, line_items: [...(prev.line_items || []), item] }))} suggestions={materialSuggestions} />
               </div>
             </div>
+
+            <POAttachmentsField attachments={form.attachments || []} onChange={v => set("attachments", v)} />
 
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-slate-700">Additional Notes (optional)</Label>

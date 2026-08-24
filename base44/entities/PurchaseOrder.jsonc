@@ -47,6 +47,21 @@
         }
       }
     },
+    "attachments": {
+      "type": "array",
+      "description": "Supporting documents (PDF, images, other files) uploaded for this purchase order",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "items": {
       "type": "string",
       "description": "Line items (comma separated or details)"
