@@ -1,9 +1,11 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 export default function TransactionDrilldownDialog({ open, onOpenChange, title, transactions = [] }) {
+  const navigate = useNavigate();
   const total = transactions.reduce((s, t) => s + (t.amount || 0), 0);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -26,7 +28,12 @@ export default function TransactionDrilldownDialog({ open, onOpenChange, title, 
               </thead>
               <tbody>
                 {transactions.map((t, i) => (
-                  <tr key={i} className="border-b border-border/30">
+                  <tr
+                    key={t.id || i}
+                    onClick={() => navigate(`/transactions?edit=${t.id}`)}
+                    className="border-b border-border/30 cursor-pointer hover:bg-muted/30"
+                    title="Open this transaction to edit"
+                  >
                     <td className="py-2 pr-3 whitespace-nowrap">{t.date ? format(parseISO(t.date), "MMM d, yyyy") : "—"}</td>
                     <td className="py-2 pr-3">{t.description || "—"}</td>
                     <td className="py-2 pr-3">{t.project_code || "—"}</td>

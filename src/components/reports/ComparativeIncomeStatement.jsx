@@ -15,6 +15,7 @@ const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "S
 
 export default function ComparativeIncomeStatement() {
   const [fiscalYear, setFiscalYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(String(new Date().getMonth()));
   const [projectFilter, setProjectFilter] = useState("all");
   const [taxRate, setTaxRate] = useState(0);
   const [drilldown, setDrilldown] = useState(null);
@@ -56,8 +57,8 @@ export default function ComparativeIncomeStatement() {
       label: "YTD",
       ...buildPeriod(filteredTx, format(yearStart, "yyyy-MM-dd"), format(ytdEnd, "yyyy-MM-dd")),
     };
-    return [...months, ytd];
-  }, [filteredTx, fiscalYear]);
+    return selectedMonth === "all" ? [...months, ytd] : [months[Number(selectedMonth)], ytd];
+  }, [filteredTx, fiscalYear, selectedMonth]);
 
   const handleExport = () => {
     const rows = [["Line Item", ...periods.map(p => p.label)]];
@@ -103,6 +104,14 @@ export default function ComparativeIncomeStatement() {
           <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
           <SelectContent>
             {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Select Month" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Months</SelectItem>
+            {MONTH_LABELS.map((month, index) => <SelectItem key={month} value={String(index)}>{month}</SelectItem>)}
           </SelectContent>
         </Select>
 
