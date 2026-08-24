@@ -134,6 +134,21 @@
       "type": "string",
       "description": "Reference to attached documents"
     },
+    "attachments": {
+      "type": "array",
+      "description": "Uploaded supporting documents (PDF, images, other files)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "check_number": {
       "type": "string"
     },

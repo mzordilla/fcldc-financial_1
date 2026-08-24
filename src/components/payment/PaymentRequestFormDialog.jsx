@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Printer } from "lucide-react";
 import PayeeSelector from "./PayeeSelector";
 import PaymentRequestPrintView from "./PaymentRequestPrintView";
+import POAttachmentsField from "@/components/purchase-orders/POAttachmentsField";
 
 const defaultForm = {
   request_number: "",
@@ -21,6 +22,7 @@ const defaultForm = {
   due_date: "",
   requested_by: "",
   supporting_docs: "",
+  attachments: [],
   base_amount: "",
   withholding_tax_percentage: 0,
   withholding_tax_amount: 0,
@@ -319,9 +321,11 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
           </div>
 
           <div className="space-y-1.5">
-            <Label>Supporting Documents</Label>
+            <Label>Supporting Documents (reference)</Label>
             <Input placeholder="e.g. Invoice attached, PO-2026-010" value={form.supporting_docs} onChange={e => setField("supporting_docs", e.target.value)} />
           </div>
+
+          <POAttachmentsField attachments={form.attachments || []} onChange={v => setField("attachments", v)} />
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPrint(true); }}>
