@@ -284,7 +284,7 @@ export default function Payees() {
   });
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 md:p-8 w-full space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -348,7 +348,7 @@ export default function Payees() {
       </div>
 
       {/* Table */}
-      <div className="bg-card border border-border rounded-2xl overflow-hidden">
+      <div className="bg-card border border-border rounded-2xl overflow-x-auto">
         {isLoading && <p className="text-center py-12 text-muted-foreground">Loading...</p>}
         {!isLoading && filtered.length === 0 && (
           <div className="text-center py-16">
@@ -357,7 +357,7 @@ export default function Payees() {
           </div>
         )}
         {filtered.length > 0 && (
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[1200px] text-sm">
             <thead className="border-b border-border bg-muted/40">
               <tr>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</th>
