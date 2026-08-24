@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import * as XLSX from "xlsx";
 import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
-import { buildPeriod } from "./comparativeIncomeStatementUtils";
+import { buildPeriod, balanceSheetAccountNames } from "./comparativeIncomeStatementUtils";
 import ComparativeIncomeStatementTable from "./ComparativeIncomeStatementTable";
 import TransactionDrilldownDialog from "./TransactionDrilldownDialog";
 
@@ -30,6 +30,13 @@ export default function ComparativeIncomeStatement() {
     queryFn: () => base44.entities.Project.list("project_name", 500),
   });
 
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ["chartofaccounts"],
+    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 1000),
+  });
+
+  const bsAccounts = useMemo(() => balanceSheetAccountNames(chartOfAccounts), [chartOfAccounts]);
+
   const years = useMemo(() => {
     const set = new Set(transactions.map(t => t.date ? parseInt(t.date.slice(0, 4)) : null).filter(Boolean));
     set.add(new Date().getFullYear());
@@ -48,17 +55,17 @@ export default function ComparativeIncomeStatement() {
       const mEnd = endOfMonth(mStart);
       return {
         label: MONTH_LABELS[i],
-        ...buildPeriod(filteredTx, format(mStart, "yyyy-MM-dd"), format(mEnd, "yyyy-MM-dd")),
+        ...buildPeriod(filteredTx, format(mStart, "yyyy-MM-dd"), format(mEnd, "yyyy-MM-dd"), bsAccounts),
       };
     });
     const today = new Date();
     const ytdEnd = fiscalYear === today.getFullYear() ? today : endOfYear(yearStart);
     const ytd = {
       label: "YTD",
-      ...buildPeriod(filteredTx, format(yearStart, "yyyy-MM-dd"), format(ytdEnd, "yyyy-MM-dd")),
+      ...buildPeriod(filteredTx, format(yearStart, "yyyy-MM-dd"), format(ytdEnd, "yyyy-MM-dd"), bsAccounts),
     };
     return selectedMonth === "all" ? [...months, ytd] : [months[Number(selectedMonth)], ytd];
-  }, [filteredTx, fiscalYear, selectedMonth]);
+  }, [filteredTx, fiscalYear, selectedMonth, bsAccounts]);
 
   const handleExport = () => {
     const rows = [["Line Item", ...periods.map(p => p.label)]];

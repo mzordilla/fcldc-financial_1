@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import * as XLSX from "xlsx";
 import { format, parseISO, startOfMonth, endOfMonth, addMonths } from "date-fns";
 import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
-import { buildPeriod } from "./comparativeIncomeStatementUtils";
+import { base44 } from "@/api/base44Client";
+import { buildPeriod, balanceSheetAccountNames } from "./comparativeIncomeStatementUtils";
 import ComparativeIncomeStatementTable from "./ComparativeIncomeStatementTable";
 import TransactionDrilldownDialog from "./TransactionDrilldownDialog";
 
@@ -22,6 +23,13 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
     queryFn: () => fetchAllTransactions("-date"),
   });
 
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ["chartofaccounts"],
+    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 1000),
+  });
+
+  const bsAccounts = useMemo(() => balanceSheetAccountNames(chartOfAccounts), [chartOfAccounts]);
+
   const periods = useMemo(() => {
     if (!dateFrom || !dateTo) return [];
     const rangeStart = parseISO(dateFrom);
@@ -36,17 +44,17 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
       months.push({
         key: format(mStart, "yyyy-MM"),
         label: format(mStart, "MMM yyyy"),
-        ...buildPeriod(transactions, from, to),
+        ...buildPeriod(transactions, from, to, bsAccounts),
       });
       cursor = addMonths(cursor, 1);
     }
     if (selectedMonth !== "all") return months.filter(month => month.key === selectedMonth);
     const total = {
       label: "Total",
-      ...buildPeriod(transactions, dateFrom, dateTo),
+      ...buildPeriod(transactions, dateFrom, dateTo, bsAccounts),
     };
     return [...months, total];
-  }, [transactions, dateFrom, dateTo, selectedMonth]);
+  }, [transactions, dateFrom, dateTo, selectedMonth, bsAccounts]);
 
   const totalPeriod = periods[periods.length - 1];
   const totalIncome = totalPeriod?.totalRevenue + totalPeriod?.totalOtherIncome || 0;
