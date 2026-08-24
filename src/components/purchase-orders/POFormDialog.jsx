@@ -147,7 +147,7 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
       ? form.line_items.reduce((sum, item) => sum + (item.total || 0), 0)
       : parseFloat(form.amount) || 0;
     const breakdown = calculatePurchaseOrderVat(enteredAmount, form.vat_treatment);
-    await onSubmit({ ...form, requested_by: "", amount: breakdown.total, subtotal: breakdown.subtotal, vat_amount: breakdown.vatAmount, vat_percentage: VAT_RATE });
+    await onSubmit({ ...form, amount: breakdown.total, subtotal: breakdown.subtotal, vat_amount: breakdown.vatAmount, vat_percentage: VAT_RATE });
     setSaving(false);
     onOpenChange(false);
   };
@@ -307,8 +307,8 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.5fr_1fr_1fr]">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-slate-700">Purchaser</Label>
-                <div className="flex h-9 items-center rounded-sm border border-slate-300 bg-slate-50 px-3 text-sm font-medium">PROCUREMENT AND LOGISTIC</div>
+                <Label className="text-xs font-semibold text-slate-700">Requested By</Label>
+                <Input value={form.requested_by} onChange={e => set("requested_by", e.target.value)} placeholder="Enter requester name" className="h-9 rounded-sm border-slate-300 shadow-none" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-slate-700">Request Date</Label>

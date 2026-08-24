@@ -20,6 +20,7 @@ export default function NoticeOfDeliveryPrintDocument({ po, compact = false }) {
         <div><p className="text-xs font-semibold uppercase text-gray-500">Project</p><p className="font-medium">{po.project_name || "—"}</p></div>
         <div><p className="text-xs font-semibold uppercase text-gray-500">Delivery Date</p><p className="font-medium">{po.delivery_date ? format(new Date(po.delivery_date), "MMM d, yyyy") : "—"}</p></div>
         <div><p className="text-xs font-semibold uppercase text-gray-500">Requested Date</p><p className="font-medium">{po.requested_date ? format(new Date(po.requested_date), "MMM d, yyyy") : "—"}</p></div>
+        <div><p className="text-xs font-semibold uppercase text-gray-500">Requested By</p><p className="font-medium">{po.requested_by || "—"}</p></div>
       </div>
 
       <div className={`${compact ? "mt-3" : "mt-6"} text-sm`}><p className="text-xs font-semibold uppercase text-gray-500">Description</p><p className="mt-1">{po.description || "—"}</p></div>
