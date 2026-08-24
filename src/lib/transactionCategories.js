@@ -1,0 +1,15 @@
+export const TRANSACTION_CATEGORIES = [
+  { value: "project_payment", label: "Project Payment" },
+  { value: "material_cost", label: "Material Cost" },
+  { value: "labor", label: "Labor" },
+  { value: "direct_labor", label: "Direct Labor" },
+  { value: "equipment", label: "Equipment" },
+  { value: "subcontractor", label: "Subcontractor" },
+  { value: "overhead", label: "Overhead" },
+  { value: "operating_expense", label: "Operating Expense" },
+  { value: "permits", label: "Permits" },
+  { value: "insurance", label: "Insurance" },
+  { value: "bank_reconciliation", label: "Bank Reconciliation" },
+  { value: "fund_transfer", label: "Fund Transfer" },
+  { value: "other", label: "Other" },
+];
