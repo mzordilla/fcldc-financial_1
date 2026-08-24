@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const emptyLoan = () => ({ invoice_number: "", amount: "", amount_paid: "", due_date: "", notes: "" });
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const emptyLoan = () => ({ invoice_number: "", amount: "", amount_paid: "", due_date: "", notes: "", funding_purpose: "funding" });
 
 export default function MultiFundingLoanDialog({ open, onOpenChange, onSubmit }) {
   const [clientName, setClientName] = useState("");
@@ -34,6 +36,7 @@ export default function MultiFundingLoanDialog({ open, onOpenChange, onSubmit })
           ? (Number(l.amount_paid) >= Number(l.amount) ? "paid" : "partially_paid")
           : "outstanding",
         notes: l.notes || "",
+        funding_purpose: l.funding_purpose || "funding",
         receivable_type: "funding_loan",
       })));
       onOpenChange(false);
@@ -83,6 +86,17 @@ export default function MultiFundingLoanDialog({ open, onOpenChange, onSubmit })
                     <Label className="text-xs">Due Date *</Label>
                     <Input type="date" value={loan.due_date} onChange={(e) => updateLoan(i, "due_date", e.target.value)} />
                   </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Classification</Label>
+                  <Select value={loan.funding_purpose} onValueChange={(v) => updateLoan(i, "funding_purpose", v)}>
+                    <SelectTrigger><SelectValue placeholder="Select classification" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="renovation">Renovation</SelectItem>
+                      <SelectItem value="acquisition">Acquisition</SelectItem>
+                      <SelectItem value="funding">Funding</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Notes</Label>

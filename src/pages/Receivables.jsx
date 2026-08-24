@@ -82,6 +82,11 @@ const fundingFields = [
     { value: "paid", label: "Paid" },
     { value: "overdue", label: "Overdue" },
   ]},
+  { name: "funding_purpose", label: "Classification", type: "select", options: [
+    { value: "renovation", label: "Renovation" },
+    { value: "acquisition", label: "Acquisition" },
+    { value: "funding", label: "Funding" },
+  ]},
   { name: "notes", label: "Notes", placeholder: "Details of the funding/loan" },
 ];
 
@@ -123,6 +128,7 @@ export default function Receivables() {
   const [editingR, setEditingR] = useState(null);
   const [collectingR, setCollectingR] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [purposeFilter, setPurposeFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("project-receivables");
   const [expandedClients, setExpandedClients] = useState(new Set());
   const queryClient = useQueryClient();
@@ -198,8 +204,11 @@ export default function Receivables() {
     : activeTab === "employee-receivables"
     ? receivables.filter(r => !r.property_listing_id && r.receivable_type === "employee")
     : receivables.filter(r => !r.property_listing_id && !["funding_loan", "employee"].includes(r.receivable_type));
-  const filtered = statusFilter === "all" ? categoryReceivables : categoryReceivables.filter(r => r.status === statusFilter);
   const isLongTerm = activeTab === "funding-loans";
+  const purposeScoped = isLongTerm && purposeFilter !== "all"
+    ? categoryReceivables.filter(r => (r.funding_purpose || "funding") === purposeFilter)
+    : categoryReceivables;
+  const filtered = statusFilter === "all" ? purposeScoped : purposeScoped.filter(r => r.status === statusFilter);
   const gridCols = isLongTerm
     ? "grid grid-cols-[1.6fr_1fr_2.5rem] gap-0"
     : "grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_1fr_1fr_2.5rem] gap-0";
@@ -260,6 +269,17 @@ export default function Receivables() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {isLongTerm && (
+            <Select value={purposeFilter} onValueChange={setPurposeFilter}>
+              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Classifications</SelectItem>
+                <SelectItem value="renovation">Renovation</SelectItem>
+                <SelectItem value="acquisition">Acquisition</SelectItem>
+                <SelectItem value="funding">Funding</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
             <SelectContent>

@@ -28,6 +28,15 @@
       "default": "project",
       "description": "Whether this is a project billing receivable, a funding/loan receivable, or an employee receivable (cash advance / loan to an employee)"
     },
+    "funding_purpose": {
+      "type": "string",
+      "enum": [
+        "renovation",
+        "acquisition",
+        "funding"
+      ],
+      "description": "Classification of a funding/loan receivable: renovation, acquisition, or funding"
+    },
     "amount": {
       "type": "number",
       "description": "Invoice amount before applied advance payments"
