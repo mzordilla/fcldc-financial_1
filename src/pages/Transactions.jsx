@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
@@ -57,6 +57,13 @@ export default function Transactions() {
     queryKey: ["transactions"],
     queryFn: () => fetchAllTransactions("-date"),
   });
+
+  useEffect(() => {
+    const editId = new URLSearchParams(window.location.search).get("edit");
+    if (editId && transactions.length) {
+      setEditingT(transactions.find(transaction => transaction.id === editId) || null);
+    }
+  }, [transactions]);
 
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ["bankaccounts"],

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format, parseISO, eachMonthOfInterval, startOfMonth } from "date-fns";
 import { FileSpreadsheet, ChevronDown, ChevronUp } from "lucide-react";
@@ -18,8 +19,8 @@ const CATEGORY_LABELS = {
 };
 
 export default function MonthlyTransactionsReport({ dateFrom, dateTo }) {
+  const navigate = useNavigate();
   const [expandedMonth, setExpandedMonth] = useState(null);
-  const [expandedTx, setExpandedTx] = useState(null);
 
   const { data: allTransactions = [] } = useQuery({
     queryKey: ["transactions_monthly_report"],
@@ -199,7 +200,12 @@ export default function MonthlyTransactionsReport({ dateFrom, dateTo }) {
                               </thead>
                               <tbody>
                                 {[...txs].sort((a, b) => b.date?.localeCompare(a.date)).map(t => (
-                                  <tr key={t.id} className="border-b border-border/40 hover:bg-muted/20">
+                                  <tr
+                                    key={t.id}
+                                    onClick={() => navigate(`/transactions?edit=${t.id}`)}
+                                    className="border-b border-border/40 hover:bg-muted/20 cursor-pointer"
+                                    title="Open this transaction to edit"
+                                  >
                                     <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">{t.date ? format(parseISO(t.date), "MMM d") : "—"}</td>
                                     <td className="px-4 py-2 text-foreground">{t.description || "—"}</td>
                                     <td className="px-4 py-2">
