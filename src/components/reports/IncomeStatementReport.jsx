@@ -7,7 +7,7 @@ import * as XLSX from "xlsx";
 import { format, parseISO, startOfMonth, endOfMonth, addMonths } from "date-fns";
 import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
 import { base44 } from "@/api/base44Client";
-import { buildPeriod, balanceSheetAccountNames } from "./comparativeIncomeStatementUtils";
+import { buildPeriod, incomeStatementAccountNames } from "./comparativeIncomeStatementUtils";
 import ComparativeIncomeStatementTable from "./ComparativeIncomeStatementTable";
 import TransactionDrilldownDialog from "./TransactionDrilldownDialog";
 
@@ -28,7 +28,7 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
     queryFn: () => base44.entities.ChartOfAccount.list("account_code", 1000),
   });
 
-  const bsAccounts = useMemo(() => balanceSheetAccountNames(chartOfAccounts), [chartOfAccounts]);
+  const bsAccounts = useMemo(() => incomeStatementAccountNames(chartOfAccounts), [chartOfAccounts]);
 
   const periods = useMemo(() => {
     if (!dateFrom || !dateTo) return [];
