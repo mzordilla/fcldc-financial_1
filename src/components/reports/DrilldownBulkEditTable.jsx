@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TRANSACTION_CATEGORIES } from "@/lib/transactionCategories";
 
+const TRANSACTION_TYPES = [
+  { value: "income", label: "Income" },
+  { value: "expense", label: "Expense" },
+  { value: "fund_transfer", label: "Fund Transfer" },
+  { value: "other", label: "Other" },
+];
+
 export default function DrilldownBulkEditTable({ transactions, onSave, isSaving }) {
   const [rows, setRows] = useState(transactions);
 
@@ -26,7 +33,7 @@ export default function DrilldownBulkEditTable({ transactions, onSave, isSaving 
 
   const changed = rows.filter(row => {
     const original = transactions.find(t => t.id === row.id);
-    return original && ["description", "date", "amount", "category", "chart_of_account", "project_code"].some(f => row[f] !== original[f]);
+    return original && ["description", "date", "amount", "type", "category", "chart_of_account", "project_code"].some(f => row[f] !== original[f]);
   });
 
   return (
@@ -36,6 +43,7 @@ export default function DrilldownBulkEditTable({ transactions, onSave, isSaving 
           <tr className="border-b border-border text-left text-xs text-muted-foreground">
             <th className="py-2 pr-2">Date</th>
             <th className="py-2 pr-2">Description</th>
+            <th className="py-2 pr-2">Type</th>
             <th className="py-2 pr-2">Category</th>
             <th className="py-2 pr-2">Chart of Account</th>
             <th className="py-2 pr-2">Project</th>
@@ -50,6 +58,14 @@ export default function DrilldownBulkEditTable({ transactions, onSave, isSaving 
               </td>
               <td className="py-1.5 pr-2">
                 <Input className="h-8 text-xs" value={row.description || ""} onChange={e => setField(row.id, "description", e.target.value)} />
+              </td>
+              <td className="py-1.5 pr-2">
+                <Select value={row.type || ""} onValueChange={v => setField(row.id, "type", v)}>
+                  <SelectTrigger className="h-8 w-32 text-xs"><SelectValue placeholder="Type" /></SelectTrigger>
+                  <SelectContent>
+                    {TRANSACTION_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </td>
               <td className="py-1.5 pr-2">
                 <Select value={row.category || ""} onValueChange={v => setField(row.id, "category", v)}>
