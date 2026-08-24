@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pencil, Trash2, Package, Boxes } from "lucide-react";
 import { ExecutiveTabsList, ExecutiveTab } from "@/components/shared/ExecutiveTabs";
 import PPEAuditSummary from "@/components/ppe/PPEAuditSummary";
+import { computeAccumulatedDepreciation } from "@/lib/ppeDepreciation";
 
 const ASSET_TYPES = [
   { value: "land", label: "Land" },
@@ -69,15 +70,18 @@ function AssetFormDialog({ open, onClose, asset, onSubmit }) {
   const [form, setForm] = useState(asset ? { ...asset } : { ...EMPTY_FORM });
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+  const autoAccumDep = computeAccumulatedDepreciation(form);
+  const autoBookValue = (parseFloat(form.acquisition_cost) || 0) - autoAccumDep;
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const data = {
       ...form,
       acquisition_cost: parseFloat(form.acquisition_cost) || 0,
       useful_life_years: form.useful_life_years ? parseFloat(form.useful_life_years) : undefined,
-      accumulated_depreciation: parseFloat(form.accumulated_depreciation) || 0,
+      accumulated_depreciation: autoAccumDep,
       area_sqm: form.area_sqm ? parseFloat(form.area_sqm) : undefined,
-      book_value: form.book_value ? parseFloat(form.book_value) : (parseFloat(form.acquisition_cost) || 0) - (parseFloat(form.accumulated_depreciation) || 0),
+      book_value: autoBookValue,
     };
     onSubmit(data);
   };
@@ -140,11 +144,13 @@ function AssetFormDialog({ open, onClose, asset, onSubmit }) {
             </div>
             <div>
               <Label>Accumulated Depreciation</Label>
-              <Input type="number" value={form.accumulated_depreciation} onChange={e => set("accumulated_depreciation", e.target.value)} min="0" />
+              <Input type="number" value={autoAccumDep} readOnly className="bg-muted/50" />
+              <p className="mt-1 text-xs text-muted-foreground">Auto-computed from cost, date, life & method</p>
             </div>
             <div>
               <Label>Book Value</Label>
-              <Input type="number" value={form.book_value} onChange={e => set("book_value", e.target.value)} min="0" placeholder="Auto-calculated if blank" />
+              <Input type="number" value={autoBookValue} readOnly className="bg-muted/50" />
+              <p className="mt-1 text-xs text-muted-foreground">Cost less accumulated depreciation</p>
             </div>
             <div>
               <Label>Location</Label>
