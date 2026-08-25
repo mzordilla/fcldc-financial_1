@@ -46,10 +46,19 @@
       "type": "string",
       "enum": [
         "independent",
-        "payment_approval"
+        "payment_approval",
+        "fund_transfer"
       ],
       "default": "independent",
       "description": "Where the check was created"
+    },
+    "destination_bank_account_id": {
+      "type": "string",
+      "description": "Destination BankAccount ID for fund transfer checks"
+    },
+    "destination_bank_name": {
+      "type": "string",
+      "description": "Destination bank display name for fund transfer checks"
     },
     "payment_request_ids": {
       "type": "array",

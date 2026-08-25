@@ -13,7 +13,13 @@ export default function useCheckWriter() {
     mutationFn: async ({ form, print, printWindow }) => {
       const bank = bankAccounts.find(a => a.id === form.bank_account_id);
       const check = await base44.entities.Check.create({ ...form, source: form.source || "independent", bank_name: bank.bank_name, account_name: bank.account_name, account_number: bank.account_number || "", status: "saved" });
-      if (form.source !== "payment_approval") {
+      if (form.source === "fund_transfer") {
+        const dest = bankAccounts.find(a => a.id === form.destination_bank_account_id);
+        await base44.entities.Transaction.create({ description: `Fund Transfer Check ${form.check_number} – to ${form.destination_bank_name || form.payee}`, amount: form.amount, type: "expense", category: "fund_transfer", chart_of_account: `${bank.account_name} – ${bank.bank_name}`, bank_account_id: bank.id, date: form.check_date, status: "completed" });
+        if (dest) {
+          await base44.entities.Transaction.create({ description: `Fund Transfer Check ${form.check_number} – from ${bank.account_name} – ${bank.bank_name}`, amount: form.amount, type: "income", category: "fund_transfer", chart_of_account: `${dest.account_name} – ${dest.bank_name}`, bank_account_id: dest.id, date: form.check_date, status: "completed" });
+        }
+      } else if (form.source !== "payment_approval") {
         await base44.entities.Transaction.create({ description: `Check ${form.check_number} – ${form.payee}${form.memo ? `: ${form.memo}` : ""}`, amount: form.amount, type: "expense", category: "other", chart_of_account: `${bank.account_name} – ${bank.bank_name}`, bank_account_id: bank.id, date: form.check_date, status: "completed" });
       }
       if (print) { printChecks([check], printWindow); await markPrinted([check]); return { ...check, status: "printed", printed_date: new Date().toISOString() }; }
