@@ -1,11 +1,14 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { FileSpreadsheet, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
 import { format, parseISO } from "date-fns";
 import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
+import { buildGeneralLedger, seedBalanceSheetAccounts } from "@/lib/balanceSheetAccounts";
+import GLReconciliationPanel from "./GLReconciliationPanel";
+import TransactionDrilldownDialog from "./TransactionDrilldownDialog";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
@@ -52,6 +55,11 @@ function ExpandableBSRow({ label, value, items = [], renderItem, isSub, colorCla
 }
 
 export default function BalanceSheetReport({ asOfDate }) {
+  const queryClient = useQueryClient();
+  const [drilldown, setDrilldown] = useState(null);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [seedNotice, setSeedNotice] = useState("");
+
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ["bankaccounts"],
     queryFn: () => base44.entities.BankAccount.list("-created_date", 100),
@@ -86,6 +94,40 @@ export default function BalanceSheetReport({ asOfDate }) {
     queryKey: ["ppeassets"],
     queryFn: () => base44.entities.PPEAsset.list("-created_date", 5000),
   });
+
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ["chartofaccounts"],
+    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 1000),
+  });
+
+  const runSeed = async (announce) => {
+    setIsSeeding(true);
+    const created = await seedBalanceSheetAccounts(chartOfAccounts);
+    if (created.length > 0) {
+      queryClient.invalidateQueries({ queryKey: ["chartofaccounts"] });
+      setSeedNotice(`Added ${created.length} standard balance-sheet account${created.length !== 1 ? "s" : ""}: ${created.join(", ")}`);
+    } else if (announce) {
+      setSeedNotice("All standard balance-sheet accounts already exist in the Chart of Accounts.");
+    }
+    setIsSeeding(false);
+  };
+
+  // Auto-seed the standard balance-sheet accounts once the Chart of Accounts has loaded.
+  useEffect(() => {
+    if (chartOfAccounts.length === 0) return;
+    runSeed(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chartOfAccounts.length]);
+
+  const ledger = useMemo(
+    () => buildGeneralLedger(transactions, chartOfAccounts, asOfDate),
+    [transactions, chartOfAccounts, asOfDate]
+  );
+
+  const bankAccountNames = useMemo(
+    () => bankAccounts.map(a => `${a.account_name} – ${a.bank_name}`),
+    [bankAccounts]
+  );
 
   const bs = useMemo(() => {
     const activeBankAccounts = bankAccounts.filter(a => a.status === "active");
@@ -371,6 +413,24 @@ export default function BalanceSheetReport({ asOfDate }) {
           </div>
         </div>
       </div>
+
+      <GLReconciliationPanel
+        bs={bs}
+        ledger={ledger}
+        bankAccountNames={bankAccountNames}
+        asOfDate={asOfDate}
+        onDrilldown={(title, txs) => setDrilldown({ title: `${title} — Ledger Postings`, transactions: txs })}
+        onSeed={() => runSeed(true)}
+        isSeeding={isSeeding}
+        seedNotice={seedNotice}
+      />
+
+      <TransactionDrilldownDialog
+        open={!!drilldown}
+        onOpenChange={(v) => { if (!v) setDrilldown(null); }}
+        title={drilldown?.title}
+        transactions={drilldown?.transactions || []}
+      />
     </div>
   );
 }

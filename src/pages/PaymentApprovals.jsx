@@ -22,6 +22,7 @@ import ApprovalHistoryLog from "../components/approvals/ApprovalHistoryLog";
 import SupplierGroupedRequests from "../components/payment/SupplierGroupedRequests";
 import SupplierGroupedPOs from "../components/payment/SupplierGroupedPOs";
 import CheckWriterWorkspace from "@/components/check-writer/CheckWriterWorkspace";
+import { seedBalanceSheetAccounts, validatePostingAccount, findAccount, BS_ACCOUNT_NAMES } from "@/lib/balanceSheetAccounts";
 
 const statusStyles = {
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
@@ -105,6 +106,26 @@ export default function PaymentApprovals() {
     queryFn: () => base44.entities.Payable.list("-created_date", 10000),
   });
 
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ["chartofaccounts"],
+    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 1000),
+  });
+
+  // Ensure the standard posting accounts exist so every ledger entry maps to a real account.
+  useEffect(() => {
+    if (chartOfAccounts.length === 0) return;
+    seedBalanceSheetAccounts(chartOfAccounts).then(created => {
+      if (created.length > 0) queryClient.invalidateQueries({ queryKey: ["chartofaccounts"] });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chartOfAccounts.length]);
+
+  // Blocks a posting whose chart_of_account is missing from, or mistyped in, the Chart of Accounts.
+  const assertPostingAccount = (name, expectedType) => {
+    const error = validatePostingAccount(chartOfAccounts, name, expectedType);
+    if (error) throw new Error(error);
+  };
+
   // Filter out POs that already have a payment request OR payable linked to them
   const poRefsWithRequests = new Set(
     requests
@@ -138,7 +159,7 @@ export default function PaymentApprovals() {
 
   // Map PR category to a sensible expense CoA name
   const PR_CATEGORY_COA = {
-    supplier_invoice: "Accounts Payable",
+    supplier_invoice: "General Expense",
     subcontractor: "Subcontractor Expense",
     labor: "Direct Labor",
     equipment: "Equipment Expense",
@@ -178,6 +199,10 @@ export default function PaymentApprovals() {
       const expenseCoA = PR_CATEGORY_COA[data.category] || "General Expense";
       const txCategory = PR_CATEGORY_TX[data.category] || "other";
 
+      // Enforce that both legs post to real Chart of Account records
+      assertPostingAccount(expenseCoA, "expense");
+      assertPostingAccount(BS_ACCOUNT_NAMES.payable, "liability");
+
       // Dr. Expense / Asset (recognize cost)
       await base44.entities.Transaction.create({
         description: `Expense Recognition – ${data.payee}${data.invoice_number ? ` (${data.invoice_number})` : ""}${data.description ? `: ${data.description}` : ""}`,
@@ -208,6 +233,7 @@ export default function PaymentApprovals() {
       queryClient.invalidateQueries({ queryKey: ["payment_requests"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
+    onError: (error) => alert(error.message),
   });
 
   const updateMutation = useMutation({
@@ -374,8 +400,17 @@ export default function PaymentApprovals() {
     if (action === "paid") {
       const bankAccounts = await base44.entities.BankAccount.list("-created_date", 10000);
       const bankAccount = bankAccounts.find(a => a.id === bankAccountId);
-      const bankLabel = bankAccount ? `${bankAccount.account_name} – ${bankAccount.bank_name}` : "Cash in Bank";
+      const bankAccountLabel = bankAccount ? `${bankAccount.account_name} – ${bankAccount.bank_name}` : "";
+      // Post cash to the bank's own Chart of Account when it exists, otherwise the standard Cash in Bank account
+      const bankLabel = findAccount(chartOfAccounts, bankAccountLabel) ? bankAccountLabel : BS_ACCOUNT_NAMES.cash;
       const projectName = pr.project_allocations?.[0]?.project_name || "";
+
+      // Enforce that every disbursement leg posts to a real Chart of Account record
+      assertPostingAccount(BS_ACCOUNT_NAMES.payable, "liability");
+      assertPostingAccount(bankLabel, "asset");
+      if ((pr.withholding_tax_amount || 0) > 0) {
+        assertPostingAccount(BS_ACCOUNT_NAMES.withholdingTax, "liability");
+      }
 
       const withholdingTax = pr.withholding_tax_amount || 0;
       const vatAmt = pr.vat_amount || 0;
