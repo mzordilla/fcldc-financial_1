@@ -9,7 +9,7 @@ import ApprovedPRSelect from "@/components/check-writer/ApprovedPRSelect";
 
 const initial = { bank_account_id: "", payee: "", amount: "", check_number: "", check_date: new Date().toISOString().split("T")[0], memo: "" };
 export default function CheckForm({ bankAccounts, approvedRequests, payees, loadingRequests, onSave, saving }) {
-  const [form, setForm] = useState(initial); const [error, setError] = useState("");
+  const [form, setForm] = useState(initial); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
   const [selectedRequestIds, setSelectedRequestIds] = useState([]);
   const [checkType, setCheckType] = useState("standard");
   const [destinationId, setDestinationId] = useState("");
@@ -40,12 +40,18 @@ export default function CheckForm({ bankAccounts, approvedRequests, payees, load
     if (!form.bank_account_id || !form.payee || !Number(form.amount) || !form.check_number || !form.check_date) return setError("Complete all required fields.");
     if (checkType === "fund_transfer" && !destinationId) return setError("Select a destination bank account.");
     if (checkType === "fund_transfer" && destinationId === form.bank_account_id) return setError("Source and destination banks must be different.");
-    setError(""); const printWindow = print ? window.open("", "_blank", "width=950,height=650") : null;
+    setError(""); setNotice("");
+    const isTransfer = checkType === "fund_transfer";
+    const printWindow = print && !isTransfer ? window.open("", "_blank", "width=950,height=650") : null;
     const dest = bankAccounts.find(a => a.id === destinationId);
     const payload = checkType === "fund_transfer"
       ? { ...form, source: "fund_transfer", destination_bank_account_id: destinationId, destination_bank_name: dest ? `${dest.account_name} – ${dest.bank_name}` : "" }
       : form;
-    try { await onSave({ ...payload, amount: Number(form.amount), amount_in_words: words }, print, printWindow); setForm(initial); setSelectedRequestIds([]); setDestinationId(""); }
+    try {
+      await onSave({ ...payload, amount: Number(form.amount), amount_in_words: words }, print, printWindow);
+      setForm(initial); setSelectedRequestIds([]); setDestinationId("");
+      if (isTransfer) setNotice(`Fund transfer submitted — awaiting admin approval before the check can be printed${print ? " (it will print automatically once approved)" : ""}.`);
+    }
     catch (e) { printWindow?.close(); setError(e.message || "Unable to save check."); }
   };
   return <section className="bg-card border border-border rounded-xl p-3 space-y-2.5">
@@ -65,6 +71,7 @@ export default function CheckForm({ bankAccounts, approvedRequests, payees, load
     <div className="space-y-1.5"><Label>Memo</Label><Input value={form.memo} onChange={e => set("memo", e.target.value)} /></div>
     <div className="rounded-xl bg-muted/50 border border-border p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Amount in words</p><p className="text-xs font-mono font-semibold leading-relaxed">{words}</p></div>
     {error && <p className="text-sm text-destructive">{error}</p>}
+    {notice && <p className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs font-medium text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-400">{notice}</p>}
     <div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={saving} onClick={() => submit(false)}>{saving ? <Loader2 className="animate-spin" /> : <Save />} Save Check</Button><Button disabled={saving} onClick={() => submit(true)}><Printer /> Save & Print</Button></div>
   </section>;
 }

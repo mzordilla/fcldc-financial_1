@@ -60,6 +60,24 @@
       "type": "string",
       "description": "Destination bank display name for fund transfer checks"
     },
+    "bank_transfer_request_id": {
+      "type": "string",
+      "description": "Linked BankTransferRequest ID for fund transfer checks awaiting approval"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "pending_approval",
+        "approved",
+        "rejected"
+      ],
+      "description": "Approval gate status for fund transfer checks"
+    },
+    "print_on_approval": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the submitter chose Save & Print, so the check auto-prints once approved"
+    },
     "payment_request_ids": {
       "type": "array",
       "description": "Payment Requests paid by this check",
