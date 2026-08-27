@@ -52,7 +52,7 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
 
   const { data: payees = [] } = useQuery({
     queryKey: ["payees"],
-    queryFn: () => base44.entities.Payee.list("name", 200),
+    queryFn: () => base44.entities.Payee.list("name", 1000),
   });
 
   const { data: projects = [] } = useQuery({
