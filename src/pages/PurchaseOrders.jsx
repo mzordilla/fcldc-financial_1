@@ -141,8 +141,18 @@ export default function PurchaseOrders() {
               {po.approval_status === "approved" &&
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="inline-flex items-center gap-1 rounded-md border border-primary/30 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10">
+                    <button className="relative inline-flex items-center gap-1 rounded-md border border-primary/30 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10">
                       <MoreHorizontal className="w-3.5 h-3.5" /> Processing
+                      {!po.receipt_url &&
+                        <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-chart-2/15 px-1.5 py-0.5 text-[9px] font-semibold text-chart-2">
+                          <Package className="w-2.5 h-2.5" /> No receipt
+                        </span>
+                      }
+                      {po.receipt_url && !poIdsWithPayables.has(po.id) && !poIdsWithPaidRequests.has(po.po_number) &&
+                        <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-[9px] font-semibold text-primary">
+                          <CreditCard className="w-2.5 h-2.5" /> For pay
+                        </span>
+                      }
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
