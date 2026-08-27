@@ -27,6 +27,7 @@ import ProjectDeliverySummary from "../components/purchase-orders/ProjectDeliver
 import ChangeRequestDialog from "../components/purchase-orders/ChangeRequestDialog";
 import ChangeRequestReviewDialog from "../components/purchase-orders/ChangeRequestReviewDialog";
 import PendingChangeRequestsBanner from "../components/purchase-orders/PendingChangeRequestsBanner";
+import PendingReceiptBanner from "../components/purchase-orders/PendingReceiptBanner";
 import POBudgetWarning from "@/components/purchase-orders/POBudgetWarning";
 import Payees from "./Payees";
 const statusStyles = {
@@ -69,6 +70,7 @@ export default function PurchaseOrders() {
   const [expandedHistory, setExpandedHistory] = useState(null);
   const [expandedGroups, setExpandedGroups] = useState({ pending: true, approved: true, rejected: false, cancelled: false });
   const [statusFilter, setStatusFilter] = useState("pending");
+  const [fulfillmentFilter, setFulfillmentFilter] = useState("all");
   const [supplierFilter, setSupplierFilter] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");
   const [poSearch, setPoSearch] = useState("");
@@ -400,8 +402,14 @@ export default function PurchaseOrders() {
   const poSuppliers = useMemo(() => [...new Set(orders.map((o) => o.supplier_name).filter(Boolean))].sort(), [orders]);
   const poProjects = useMemo(() => [...new Set(orders.map((o) => o.project_name).filter(Boolean))].sort(), [orders]);
 
+  const isPaid = (o) => poIdsWithPayables.has(o.id) || poIdsWithPaidRequests.has(o.po_number);
+  const awaitingReceipt = orders.filter((o) => o.approval_status === "approved" && !o.receipt_url);
+  const readyToPay = orders.filter((o) => o.approval_status === "approved" && o.receipt_url && !isPaid(o));
+
   const filtered = orders.filter((o) => {
     if (statusFilter !== "all" && o.approval_status !== statusFilter) return false;
+    if (fulfillmentFilter === "no_receipt" && !(o.approval_status === "approved" && !o.receipt_url)) return false;
+    if (fulfillmentFilter === "ready_to_pay" && !(o.approval_status === "approved" && o.receipt_url && !isPaid(o))) return false;
     if (supplierFilter !== "all" && o.supplier_name !== supplierFilter) return false;
     if (projectFilter !== "all" && o.project_name !== projectFilter) return false;
     if (dateFrom && (!o.requested_date || o.requested_date < dateFrom)) return false;
@@ -544,6 +552,7 @@ export default function PurchaseOrders() {
                 <Input placeholder="Search PO#, supplier, project..." className="pl-9" value={poSearch} onChange={(e) => setPoSearch(e.target.value)} />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All Status</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="rejected">Rejected</SelectItem><SelectItem value="cancelled">Cancelled</SelectItem></SelectContent></Select>
+              <Select value={fulfillmentFilter} onValueChange={setFulfillmentFilter}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All Fulfillment</SelectItem><SelectItem value="no_receipt">No Receipt (For Receiving)</SelectItem><SelectItem value="ready_to_pay">For Pay (Received)</SelectItem></SelectContent></Select>
               <Select value={supplierFilter} onValueChange={setSupplierFilter}><SelectTrigger><SelectValue placeholder="All Suppliers" /></SelectTrigger><SelectContent><SelectItem value="all">All Suppliers</SelectItem>{poSuppliers.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
               <Select value={projectFilter} onValueChange={setProjectFilter}><SelectTrigger><SelectValue placeholder="All Projects" /></SelectTrigger><SelectContent><SelectItem value="all">All Projects</SelectItem>{poProjects.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
               <div className="flex gap-2 sm:col-span-2 lg:col-span-1 xl:col-span-1">
@@ -606,6 +615,13 @@ export default function PurchaseOrders() {
             }
         </div>
           }
+
+      {/* Receiving / payment notifications */}
+      <PendingReceiptBanner
+        awaitingReceipt={awaitingReceipt}
+        readyToPay={readyToPay}
+        onShowAwaitingReceipt={() => { setStatusFilter("approved"); setFulfillmentFilter("no_receipt"); }}
+        onShowReadyToPay={() => { setStatusFilter("approved"); setFulfillmentFilter("ready_to_pay"); }} />
 
       {/* Pending change requests notification */}
       <PendingChangeRequestsBanner orders={orders} onReview={setReviewingChangesPO} />
