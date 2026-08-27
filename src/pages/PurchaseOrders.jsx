@@ -146,13 +146,16 @@ export default function PurchaseOrders() {
                   <DropdownMenuContent align="end">
                     {!po.receipt_url && <DropdownMenuItem onClick={() => setUploadingReceipt(po)}><Package /> Receipt</DropdownMenuItem>}
                     <DropdownMenuItem onClick={() => setReceivingItems(po)}><Package /> Receive</DropdownMenuItem>
-                    <DropdownMenuItem
-                      disabled={!po.receipt_url || poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number)}
-                      onClick={() => setConvertingPO(po)}>
-                      <CreditCard /> Pay
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+              }
+              {po.approval_status === "approved" &&
+                <button
+                  disabled={!po.receipt_url || poIdsWithPayables.has(po.id) || poIdsWithPaidRequests.has(po.po_number)}
+                  onClick={() => setConvertingPO(po)}
+                  className="inline-flex items-center gap-1 rounded-md border border-primary/30 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-50 disabled:pointer-events-none">
+                  <CreditCard className="w-3.5 h-3.5" /> Pay
+                </button>
               }
               {po.approval_status === "approved" &&
                 <button onClick={() => setRequestingChangePO(po)} title="Request change" aria-label="Request change" className="inline-flex items-center rounded-md border border-chart-3/30 p-1.5 text-chart-3 hover:bg-chart-3/10">
