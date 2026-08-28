@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
+import FinancialRatiosPanel from "@/components/reports/FinancialRatiosPanel";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
@@ -195,6 +196,9 @@ export default function EfficiencyReport({ dateFrom, dateTo }) {
           </p>
         </div>
       </div>
+
+      {/* Liquidity & Financial Ratios */}
+      <FinancialRatiosPanel />
 
       {/* Detailed Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
