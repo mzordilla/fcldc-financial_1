@@ -202,22 +202,31 @@ export default function PaymentApprovals() {
       // Requests sourced from a Purchase Order were already classified and expensed on the PO side
       const fromPurchaseOrder = /PO:/.test(data.supporting_docs || "");
 
-      // Enforce that both legs post to real Chart of Account records
-      if (!fromPurchaseOrder) assertPostingAccount(expenseCoA, "expense");
+      // One expense leg per allocation, each posted to its own Chart of Account.
+      // Falls back to the PR category mapping only when an allocation has no account selected.
+      const allocations = (data.project_allocations || []).filter(a => (a.amount || 0) > 0);
+      const expenseLegs = allocations.length > 0
+        ? allocations.map(a => ({ amount: a.amount, chart_of_account: a.category || expenseCoA, project_code: a.project_name || "" }))
+        : [{ amount: data.amount, chart_of_account: expenseCoA, project_code: projectName }];
+
+      // Enforce that every leg posts to a real Chart of Account record
+      if (!fromPurchaseOrder) expenseLegs.forEach(leg => assertPostingAccount(leg.chart_of_account, "expense"));
       assertPostingAccount(BS_ACCOUNT_NAMES.payable, "liability");
 
       // Dr. Expense / Asset (recognize cost) — skipped for PO-sourced requests to avoid a double expense
       if (!fromPurchaseOrder) {
-        await base44.entities.Transaction.create({
-          description: `Expense Recognition – ${data.payee}${data.invoice_number ? ` (${data.invoice_number})` : ""}${data.description ? `: ${data.description}` : ""}`,
-          amount: data.amount,
-          type: "expense",
-          category: txCategory,
-          chart_of_account: expenseCoA,
-          project_code: projectName,
-          date: data.invoice_date || today,
-          status: "completed",
-        });
+        for (const leg of expenseLegs) {
+          await base44.entities.Transaction.create({
+            description: `Expense Recognition – ${data.payee}${data.invoice_number ? ` (${data.invoice_number})` : ""}${data.description ? `: ${data.description}` : ""}`,
+            amount: leg.amount,
+            type: "expense",
+            category: txCategory,
+            chart_of_account: leg.chart_of_account,
+            project_code: leg.project_code,
+            date: data.invoice_date || today,
+            status: "completed",
+          });
+        }
       }
 
       // Cr. Accounts Payable (record liability)
