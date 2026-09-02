@@ -7,15 +7,17 @@ const OPEX_GROUPS = ["overhead", "operating_expense", "permits", "insurance", "r
 // Section placement follows the account's own group, not the transaction category.
 export const UNCLASSIFIED_EXPENSE = "Unclassified Expense";
 
-export function incomeStatementAccountNames(chartOfAccounts = []) {
+export function incomeStatementAccountNames(chartOfAccounts = [], bankAccounts = []) {
   const map = new Map();
   chartOfAccounts
     .filter(a => ["income", "expense"].includes(a.account_type))
     .forEach(a => map.set(a.account_name, a));
-  // Balance-sheet accounts are tracked so their postings (cash / payable legs) are not treated as expenses.
-  map.balanceSheetNames = new Set(
-    chartOfAccounts.filter(a => ["asset", "liability", "equity"].includes(a.account_type)).map(a => a.account_name)
-  );
+  // Balance-sheet accounts (and bank account labels used on cash legs) are tracked so their
+  // postings are not counted as expenses a second time on top of the expense-recognition leg.
+  map.balanceSheetNames = new Set([
+    ...chartOfAccounts.filter(a => ["asset", "liability", "equity"].includes(a.account_type)).map(a => a.account_name),
+    ...bankAccounts.map(a => `${a.account_name} – ${a.bank_name}`),
+  ]);
   return map;
 }
 

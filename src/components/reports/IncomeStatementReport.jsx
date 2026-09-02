@@ -33,7 +33,12 @@ export default function IncomeStatementReport({ dateFrom, dateTo }) {
     queryFn: () => base44.entities.PPEAsset.list("-acquisition_date", 500),
   });
 
-  const bsAccounts = useMemo(() => incomeStatementAccountNames(chartOfAccounts), [chartOfAccounts]);
+  const { data: bankAccounts = [] } = useQuery({
+    queryKey: ["bankaccounts"],
+    queryFn: () => base44.entities.BankAccount.list("-created_date", 100),
+  });
+
+  const bsAccounts = useMemo(() => incomeStatementAccountNames(chartOfAccounts, bankAccounts), [chartOfAccounts, bankAccounts]);
 
   const periods = useMemo(() => {
     if (!dateFrom || !dateTo) return [];

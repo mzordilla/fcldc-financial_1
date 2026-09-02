@@ -40,7 +40,12 @@ export default function ComparativeIncomeStatement() {
     queryFn: () => base44.entities.PPEAsset.list("-acquisition_date", 500),
   });
 
-  const bsAccounts = useMemo(() => incomeStatementAccountNames(chartOfAccounts), [chartOfAccounts]);
+  const { data: bankAccounts = [] } = useQuery({
+    queryKey: ["bankaccounts"],
+    queryFn: () => base44.entities.BankAccount.list("-created_date", 100),
+  });
+
+  const bsAccounts = useMemo(() => incomeStatementAccountNames(chartOfAccounts, bankAccounts), [chartOfAccounts, bankAccounts]);
 
   const years = useMemo(() => {
     const set = new Set(transactions.map(t => t.date ? parseInt(t.date.slice(0, 4)) : null).filter(Boolean));
