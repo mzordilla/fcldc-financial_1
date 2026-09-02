@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
@@ -49,6 +51,7 @@ export default function DrilldownBulkEditTable({ transactions, onSave, isSaving 
             <th className="py-2 pr-2">Chart of Account</th>
             <th className="py-2 pr-2">Project</th>
             <th className="py-2 text-right">Amount</th>
+            <th className="py-2 pl-2"></th>
           </tr>
         </thead>
         <tbody>
@@ -100,6 +103,11 @@ export default function DrilldownBulkEditTable({ transactions, onSave, isSaving 
               </td>
               <td className="py-1.5">
                 <Input type="number" step="0.01" className="h-8 w-32 text-xs text-right" value={row.amount ?? ""} onChange={e => setField(row.id, "amount", parseFloat(e.target.value) || 0)} />
+              </td>
+              <td className="py-1.5 pl-2">
+                <Link to={`/transactions?edit=${row.id}`} title="Open in Transactions" className="text-muted-foreground hover:text-primary">
+                  <ExternalLink className="w-4 h-4" />
+                </Link>
               </td>
             </tr>
           ))}
