@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
-import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { base44 } from "@/api/base44Client";
 
 // Maps PO category to CoA classification
@@ -22,42 +20,27 @@ export default function POToPayableDialog({ open, onOpenChange, po, onSuccess })
   const [form, setForm] = useState({
     invoice_number: "",
     due_date: format(addDays(new Date(), 30), "yyyy-MM-dd"),
-    account_classification: "expense",
-    chart_of_account: "General Expense",
   });
   const [saving, setSaving] = useState(false);
 
-  const { data: chartOfAccounts = [] } = useQuery({
-    queryKey: ["chartofaccounts"],
-    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 200),
-  });
+  // The PO was already classified when it was requested — reuse its account, no re-asking here
+  const coaEntry = CATEGORY_COA_MAP[po?.category] || CATEGORY_COA_MAP.other;
+  const debitAccount = po?.chart_of_account || coaEntry.account;
 
-  // Filter accounts by selected classification type
-  const filteredAccounts = chartOfAccounts.filter(a =>
-    form.account_classification === "asset"
-      ? a.account_type === "asset"
-      : a.account_type === "expense"
-  );
-
-  // Reset form with CoA defaults whenever a new PO is loaded
   useEffect(() => {
-    if (po) {
-      const coa = CATEGORY_COA_MAP[po.category] || CATEGORY_COA_MAP.other;
-      setForm({
-        invoice_number: "",
-        due_date: format(addDays(new Date(), 30), "yyyy-MM-dd"),
-        account_classification: coa.type,
-        chart_of_account: coa.account,
-      });
-    }
+    if (po) setForm({ invoice_number: "", due_date: format(addDays(new Date(), 30), "yyyy-MM-dd") });
   }, [po?.id]);
 
   const handleSubmit = async () => {
     setSaving(true);
-    const coaEntry = CATEGORY_COA_MAP[po.category] || CATEGORY_COA_MAP.other;
-    const isAsset = form.account_classification === "asset";
+    const isAsset = coaEntry.type === "asset";
     const txCategory = isAsset ? (po.category === "equipment" ? "equipment" : "material_cost") : coaEntry.txCategory;
     const today = format(new Date(), "yyyy-MM-dd");
+
+    // Cost already recognized when the delivery was received? Then don't post it a second time.
+    const receivingItems = await base44.entities.ReceivingItem.filter({ po_id: po.id });
+    const recordedLegs = await Promise.all(receivingItems.map(item => base44.entities.Transaction.filter({ receiving_item_id: item.id })));
+    const expenseAlreadyRecorded = recordedLegs.some(list => list.length > 0);
 
     // 1. Create the Payable (represents Accounts Payable liability)
     await base44.entities.Payable.create({
@@ -99,17 +82,19 @@ export default function POToPayableDialog({ open, onOpenChange, po, onSuccess })
       }],
     });
 
-    // 2. Dr. Expense/Asset Account (recognize cost upon delivery)
-    await base44.entities.Transaction.create({
-      description: `${isAsset ? "Asset Capitalization" : "Expense Recognition"} – ${po.supplier_name}${po.po_number ? ` (${po.po_number})` : ""}${po.description ? `: ${po.description}` : ""}`,
-      amount: po.amount,
-      type: "expense",
-      category: txCategory,
-      chart_of_account: form.chart_of_account,
-      project_name: po.project_name || "",
-      date: today,
-      status: "completed",
-    });
+    // 2. Dr. Expense/Asset Account — only when the cost wasn't already recorded at receiving
+    if (!expenseAlreadyRecorded) {
+      await base44.entities.Transaction.create({
+        description: `${isAsset ? "Asset Capitalization" : "Expense Recognition"} – ${po.supplier_name}${po.po_number ? ` (${po.po_number})` : ""}${po.description ? `: ${po.description}` : ""}`,
+        amount: po.amount,
+        type: "expense",
+        category: txCategory,
+        chart_of_account: debitAccount,
+        project_code: po.project_code || "",
+        date: today,
+        status: "completed",
+      });
+    }
 
     // 3. Cr. Accounts Payable (record liability)
     await base44.entities.Transaction.create({
@@ -162,48 +147,9 @@ export default function POToPayableDialog({ open, onOpenChange, po, onSuccess })
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Account Classification</Label>
-            <Select
-              value={form.account_classification}
-              onValueChange={v => {
-                const defaults = v === "asset"
-                  ? (po?.category === "equipment" ? "Property, Plant & Equipment" : "Raw Materials Inventory")
-                  : (CATEGORY_COA_MAP[po?.category] || CATEGORY_COA_MAP.other).account;
-                setForm(f => ({ ...f, account_classification: v, chart_of_account: defaults }));
-              }}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="expense">Expense (Income Statement)</SelectItem>
-                <SelectItem value="asset">Asset (Balance Sheet)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Debit Account (Chart of Accounts)</Label>
-            <Select
-              value={form.chart_of_account}
-              onValueChange={v => setForm(f => ({ ...f, chart_of_account: v }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select debit account..." />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredAccounts.map(a => (
-                  <SelectItem key={a.id} value={a.account_name}>
-                    {a.account_code ? `${a.account_code} · ${a.account_name}` : a.account_name}
-                  </SelectItem>
-                ))}
-                {filteredAccounts.length === 0 && (
-                  <SelectItem value={form.chart_of_account} disabled>
-                    No accounts found
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">Credit entry will be posted to: <strong>Accounts Payable</strong></p>
+          <div className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground space-y-0.5">
+            <p>Expense account (from PO): <strong className="text-foreground">{debitAccount}</strong></p>
+            <p>Credit entry will be posted to: <strong className="text-foreground">Accounts Payable</strong></p>
           </div>
         </div>
 

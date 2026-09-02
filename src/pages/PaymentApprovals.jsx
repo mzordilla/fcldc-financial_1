@@ -199,21 +199,26 @@ export default function PaymentApprovals() {
       const expenseCoA = PR_CATEGORY_COA[data.category] || "General Expense";
       const txCategory = PR_CATEGORY_TX[data.category] || "other";
 
+      // Requests sourced from a Purchase Order were already classified and expensed on the PO side
+      const fromPurchaseOrder = /PO:/.test(data.supporting_docs || "");
+
       // Enforce that both legs post to real Chart of Account records
-      assertPostingAccount(expenseCoA, "expense");
+      if (!fromPurchaseOrder) assertPostingAccount(expenseCoA, "expense");
       assertPostingAccount(BS_ACCOUNT_NAMES.payable, "liability");
 
-      // Dr. Expense / Asset (recognize cost)
-      await base44.entities.Transaction.create({
-        description: `Expense Recognition – ${data.payee}${data.invoice_number ? ` (${data.invoice_number})` : ""}${data.description ? `: ${data.description}` : ""}`,
-        amount: data.amount,
-        type: "expense",
-        category: txCategory,
-        chart_of_account: expenseCoA,
-        project_code: projectName,
-        date: data.invoice_date || today,
-        status: "completed",
-      });
+      // Dr. Expense / Asset (recognize cost) — skipped for PO-sourced requests to avoid a double expense
+      if (!fromPurchaseOrder) {
+        await base44.entities.Transaction.create({
+          description: `Expense Recognition – ${data.payee}${data.invoice_number ? ` (${data.invoice_number})` : ""}${data.description ? `: ${data.description}` : ""}`,
+          amount: data.amount,
+          type: "expense",
+          category: txCategory,
+          chart_of_account: expenseCoA,
+          project_code: projectName,
+          date: data.invoice_date || today,
+          status: "completed",
+        });
+      }
 
       // Cr. Accounts Payable (record liability)
       await base44.entities.Transaction.create({
