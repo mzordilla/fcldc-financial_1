@@ -18,15 +18,25 @@ export function incomeStatementAccountNames(chartOfAccounts = [], bankAccounts =
     ...chartOfAccounts.filter(a => ["asset", "liability", "equity"].includes(a.account_type)).map(a => a.account_name),
     ...bankAccounts.map(a => `${a.account_name} – ${a.bank_name}`),
   ]);
+  // Bank labels may have been renamed since a cash leg was posted, so also match either side of the label.
+  map.bankNameParts = new Set(bankAccounts.flatMap(a => [a.account_name, a.bank_name]).filter(Boolean));
   return map;
 }
 
-// Expense transactions not coded to any Chart of Account (or coded to a name that isn't in the chart,
-// e.g. a bank account label) surface as "Unclassified Expense" so they aren't silently dropped.
+// Cash legs of a disbursement (the bank side of a payment) are balance-sheet postings, never expenses.
+function isCashLeg(t, allowedAccounts) {
+  if (/^Cash Payment –/.test(t.description || "")) return true;
+  if (allowedAccounts.balanceSheetNames?.has(t.chart_of_account)) return true;
+  const parts = (t.chart_of_account || "").split(" – ");
+  return parts.length === 2 && parts.some(p => allowedAccounts.bankNameParts?.has(p.trim()));
+}
+
+// Expense transactions not coded to any Chart of Account (or coded to a name that isn't in the chart)
+// surface as "Unclassified Expense" so they aren't silently dropped.
 function isUnclassifiedExpense(t, allowedAccounts) {
   if (t.type !== "expense" || t.category === "fund_transfer") return false;
-  if (!t.chart_of_account) return true;
-  return !allowedAccounts.balanceSheetNames?.has(t.chart_of_account);
+  if (isCashLeg(t, allowedAccounts)) return false;
+  return true;
 }
 
 function classify(t, allowedAccounts) {
