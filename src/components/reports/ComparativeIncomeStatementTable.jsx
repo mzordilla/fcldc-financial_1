@@ -1,3 +1,5 @@
+import { UNCLASSIFIED_EXPENSE } from "./comparativeIncomeStatementUtils";
+
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 function AccountRows({ title, sectionKey, totalKey, periods, colorClass, onDrilldown }) {
@@ -12,7 +14,10 @@ function AccountRows({ title, sectionKey, totalKey, periods, colorClass, onDrill
       )}
       {accounts.map(acct => (
         <tr key={acct} className="border-b border-border/30 hover:bg-muted/20">
-          <td className="px-4 py-2 pl-8 text-sm text-muted-foreground whitespace-nowrap">{acct}</td>
+          <td className="px-4 py-2 pl-8 text-sm text-muted-foreground whitespace-nowrap">
+            {acct}
+            {acct === UNCLASSIFIED_EXPENSE && <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-chart-3">needs coding</span>}
+          </td>
           {periods.map(p => {
             const amt = p.buckets[sectionKey][acct] || 0;
             const txs = p.bucketTx[sectionKey][acct] || [];
