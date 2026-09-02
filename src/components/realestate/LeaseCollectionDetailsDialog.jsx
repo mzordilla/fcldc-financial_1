@@ -124,15 +124,21 @@ export default function LeaseCollectionDetailsDialog({
                 </Select>
               </div>
               <div>
-                <Label className="text-xs">Deposit To Bank *</Label>
+                <Label className="text-xs">Deposit To * <span className="text-muted-foreground font-normal">(bank account or undeposited)</span></Label>
                 <Select value={form.bank_account_id} onValueChange={(v) => setForm({ ...form, bank_account_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select destination" /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="undeposited">
+                      <span className="flex items-center gap-2">📥 Undeposited Collections</span>
+                    </SelectItem>
                     {bankAccounts.filter((account) => account.status !== "closed").map((account) => (
                       <SelectItem key={account.id} value={account.id}>{account.account_name} – {account.bank_name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {form.bank_account_id === "undeposited" && (
+                  <p className="text-xs text-muted-foreground mt-1">Collection will be recorded but not posted to any bank account yet.</p>
+                )}
               </div>
               <div>
                 <Label className="text-xs">Reference</Label>

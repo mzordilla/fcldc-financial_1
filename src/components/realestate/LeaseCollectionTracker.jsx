@@ -82,8 +82,9 @@ export default function LeaseCollectionTracker() {
     if (!record?.receivable_id) return;
     const receivable = await base44.entities.Receivable.get(record.receivable_id);
     const priorHistory = receivable.payment_history || [];
+    const isUndeposited = form.bank_account_id === "undeposited";
     const paymentHistory = collected
-      ? [...priorHistory, { collection_date: form.collected_date, amount: record.amount || 0, bank_account_id: form.bank_account_id || "", reference: form.reference || "", notes: "Recorded from Lease Collections" }]
+      ? [...priorHistory, { collection_date: form.collected_date, amount: record.amount || 0, bank_account_id: isUndeposited ? "" : (form.bank_account_id || ""), undeposited: isUndeposited, reference: form.reference || "", notes: "Recorded from Lease Collections" }]
       : priorHistory.filter((entry) => entry.notes !== "Recorded from Lease Collections");
     await base44.entities.Receivable.update(receivable.id, {
       amount_paid: collected ? receivable.amount : 0,
@@ -94,6 +95,7 @@ export default function LeaseCollectionTracker() {
   };
 
   const postBankCollection = async (record, form) => {
+    if (form.bank_account_id === "undeposited") return;
     const transaction = await base44.entities.Transaction.create({
       description: `Lease collection — ${record.tenant_name} · ${record.unit_number || "Unit"} · ${record.month}${form.reference ? ` · ${form.reference}` : ""}`,
       amount: record.amount || 0,
