@@ -99,7 +99,8 @@ export default function BillingCycles() {
         amount: grossBillingAmount,
         type: "income",
         category: "project_payment",
-        project_name: bc.project_name || "",
+        chart_of_account: "Construction Revenue",
+        project_code: bc.project_name || "",
         date: bc.period_end || bc.period_start || bc.due_date || today,
         status: "completed",
       });
