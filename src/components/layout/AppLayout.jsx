@@ -5,21 +5,23 @@ import AccessDenied from "./AccessDenied";
 import ApprovalSidebar from "./ApprovalSidebar";
 import TeamChat from "@/components/chat/TeamChat";
 import { useAuth } from "@/lib/AuthContext";
-import { canAccess, roleAccess } from "@/lib/access-control";
+import { canAccess, getAllowedRoutes } from "@/lib/access-control";
+import useRoleAccess from "@/hooks/useRoleAccess";
 
 export default function AppLayout() {
   const { user } = useAuth();
   const location = useLocation();
-
+  const { config, isLoading } = useRoleAccess();
   const role = user?.role?.toLowerCase();
-  const allowed = canAccess(role, location.pathname);
 
-  // Redirect non-admin users away from disallowed routes to their first allowed route
-  if (!allowed) {
-    const allowedRoutes = Array.isArray(roleAccess[role]) ? roleAccess[role] : [];
-    if (allowedRoutes.length > 0) {
-      return <Navigate to={allowedRoutes[0]} replace />;
-    }
+  if (role !== "admin" && isLoading) {
+    return <div className="fixed inset-0 flex items-center justify-center"><div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" /></div>;
+  }
+
+  const allowed = canAccess(role, location.pathname, config);
+  const allowedRoutes = getAllowedRoutes(role, config);
+  if (!allowed && Array.isArray(allowedRoutes) && allowedRoutes.length > 0) {
+    return <Navigate to={allowedRoutes[0]} replace />;
   }
 
   return (

@@ -1,0 +1,54 @@
+{
+  "name": "RoleAccessConfig",
+  "type": "object",
+  "properties": {
+    "disbursement": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "accounting": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "procurement": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "marketing": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "disbursement",
+    "accounting",
+    "procurement",
+    "marketing"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

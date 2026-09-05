@@ -7,7 +7,8 @@ import {
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
-import { navItemsByRole, canAccess } from "@/lib/access-control";
+import { canAccess } from "@/lib/access-control";
+import useRoleAccess from "@/hooks/useRoleAccess";
 import GlobalSearch from "./GlobalSearch";
 
 const allNavItems = [
@@ -33,10 +34,9 @@ export default function MobileNav() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const { user } = useAuth();
-
+  const { config } = useRoleAccess();
   const role = user?.role?.toLowerCase();
-  const allowed = navItemsByRole[role];
-  const navItems = allowed === "all" ? allNavItems : allNavItems.filter(item => canAccess(role, item.path));
+  const navItems = allNavItems.filter(item => canAccess(role, item.path, config));
 
   return (
     <>

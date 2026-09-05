@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Check, Save, RotateCcw } from "lucide-react";
+import useRoleAccess from "@/hooks/useRoleAccess";
 
 const ALL_MODULES = [
   { label: "Dashboard", path: "/" },
@@ -38,27 +39,14 @@ const ROLE_COLORS = {
   marketing: { badge: "bg-orange-100 text-orange-700 border-orange-200", check: "bg-orange-500" },
 };
 
-const DEFAULT_ACCESS = {
-  disbursement: ["/", "/bank-accounts", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/payables", "/chart-of-accounts", "/billing-cycles", "/receiving-items"],
-  accounting: ["/", "/projects", "/project-pnl", "/billing-cycles", "/receivables", "/payables", "/bank-reconciliation", "/transactions", "/payees", "/payment-approvals", "/chart-of-accounts", "/receiving-items"],
-  procurement: ["/", "/purchase-orders", "/payment-approvals", "/payees", "/receiving-items", "/materials-history"],
-  marketing: ["/re/portfolio", "/re/units", "/re/tenants", "/re/listings", "/re/reports"],
-};
-
-const STORAGE_KEY = "fcldc_role_access_v1";
-
-function loadAccess() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : DEFAULT_ACCESS;
-  } catch {
-    return DEFAULT_ACCESS;
-  }
-}
-
 export default function RoleAccessMatrix() {
-  const [access, setAccess] = useState(loadAccess);
+  const { config, isLoading, saveAccess, copyDefaults } = useRoleAccess();
+  const [access, setAccess] = useState(config);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => setAccess(config), [config]);
 
   const toggle = (role, path) => {
     setAccess(prev => {
@@ -72,16 +60,33 @@ export default function RoleAccessMatrix() {
     setSaved(false);
   };
 
-  const handleSave = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(access));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      await saveAccess(access);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      setError(e.message || "Unable to save access settings.");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleReset = () => {
-    setAccess(DEFAULT_ACCESS);
-    localStorage.removeItem(STORAGE_KEY);
+  const handleReset = async () => {
+    const defaults = copyDefaults();
+    setAccess(defaults);
     setSaved(false);
+    setError("");
+    setSaving(true);
+    try {
+      await saveAccess(defaults);
+    } catch (e) {
+      setError(e.message || "Unable to reset access settings.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const toggleAllForRole = (role) => {
@@ -105,6 +110,8 @@ export default function RoleAccessMatrix() {
     setSaved(false);
   };
 
+  if (isLoading) return <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">Loading access settings...</div>;
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       {/* Header */}
@@ -116,19 +123,23 @@ export default function RoleAccessMatrix() {
         <div className="flex items-center gap-2">
           <button
             onClick={handleReset}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
+            disabled={saving}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors disabled:opacity-50"
           >
             <RotateCcw className="w-3 h-3" /> Reset
           </button>
           <button
             onClick={handleSave}
-            className={`flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-lg font-semibold transition-colors ${saved ? "bg-emerald-500 text-white" : "bg-primary text-white hover:bg-primary/90"}`}
+            disabled={saving}
+            className={`flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-lg font-semibold transition-colors disabled:opacity-50 ${saved ? "bg-emerald-500 text-white" : "bg-primary text-white hover:bg-primary/90"}`}
           >
             {saved ? <Check className="w-3 h-3" /> : <Save className="w-3 h-3" />}
             {saved ? "Saved!" : "Save Changes"}
           </button>
         </div>
       </div>
+
+      {error && <div className="px-6 py-2 bg-red-50 border-b border-red-100 text-xs text-red-700">{error}</div>}
 
       {/* Admin note */}
       <div className="px-6 py-2 bg-slate-50 border-b border-slate-100 flex items-center gap-2">

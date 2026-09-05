@@ -2,6 +2,9 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
+import { canAccess } from "@/lib/access-control";
+import useRoleAccess from "@/hooks/useRoleAccess";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -40,16 +43,20 @@ export default function GlobalSearch() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { config, isLoading: accessLoading } = useRoleAccess();
+  const role = user?.role?.toLowerCase();
+  const accessibleModules = useMemo(() => MODULES.filter(module => canAccess(role, destinationFor(module, {}), config)), [role, config]);
 
   const queries = useQuery({
-    queryKey: ["global-search-data"],
+    queryKey: ["global-search-data", role, accessibleModules.map(module => module.key).join(",")],
     queryFn: async () => {
       const results = await Promise.all(
-        MODULES.map((m) => base44.entities[m.entity].list("-created_date", 500))
+        accessibleModules.map((m) => base44.entities[m.entity].list("-created_date", 500))
       );
-      return Object.fromEntries(MODULES.map((m, i) => [m.key, results[i]]));
+      return Object.fromEntries(accessibleModules.map((m, i) => [m.key, results[i]]));
     },
-    enabled: open,
+    enabled: open && !accessLoading,
     staleTime: 60000,
   });
 
@@ -58,7 +65,7 @@ export default function GlobalSearch() {
   const groupedResults = useMemo(() => {
     const term = query.trim().toLowerCase();
     if (!term) return [];
-    return MODULES.map((module) => {
+    return accessibleModules.map((module) => {
       const records = data[module.key] || [];
       const matches = records.filter((r) => {
         const name = String(r[module.nameField] || "").toLowerCase();
@@ -67,7 +74,7 @@ export default function GlobalSearch() {
       }).slice(0, 8);
       return { module, matches };
     }).filter((g) => g.matches.length > 0);
-  }, [query, data]);
+  }, [query, data, accessibleModules]);
 
   const handleSelect = (module, record) => {
     setOpen(false);
