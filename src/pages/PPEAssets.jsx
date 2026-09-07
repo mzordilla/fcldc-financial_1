@@ -58,6 +58,8 @@ const EMPTY_FORM = {
   salvage_value: "",
   accumulated_depreciation: "",
   book_value: "",
+  market_value: "",
+  revaluation_surplus: "",
   insurance_cost: "",
   insurance_provider: "",
   insurance_policy_number: "",
@@ -83,6 +85,9 @@ function AssetFormDialog({ open, onClose, asset, onSubmit, suppliers }) {
   const acquisitionCost = parseFloat(form.acquisition_cost) || 0;
   const salvageValue = form.depreciation_method === "straight_line" ? acquisitionCost * 0.1 : 0;
   const autoBookValue = acquisitionCost - autoAccumDep;
+  const hasMarketValue = form.market_value !== "" && form.market_value != null;
+  const marketValue = hasMarketValue ? parseFloat(form.market_value) || 0 : undefined;
+  const revaluationSurplus = hasMarketValue ? marketValue - autoBookValue : 0;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -96,6 +101,8 @@ function AssetFormDialog({ open, onClose, asset, onSubmit, suppliers }) {
       insurance_cost: parseFloat(form.insurance_cost) || 0,
       registration_cost: parseFloat(form.registration_cost) || 0,
       book_value: autoBookValue,
+      market_value: marketValue,
+      revaluation_surplus: revaluationSurplus,
     };
     onSubmit(data);
   };
@@ -172,6 +179,15 @@ function AssetFormDialog({ open, onClose, asset, onSubmit, suppliers }) {
               <Input type="number" value={autoBookValue} readOnly className="bg-muted/50" />
               <p className="mt-1 text-xs text-muted-foreground">Cost less accumulated depreciation</p>
             </div>
+            <div>
+              <Label>Market Value</Label>
+              <Input type="number" min="0" value={form.market_value ?? ""} onChange={e => set("market_value", e.target.value)} placeholder="Current appraised value" />
+            </div>
+            <div>
+              <Label>Asset Revaluation</Label>
+              <Input type="number" value={revaluationSurplus} readOnly className="bg-muted/50" />
+              <p className="mt-1 text-xs text-muted-foreground">Market value less book value; reflected in equity</p>
+            </div>
             <InsuranceRegistrationFields form={form} set={set} suppliers={suppliers} />
             <div>
               <Label>Location</Label>
@@ -246,6 +262,8 @@ export default function PPEAssets() {
   const totalCost = filtered.reduce((s, a) => s + (a.acquisition_cost || 0), 0);
   const totalAccumDep = filtered.reduce((s, a) => s + (a.accumulated_depreciation || 0), 0);
   const totalBookValue = filtered.reduce((s, a) => s + (a.book_value ?? ((a.acquisition_cost || 0) - (a.accumulated_depreciation || 0))), 0);
+  const totalMarketValue = filtered.reduce((s, a) => s + (a.market_value ?? (a.book_value ?? ((a.acquisition_cost || 0) - (a.accumulated_depreciation || 0)))), 0);
+  const totalRevaluation = filtered.reduce((s, a) => s + (a.revaluation_surplus || 0), 0);
 
   // Group totals by type
   const byType = ASSET_TYPES.map(t => ({
@@ -269,6 +287,8 @@ export default function PPEAssets() {
         totalCost={totalCost}
         totalAccumDep={totalAccumDep}
         totalBookValue={totalBookValue}
+        totalMarketValue={totalMarketValue}
+        totalRevaluation={totalRevaluation}
         byType={byType}
       />
 
@@ -311,6 +331,8 @@ export default function PPEAssets() {
                   <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Cost</th>
                   <th className="hidden px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">Accum. Dep.</th>
                   <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Book Value</th>
+                  <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Market Value</th>
+                  <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Revaluation</th>
                   <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
                   <th className="px-4 py-3" />
                 </tr>
@@ -338,6 +360,8 @@ export default function PPEAssets() {
                       <td className="px-4 py-2.5 text-right font-medium text-foreground">{fmt(a.acquisition_cost)}</td>
                       <td className="hidden px-4 py-2.5 text-right text-destructive lg:table-cell">{fmt(a.accumulated_depreciation)}</td>
                       <td className="px-4 py-2.5 text-right font-semibold text-primary">{fmt(bookVal)}</td>
+                      <td className="px-4 py-2.5 text-right font-semibold text-foreground">{a.market_value == null ? "—" : fmt(a.market_value)}</td>
+                      <td className={`px-4 py-2.5 text-right font-semibold ${(a.revaluation_surplus || 0) >= 0 ? "text-primary" : "text-destructive"}`}>{a.market_value == null ? "—" : fmt(a.revaluation_surplus)}</td>
                       <td className="px-4 py-2.5">
                         <Badge variant="outline" className={`text-xs ${STATUS_STYLES[a.status] || ""}`}>
                           {STATUS_LABELS[a.status] || a.status}

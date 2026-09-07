@@ -2,13 +2,15 @@ function fmt(value) {
   return `₱${(value || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
-export default function PPEAuditSummary({ totalCost, totalAccumDep, totalBookValue, byType }) {
+export default function PPEAuditSummary({ totalCost, totalAccumDep, totalBookValue, totalMarketValue, totalRevaluation, byType }) {
   const populatedTypes = byType.filter((type) => type.count > 0);
   const displayTypes = populatedTypes.length > 0 ? populatedTypes : byType;
   const metrics = [
     { label: "Total Acquisition Cost", value: totalCost, color: "border-primary", valueClass: "text-foreground" },
     { label: "Accumulated Depreciation", value: totalAccumDep, color: "border-foreground/70", valueClass: "text-destructive" },
     { label: "Net Book Value", value: totalBookValue, color: "border-primary", valueClass: "text-primary" },
+    { label: "Market Value", value: totalMarketValue, color: "border-primary", valueClass: "text-foreground" },
+    { label: "Asset Revaluation (Equity)", value: totalRevaluation, color: "border-primary", valueClass: totalRevaluation >= 0 ? "text-primary" : "text-destructive" },
   ];
 
   return (

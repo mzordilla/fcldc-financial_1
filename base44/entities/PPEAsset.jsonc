@@ -29,7 +29,7 @@
     },
     "area_sqm": {
       "type": "number",
-      "description": "Area in square meters (for land and building assets)"
+      "description": "Area in square meters"
     },
     "acquisition_date": {
       "type": "string",
@@ -51,8 +51,7 @@
         "declining_balance",
         "none"
       ],
-      "default": "straight_line",
-      "description": "Depreciation method used"
+      "default": "straight_line"
     },
     "salvage_value": {
       "type": "number",
@@ -61,52 +60,51 @@
     },
     "accumulated_depreciation": {
       "type": "number",
-      "default": 0,
-      "description": "Total accumulated depreciation to date"
+      "default": 0
     },
     "book_value": {
       "type": "number",
-      "description": "Current book value (cost minus accumulated depreciation)"
+      "description": "Current book value before revaluation"
+    },
+    "market_value": {
+      "type": "number",
+      "description": "Current appraised market value"
+    },
+    "revaluation_surplus": {
+      "type": "number",
+      "default": 0,
+      "description": "Market value less book value; included in equity"
     },
     "insurance_cost": {
       "type": "number",
-      "default": 0,
-      "description": "Insurance premium amount"
+      "default": 0
     },
     "insurance_provider": {
-      "type": "string",
-      "description": "Insurance company or provider"
+      "type": "string"
     },
     "insurance_policy_number": {
-      "type": "string",
-      "description": "Insurance policy number"
+      "type": "string"
     },
     "insurance_expiry_date": {
       "type": "string",
-      "format": "date",
-      "description": "Insurance policy expiry or renewal date"
+      "format": "date"
     },
     "registration_cost": {
       "type": "number",
-      "default": 0,
-      "description": "Asset registration fee amount"
+      "default": 0
     },
     "registration_number": {
-      "type": "string",
-      "description": "Asset registration number"
+      "type": "string"
     },
     "registration_expiry_date": {
       "type": "string",
-      "format": "date",
-      "description": "Registration expiry or renewal date"
+      "format": "date"
     },
     "location": {
-      "type": "string",
-      "description": "Where the asset is located or assigned"
+      "type": "string"
     },
     "assigned_to": {
-      "type": "string",
-      "description": "Person or project the asset is assigned to"
+      "type": "string"
     },
     "status": {
       "type": "string",
@@ -119,8 +117,7 @@
       "default": "active"
     },
     "notes": {
-      "type": "string",
-      "description": "Additional notes"
+      "type": "string"
     }
   },
   "required": [

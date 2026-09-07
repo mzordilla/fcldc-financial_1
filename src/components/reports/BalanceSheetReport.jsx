@@ -149,8 +149,9 @@ export default function BalanceSheetReport({ asOfDate }) {
 
     const activePPE = ppeAssets.filter(a => a.status !== "disposed");
     const ppeNetBookValue = activePPE.reduce((s, a) => {
-      return s + Math.max(0, (a.acquisition_cost || 0) - (a.accumulated_depreciation || 0));
+      return s + Math.max(0, a.market_value ?? ((a.acquisition_cost || 0) - (a.accumulated_depreciation || 0)));
     }, 0);
+    const assetRevaluationSurplus = activePPE.reduce((s, a) => s + (a.revaluation_surplus || 0), 0);
 
     const totalNonCurrentAssets = nonCurrentAssetTx + equipmentTx + ppeNetBookValue;
     const totalAssets = totalCurrentAssets + totalNonCurrentAssets;
@@ -201,7 +202,7 @@ export default function BalanceSheetReport({ asOfDate }) {
       totalCurrentLiabilities,
       totalNonCurrentLiabilities,
       totalLiabilities,
-      retainedEarnings, totalEquity,
+      retainedEarnings, assetRevaluationSurplus, totalEquity,
     };
   }, [bankAccounts, receivables, payables, loans, wcLoans, transactions, ppeAssets]);
 
@@ -239,6 +240,7 @@ export default function BalanceSheetReport({ asOfDate }) {
       [],
       ["EQUITY"],
       ["  Retained Earnings", bs.retainedEarnings],
+      ["  Asset Revaluation Surplus", bs.assetRevaluationSurplus],
       ["  Total Equity", bs.totalEquity],
       [],
       ["TOTAL LIABILITIES & EQUITY", bs.totalLiabilities + bs.totalEquity],
@@ -312,7 +314,7 @@ export default function BalanceSheetReport({ asOfDate }) {
               <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
                 <td className="pl-10 pr-3 py-1.5 text-foreground">{a.asset_name}</td>
                 <td className="px-3 py-1.5 text-muted-foreground">{a.asset_type?.replace(/_/g, " ")}</td>
-                <td className="px-3 py-1.5 text-right font-medium">{fmt(Math.max(0, (a.acquisition_cost || 0) - (a.accumulated_depreciation || 0)))}</td>
+                <td className="px-3 py-1.5 text-right font-medium">{fmt(Math.max(0, a.market_value ?? ((a.acquisition_cost || 0) - (a.accumulated_depreciation || 0))))}</td>
               </tr>
             )}
           />
@@ -405,6 +407,7 @@ export default function BalanceSheetReport({ asOfDate }) {
 
           <SectionHeader label="Equity" />
           <BSRow label="Retained Earnings" value={bs.retainedEarnings} isSub colorClass={bs.retainedEarnings >= 0 ? "text-primary" : "text-destructive"} />
+          <BSRow label="Asset Revaluation Surplus" value={bs.assetRevaluationSurplus} isSub colorClass={bs.assetRevaluationSurplus >= 0 ? "text-primary" : "text-destructive"} />
           <BSRow label="Total Equity" value={bs.totalEquity} isTotal colorClass={bs.totalEquity >= 0 ? "text-primary" : "text-destructive"} />
 
           <div className="flex justify-between items-center mt-4 pt-3 border-t-2 border-border">
