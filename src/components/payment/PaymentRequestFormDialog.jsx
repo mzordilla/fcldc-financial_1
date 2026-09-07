@@ -188,6 +188,11 @@ export default function PaymentRequestFormDialog({ open, onOpenChange, onSubmit,
                    >
                      <SelectTrigger className="flex-1"><SelectValue placeholder="Select project" /></SelectTrigger>
                      <SelectContent>
+                       {alloc.project_name && !projects.some(p => p.project_name === alloc.project_name) && (
+                         <SelectItem value={alloc.project_name}>
+                           {alloc.project_name}{alloc.project_code && alloc.project_code !== alloc.project_name ? ` (${alloc.project_code})` : ""} — saved allocation
+                         </SelectItem>
+                       )}
                        {projects.map(p => (
                          <SelectItem key={p.id} value={p.project_name}>
                            {p.project_name}{p.project_code ? ` (${p.project_code})` : ""}
