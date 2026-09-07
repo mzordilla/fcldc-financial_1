@@ -13,6 +13,7 @@ import SupplierStatementDialog from "../components/payables/SupplierStatementDia
 import SupplierInvoiceDetails from "../components/payables/SupplierInvoiceDetails";
 import StatementOfPayablesReport from "../components/payables/StatementOfPayablesReport";
 import OtherPayables from "../components/payables/OtherPayables";
+import CustomerAdvances from "../components/payables/CustomerAdvances";
 import AgingSummary from "../components/payables/AgingSummary";
 
 export default function Payables() {
@@ -238,7 +239,7 @@ export default function Payables() {
       {dupesResultMsg && <p className="text-xs text-muted-foreground">{dupesResultMsg}</p>}
 
       <ExecutiveSegmentBar
-        items={[{ key: "payables", label: "Payables", icon: CreditCard }, { key: "other", label: "Other Payables", icon: CircleEllipsis }, { key: "statement", label: "Statement of Payables", icon: FileText }]}
+        items={[{ key: "payables", label: "Payables", icon: CreditCard }, { key: "other", label: "Other Payables", icon: CircleEllipsis }, { key: "advances", label: "Customer Advances", icon: Banknote }, { key: "statement", label: "Statement of Payables", icon: FileText }]}
         activeKey={activeTab}
         onChange={setActiveTab}
       />
@@ -246,6 +247,8 @@ export default function Payables() {
       {activeTab === "statement" && <StatementOfPayablesReport />}
 
       {activeTab === "other" && <OtherPayables />}
+
+      {activeTab === "advances" && <CustomerAdvances />}
 
       {activeTab === "payables" && <>
 

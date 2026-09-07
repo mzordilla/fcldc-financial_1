@@ -1,0 +1,77 @@
+{
+  "name": "CustomerAdvance",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Linked Client ID"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client name"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Total advance received"
+    },
+    "applied_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Amount applied to receivables"
+    },
+    "available_balance": {
+      "type": "number",
+      "description": "Remaining unapplied liability"
+    },
+    "received_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "bank_account_id": {
+      "type": "string",
+      "description": "Bank account where the advance was deposited"
+    },
+    "reference": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "partially_applied",
+        "fully_applied"
+      ],
+      "default": "available"
+    },
+    "application_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "receivable_id": {
+            "type": "string"
+          },
+          "invoice_number": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "application_date": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "amount",
+    "received_date"
+  ]
+}
