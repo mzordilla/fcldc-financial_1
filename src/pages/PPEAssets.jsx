@@ -75,7 +75,7 @@ function fmt(v) {
   return `₱${(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
-function AssetFormDialog({ open, onClose, asset, onSubmit }) {
+function AssetFormDialog({ open, onClose, asset, onSubmit, suppliers }) {
   const [form, setForm] = useState(asset ? { ...asset } : { ...EMPTY_FORM });
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -172,7 +172,7 @@ function AssetFormDialog({ open, onClose, asset, onSubmit }) {
               <Input type="number" value={autoBookValue} readOnly className="bg-muted/50" />
               <p className="mt-1 text-xs text-muted-foreground">Cost less accumulated depreciation</p>
             </div>
-            <InsuranceRegistrationFields form={form} set={set} />
+            <InsuranceRegistrationFields form={form} set={set} suppliers={suppliers} />
             <div>
               <Label>Location</Label>
               <Input value={form.location} onChange={e => set("location", e.target.value)} />
@@ -215,6 +215,11 @@ export default function PPEAssets() {
   const { data: assets = [], isLoading } = useQuery({
     queryKey: ["ppe_assets"],
     queryFn: () => base44.entities.PPEAsset.list("-acquisition_date", 500),
+  });
+
+  const { data: suppliers = [] } = useQuery({
+    queryKey: ["ppe-insurance-suppliers"],
+    queryFn: () => base44.entities.Payee.filter({ category: "supplier" }, "name", 1000),
   });
 
   const create = useMutation({
@@ -358,10 +363,10 @@ export default function PPEAssets() {
       </div>
 
       {showForm && (
-        <AssetFormDialog open onClose={() => setShowForm(false)} onSubmit={(data) => create.mutate(data)} />
+        <AssetFormDialog open onClose={() => setShowForm(false)} onSubmit={(data) => create.mutate(data)} suppliers={suppliers} />
       )}
       {editing && (
-        <AssetFormDialog open onClose={() => setEditing(null)} asset={editing} onSubmit={(data) => update.mutate({ id: editing.id, data })} />
+        <AssetFormDialog open onClose={() => setEditing(null)} asset={editing} onSubmit={(data) => update.mutate({ id: editing.id, data })} suppliers={suppliers} />
       )}
     </div>
   );
