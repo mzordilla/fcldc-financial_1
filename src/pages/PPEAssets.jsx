@@ -234,8 +234,8 @@ export default function PPEAssets() {
   });
 
   const { data: suppliers = [] } = useQuery({
-    queryKey: ["ppe-insurance-suppliers"],
-    queryFn: () => base44.entities.Payee.filter({ category: "supplier" }, "name", 1000),
+    queryKey: ["ppe-insurance-payees"],
+    queryFn: () => base44.entities.Payee.list("name", 1000),
   });
 
   const create = useMutation({
