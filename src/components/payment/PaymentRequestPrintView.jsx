@@ -125,7 +125,7 @@ function CopyBlock({ data, allocations, netAmount, watermark, heightMm = 136 }) 
           <thead>
             <tr className="border-b-2 border-black">
               <th className="text-left py-0.5 w-[8%]">#</th>
-              <th className="text-left py-0.5 w-[42%]">Project</th>
+              <th className="text-left py-0.5 w-[42%]">Project Code</th>
               <th className="text-left py-0.5 w-[25%]">Category</th>
               <th className="text-right py-0.5 w-[25%]">Amount</th>
             </tr>
@@ -135,7 +135,7 @@ function CopyBlock({ data, allocations, netAmount, watermark, heightMm = 136 }) 
               allocations.map((a, idx) => (
                 <tr key={idx} className="border-b border-gray-300">
                   <td className="py-0.5 break-words">{idx + 1}</td>
-                  <td className="py-0.5 break-words">{a.project_name}</td>
+                  <td className="py-0.5 break-words">{a.project_code || a.project_name}</td>
                   <td className="py-0.5 break-words">{a.category || "—"}</td>
                   <td className="py-0.5 text-right break-words">₱{(parseFloat(a.amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                 </tr>
