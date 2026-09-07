@@ -174,7 +174,22 @@ export default function BalanceSheetReport({ asOfDate }) {
     const activeLoans = [...loans, ...wcLoans].filter(l => l.status === "active");
     const currentPortionLoans = activeLoans.reduce((s, l) => s + ((l.monthly_payment || 0) * 12), 0);
 
-    const totalCurrentLiabilities = unpaidPayables + withholdingTaxPayable + currentPortionLoans;
+    const separatelyReportedCurrentLiabilities = new Set([
+      "accounts payable",
+      "withholding tax payable",
+      "current portion of loans",
+    ]);
+    const otherCurrentPayableAccounts = chartOfAccounts
+      .filter(a => a.is_active !== false && a.account_type === "liability" && a.category === "current_liabilities")
+      .filter(a => !separatelyReportedCurrentLiabilities.has((a.account_name || "").trim().toLowerCase()))
+      .map(a => {
+        const entry = ledger.get((a.account_name || "").trim().toLowerCase());
+        return { ...a, balance: entry?.balance || 0, transactions: entry?.transactions || [] };
+      })
+      .filter(a => Math.abs(a.balance) >= 0.01);
+    const otherCurrentPayables = otherCurrentPayableAccounts.reduce((sum, a) => sum + a.balance, 0);
+
+    const totalCurrentLiabilities = unpaidPayables + withholdingTaxPayable + currentPortionLoans + otherCurrentPayables;
 
     const loanBalances = loans.filter(l => l.status === "active").reduce((s, l) => s + (l.outstanding_balance || 0), 0);
     const wcLoanBalances = wcLoans.filter(l => l.status === "active").reduce((s, l) => s + ((l.total_amount || 0) - (l.amount_paid || 0)), 0);
@@ -200,12 +215,13 @@ export default function BalanceSheetReport({ asOfDate }) {
       otherPayables, otherPayablesList,
       withholdingTaxPayable, whtPayableList,
       currentPortionLoans, activeLoans,
+      otherCurrentPayables, otherCurrentPayableAccounts,
       totalCurrentLiabilities,
       longTermLoans, totalNonCurrentLiabilities,
       totalLiabilities,
       retainedEarnings, assetRevaluationSurplus, totalEquity,
     };
-  }, [bankAccounts, receivables, payables, loans, wcLoans, transactions, ppeAssets]);
+  }, [bankAccounts, receivables, payables, loans, wcLoans, transactions, ppeAssets, chartOfAccounts, ledger]);
 
   const handleExport = () => {
     const rows = [
@@ -231,6 +247,7 @@ export default function BalanceSheetReport({ asOfDate }) {
       ["  Accounts Payable", bs.unpaidPayables],
       ["  Withholding Tax Payable", bs.withholdingTaxPayable],
       ["  Current Portion of Loans", bs.currentPortionLoans],
+      ...bs.otherCurrentPayableAccounts.map(a => [`  ${a.account_name}`, a.balance]),
       ["  Total Current Liabilities", bs.totalCurrentLiabilities],
       [],
       ["Non-Current Liabilities"],
@@ -387,6 +404,19 @@ export default function BalanceSheetReport({ asOfDate }) {
               </tr>
             )}
           />
+          {bs.otherCurrentPayableAccounts.length > 0 && (
+            <ExpandableBSRow
+              label="Other Current Payables" value={bs.otherCurrentPayables} isSub
+              items={bs.otherCurrentPayableAccounts}
+              renderItem={(account) => (
+                <tr key={account.id} className="border-b border-border/20 hover:bg-muted/30">
+                  <td className="pl-10 pr-3 py-1.5 text-foreground">{account.account_name}</td>
+                  <td className="px-3 py-1.5 text-muted-foreground">{account.account_code || "—"}</td>
+                  <td className="px-3 py-1.5 text-right font-medium">{fmt(account.balance)}</td>
+                </tr>
+              )}
+            />
+          )}
           <BSRow label="Total Current Liabilities" value={bs.totalCurrentLiabilities} isTotal colorClass="text-destructive" />
 
           <SectionHeader label="Non-Current Liabilities" />
