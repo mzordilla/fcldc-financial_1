@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
+import { bankOnly } from "@/lib/bankCashFlow";
 import FinancialRatiosPanel from "@/components/reports/FinancialRatiosPanel";
 
 const fmt = (v) => `₱${(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
@@ -55,53 +56,56 @@ export default function EfficiencyReport({ dateFrom, dateTo }) {
       receivables: filterByDate(receivables, "due_date"),
       purchaseOrders: filterByDate(purchaseOrders, "requested_date"),
       transactions: filterByDate(transactions, "date"),
-      billingCycles: filterByDate(billingCycles, "period_start"),
+      billingCycles: filterByDate(billingCycles, "period_end"),
     };
   }, [payables, receivables, purchaseOrders, transactions, billingCycles, dateFrom, dateTo]);
 
-  // Payables Efficiency (based on aging/overdue)
+  // Payables Efficiency (net invoice value after VAT and withholding tax)
   const payablesMetrics = useMemo(() => {
-    const total = filteredData.payables.reduce((s, p) => s + (p.amount || 0), 0);
-    const paid = filteredData.payables.reduce((s, p) => s + (p.amount_paid || 0), 0);
+    const netAmount = (p) => Math.max(0, (p.amount || 0) + (p.vat_amount || 0) - (p.withholding_tax_amount || 0));
+    const outstanding = (p) => Math.max(0, netAmount(p) - (p.amount_paid || 0));
+    const total = filteredData.payables.reduce((s, p) => s + netAmount(p), 0);
+    const paid = filteredData.payables.reduce((s, p) => s + Math.min(netAmount(p), Math.max(0, p.amount_paid || 0)), 0);
     const overdue = filteredData.payables
-      .filter(p => p.status === "overdue" || (p.due_date && new Date(p.due_date) < new Date() && p.status !== "paid"))
-      .reduce((s, p) => s + ((p.amount || 0) - (p.amount_paid || 0)), 0);
-    
+      .filter(p => p.status !== "paid" && p.due_date && p.due_date < format(new Date(), "yyyy-MM-dd"))
+      .reduce((s, p) => s + outstanding(p), 0);
     const efficiency = total > 0 ? ((total - overdue) / total) * 100 : 0;
-    
+
     return { total, paid, overdue, efficiency };
   }, [filteredData.payables]);
 
   // Receivables Collection Efficiency
   const receivablesMetrics = useMemo(() => {
-    const total = filteredData.receivables.reduce((s, r) => s + (r.amount || 0), 0);
-    const collected = filteredData.receivables.reduce((s, r) => s + (r.amount_paid || 0), 0);
-    const outstanding = filteredData.receivables
-      .filter(r => r.status !== "paid")
-      .reduce((s, r) => s + ((r.amount || 0) - (r.amount_paid || 0)), 0);
+    const total = filteredData.receivables.reduce((s, r) => s + Math.max(0, r.amount || 0), 0);
+    const collected = filteredData.receivables.reduce((s, r) => s + Math.min(Math.max(0, r.amount || 0), Math.max(0, r.amount_paid || 0)), 0);
+    const outstanding = filteredData.receivables.reduce(
+      (s, r) => s + Math.max(0, (r.amount || 0) - (r.amount_paid || 0)), 0
+    );
     const efficiency = total > 0 ? (collected / total) * 100 : 0;
-    
+
     return { total, collected, outstanding, efficiency };
   }, [filteredData.receivables]);
 
   // Purchase Order Delivery Efficiency
   const poMetrics = useMemo(() => {
-    const approvedPOs = filteredData.purchaseOrders.filter(po => po.approval_status === "approved" && po.requested_date && po.delivery_date);
-    const onTime = approvedPOs.filter(po => new Date(po.delivery_date) <= new Date(po.requested_date)).length;
-    const delayed = approvedPOs.length - onTime;
-    const efficiency = approvedPOs.length > 0 ? (onTime / approvedPOs.length) * 100 : 0;
-    
-    return { total: approvedPOs.length, onTime, delayed, efficiency };
+    const deliveredPOs = filteredData.purchaseOrders.filter(
+      po => po.approval_status === "approved" && po.required_date && po.delivery_date
+    );
+    const onTime = deliveredPOs.filter(po => po.delivery_date <= po.required_date).length;
+    const delayed = deliveredPOs.length - onTime;
+    const efficiency = deliveredPOs.length > 0 ? (onTime / deliveredPOs.length) * 100 : 0;
+
+    return { total: deliveredPOs.length, onTime, delayed, efficiency };
   }, [filteredData.purchaseOrders]);
 
-  // Banking Transaction Velocity
+  // Banking Transaction Velocity — actual bank movements only, excluding internal transfers
   const bankingMetrics = useMemo(() => {
-    const income = filteredData.transactions.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
-    const expenses = filteredData.transactions.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
+    const movements = bankOnly(filteredData.transactions).filter(t => t.category !== "fund_transfer");
+    const income = movements.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
+    const expenses = movements.filter(t => t.type === "expense").reduce((s, t) => s + (t.amount || 0), 0);
     const net = income - expenses;
-    const transactionCount = filteredData.transactions.length;
-    
-    return { income, expenses, net, transactionCount };
+
+    return { income, expenses, net, transactionCount: movements.length };
   }, [filteredData.transactions]);
 
   // Reporting/Billing Efficiency
@@ -263,7 +267,7 @@ export default function EfficiencyReport({ dateFrom, dateTo }) {
           </h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center py-2 border-b border-border">
-              <span className="text-sm text-muted-foreground">Total Approved POs</span>
+              <span className="text-sm text-muted-foreground">Delivered Approved POs</span>
               <span className="text-sm font-semibold text-foreground">{poMetrics.total}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-border">
