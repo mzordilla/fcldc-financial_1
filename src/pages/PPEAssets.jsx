@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pencil, Trash2, Package, Boxes } from "lucide-react";
 import { ExecutiveTabsList, ExecutiveTab } from "@/components/shared/ExecutiveTabs";
 import PPEAuditSummary from "@/components/ppe/PPEAuditSummary";
+import InsuranceRegistrationFields from "@/components/ppe/InsuranceRegistrationFields";
 import { computeAccumulatedDepreciation } from "@/lib/ppeDepreciation";
 
 const ASSET_TYPES = [
@@ -54,8 +55,16 @@ const EMPTY_FORM = {
   acquisition_cost: "",
   useful_life_years: "",
   depreciation_method: "straight_line",
+  salvage_value: "",
   accumulated_depreciation: "",
   book_value: "",
+  insurance_cost: "",
+  insurance_provider: "",
+  insurance_policy_number: "",
+  insurance_expiry_date: "",
+  registration_cost: "",
+  registration_number: "",
+  registration_expiry_date: "",
   location: "",
   assigned_to: "",
   status: "active",
@@ -71,7 +80,9 @@ function AssetFormDialog({ open, onClose, asset, onSubmit }) {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const autoAccumDep = computeAccumulatedDepreciation(form);
-  const autoBookValue = (parseFloat(form.acquisition_cost) || 0) - autoAccumDep;
+  const acquisitionCost = parseFloat(form.acquisition_cost) || 0;
+  const salvageValue = form.depreciation_method === "straight_line" ? acquisitionCost * 0.1 : 0;
+  const autoBookValue = acquisitionCost - autoAccumDep;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -79,8 +90,11 @@ function AssetFormDialog({ open, onClose, asset, onSubmit }) {
       ...form,
       acquisition_cost: parseFloat(form.acquisition_cost) || 0,
       useful_life_years: form.useful_life_years ? parseFloat(form.useful_life_years) : undefined,
+      salvage_value: salvageValue,
       accumulated_depreciation: autoAccumDep,
       area_sqm: form.area_sqm ? parseFloat(form.area_sqm) : undefined,
+      insurance_cost: parseFloat(form.insurance_cost) || 0,
+      registration_cost: parseFloat(form.registration_cost) || 0,
       book_value: autoBookValue,
     };
     onSubmit(data);
@@ -142,6 +156,12 @@ function AssetFormDialog({ open, onClose, asset, onSubmit }) {
                 </SelectContent>
               </Select>
             </div>
+            {form.depreciation_method === "straight_line" && (
+              <div>
+                <Label>Salvage Value (10% of Original Cost)</Label>
+                <Input type="number" value={salvageValue} readOnly className="bg-muted/50" />
+              </div>
+            )}
             <div>
               <Label>Accumulated Depreciation</Label>
               <Input type="number" value={autoAccumDep} readOnly className="bg-muted/50" />
@@ -152,6 +172,7 @@ function AssetFormDialog({ open, onClose, asset, onSubmit }) {
               <Input type="number" value={autoBookValue} readOnly className="bg-muted/50" />
               <p className="mt-1 text-xs text-muted-foreground">Cost less accumulated depreciation</p>
             </div>
+            <InsuranceRegistrationFields form={form} set={set} />
             <div>
               <Label>Location</Label>
               <Input value={form.location} onChange={e => set("location", e.target.value)} />
@@ -299,6 +320,8 @@ export default function PPEAssets() {
                         {a.title_no && <p className="text-xs text-muted-foreground">Title No.: {a.title_no}</p>}
                         {a.area_sqm ? <p className="text-xs text-muted-foreground">{a.area_sqm.toLocaleString()} sqm</p> : null}
                         {a.asset_code && <p className="text-xs text-muted-foreground">{a.asset_code}</p>}
+                        {a.insurance_policy_number && <p className="text-xs text-muted-foreground">Policy: {a.insurance_policy_number}{a.insurance_expiry_date ? ` · expires ${a.insurance_expiry_date}` : ""}</p>}
+                        {a.registration_number && <p className="text-xs text-muted-foreground">Registration: {a.registration_number}{a.registration_expiry_date ? ` · expires ${a.registration_expiry_date}` : ""}</p>}
                         {a.location && <p className="text-xs text-muted-foreground">{a.location}</p>}
                       </td>
                       <td className="px-4 py-2.5">

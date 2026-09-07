@@ -9,6 +9,7 @@ export function depreciationExpenseForPeriod(assets = [], from, to) {
     const cost = a.acquisition_cost || 0;
     const life = a.useful_life_years || 0;
     if (!cost || !life || !a.acquisition_date || a.depreciation_method === "none") return sum;
+    const depreciableCost = a.depreciation_method === "straight_line" ? cost * 0.9 : cost;
     const acq = new Date(a.acquisition_date);
     if (isNaN(acq.getTime())) return sum;
     const lifeEnd = new Date(acq.getFullYear() + life, acq.getMonth(), 1);
@@ -16,7 +17,7 @@ export function depreciationExpenseForPeriod(assets = [], from, to) {
     const windowEnd = lifeEnd < end ? lifeEnd : end;
     const months = monthsBetween(windowStart, windowEnd) + (windowEnd >= windowStart ? 1 : 0);
     if (months <= 0) return sum;
-    return sum + (cost / (life * 12)) * months;
+    return sum + (depreciableCost / (life * 12)) * months;
   }, 0);
 }
 
@@ -41,6 +42,8 @@ export function computeAccumulatedDepreciation({ acquisition_cost, acquisition_d
     return Math.round((cost - remaining) * 100) / 100;
   }
 
-  // straight line
-  return Math.round((cost / life) * yearsElapsed * 100) / 100;
+  // Straight line depreciates 90% of original cost, preserving 10% salvage value.
+  const salvageValue = cost * 0.1;
+  const depreciation = ((cost - salvageValue) / life) * yearsElapsed;
+  return Math.round(Math.min(cost - salvageValue, depreciation) * 100) / 100;
 }

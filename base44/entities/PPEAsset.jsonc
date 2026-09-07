@@ -54,6 +54,11 @@
       "default": "straight_line",
       "description": "Depreciation method used"
     },
+    "salvage_value": {
+      "type": "number",
+      "default": 0,
+      "description": "Residual value; automatically set to 10% of original cost for straight-line depreciation"
+    },
     "accumulated_depreciation": {
       "type": "number",
       "default": 0,
@@ -62,6 +67,38 @@
     "book_value": {
       "type": "number",
       "description": "Current book value (cost minus accumulated depreciation)"
+    },
+    "insurance_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Insurance premium amount"
+    },
+    "insurance_provider": {
+      "type": "string",
+      "description": "Insurance company or provider"
+    },
+    "insurance_policy_number": {
+      "type": "string",
+      "description": "Insurance policy number"
+    },
+    "insurance_expiry_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Insurance policy expiry or renewal date"
+    },
+    "registration_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Asset registration fee amount"
+    },
+    "registration_number": {
+      "type": "string",
+      "description": "Asset registration number"
+    },
+    "registration_expiry_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Registration expiry or renewal date"
     },
     "location": {
       "type": "string",
