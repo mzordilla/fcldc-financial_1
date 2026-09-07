@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 export const STANDARD_BS_ACCOUNTS = [
   { account_code: "1000", account_name: "Cash in Bank", account_type: "asset", category: "current_assets" },
   { account_code: "1100", account_name: "Accounts Receivable", account_type: "asset", category: "current_assets" },
-  { account_code: "1150", account_name: "Funding & Loans Receivable", account_type: "asset", category: "current_assets" },
+  { account_code: "1150", account_name: "Funding & Loans Receivable", account_type: "asset", category: "non_current_assets" },
   { account_code: "1500", account_name: "Property, Plant & Equipment", account_type: "asset", category: "non_current_assets" },
   { account_code: "2000", account_name: "Accounts Payable", account_type: "liability", category: "current_liabilities" },
   { account_code: "2010", account_name: "Other Payables", account_type: "liability", category: "current_liabilities" },

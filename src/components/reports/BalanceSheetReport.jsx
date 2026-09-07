@@ -139,7 +139,7 @@ export default function BalanceSheetReport({ asOfDate }) {
     const outstandingFundingLoanReceivables = receivables.filter(r => r.status !== "paid" && r.receivable_type === "funding_loan");
     const totalFundingLoanReceivables = outstandingFundingLoanReceivables.reduce((s, r) => s + ((r.amount || 0) - (r.amount_paid || 0)), 0);
 
-    const totalCurrentAssets = cashAndBank + totalReceivables + totalFundingLoanReceivables;
+    const totalCurrentAssets = cashAndBank + totalReceivables;
 
     const nonCurrentAssetTxList = transactions.filter(t => t.category === "non_current_assets" && t.type === "expense");
     const nonCurrentAssetTx = nonCurrentAssetTxList.reduce((s, t) => s + (t.amount || 0), 0);
@@ -153,7 +153,7 @@ export default function BalanceSheetReport({ asOfDate }) {
     }, 0);
     const assetRevaluationSurplus = activePPE.reduce((s, a) => s + (a.revaluation_surplus || 0), 0);
 
-    const totalNonCurrentAssets = nonCurrentAssetTx + equipmentTx + ppeNetBookValue;
+    const totalNonCurrentAssets = totalFundingLoanReceivables + nonCurrentAssetTx + equipmentTx + ppeNetBookValue;
     const totalAssets = totalCurrentAssets + totalNonCurrentAssets;
 
     const allUnpaidPayables = payables.filter(p => p.status !== "paid");
@@ -214,10 +214,10 @@ export default function BalanceSheetReport({ asOfDate }) {
       ["Current Assets"],
       ["  Cash & Bank Balances", bs.cashAndBank],
       ["  Accounts Receivable", bs.totalReceivables],
-      ["  Funding & Loans Receivable", bs.totalFundingLoanReceivables],
       ["  Total Current Assets", bs.totalCurrentAssets],
       [],
       ["Non-Current Assets"],
+      ["  Funding & Loans Receivable", bs.totalFundingLoanReceivables],
       ["  PPE Assets (Net Book Value)", bs.ppeNetBookValue],
       ["  Equipment (Transactions)", bs.equipmentTx],
       ["  Other Non-Current Assets", bs.nonCurrentAssetTx],
@@ -293,6 +293,9 @@ export default function BalanceSheetReport({ asOfDate }) {
               </tr>
             )}
           />
+          <BSRow label="Total Current Assets" value={bs.totalCurrentAssets} isTotal colorClass="text-primary" />
+
+          <SectionHeader label="Non-Current Assets" />
           <ExpandableBSRow
             label="Funding & Loans Receivable" value={bs.totalFundingLoanReceivables} isSub
             items={bs.outstandingFundingLoanReceivables}
@@ -304,9 +307,6 @@ export default function BalanceSheetReport({ asOfDate }) {
               </tr>
             )}
           />
-          <BSRow label="Total Current Assets" value={bs.totalCurrentAssets} isTotal colorClass="text-primary" />
-
-          <SectionHeader label="Non-Current Assets" />
           <ExpandableBSRow
             label="PPE Assets (Net Book Value)" value={bs.ppeNetBookValue} isSub
             items={bs.activePPE}
