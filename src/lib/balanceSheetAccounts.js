@@ -8,7 +8,7 @@ export const STANDARD_BS_ACCOUNTS = [
   { account_code: "1150", account_name: "Funding & Loans Receivable", account_type: "asset", category: "non_current_assets" },
   { account_code: "1500", account_name: "Property, Plant & Equipment", account_type: "asset", category: "non_current_assets" },
   { account_code: "2000", account_name: "Accounts Payable", account_type: "liability", category: "current_liabilities" },
-  { account_code: "2010", account_name: "Other Payables", account_type: "liability", category: "current_liabilities" },
+  { account_code: "2010", account_name: "Other Payables", account_type: "liability", category: "non_current_liabilities" },
   { account_code: "2100", account_name: "Withholding Tax Payable", account_type: "liability", category: "current_liabilities" },
   { account_code: "2200", account_name: "Current Portion of Loans", account_type: "liability", category: "current_liabilities" },
   { account_code: "2500", account_name: "Long-Term Loans", account_type: "liability", category: "non_current_liabilities" },

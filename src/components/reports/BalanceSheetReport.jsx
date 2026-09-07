@@ -174,11 +174,12 @@ export default function BalanceSheetReport({ asOfDate }) {
     const activeLoans = [...loans, ...wcLoans].filter(l => l.status === "active");
     const currentPortionLoans = activeLoans.reduce((s, l) => s + ((l.monthly_payment || 0) * 12), 0);
 
-    const totalCurrentLiabilities = unpaidPayables + otherPayables + withholdingTaxPayable + currentPortionLoans;
+    const totalCurrentLiabilities = unpaidPayables + withholdingTaxPayable + currentPortionLoans;
 
     const loanBalances = loans.filter(l => l.status === "active").reduce((s, l) => s + (l.outstanding_balance || 0), 0);
     const wcLoanBalances = wcLoans.filter(l => l.status === "active").reduce((s, l) => s + ((l.total_amount || 0) - (l.amount_paid || 0)), 0);
-    const totalNonCurrentLiabilities = Math.max(0, (loanBalances + wcLoanBalances) - currentPortionLoans);
+    const longTermLoans = Math.max(0, (loanBalances + wcLoanBalances) - currentPortionLoans);
+    const totalNonCurrentLiabilities = longTermLoans + otherPayables;
     const totalLiabilities = totalCurrentLiabilities + totalNonCurrentLiabilities;
 
     const totalIncome = transactions.filter(t => t.type === "income").reduce((s, t) => s + (t.amount || 0), 0);
@@ -200,7 +201,7 @@ export default function BalanceSheetReport({ asOfDate }) {
       withholdingTaxPayable, whtPayableList,
       currentPortionLoans, activeLoans,
       totalCurrentLiabilities,
-      totalNonCurrentLiabilities,
+      longTermLoans, totalNonCurrentLiabilities,
       totalLiabilities,
       retainedEarnings, assetRevaluationSurplus, totalEquity,
     };
@@ -228,13 +229,13 @@ export default function BalanceSheetReport({ asOfDate }) {
       ["LIABILITIES"],
       ["Current Liabilities"],
       ["  Accounts Payable", bs.unpaidPayables],
-      ["  Other Payables", bs.otherPayables],
       ["  Withholding Tax Payable", bs.withholdingTaxPayable],
       ["  Current Portion of Loans", bs.currentPortionLoans],
       ["  Total Current Liabilities", bs.totalCurrentLiabilities],
       [],
       ["Non-Current Liabilities"],
-      ["  Long-Term Loans", bs.totalNonCurrentLiabilities],
+      ["  Other Payables", bs.otherPayables],
+      ["  Long-Term Loans", bs.longTermLoans],
       [],
       ["TOTAL LIABILITIES", bs.totalLiabilities],
       [],
@@ -365,17 +366,6 @@ export default function BalanceSheetReport({ asOfDate }) {
             )}
           />
           <ExpandableBSRow
-            label="Other Payables" value={bs.otherPayables} isSub
-            items={bs.otherPayablesList}
-            renderItem={(p, i) => (
-              <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
-                <td className="pl-10 pr-3 py-1.5 text-foreground">{p.supplier_name}</td>
-                <td className="px-3 py-1.5 text-muted-foreground">{p.description || p.invoice_number || "—"}</td>
-                <td className="px-3 py-1.5 text-right font-medium">{fmt((p.amount || 0) - (p.amount_paid || 0))}</td>
-              </tr>
-            )}
-          />
-          <ExpandableBSRow
             label="Withholding Tax Payable" value={bs.withholdingTaxPayable} isSub
             items={bs.whtPayableList}
             renderItem={(p, i) => (
@@ -400,7 +390,18 @@ export default function BalanceSheetReport({ asOfDate }) {
           <BSRow label="Total Current Liabilities" value={bs.totalCurrentLiabilities} isTotal colorClass="text-destructive" />
 
           <SectionHeader label="Non-Current Liabilities" />
-          <BSRow label="Long-Term Loans" value={bs.totalNonCurrentLiabilities} isSub />
+          <ExpandableBSRow
+            label="Other Payables" value={bs.otherPayables} isSub
+            items={bs.otherPayablesList}
+            renderItem={(p, i) => (
+              <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
+                <td className="pl-10 pr-3 py-1.5 text-foreground">{p.supplier_name}</td>
+                <td className="px-3 py-1.5 text-muted-foreground">{p.description || p.invoice_number || "—"}</td>
+                <td className="px-3 py-1.5 text-right font-medium">{fmt((p.amount || 0) - (p.amount_paid || 0))}</td>
+              </tr>
+            )}
+          />
+          <BSRow label="Long-Term Loans" value={bs.longTermLoans} isSub />
           <BSRow label="Total Non-Current Liabilities" value={bs.totalNonCurrentLiabilities} isTotal />
 
           <BSRow label="TOTAL LIABILITIES" value={bs.totalLiabilities} isTotal colorClass="text-destructive" />

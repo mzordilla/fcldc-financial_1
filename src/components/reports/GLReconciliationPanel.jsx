@@ -17,7 +17,7 @@ export default function GLReconciliationPanel({ bs, ledger, bankAccountNames = [
     { label: "Other Payables", value: bs.otherPayables, names: BS_ACCOUNT_NAMES.otherPayable, colorClass: "text-destructive" },
     { label: "Withholding Tax Payable", value: bs.withholdingTaxPayable, names: BS_ACCOUNT_NAMES.withholdingTax, colorClass: "text-destructive" },
     { label: "Current Portion of Loans", value: bs.currentPortionLoans, names: BS_ACCOUNT_NAMES.currentLoans, colorClass: "text-destructive" },
-    { label: "Long-Term Loans", value: bs.totalNonCurrentLiabilities, names: BS_ACCOUNT_NAMES.longTermLoans, colorClass: "text-destructive" },
+    { label: "Long-Term Loans", value: bs.longTermLoans, names: BS_ACCOUNT_NAMES.longTermLoans, colorClass: "text-destructive" },
   ];
 
   return (
