@@ -36,7 +36,7 @@
           },
           "unit_of_measure": {
             "type": "string",
-            "description": "Unit of measure (e.g., pcs, kg, m, etc.)"
+            "description": "Unit of measure"
           },
           "cost_per_item": {
             "type": "number"
@@ -49,7 +49,7 @@
     },
     "attachments": {
       "type": "array",
-      "description": "Supporting documents (PDF, images, other files) uploaded for this purchase order",
+      "description": "Supporting documents",
       "items": {
         "type": "object",
         "properties": {
@@ -64,11 +64,11 @@
     },
     "items": {
       "type": "string",
-      "description": "Line items (comma separated or details)"
+      "description": "Additional line item details"
     },
     "amount": {
       "type": "number",
-      "description": "Grand total PO amount including VAT when applicable"
+      "description": "Net payable amount after VAT and deductions"
     },
     "vat_treatment": {
       "type": "string",
@@ -77,23 +77,55 @@
         "vat_exclusive",
         "non_vat"
       ],
-      "default": "non_vat",
-      "description": "Whether entered purchase prices include VAT, exclude VAT, or are non-VAT"
+      "default": "non_vat"
     },
     "vat_percentage": {
       "type": "number",
-      "default": 12,
-      "description": "VAT rate applied to this purchase order"
+      "default": 12
     },
     "subtotal": {
       "type": "number",
       "default": 0,
-      "description": "Purchase amount before VAT"
+      "description": "Purchase amount before VAT and deductions"
     },
     "vat_amount": {
       "type": "number",
+      "default": 0
+    },
+    "deductions": {
+      "type": "array",
+      "description": "Deductions calculated from the pre-VAT subtotal",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "percentage": {
+            "type": "number"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "chart_of_account": {
+            "type": "string"
+          },
+          "account_code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "description",
+          "percentage",
+          "amount",
+          "chart_of_account"
+        ]
+      }
+    },
+    "total_deductions": {
+      "type": "number",
       "default": 0,
-      "description": "VAT portion of the purchase order"
+      "description": "Total deductions from the pre-VAT subtotal"
     },
     "category": {
       "type": "string",
@@ -124,12 +156,10 @@
       "description": "Linked Chart of Account name"
     },
     "requested_by": {
-      "type": "string",
-      "description": "Person requesting the purchase"
+      "type": "string"
     },
     "approved_by": {
-      "type": "string",
-      "description": "Person who approved"
+      "type": "string"
     },
     "requested_date": {
       "type": "string",
@@ -137,8 +167,7 @@
     },
     "required_date": {
       "type": "string",
-      "format": "date",
-      "description": "Date materials/services needed"
+      "format": "date"
     },
     "approval_status": {
       "type": "string",
@@ -151,8 +180,7 @@
       "default": "pending"
     },
     "approval_notes": {
-      "type": "string",
-      "description": "Notes from approver"
+      "type": "string"
     },
     "approval_step": {
       "type": "string",
@@ -162,12 +190,10 @@
         "approved",
         "rejected"
       ],
-      "default": "submitted",
-      "description": "Current step in the approval workflow"
+      "default": "submitted"
     },
     "approval_history": {
       "type": "array",
-      "description": "Audit log of all approval actions",
       "items": {
         "type": "object",
         "properties": {
@@ -200,21 +226,17 @@
       "default": "normal"
     },
     "receipt_url": {
-      "type": "string",
-      "description": "Uploaded receipt/delivery document URL"
+      "type": "string"
     },
     "delivery_date": {
       "type": "string",
-      "format": "date",
-      "description": "Date goods/services were delivered"
+      "format": "date"
     },
     "delivery_notes": {
-      "type": "string",
-      "description": "Notes about delivery condition or inspection"
+      "type": "string"
     },
     "change_requests": {
       "type": "array",
-      "description": "Requests to change price, quantity, or supplier on an already-approved PO",
       "items": {
         "type": "object",
         "properties": {
@@ -227,8 +249,7 @@
             ]
           },
           "line_item_description": {
-            "type": "string",
-            "description": "Which line item this quantity change applies to, if any"
+            "type": "string"
           },
           "current_value": {
             "type": "string"

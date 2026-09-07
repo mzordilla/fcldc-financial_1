@@ -5,7 +5,10 @@ export default function PurchaseOrderPrintDocument({ po, compact = false, signat
   const lineItems = po.line_items || [];
   const enteredAmount = lineItems.reduce((sum, item) => sum + (item.total || item.quantity * item.cost_per_item || 0), 0) || po.amount || 0;
   const calculated = calculatePurchaseOrderVat(enteredAmount, po.vat_treatment);
-  const totals = po.subtotal != null ? { subtotal: po.subtotal, vatAmount: po.vat_amount || 0, total: po.amount || 0 } : calculated;
+  const deductions = po.deductions || [];
+  const totalDeductions = po.total_deductions || deductions.reduce((sum, item) => sum + (item.amount || 0), 0);
+  const totals = po.subtotal != null ? { subtotal: po.subtotal, vatAmount: po.vat_amount || 0, total: (po.amount || 0) + totalDeductions } : calculated;
+  const netPayable = totals.total - totalDeductions;
   const gap = compact ? "mb-3" : "mb-6";
 
   return (
@@ -36,7 +39,8 @@ export default function PurchaseOrderPrintDocument({ po, compact = false, signat
         <tfoot className="border-t-2 border-black">
           <tr><td colSpan={5} className="pt-2 text-right">Subtotal:</td><td className="pt-2 text-right">₱{totals.subtotal.toLocaleString()}</td></tr>
           <tr><td colSpan={5} className="py-1 text-right">VAT (12%) · {vatTreatmentLabel(po.vat_treatment)}:</td><td className="py-1 text-right">₱{totals.vatAmount.toLocaleString()}</td></tr>
-          <tr><td colSpan={5} className={`${compact ? "pb-1" : "pb-3"} text-right font-bold`}>GRAND TOTAL:</td><td className={`${compact ? "pb-1" : "pb-3"} text-right font-bold`}>₱{totals.total.toLocaleString()}</td></tr>
+          {deductions.map((item, index) => <tr key={`deduction-${index}`}><td colSpan={5} className="py-1 text-right">Less: {item.description} ({item.percentage}%) · {item.account_code || item.chart_of_account}:</td><td className="py-1 text-right">-₱{(item.amount || 0).toLocaleString()}</td></tr>)}
+          <tr><td colSpan={5} className={`${compact ? "pb-1" : "pb-3"} text-right font-bold`}>NET PAYABLE:</td><td className={`${compact ? "pb-1" : "pb-3"} text-right font-bold`}>₱{netPayable.toLocaleString()}</td></tr>
         </tfoot>
       </table>
       <div className={`${compact ? "mb-4" : "mb-8"} text-sm`}><p className="text-gray-500 font-semibold uppercase text-xs mb-1">Approval Status</p><p className="font-semibold capitalize">{po.approval_status || "pending"}</p>{po.approved_by && <p className="text-gray-600 mt-1">Approved By: {po.approved_by}</p>}{po.approval_notes && <p className="text-gray-600 italic mt-1">Notes: {po.approval_notes}</p>}</div>

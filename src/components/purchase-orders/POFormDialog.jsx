@@ -12,6 +12,7 @@ import LineItemAdd from "./LineItemAdd";
 import POBudgetWarning from "@/components/purchase-orders/POBudgetWarning";
 import POVatBreakdown from "@/components/purchase-orders/POVatBreakdown";
 import POAttachmentsField from "@/components/purchase-orders/POAttachmentsField";
+import PODeductionLines from "@/components/purchase-orders/PODeductionLines";
 import { calculatePurchaseOrderVat, VAT_RATE } from "@/lib/purchaseOrderVat";
 
 const COA_CATEGORY_LABELS = {
@@ -40,6 +41,7 @@ const defaultForm = {
   requested_date: "",
   required_date: "",
   attachments: [],
+  deductions: [],
 };
 
 const OTHER_VALUE = "__other__";
@@ -107,8 +109,8 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
   useEffect(() => {
     if (open) {
       const data = { ...defaultForm, ...initialData };
-      if (!data.line_items?.length && data.vat_treatment === "vat_exclusive" && data.subtotal != null) {
-        data.amount = data.subtotal;
+      if (!data.line_items?.length && data.subtotal != null) {
+        data.amount = data.vat_treatment === "vat_inclusive" ? data.subtotal + (data.vat_amount || 0) : data.subtotal;
       }
       setForm(data);
       setFormError("");
@@ -125,7 +127,9 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
   const baseAmount = form.line_items?.length > 0 ? form.line_items.reduce((sum, item) => sum + (item.total || 0), 0) : parseFloat(form.amount) || 0;
   const vatBreakdown = calculatePurchaseOrderVat(baseAmount, form.vat_treatment);
-  const currentAmount = vatBreakdown.total;
+  const deductions = form.deductions || [];
+  const totalDeductions = deductions.reduce((sum, item) => sum + (vatBreakdown.subtotal * (Number(item.percentage) || 0) / 100), 0);
+  const currentAmount = vatBreakdown.total - totalDeductions;
   const selectedProject = projects.find((project) => project.project_name === form.project_name);
 
   const handleSupplierSelect = (value) => {
@@ -143,13 +147,19 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
       setFormError("Category and Chart of Account are required before saving.");
       return;
     }
+    if ((form.deductions || []).some(item => !item.description || !item.chart_of_account || Number(item.percentage) <= 0)) {
+      setFormError("Complete the description, percentage, and balance sheet account for every deduction.");
+      return;
+    }
     setFormError("");
     setSaving(true);
     const enteredAmount = form.line_items?.length > 0
       ? form.line_items.reduce((sum, item) => sum + (item.total || 0), 0)
       : parseFloat(form.amount) || 0;
     const breakdown = calculatePurchaseOrderVat(enteredAmount, form.vat_treatment);
-    await onSubmit({ ...form, amount: breakdown.total, subtotal: breakdown.subtotal, vat_amount: breakdown.vatAmount, vat_percentage: VAT_RATE });
+    const savedDeductions = (form.deductions || []).filter(item => item.description && item.chart_of_account && Number(item.percentage) > 0).map(item => ({ ...item, percentage: Number(item.percentage), amount: breakdown.subtotal * Number(item.percentage) / 100 }));
+    const savedDeductionTotal = savedDeductions.reduce((sum, item) => sum + item.amount, 0);
+    await onSubmit({ ...form, deductions: savedDeductions, total_deductions: savedDeductionTotal, amount: breakdown.total - savedDeductionTotal, subtotal: breakdown.subtotal, vat_amount: breakdown.vatAmount, vat_percentage: VAT_RATE });
     setSaving(false);
     onOpenChange(false);
   };
@@ -311,8 +321,11 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
               </div>
             </div>
 
+            <PODeductionLines deductions={deductions} onChange={value => set("deductions", value)} accounts={chartOfAccounts} subtotal={vatBreakdown.subtotal} />
+            {deductions.length > 0 && <div className="ml-auto w-full max-w-sm space-y-1 text-sm"><div className="flex justify-between"><span>Gross total</span><span>₱{vatBreakdown.total.toLocaleString()}</span></div><div className="flex justify-between text-destructive"><span>Less deductions</span><span>-₱{totalDeductions.toLocaleString()}</span></div><div className="flex justify-between border-t border-slate-300 pt-1 font-bold"><span>Net payable</span><span>₱{currentAmount.toLocaleString()}</span></div></div>}
+
             {formError && <p className="rounded-sm border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{formError}</p>}
-            <POBudgetWarning project={selectedProject} orders={historicalPOs} category={form.category} amount={currentAmount} currentPOId={initialData?.id} />
+            <POBudgetWarning project={selectedProject} orders={historicalPOs} category={form.category} amount={vatBreakdown.total} currentPOId={initialData?.id} />
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.5fr_1fr_1fr]">
               <div className="space-y-1.5">
