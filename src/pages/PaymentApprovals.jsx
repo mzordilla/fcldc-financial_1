@@ -206,8 +206,8 @@ export default function PaymentApprovals() {
       // Falls back to the PR category mapping only when an allocation has no account selected.
       const allocations = (data.project_allocations || []).filter(a => (a.amount || 0) > 0);
       const expenseLegs = allocations.length > 0
-        ? allocations.map(a => ({ amount: a.amount, chart_of_account: a.category || expenseCoA, project_code: a.project_name || "" }))
-        : [{ amount: data.amount, chart_of_account: expenseCoA, project_code: projectName }];
+        ? allocations.map(a => ({ amount: a.amount, chart_of_account: a.category || expenseCoA, project_code: a.project_code || a.project_name || "" }))
+        : [{ amount: data.amount, chart_of_account: expenseCoA, project_code: data.project_allocations?.[0]?.project_code || projectName }];
 
       // Enforce that every leg posts to a real Chart of Account record
       if (!fromPurchaseOrder) expenseLegs.forEach(leg => assertPostingAccount(leg.chart_of_account, "expense"));
@@ -236,7 +236,7 @@ export default function PaymentApprovals() {
         type: "income",
         category: "other",
         chart_of_account: "Accounts Payable",
-        project_code: projectName,
+        project_code: data.project_allocations?.[0]?.project_code || projectName,
         date: data.invoice_date || today,
         status: "pending",
       });
@@ -308,7 +308,7 @@ export default function PaymentApprovals() {
       due_date: po.required_date || "",
       requested_by: po.requested_by || "",
       supporting_docs: `PO: ${po.po_number || ""}`,
-      project_allocations: po.project_name ? [{ project_name: po.project_name, amount: po.amount }] : [],
+      project_allocations: po.project_name ? [{ project_name: po.project_name, project_code: po.project_code || "", amount: po.amount }] : [],
       amount: po.amount,
     };
     setShowAdd(true);
@@ -380,7 +380,11 @@ export default function PaymentApprovals() {
       due_date: dueDates[0] || "",
       requested_by: selectedPOs[0].requested_by || "",
       supporting_docs: `PO: ${poRefs.join(", ")}`,
-      project_allocations: Object.entries(allocMap).map(([project_name, amount]) => ({ project_name, amount })),
+      project_allocations: Object.entries(allocMap).map(([project_name, amount]) => ({
+        project_name,
+        project_code: selectedPOs.find(po => po.project_name === project_name)?.project_code || "",
+        amount,
+      })),
       amount: totalAmount,
     };
     setShowAdd(true);
@@ -417,7 +421,7 @@ export default function PaymentApprovals() {
       const bankAccountLabel = bankAccount ? `${bankAccount.account_name} – ${bankAccount.bank_name}` : "";
       // Post cash to the bank's own Chart of Account when it exists, otherwise the standard Cash in Bank account
       const bankLabel = findAccount(chartOfAccounts, bankAccountLabel) ? bankAccountLabel : BS_ACCOUNT_NAMES.cash;
-      const projectName = pr.project_allocations?.[0]?.project_name || "";
+      const projectCode = pr.project_allocations?.[0]?.project_code || pr.project_allocations?.[0]?.project_name || "";
 
       // Enforce that every disbursement leg posts to a real Chart of Account record
       assertPostingAccount(BS_ACCOUNT_NAMES.payable, "liability");
@@ -437,7 +441,7 @@ export default function PaymentApprovals() {
         type: "expense",
         category: "other",
         chart_of_account: "Accounts Payable",
-        project_code: projectName,
+        project_code: projectCode,
         date: disbursedDate,
         status: "completed",
       });
@@ -449,7 +453,7 @@ export default function PaymentApprovals() {
         type: "expense",
         category: pr.category || "other",
         chart_of_account: bankLabel,
-        project_code: projectName,
+        project_code: projectCode,
         bank_account_id: bankAccountId || "",
         date: disbursedDate,
         status: "completed",
@@ -463,7 +467,7 @@ export default function PaymentApprovals() {
           type: "income",
           category: "other",
           chart_of_account: "Withholding Tax Payable",
-          project_code: projectName,
+          project_code: projectCode,
           date: disbursedDate,
           status: "completed",
         });

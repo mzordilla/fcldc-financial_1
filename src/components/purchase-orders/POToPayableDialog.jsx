@@ -70,7 +70,7 @@ export default function POToPayableDialog({ open, onOpenChange, po, onSuccess })
       due_date: form.due_date,
       requested_by: po.requested_by || "",
       supporting_docs: `PO: ${po.po_number || po.id}`,
-      project_allocations: po.project_name ? [{ project_name: po.project_name, amount: po.amount }] : [],
+      project_allocations: po.project_name ? [{ project_name: po.project_name, project_code: po.project_code || "", amount: po.amount }] : [],
       approval_status: "pending",
       approval_step: "submitted",
       approval_history: [{
@@ -103,7 +103,7 @@ export default function POToPayableDialog({ open, onOpenChange, po, onSuccess })
       type: "income",
       category: "other",
       chart_of_account: "Accounts Payable",
-      project_name: po.project_name || "",
+      project_code: po.project_code || po.project_name || "",
       date: today,
       status: "pending",
     });

@@ -10,17 +10,20 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend,
 } from "recharts";
 import ProjectMonthlyTransactions from "@/components/projects/ProjectMonthlyTransactions";
+import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
 
 const EXPENSE_CATEGORIES = [
-  "material_cost", "labor", "equipment", "subcontractor", "overhead", "permits", "insurance", "other",
+  "material_cost", "labor", "direct_labor", "equipment", "subcontractor", "overhead", "operating_expense", "permits", "insurance", "other",
 ];
 
 const CATEGORY_LABELS = {
   material_cost: "Materials",
   labor: "Labor",
+  direct_labor: "Direct Labor",
   equipment: "Equipment",
   subcontractor: "Subcontractor",
   overhead: "Overhead",
+  operating_expense: "Operating Expense",
   permits: "Permits",
   insurance: "Insurance",
   other: "Other",
@@ -36,23 +39,31 @@ const CLASSIFICATION_LABELS = {
   external_construction: "External Construction",
 };
 
-function buildProjectData(transactions, receivables = [], billingCycles = [], projectsData = [], payables = [], paymentRequests = []) {
+function buildProjectData(transactions, receivables = [], billingCycles = [], projectsData = [], chartOfAccounts = [], receivingItems = [], purchaseOrders = []) {
   const projects = {};
 
-  // Build lookups by project_name and project_code
+  // Resolve both current project codes and legacy records that stored a project name in project_code.
   const classificationMap = {};
-  const codeToName = {}; // project_code → canonical project_name
+  const projectIdentity = {};
+  const codePrefixes = {};
   projectsData.forEach(p => {
-    if (p.project_name) {
-      if (p.project_classification) classificationMap[p.project_name] = p.project_classification;
-      if (p.project_code) codeToName[p.project_code] = p.project_name;
+    if (!p.project_name) return;
+    if (p.project_classification) classificationMap[p.project_name] = p.project_classification;
+    projectIdentity[p.project_name.trim().toLowerCase()] = p.project_name;
+    if (p.project_code) {
+      projectIdentity[p.project_code.trim().toLowerCase()] = p.project_name;
+      const prefix = p.project_code.match(/^[a-z0-9&]+/i)?.[0]?.toLowerCase();
+      if (prefix) (codePrefixes[prefix] ||= []).push(p.project_name);
     }
   });
+  Object.entries(codePrefixes).forEach(([prefix, names]) => {
+    if (names.length === 1) projectIdentity[prefix] = names[0];
+  });
+  const accountTypes = new Map(chartOfAccounts.map(a => [(a.account_name || "").trim().toLowerCase(), a.account_type]));
 
-  // Resolve a record to a canonical project name key
   const resolveKey = (project_name, project_code) => {
-    if (project_code && codeToName[project_code]) return codeToName[project_code];
-    return project_name || "Unassigned";
+    const identity = (project_code || project_name || "").trim().toLowerCase();
+    return projectIdentity[identity] || project_name || project_code || "Unassigned";
   };
 
   const ensure = (key) => {
@@ -61,16 +72,19 @@ function buildProjectData(transactions, receivables = [], billingCycles = [], pr
     }
   };
 
-  // Track transaction-linked payable/PR IDs to avoid double-counting
-  const transactionLinkedPayableIds = new Set();
-  const transactionLinkedPRIds = new Set();
-
   transactions.forEach((t) => {
-    if (t.category === "fund_transfer") return;
-    if (t.category === "bank_reconciliation") return;
-    const key = resolveKey(t.project_name, t.project_code);
+    if (t.status !== "completed" || !t.project_code) return;
+    if (["fund_transfer", "bank_reconciliation"].includes(t.category)) return;
+    const accountType = accountTypes.get((t.chart_of_account || "").trim().toLowerCase());
+    const isRevenue = t.type === "income" && (accountType === "income" || t.category === "project_payment");
+    const isCost = t.type === "expense" && (
+      !!t.receiving_item_id || accountType === "expense" || (!accountType && EXPENSE_CATEGORIES.includes(t.category))
+    );
+    if (!isRevenue && !isCost) return;
+
+    const key = resolveKey("", t.project_code);
     ensure(key);
-    if (t.type === "income") {
+    if (isRevenue) {
       projects[key].income += t.amount || 0;
     } else {
       projects[key].expenses += t.amount || 0;
@@ -80,48 +94,34 @@ function buildProjectData(transactions, receivables = [], billingCycles = [], pr
     projects[key].transactions.push(t);
   });
 
-  // Include payables (from POs) that have a project and aren't already in transactions
-  // Use net amount (gross - withholding tax) to match what was actually paid
-  payables.forEach((p) => {
-    if (!p.project_name && !p.project_code) return;
-    const key = resolveKey(p.project_name, p.project_code);
+  // Include received PO costs only when their accounting transaction is missing.
+  const recordedReceiptIds = new Set(transactions.map(t => t.receiving_item_id).filter(Boolean));
+  const expenseDescriptions = transactions.filter(t => t.type === "expense").map(t => (t.description || "").toLowerCase());
+  const poById = new Map(purchaseOrders.map(po => [po.id, po]));
+  const poCategoryMap = { materials: "material_cost", equipment: "equipment", subcontractor: "subcontractor", services: "other", utilities: "overhead", other: "other" };
+  receivingItems.forEach(receipt => {
+    const po = poById.get(receipt.po_id);
+    const alreadyRecognized = recordedReceiptIds.has(receipt.id) || (receipt.po_number && expenseDescriptions.some(d => d.includes(receipt.po_number.toLowerCase())));
+    if (alreadyRecognized || !(receipt.total_amount > 0)) return;
+    const key = resolveKey(receipt.project_name || po?.project_name, po?.project_code);
     ensure(key);
-    // Amount to count: use amount_paid if partially/fully paid, else full amount for unpaid
-    const amt = p.amount_paid > 0 ? p.amount_paid : (p.status === "paid" ? (p.amount - (p.withholding_tax_amount || 0)) : 0);
-    if (amt <= 0) return;
-    const cat = p.category || "other";
-    projects[key].expenses += amt;
-    projects[key].categories[cat] = (projects[key].categories[cat] || 0) + amt;
-  });
-
-  // Include paid/approved payment requests that have project allocations
-  paymentRequests.forEach((pr) => {
-    if (pr.approval_status !== "paid" && pr.approval_status !== "approved") return;
-    const allocations = pr.project_allocations || [];
-    if (allocations.length === 0 && (pr.project_name || pr.project_code)) {
-      // fallback: single project
-      const key = resolveKey(pr.project_name, pr.project_code);
-      ensure(key);
-      const amt = pr.amount - (pr.withholding_tax_amount || 0);
-      if (amt <= 0) return;
-      const cat = pr.category || "other";
-      projects[key].expenses += amt;
-      projects[key].categories[cat] = (projects[key].categories[cat] || 0) + amt;
-    } else {
-      allocations.forEach((alloc) => {
-        if ((!alloc.project_name && !alloc.project_code) || !alloc.amount) return;
-        const key = resolveKey(alloc.project_name, alloc.project_code);
-        ensure(key);
-        projects[key].expenses += alloc.amount;
-        const cat = alloc.category || pr.category || "other";
-        projects[key].categories[cat] = (projects[key].categories[cat] || 0) + alloc.amount;
-      });
-    }
+    const category = poCategoryMap[po?.category] || "material_cost";
+    const amount = receipt.total_amount || 0;
+    projects[key].expenses += amount;
+    projects[key].categories[category] = (projects[key].categories[category] || 0) + amount;
+    projects[key].transactions.push({
+      id: `receipt-${receipt.id}`,
+      date: receipt.received_date,
+      description: `Received PO ${receipt.po_number || ""} — ${receipt.supplier_name || "Supplier"}`,
+      amount,
+      type: "expense",
+      category,
+    });
   });
 
   // Add approved billing cycles as billed revenue
   billingCycles.forEach((bc) => {
-    const key = bc.project_name || "Unassigned";
+    const key = resolveKey(bc.project_name, bc.project_code);
     ensure(key);
     projects[key].billed += bc.net_billing_amount || bc.billing_amount || 0;
   });
@@ -129,7 +129,7 @@ function buildProjectData(transactions, receivables = [], billingCycles = [], pr
   // Add collected receivables (exclude condo sale receivables, which are not project billings)
   receivables.forEach((r) => {
     if (r.property_listing_id) return;
-    const key = r.project_name || "Unassigned";
+    const key = resolveKey(r.project_name, r.project_code);
     ensure(key);
     projects[key].collected += r.amount_paid || 0;
   });
@@ -289,7 +289,7 @@ function ProjectRow({ project }) {
 export default function ProjectPnL() {
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 5000),
+    queryFn: () => fetchAllTransactions("-date"),
   });
 
   const { data: receivables = [] } = useQuery({
@@ -307,19 +307,24 @@ export default function ProjectPnL() {
     queryFn: () => base44.entities.Project.list("project_name", 2000),
   });
 
-  const { data: payables = [] } = useQuery({
-    queryKey: ["payables_pnl"],
-    queryFn: () => base44.entities.Payable.list("-created_date", 5000),
+  const { data: chartOfAccounts = [] } = useQuery({
+    queryKey: ["chartofaccounts"],
+    queryFn: () => base44.entities.ChartOfAccount.list("account_code", 1000),
   });
 
-  const { data: paymentRequests = [] } = useQuery({
-    queryKey: ["payment_requests_pnl"],
-    queryFn: () => base44.entities.PaymentRequest.filter({ approval_status: "paid" }, "-created_date", 5000),
+  const { data: receivingItems = [] } = useQuery({
+    queryKey: ["receiving_items_pnl"],
+    queryFn: () => base44.entities.ReceivingItem.list("-received_date", 10000),
+  });
+
+  const { data: purchaseOrders = [] } = useQuery({
+    queryKey: ["purchase_orders_pnl"],
+    queryFn: () => base44.entities.PurchaseOrder.list("-created_date", 10000),
   });
 
   const [classFilter, setClassFilter] = useState("all");
 
-  const allProjects = buildProjectData(transactions, receivables, billingCycles, projectsData, payables, paymentRequests);
+  const allProjects = buildProjectData(transactions, receivables, billingCycles, projectsData, chartOfAccounts, receivingItems, purchaseOrders);
   const projects = classFilter === "all" ? allProjects : allProjects.filter(p => p.classification === classFilter);
 
   const totalIncome = projects.reduce((s, p) => s + p.income, 0);

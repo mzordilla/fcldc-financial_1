@@ -37,6 +37,11 @@ export default function BillingCycles() {
     queryFn: () => base44.entities.BillingCycle.list("-created_date", 100),
   });
 
+  const { data: projects = [] } = useQuery({
+    queryKey: ["projects"],
+    queryFn: () => base44.entities.Project.list("project_name", 2000),
+  });
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.BillingCycle.create(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["billing_cycles"] }),
@@ -72,6 +77,7 @@ export default function BillingCycles() {
       const advanceApplied = bc.down_payment_deduction || 0;
       const receivableAmount = netBillingAmount + advanceApplied;
       const today = new Date().toISOString().split("T")[0];
+      const projectCode = projects.find(p => p.project_name === bc.project_name)?.project_code || bc.project_name || "";
 
       // 1. Create Accounts Receivable record with any project advance applied to it
       const receivable = await base44.entities.Receivable.create({
@@ -100,7 +106,7 @@ export default function BillingCycles() {
         type: "income",
         category: "project_payment",
         chart_of_account: "Construction Revenue",
-        project_code: bc.project_name || "",
+        project_code: projectCode,
         date: bc.period_end || bc.period_start || bc.due_date || today,
         status: "completed",
       });

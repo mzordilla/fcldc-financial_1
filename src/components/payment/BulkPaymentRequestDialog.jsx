@@ -78,7 +78,11 @@ export default function BulkPaymentRequestDialog({ open, onOpenChange, onSubmit 
       invoice_number: r.invoice_number || undefined,
       requested_by: r.requested_by || undefined,
       project_allocations: r.project_name
-        ? [{ project_name: r.project_name, amount: parseFloat(r.amount) || 0 }]
+        ? [{
+            project_name: r.project_name,
+            project_code: projects.find(p => p.project_name === r.project_name)?.project_code || "",
+            amount: parseFloat(r.amount) || 0,
+          }]
         : [],
       approval_status: "pending",
       approval_step: "submitted",
