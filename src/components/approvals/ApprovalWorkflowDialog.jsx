@@ -48,8 +48,8 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
   }, [open]);
 
   const { data: allUsers = [] } = useQuery({
-    queryKey: ["all_users"],
-    queryFn: () => base44.entities.User.list("full_name", 100),
+    queryKey: ["approver_list"],
+    queryFn: async () => (await base44.functions.invoke("listApprovers", {})).data.approvers,
     enabled: open,
   });
 
