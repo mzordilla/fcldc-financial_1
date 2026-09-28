@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import LeaseCollectionEditDialog from "./LeaseCollectionEditDialog";
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
@@ -25,6 +26,7 @@ export default function LeaseCollectionDetailsDialog({
   onMarkCollected, onUndo, onMarkGroupCollected, onUndoGroup,
 }) {
   const [form, setForm] = useState(defaultForm);
+  const [editing, setEditing] = useState(null);
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ["bankaccounts"],
     queryFn: () => base44.entities.BankAccount.list("-created_date", 100),
@@ -62,7 +64,8 @@ export default function LeaseCollectionDetailsDialog({
                 {tenants.map((t, i) => (
                   <li key={t.id} className="flex justify-between text-xs">
                     <span className="text-foreground">{t.contract_attachment_url ? <a href={t.contract_attachment_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{t.unit_number || "View contract"}</a> : t.unit_number}{t.building ? ` · ${t.building}` : ""}</span>
-                    <span className="text-muted-foreground">{fmt(records[i]?.amount ?? ((t.monthly_rent || 0) + (t.association_dues || 0)))}{records[i]?.collected ? " ✓" : ""}</span>
+                    <span className="text-muted-foreground">{fmt(records[i]?.amount ?? ((t.monthly_rent || 0) + (t.association_dues || 0)))}{records[i]?.collected ? " ✓" : ""}
+                      {records[i] && !records[i].collected && <button type="button" className="ml-2 text-primary hover:underline" onClick={() => setEditing(records[i])}>Edit</button>}</span>
                   </li>
                 ))}
               </ul>
@@ -153,6 +156,7 @@ export default function LeaseCollectionDetailsDialog({
         </div>
 
         <DialogFooter>
+          {!isGroup && record && !record.collected && <Button variant="outline" onClick={() => setEditing(record)}>Edit</Button>}
           {isCollected ? (
             isGroup ? (
               <Button variant="outline" onClick={() => onUndoGroup(tenants, month, records)}>Undo Collection for All Units</Button>
@@ -166,6 +170,7 @@ export default function LeaseCollectionDetailsDialog({
           )}
         </DialogFooter>
       </DialogContent>
+      <LeaseCollectionEditDialog record={editing} onClose={(saved) => { setEditing(null); if (saved) onOpenChange(false); }} />
     </Dialog>
   );
 }
