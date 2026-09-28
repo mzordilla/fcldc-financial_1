@@ -40,6 +40,37 @@
       "type": "number",
       "description": "Agreed monthly rent"
     },
+    "lease_term_months": {
+      "type": "number",
+      "description": "Contract term in months"
+    },
+    "escalation_rate": {
+      "type": "number",
+      "description": "Rent escalation percentage per interval"
+    },
+    "escalation_interval_months": {
+      "type": "number",
+      "default": 12,
+      "description": "Months between escalations"
+    },
+    "rent_schedule": {
+      "type": "array",
+      "description": "Escalated rent per month range",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from_month": {
+            "type": "number"
+          },
+          "to_month": {
+            "type": "number"
+          },
+          "monthly_rent": {
+            "type": "number"
+          }
+        }
+      }
+    },
     "deposit_amount": {
       "type": "number",
       "description": "Security deposit amount"

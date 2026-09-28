@@ -7,12 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { base44 } from "@/api/base44Client";
 import { Paperclip, Loader2 } from "lucide-react";
+import RentEscalationFields from "@/components/realestate/RentEscalationFields";
 
 const defaults = {
   full_name: "", email: "", contact_number: "", unit_id: "", unit_number: "",
   building: "", area_sqm: "", lease_start: "", lease_end: "", monthly_rent: "",
   deposit_amount: "", association_dues_per_sqm: "", association_dues: "", status: "active",
   contract_attachment_url: "", notes: "",
+  lease_term_months: "", escalation_rate: "", escalation_interval_months: "12", rent_schedule: [],
 };
 
 export default function TenantFormDialog({ open, onOpenChange, initialData, units = [], onSubmit }) {
@@ -64,6 +66,9 @@ export default function TenantFormDialog({ open, onOpenChange, initialData, unit
       deposit_amount: form.deposit_amount ? Number(form.deposit_amount) : undefined,
       association_dues_per_sqm: form.association_dues_per_sqm ? Number(form.association_dues_per_sqm) : undefined,
       association_dues: form.association_dues ? Number(form.association_dues) : undefined,
+      lease_term_months: form.lease_term_months ? Number(form.lease_term_months) : undefined,
+      escalation_rate: form.escalation_rate ? Number(form.escalation_rate) : undefined,
+      escalation_interval_months: form.escalation_interval_months ? Number(form.escalation_interval_months) : undefined,
     });
     setSaving(false);
     onOpenChange(false);
@@ -154,6 +159,7 @@ export default function TenantFormDialog({ open, onOpenChange, initialData, unit
               </Select>
             </div>
           </div>
+          <RentEscalationFields form={form} set={set} />
           <div className="space-y-1">
             <Label>Lease Contract</Label>
             {form.contract_attachment_url && (
