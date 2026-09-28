@@ -68,6 +68,11 @@ export default function Dashboard() {
   }, [transactions, span]);
 
   const ar = useMemo(() => receivablesHealth(receivables), [receivables]);
+  const arSplit = useMemo(() => receivables.filter(r => r.status !== "paid").reduce((s, r) => {
+    const bal = (r.amount || 0) - (r.amount_paid || 0);
+    if (r.receivable_type === "funding_loan") s.nonCurrent += bal; else s.current += bal;
+    return s;
+  }, { current: 0, nonCurrent: 0 }), [receivables]);
   const ap = useMemo(() => payablesHealth(payables), [payables]);
   const projectRows = useMemo(() => projectPerformance(projects, transactions).slice(0, 6), [projects, transactions]);
 
@@ -116,12 +121,13 @@ export default function Dashboard() {
         </Select>
       </section>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-7">
         <ExecutiveKpiCard label="Revenue" value={compact(metrics.current.income)} sub="vs prior period" change={changePercent(metrics.current.income, metrics.prior.income)} />
         <ExecutiveKpiCard label="Operating Cost" value={compact(metrics.current.expenses)} sub="vs prior period" change={changePercent(metrics.current.expenses, metrics.prior.expenses)} invertChange />
         <ExecutiveKpiCard label="Net Result" value={compact(metrics.current.net)} accent={metrics.current.net < 0 ? "text-rose-600" : "text-teal-700"} sub={`${Math.round(metrics.current.margin)}% margin`} change={changePercent(metrics.current.net, metrics.prior.net)} />
         <ExecutiveKpiCard label="Cash Position" value={compact(cashOnHand)} sub={`${bankAccounts.length} accounts`} />
-        <ExecutiveKpiCard label="Receivables" value={compact(ar.total)} accent="text-sky-700" sub={`${ar.overdueCount} overdue`} />
+        <ExecutiveKpiCard label="Current Receivables" value={compact(arSplit.current)} accent="text-sky-700" sub={`${ar.overdueCount} overdue`} />
+        <ExecutiveKpiCard label="Non-Current Receivables" value={compact(arSplit.nonCurrent)} accent="text-indigo-700" sub="Funding & loans" />
         <ExecutiveKpiCard label="Debt Outstanding" value={compact(debtOutstanding)} accent="text-amber-600" sub={`${compact(monthlyDebtService)}/mo service`} />
       </div>
 
