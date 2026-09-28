@@ -1,0 +1,14 @@
+{
+  "name": "WorkingCapitalSetting",
+  "type": "object",
+  "properties": {
+    "available_override": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Manually set available credit balance; null uses auto-calculation"
+    }
+  },
+  "required": []
+}

@@ -1,4 +1,6 @@
-export default function WorkingCapitalCommandHeader({ outstanding, available, monthlyPayments, controls }) {
+import EditableAvailable from "./EditableAvailable";
+
+export default function WorkingCapitalCommandHeader({ outstanding, available, isOverride, canEdit, onSaveAvailable, monthlyPayments, controls }) {
   const money = (value) => `₱${(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
@@ -10,7 +12,7 @@ export default function WorkingCapitalCommandHeader({ outstanding, available, mo
             <p className="text-xs font-medium text-muted-foreground">outstanding</p>
           </div>
           <div className="py-3 sm:px-5 sm:py-0">
-            <p className="font-project-display text-2xl font-bold tracking-tight text-foreground">{money(available)}</p>
+            <EditableAvailable value={available} isOverride={isOverride} canEdit={canEdit} onSave={onSaveAvailable} money={money} />
             <p className="text-xs font-medium text-muted-foreground">available</p>
           </div>
           <div className="pt-3 sm:pl-5 sm:pt-0">

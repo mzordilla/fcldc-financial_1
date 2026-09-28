@@ -116,13 +116,31 @@ export default function WorkingCapitalLoans() {
   const monthlyPayments = activeItems.reduce((s, d) => s + (d.monthly_payment || 0), 0);
   const totalGranted = activeItems.filter(d => d.amount_granted).reduce((s, d) => s + (d.amount_granted || 0), 0);
   const totalDrawn = activeItems.filter(d => d.amount_granted).reduce((s, d) => s + getLoanBalance(d), 0);
-  const availableBalance = Math.max(0, totalGranted - totalDrawn);
+  const autoAvailable = Math.max(0, totalGranted - totalDrawn);
+
+  const { data: settings = [] } = useQuery({
+    queryKey: ["workingcapitalsetting"],
+    queryFn: () => base44.entities.WorkingCapitalSetting.list("-created_date", 1),
+  });
+  const setting = settings[0];
+  const isOverride = setting?.available_override !== null && setting?.available_override !== undefined;
+  const availableBalance = isOverride ? setting.available_override : autoAvailable;
+
+  const saveAvailable = async (val) => {
+    const data = { available_override: val === null || isNaN(val) ? null : val };
+    if (setting) await base44.entities.WorkingCapitalSetting.update(setting.id, data);
+    else await base44.entities.WorkingCapitalSetting.create(data);
+    queryClient.invalidateQueries({ queryKey: ["workingcapitalsetting"] });
+  };
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-4 bg-muted/30 p-4 font-project-body md:p-6">
       <WorkingCapitalCommandHeader
         outstanding={totalActive}
         available={availableBalance}
+        isOverride={isOverride}
+        canEdit={user?.role === "admin"}
+        onSaveAvailable={saveAvailable}
         monthlyPayments={monthlyPayments}
         controls={<>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
