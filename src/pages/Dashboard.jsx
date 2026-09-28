@@ -9,9 +9,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import {
-  changePercent, expenseMix, monthKeysBack, monthlySeries, payablesHealth,
-  periodTotals, projectPerformance, receivablesHealth,
+  changePercent, expenseMix, monthKeysBack, monthLabel, payablesHealth,
+  projectPerformance, receivablesHealth,
 } from "@/lib/executiveMetrics";
+import { buildPeriod, incomeStatementAccountNames } from "@/components/reports/comparativeIncomeStatementUtils";
 import ExecutiveKpiCard from "@/components/dashboard/executive/ExecutiveKpiCard";
 import PerformanceTrendChart from "@/components/dashboard/executive/PerformanceTrendChart";
 import ManagementAlerts from "@/components/dashboard/executive/ManagementAlerts";
@@ -52,20 +53,29 @@ export default function Dashboard() {
   const { data: currentUser } = useQuery({ queryKey: ["currentUser"], queryFn: () => base44.auth.me() });
   const { data: bankTransferRequests = [] } = useQuery({ queryKey: ["bankTransferRequests"], queryFn: () => base44.entities.BankTransferRequest.list("-created_date", 200) });
 
-  const bankAccounts = Array.isArray(bankAccountsData) ? bankAccountsData : [];
+  const { data: chartOfAccounts = [] } = useQuery({ queryKey: ["chartofaccounts"], queryFn: () => base44.entities.ChartOfAccount.list("account_code", 1000) });
+  const { data: ppeAssets = [] } = useQuery({ queryKey: ["ppe_assets"], queryFn: () => base44.entities.PPEAsset.list("-acquisition_date", 500) });
+  const bankAccounts = useMemo(() => Array.isArray(bankAccountsData) ? bankAccountsData : [], [bankAccountsData]);
   const span = Number(months);
   const metrics = useMemo(() => {
     const currentKeys = monthKeysBack(span);
     const priorKeys = monthKeysBack(span * 2).slice(0, span);
-    const current = periodTotals(transactions, currentKeys);
-    const prior = periodTotals(transactions, priorKeys);
+    const accts = incomeStatementAccountNames(chartOfAccounts, bankAccounts);
+    const isTotals = (keys) => {
+      const [y, m] = keys[keys.length - 1].split("-").map(Number);
+      const p = buildPeriod(transactions, `${keys[0]}-01`, `${keys[keys.length - 1]}-${String(new Date(y, m, 0).getDate()).padStart(2, "0")}`, accts, ppeAssets);
+      const income = p.totalRevenue, expenses = p.totalCOGS + p.totalOpex, net = p.incomeBeforeTax;
+      return { income, expenses, net, margin: income > 0 ? (net / income) * 100 : 0 };
+    };
+    const current = isTotals(currentKeys);
+    const prior = isTotals(priorKeys);
     return {
       current,
       prior,
-      series: monthlySeries(transactions, monthKeysBack(Math.max(span, 6))),
+      series: monthKeysBack(Math.max(span, 6)).map((key) => ({ key, label: monthLabel(key), ...isTotals([key]) })),
       mix: expenseMix(transactions, currentKeys),
     };
-  }, [transactions, span]);
+  }, [transactions, span, chartOfAccounts, bankAccounts, ppeAssets]);
 
   const ar = useMemo(() => receivablesHealth(receivables), [receivables]);
   const arSplit = useMemo(() => receivables.filter(r => r.status !== "paid").reduce((s, r) => {
