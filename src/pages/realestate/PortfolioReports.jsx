@@ -4,6 +4,7 @@ import { BarChart2, Home, Users, List, TrendingUp } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import LeaseForecastReport from "@/components/realestate/LeaseForecastReport";
 import PortfolioStatusBreakdown from "@/components/realestate/PortfolioStatusBreakdown";
+import PortfolioExcelExports from "@/components/realestate/PortfolioExcelExports";
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString()}`;
 
@@ -94,9 +95,12 @@ export default function PortfolioReports() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Portfolio Reports</h1>
-        <p className="text-muted-foreground mt-1">Real estate portfolio summary and analytics</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Portfolio Reports</h1>
+          <p className="text-muted-foreground mt-1">Real estate portfolio summary and analytics</p>
+        </div>
+        <PortfolioExcelExports />
       </div>
 
       {/* KPI Cards */}
