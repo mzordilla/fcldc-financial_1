@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
 import { normalizeLoan } from "@/lib/normalizeLoan";
+import { getLoanBalance } from "@/lib/loanBalance";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
@@ -71,7 +72,7 @@ export default function Dashboard() {
   const projectRows = useMemo(() => projectPerformance(projects, transactions).slice(0, 6), [projects, transactions]);
 
   const allLoans = useMemo(() => [...debts, ...loans].map(normalizeLoan).filter((l) => l.status === "active"), [debts, loans]);
-  const debtOutstanding = allLoans.reduce((s, l) => s + ((l.total_amount || 0) - (l.amount_paid || 0)), 0);
+  const debtOutstanding = allLoans.reduce((s, l) => s + getLoanBalance(l), 0);
   const monthlyDebtService = allLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
   const cashOnHand = bankAccounts.filter((a) => a.status !== "closed").reduce((s, a) => s + (a.current_balance || 0), 0);
 
@@ -84,7 +85,7 @@ export default function Dashboard() {
     const losing = projectPerformance(projects, transactions).filter((p) => p.margin < 0);
     if (losing.length > 0) list.push({ severity: "warning", title: `${losing.length} project${losing.length > 1 ? "s" : ""} running at a loss`, detail: losing.slice(0, 2).map((p) => p.name).join(", "), to: "/project-pnl" });
     const maturing = allLoans.filter((l) => l.due_date && (new Date(l.due_date) - today) / 86400000 <= 90 && new Date(l.due_date) >= today);
-    if (maturing.length > 0) list.push({ severity: "warning", title: `${maturing.length} loan${maturing.length > 1 ? "s" : ""} maturing within 90 days`, detail: `Principal due ${money(maturing.reduce((s, l) => s + ((l.total_amount || 0) - (l.amount_paid || 0)), 0))}`, to: "/working-capital-loans" });
+    if (maturing.length > 0) list.push({ severity: "warning", title: `${maturing.length} loan${maturing.length > 1 ? "s" : ""} maturing within 90 days`, detail: `Principal due ${money(maturing.reduce((s, l) => s + getLoanBalance(l), 0))}`, to: "/working-capital-loans" });
     if (cashOnHand > 0 && ap.dueSoonAmount > cashOnHand) list.push({ severity: "warning", title: "Payables due in 30 days exceed cash on hand", detail: `${money(ap.dueSoonAmount)} due vs ${money(cashOnHand)} available`, to: "/bank-accounts" });
     const pendingPOs = purchaseOrders.filter((p) => p.approval_status === "pending");
     if (pendingPOs.length > 0) list.push({ severity: "info", title: `${pendingPOs.length} purchase orders awaiting approval`, detail: `Committed value ${money(pendingPOs.reduce((s, p) => s + (p.amount || 0), 0))}`, to: "/purchase-orders" });

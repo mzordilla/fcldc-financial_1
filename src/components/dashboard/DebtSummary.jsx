@@ -1,11 +1,12 @@
 import { AlertTriangle, DollarSign, Calendar } from "lucide-react";
+import { getLoanBalance } from "@/lib/loanBalance";
 
 export default function DebtSummary({ debts = [], loans = [] }) {
   const activeDebts = debts.filter(d => d.status === "active");
   const activeLoans = loans.filter(l => l.status === "active");
   
   // Calculate totals
-  const totalDebtObligation = activeDebts.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
+  const totalDebtObligation = activeDebts.reduce((s, d) => s + (getLoanBalance(d)), 0);
   const totalLoanObligation = activeLoans.reduce((s, l) => s + ((l.outstanding_balance || 0)), 0);
   const totalObligation = totalDebtObligation + totalLoanObligation;
   
@@ -15,7 +16,7 @@ export default function DebtSummary({ debts = [], loans = [] }) {
   
   const totalInterestAccrued = activeDebts.reduce((s, d) => {
     const rate = (d.interest_rate || 0) / 100 / 12;
-    const balance = (d.total_amount || 0) - (d.amount_paid || 0);
+    const balance = getLoanBalance(d);
     return s + (balance * rate);
   }, 0) + activeLoans.reduce((s, l) => {
     const rate = (l.interest_rate || 0) / 100 / 12;

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { getLoanBalance } from "@/lib/loanBalance";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { FileSpreadsheet, ChevronDown, ChevronRight } from "lucide-react";
@@ -192,7 +193,7 @@ export default function BalanceSheetReport({ asOfDate }) {
     const totalCurrentLiabilities = unpaidPayables + withholdingTaxPayable + currentPortionLoans + otherCurrentPayables;
 
     const loanBalances = loans.filter(l => l.status === "active").reduce((s, l) => s + (l.outstanding_balance || 0), 0);
-    const wcLoanBalances = wcLoans.filter(l => l.status === "active").reduce((s, l) => s + ((l.total_amount || 0) - (l.amount_paid || 0)), 0);
+    const wcLoanBalances = wcLoans.filter(l => l.status === "active").reduce((s, l) => s + getLoanBalance(l), 0);
     const longTermLoans = Math.max(0, (loanBalances + wcLoanBalances) - currentPortionLoans);
     const totalNonCurrentLiabilities = longTermLoans + otherPayables;
     const totalLiabilities = totalCurrentLiabilities + totalNonCurrentLiabilities;

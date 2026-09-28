@@ -1,16 +1,17 @@
 import { Card } from "@/components/ui/card";
+import { getLoanBalance } from "@/lib/loanBalance";
 import { TrendingDown, Landmark, AlertCircle } from "lucide-react";
 
 export default function DebtSummarySectionTop({ debts }) {
   const activeDebts = debts.filter(d => d.status === "active");
   
-  const totalDebt = activeDebts.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
-  const totalOutstanding = activeDebts.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
+  const totalDebt = activeDebts.reduce((s, d) => s + (getLoanBalance(d)), 0);
+  const totalOutstanding = activeDebts.reduce((s, d) => s + (getLoanBalance(d)), 0);
   
   // Weighted average interest rate
   const weightedRate = totalOutstanding > 0
     ? activeDebts.reduce((s, d) => {
-        const outstanding = (d.total_amount || 0) - (d.amount_paid || 0);
+        const outstanding = getLoanBalance(d);
         return s + ((d.interest_rate || 0) * outstanding);
       }, 0) / totalOutstanding
     : 0;

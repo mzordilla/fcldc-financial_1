@@ -1,5 +1,6 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { Card } from "@/components/ui/card";
+import { getLoanBalance } from "@/lib/loanBalance";
 
 export default function WorkingCapitalComparison({ debts }) {
   const data = debts
@@ -7,7 +8,7 @@ export default function WorkingCapitalComparison({ debts }) {
     .map(d => ({
       creditor: d.creditor,
       availed: d.amount_availed || 0,
-      outstanding: (d.total_amount || 0) - (d.amount_paid || 0),
+      outstanding: getLoanBalance(d),
     }));
 
   const totalAvailed = data.reduce((s, d) => s + d.availed, 0);

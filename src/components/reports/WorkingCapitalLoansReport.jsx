@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { getLoanBalance } from "@/lib/loanBalance";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,7 +58,7 @@ export default function WorkingCapitalLoansReport({ loans = [] }) {
   const paidOff = loans.filter(l => l.status === "paid_off");
   const defaulted = loans.filter(l => l.status === "defaulted");
 
-  const totalOutstanding = active.reduce((s, l) => s + Math.max(0, (l.total_amount || 0) - (l.amount_paid || 0)), 0);
+  const totalOutstanding = active.reduce((s, l) => s + getLoanBalance(l), 0);
   const totalGranted = active.reduce((s, l) => s + (l.amount_granted || l.total_amount || 0), 0);
   const totalAvailed = active.reduce((s, l) => s + (l.amount_availed || 0), 0);
   const availableCredit = Math.max(0, totalGranted - totalAvailed);
@@ -109,7 +110,7 @@ export default function WorkingCapitalLoansReport({ loans = [] }) {
       l.status,
       l.total_amount || 0,
       l.amount_paid || 0,
-      Math.max(0, (l.total_amount || 0) - (l.amount_paid || 0)),
+      getLoanBalance(l),
       l.amount_granted || "",
       l.amount_availed || "",
       l.interest_rate || "",
@@ -175,7 +176,7 @@ export default function WorkingCapitalLoansReport({ loans = [] }) {
     y += 8;
 
     Object.entries(byType).forEach(([type, items], i) => {
-      const outstanding = items.reduce((s, l) => s + Math.max(0, (l.total_amount || 0) - (l.amount_paid || 0)), 0);
+      const outstanding = items.reduce((s, l) => s + getLoanBalance(l), 0);
       const totalAmt = items.reduce((s, l) => s + (l.total_amount || 0), 0);
       const monthly = items.reduce((s, l) => s + (l.monthly_payment || 0), 0);
       if (i % 2 === 0) { doc.setFillColor(248, 250, 252); doc.rect(14, y, pageW - 28, 7, "F"); }
@@ -212,7 +213,7 @@ export default function WorkingCapitalLoansReport({ loans = [] }) {
     loans.forEach((l, i) => {
       if (y > 190) { doc.addPage(); y = 20; }
       if (i % 2 === 0) { doc.setFillColor(248, 250, 252); doc.rect(14, y, pageW - 28, 7, "F"); }
-      const outstanding = Math.max(0, (l.total_amount || 0) - (l.amount_paid || 0));
+      const outstanding = getLoanBalance(l);
       doc.setFontSize(7.5);
       doc.setFont("helvetica", "normal");
       doc.text((l.creditor || "").substring(0, 16), xs[0], y + 5);
@@ -291,7 +292,7 @@ export default function WorkingCapitalLoansReport({ loans = [] }) {
           </thead>
           <tbody>
             {Object.entries(byType).map(([type, items]) => {
-              const outstanding = items.reduce((s, l) => s + Math.max(0, (l.total_amount || 0) - (l.amount_paid || 0)), 0);
+              const outstanding = items.reduce((s, l) => s + getLoanBalance(l), 0);
               const totalAmt = items.reduce((s, l) => s + (l.total_amount || 0), 0);
               const monthly = items.reduce((s, l) => s + (l.monthly_payment || 0), 0);
               return (
@@ -332,7 +333,7 @@ export default function WorkingCapitalLoansReport({ loans = [] }) {
                 <tr key={l.id} className="border-b border-border/50 hover:bg-muted/30">
                   <td className="px-5 py-3 font-medium">{l.creditor}</td>
                   <td className="px-5 py-3 text-muted-foreground">{TYPE_LABELS[l.type] || l.type}</td>
-                  <td className="px-5 py-3 text-right text-destructive">{fmt(Math.max(0, (l.total_amount || 0) - (l.amount_paid || 0)))}</td>
+                  <td className="px-5 py-3 text-right text-destructive">{fmt(getLoanBalance(l))}</td>
                   <td className="px-5 py-3"><DueBadge due_date={l.due_date} /></td>
                 </tr>
               ))}
@@ -371,7 +372,7 @@ export default function WorkingCapitalLoansReport({ loans = [] }) {
                   <td className="px-4 py-3 text-muted-foreground">{TYPE_LABELS[l.type] || l.type}</td>
                   <td className="px-4 py-3 text-right">{fmt(l.total_amount)}</td>
                   <td className="px-4 py-3 text-right text-primary">{fmt(l.amount_paid)}</td>
-                  <td className="px-4 py-3 text-right text-destructive">{fmt(Math.max(0, (l.total_amount || 0) - (l.amount_paid || 0)))}</td>
+                  <td className="px-4 py-3 text-right text-destructive">{fmt(getLoanBalance(l))}</td>
                   <td className="px-4 py-3 text-right">{l.interest_rate ? `${l.interest_rate}%` : "—"}</td>
                   <td className="px-4 py-3 text-right">{fmt(l.monthly_payment)}</td>
                   <td className="px-4 py-3"><DueBadge due_date={l.due_date} /></td>

@@ -1,6 +1,7 @@
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from "recharts";
+import { getLoanBalance } from "@/lib/loanBalance";
 
 const fmt = (v) => `₱${Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
@@ -34,7 +35,7 @@ export default function DebtBalanceChart({ loans = [], debts = [] }) {
     const key = d.creditor || "Unknown";
     if (!map[key]) map[key] = { name: key, Principal: 0, Outstanding: 0 };
     map[key].Principal += d.total_amount || 0;
-    map[key].Outstanding += (d.total_amount || 0) - (d.amount_paid || 0);
+    map[key].Outstanding += getLoanBalance(d);
   });
 
   const data = Object.values(map).sort((a, b) => b.Principal - a.Principal);

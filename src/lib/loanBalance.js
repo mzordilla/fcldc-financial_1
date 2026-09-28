@@ -1,5 +1,5 @@
 export function getLoanBalance(loan) {
-  return Math.max(0, Number(loan?.principal_balance) || 0);
+  return Math.max(0, Number(loan?.principal_balance ?? loan?.outstanding_balance) || 0);
 }
 
 export function applyLoanLedgerEntry(loan, entry) {

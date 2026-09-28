@@ -1,4 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
+import { getLoanBalance } from "@/lib/loanBalance";
 
 const typeLabels = {
   loan: "Loan",
@@ -25,7 +26,7 @@ export default function WorkingCapitalByType({ debts = [] }) {
     const typedDebts = activeDebts.filter(d => d.type === type);
     return {
       type: typeLabels[type],
-      outstanding: typedDebts.reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0),
+      outstanding: typedDebts.reduce((s, d) => s + getLoanBalance(d), 0),
       count: typedDebts.length,
     };
   }).filter(d => d.count > 0);

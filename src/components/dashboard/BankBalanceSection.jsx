@@ -1,4 +1,5 @@
 import { Building2, TrendingDown, TrendingUp, Minus } from "lucide-react";
+import { getLoanBalance } from "@/lib/loanBalance";
 
 const fmt = (v) =>
   `₱${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
@@ -31,7 +32,7 @@ export default function BankBalanceSection({ transactions = [], payables = [], l
 
   const activeDebtBalance = debts
     .filter((d) => d.status === "active")
-    .reduce((s, d) => s + ((d.total_amount || 0) - (d.amount_paid || 0)), 0);
+    .reduce((s, d) => s + getLoanBalance(d), 0);
 
   const totalDeductions = unpaidPayables + activeDebtBalance;
   const netBankBalance = grossBalance - totalDeductions;
