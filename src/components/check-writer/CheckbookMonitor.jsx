@@ -8,8 +8,14 @@ const BOOK = 100, REORDER_AT = 20;
 function printRequest(list) {
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const rows = list.map(b => `<tr><td>${b.bank}</td><td>${b.start} – ${b.end}</td><td>${b.last}</td><td>${b.used}</td><td>${b.voided}</td><td>${b.remaining}</td><td>${b.end + 1} – ${b.end + BOOK}</td></tr>`).join("");
+  const fmt = v => Number(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const details = list.map(b => {
+    const items = [...b.items].sort((x, y) => x.n - y.n);
+    const total = items.filter(c => c.status !== "voided").reduce((s, c) => s + Number(c.amount || 0), 0);
+    return `<h3 style="margin-top:24px">Checks Issued – ${b.bank} (Series ${b.start} – ${b.end})</h3><table><thead><tr><th>Check No.</th><th>Date</th><th>Payee</th><th>PR Ref</th><th>Particulars</th><th>Status</th><th style="text-align:right">Amount</th></tr></thead><tbody>${items.map(c => `<tr><td>${c.check_number}</td><td>${c.check_date || ""}</td><td>${c.payee || ""}</td><td>${(c.payment_request_numbers || []).join(", ")}</td><td>${c.memo || ""}</td><td>${c.status === "voided" ? "VOIDED" : c.status}</td><td style="text-align:right">${c.status === "voided" ? "0.00" : fmt(c.amount)}</td></tr>`).join("")}<tr><td colspan="6" style="text-align:right"><b>TOTAL (${items.length} checks)</b></td><td style="text-align:right"><b>${fmt(total)}</b></td></tr></tbody></table>`;
+  }).join("");
   const w = window.open("", "_blank");
-  w.document.write(`<html><head><title>Request for New Checkbook</title><style>body{font-family:Arial;font-size:12px;padding:30px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #999;padding:6px;text-align:left}th{background:#eee}.sig td{border:none;padding-top:50px}</style></head><body><h2 style="margin:0">REQUEST FOR NEW CHECKBOOK</h2><p>Date: ${today}</p><p>This is to request the issuance of new checkbook(s) for the following account(s), as the current checkbook series is nearly or fully consumed:</p><table><thead><tr><th>Bank / Account</th><th>Current Series</th><th>Last Check No. Used</th><th>Issued</th><th>Voided</th><th>Remaining Leaves</th><th>Requested Next Series</th></tr></thead><tbody>${rows}</tbody></table><p>Quantity requested: ${list.length} checkbook(s) of ${BOOK} leaves each.</p><table class="sig"><tr><td>Requested by:<br/>____________________</td><td>Checked by:<br/>____________________</td><td>Approved by:<br/>____________________</td></tr></table></body></html>`);
+  w.document.write(`<html><head><title>Request for New Checkbook</title><style>body{font-family:Arial;font-size:12px;padding:30px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #999;padding:6px;text-align:left}th{background:#eee}.sig td{border:none;padding-top:50px}</style></head><body><h2 style="margin:0">REQUEST FOR NEW CHECKBOOK</h2><p>Date: ${today}</p><p>This is to request the issuance of new checkbook(s) for the following account(s), as the current checkbook series is nearly or fully consumed:</p><table><thead><tr><th>Bank / Account</th><th>Current Series</th><th>Last Check No. Used</th><th>Issued</th><th>Voided</th><th>Remaining Leaves</th><th>Requested Next Series</th></tr></thead><tbody>${rows}</tbody></table><p>Quantity requested: ${list.length} checkbook(s) of ${BOOK} leaves each.</p>${details}<table class="sig"><tr><td>Requested by:<br/>____________________</td><td>Checked by:<br/>____________________</td><td>Approved by:<br/>____________________</td></tr></table></body></html>`);
   w.document.close(); w.print();
 }
 
@@ -23,6 +29,7 @@ export default function CheckbookMonitor({ checks }) {
       const key = `${c.bank_account_id}-${start}`;
       map[key] ||= { key, bank: `${c.bank_name || ""} ${c.account_number || ""}`.trim(), start, end: start + BOOK - 1, nums: new Set(), voided: 0 };
       map[key].nums.add(n);
+      (map[key].items ||= []).push({ ...c, n });
       if (c.status === "voided") map[key].voided++;
     });
     return Object.values(map).map(b => {
