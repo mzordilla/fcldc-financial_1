@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import CheckForm from "@/components/check-writer/CheckForm";
 import CheckRegister from "@/components/check-writer/CheckRegister";
+import ChecksIssuedReport from "@/components/check-writer/ChecksIssuedReport";
 import useCheckWriter from "@/hooks/useCheckWriter";
 import CheckRemovalRequestDialog from "@/components/check-writer/CheckRemovalRequestDialog";
 import CheckRemovalApprovals from "@/components/check-writer/CheckRemovalApprovals";
@@ -30,6 +31,7 @@ export default function CheckWriterWorkspace() {
     {user?.role === "admin" && <BankTransferApprovals requests={writer.pendingTransfers} onApprove={writer.approveTransfer} onReject={writer.rejectTransfer} />}
     {user?.role === "admin" && <CheckRemovalApprovals checks={writer.checks} onReview={writer.reviewRemoval} reviewingId={writer.reviewingId} />}
     <div className="grid grid-cols-1 xl:grid-cols-[350px_minmax(0,1fr)] gap-3 items-start"><CheckForm bankAccounts={writer.bankAccounts} approvedRequests={availableRequests} payees={payees} loadingRequests={loadingRequests} onSave={writer.save} saving={writer.saving} /><CheckRegister checks={writer.checks} selected={writer.selected} onToggle={writer.toggle} onPrint={writer.printOne} onDelete={writer.deleteCheck} onRequestRemoval={setRemovalCheck} deletingId={writer.deletingId} onBatchPrint={writer.batchPrint} loading={writer.isLoading} /></div>
+    <ChecksIssuedReport checks={writer.checks} />
     <CheckRemovalRequestDialog check={removalCheck} open={Boolean(removalCheck)} onOpenChange={open => !open && setRemovalCheck(null)} onSubmit={writer.requestRemoval} saving={writer.requestingRemoval} />
   </div>;
 }
