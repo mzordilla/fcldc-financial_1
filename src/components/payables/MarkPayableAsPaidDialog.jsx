@@ -106,7 +106,6 @@ export default function MarkPayableAsPaidDialog({ open, onOpenChange, payable, o
       category: "other",
       chart_of_account: "Accounts Payable",
       project_name: payable.project_name || "",
-      bank_account_id: form.bank_account_id || "",
       date: form.payment_date,
       status: "completed",
     });

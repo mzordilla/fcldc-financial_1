@@ -15,6 +15,8 @@ import StatementOfPayablesReport from "../components/payables/StatementOfPayable
 import OtherPayables from "../components/payables/OtherPayables";
 import CustomerAdvances from "../components/payables/CustomerAdvances";
 import AgingSummary from "../components/payables/AgingSummary";
+import FixDoubledDeductionsDialog from "@/components/payables/FixDoubledDeductionsDialog";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Payables() {
   const [activeTab, setActiveTab] = useState("payables");
@@ -31,6 +33,8 @@ export default function Payables() {
   const [exporting, setExporting] = useState(false);
   const queryClient = useQueryClient();
   const importRef = useRef();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const expandedSuppliersRef = useRef(expandedSuppliers);
 
   useEffect(() => { expandedSuppliersRef.current = expandedSuppliers; }, [expandedSuppliers]);
@@ -225,6 +229,7 @@ export default function Payables() {
             {checkingDupes ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
             Check Duplicates
           </Button>
+          {isAdmin && <FixDoubledDeductionsDialog />}
           <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
             {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
             Export
