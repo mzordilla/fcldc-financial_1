@@ -65,6 +65,10 @@
           },
           "amount": {
             "type": "number"
+          },
+          "accomplishment_percentage": {
+            "type": "number",
+            "description": "Accomplishment % of this change order for the cycle"
           }
         }
       }
@@ -75,7 +79,7 @@
     },
     "billing_amount": {
       "type": "number",
-      "description": "Gross billing this cycle (accomplishment% \u00d7 adjusted contract)"
+      "description": "Gross billing this cycle (main contract \u00d7 accomplishment% + each change order \u00d7 its accomplishment%)"
     },
     "additive_rows": {
       "type": "array",

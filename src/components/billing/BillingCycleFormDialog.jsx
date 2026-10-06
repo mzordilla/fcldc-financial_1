@@ -126,6 +126,16 @@ function ChangeOrderTable({ rows, onChange }) {
             value={row.amount}
             onChange={e => updateRow(i, "amount", e.target.value)}
           />
+          <Input
+            className="w-24 h-8 text-sm"
+            type="number"
+            step="0.000001"
+            min="0"
+            max="100"
+            placeholder="Acc. %"
+            value={row.accomplishment_percentage ?? ""}
+            onChange={e => updateRow(i, "accomplishment_percentage", e.target.value)}
+          />
           <Button type="button" size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => removeRow(i)}>
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -149,7 +159,12 @@ function calcTotals(form) {
   }, 0);
   const adjustedContract = contract + coNet;
 
-  const grossBilling = adjustedContract * (accomplishPct / 100);
+  const mainBilling = contract * (accomplishPct / 100);
+  const coBilling = (form.change_orders || []).reduce((s, co) => {
+    const amt = (parseFloat(co.amount) || 0) * ((parseFloat(co.accomplishment_percentage) || 0) / 100);
+    return co.type === "deductive" ? s - amt : s + amt;
+  }, 0);
+  const grossBilling = mainBilling + coBilling;
   const retentionAmt = grossBilling * (retentionRate / 100);
   const dpDeduction = downPayment * (accomplishPct / 100);
 
@@ -161,6 +176,8 @@ function calcTotals(form) {
   return {
     adjustedContract,
     coNet,
+    mainBilling,
+    coBilling,
     grossBilling,
     retentionAmt,
     dpDeduction,
@@ -231,7 +248,7 @@ export default function BillingCycleFormDialog({ open, onOpenChange, title, init
       total_additives: calc.totalAdditives,
       total_deductives: calc.totalDeductives,
       net_billing_amount: calc.net,
-      change_orders: form.change_orders.map(co => ({ ...co, amount: parseFloat(co.amount) || 0 })),
+      change_orders: form.change_orders.map(co => ({ ...co, amount: parseFloat(co.amount) || 0, accomplishment_percentage: parseFloat(co.accomplishment_percentage) || 0 })),
       additive_rows: form.additive_rows.map(r => ({ ...r, amount: parseFloat(r.amount) || 0 })),
       deductive_rows: form.deductive_rows.map(r => ({ ...r, amount: parseFloat(r.amount) || 0 })),
     };
@@ -386,7 +403,17 @@ export default function BillingCycleFormDialog({ open, onOpenChange, title, init
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Billing Summary</p>
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Gross Billing ({form.accomplishment_percentage || 0}% × ₱{fmt(calc.adjustedContract)})</span>
+                <span className="text-muted-foreground">Main Contract ({form.accomplishment_percentage || 0}% × ₱{fmt(parseFloat(form.contract_amount) || 0)})</span>
+                <span className="font-medium">₱{fmt(calc.mainBilling)}</span>
+              </div>
+              {form.change_orders.length > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Change Orders (by CO accomplishment %)</span>
+                  <span className="font-medium">₱{fmt(calc.coBilling)}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Gross Billing</span>
                 <span className="font-medium">₱{fmt(calc.grossBilling)}</span>
               </div>
               {calc.totalAdditives > 0 && (
