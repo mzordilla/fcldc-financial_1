@@ -196,8 +196,13 @@ export default function BillingCycleFormDialog({ open, onOpenChange, title, init
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
-  const handleProjectSelect = (projectName) => {
+  const handleProjectSelect = async (projectName) => {
     const proj = projects.find(p => p.project_name === projectName);
+    const approvedCOs = proj ? await base44.entities.ChangeOrder.filter({ project_id: proj.id, status: "approved" }) : [];
+    setForm(prev => ({
+      ...prev,
+      change_orders: approvedCOs.map(co => ({ co_number: co.co_number || "", description: co.description || "", type: co.co_type, amount: co.amount?.toString() || "" })),
+    }));
     setForm(prev => ({
       ...prev,
       project_name: projectName,
