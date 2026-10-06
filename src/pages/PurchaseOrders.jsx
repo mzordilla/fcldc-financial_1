@@ -31,6 +31,7 @@ import PendingReceiptBanner from "../components/purchase-orders/PendingReceiptBa
 import POBudgetWarning from "@/components/purchase-orders/POBudgetWarning";
 import Payees from "./Payees";
 const statusStyles = {
+  draft: "bg-muted text-muted-foreground border-border",
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
   approved: "bg-primary/10 text-primary border-primary/20",
   rejected: "bg-destructive/10 text-destructive border-destructive/20",
@@ -45,6 +46,7 @@ const priorityStyles = {
 };
 
 const statusIcons = {
+  draft: Pencil,
   pending: Clock,
   approved: CheckCircle,
   rejected: XCircle,
@@ -561,7 +563,7 @@ export default function PurchaseOrders() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input placeholder="Search PO#, supplier, project..." className="pl-9" value={poSearch} onChange={(e) => setPoSearch(e.target.value)} />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All Status</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="rejected">Rejected</SelectItem><SelectItem value="cancelled">Cancelled</SelectItem></SelectContent></Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All Status</SelectItem><SelectItem value="draft">Draft</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="rejected">Rejected</SelectItem><SelectItem value="cancelled">Cancelled</SelectItem></SelectContent></Select>
               <Select value={fulfillmentFilter} onValueChange={setFulfillmentFilter}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All Fulfillment</SelectItem><SelectItem value="no_receipt">No Receipt (For Receiving)</SelectItem><SelectItem value="ready_to_pay">For Pay (Received)</SelectItem></SelectContent></Select>
               <Select value={supplierFilter} onValueChange={setSupplierFilter}><SelectTrigger><SelectValue placeholder="All Suppliers" /></SelectTrigger><SelectContent><SelectItem value="all">All Suppliers</SelectItem>{poSuppliers.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
               <Select value={projectFilter} onValueChange={setProjectFilter}><SelectTrigger><SelectValue placeholder="All Projects" /></SelectTrigger><SelectContent><SelectItem value="all">All Projects</SelectItem>{poProjects.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>

@@ -141,13 +141,17 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, asDraft = false) => {
     e.preventDefault();
-    if (!form.category || !form.chart_of_account) {
+    if (asDraft && !form.supplier_name) {
+      setFormError("Enter a supplier name before saving a draft.");
+      return;
+    }
+    if (!asDraft && (!form.category || !form.chart_of_account)) {
       setFormError("Category and Chart of Account are required before saving.");
       return;
     }
-    if ((form.deductions || []).some(item => !item.description || !item.chart_of_account || Number(item.percentage) <= 0)) {
+    if (!asDraft && (form.deductions || []).some(item => !item.description || !item.chart_of_account || Number(item.percentage) <= 0)) {
       setFormError("Complete the description, percentage, and balance sheet account for every deduction.");
       return;
     }
@@ -159,7 +163,8 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
     const breakdown = calculatePurchaseOrderVat(enteredAmount, form.vat_treatment);
     const savedDeductions = (form.deductions || []).filter(item => item.description && item.chart_of_account && Number(item.percentage) > 0).map(item => ({ ...item, percentage: Number(item.percentage), amount: breakdown.subtotal * Number(item.percentage) / 100 }));
     const savedDeductionTotal = savedDeductions.reduce((sum, item) => sum + item.amount, 0);
-    await onSubmit({ ...form, deductions: savedDeductions, total_deductions: savedDeductionTotal, amount: breakdown.total - savedDeductionTotal, subtotal: breakdown.subtotal, vat_amount: breakdown.vatAmount, vat_percentage: VAT_RATE });
+    const statusUpdate = asDraft ? { approval_status: "draft" } : form.approval_status === "draft" ? { approval_status: "pending" } : {};
+    await onSubmit({ ...form, ...statusUpdate, description: form.description || "", deductions: savedDeductions, total_deductions: savedDeductionTotal, amount: breakdown.total - savedDeductionTotal, subtotal: breakdown.subtotal, vat_amount: breakdown.vatAmount, vat_percentage: VAT_RATE });
     setSaving(false);
     onOpenChange(false);
   };
@@ -345,7 +350,8 @@ export default function POFormDialog({ open, onOpenChange, title, initialData, o
 
           <DialogFooter className="border-t-4 border-primary bg-slate-50 px-6 py-4 sm:justify-end">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="min-w-24 rounded-sm border-slate-400 bg-white">Cancel</Button>
-            <Button type="submit" disabled={saving} className="min-w-24 rounded-sm">{saving ? "Saving..." : "Save"}</Button>
+            {(!initialData?.id || initialData?.approval_status === "draft") && <Button type="button" variant="outline" disabled={saving} onClick={(e) => handleSubmit(e, true)} className="min-w-24 rounded-sm border-slate-400 bg-white">Save as Draft</Button>}
+            <Button type="submit" disabled={saving} className="min-w-24 rounded-sm">{saving ? "Saving..." : initialData?.approval_status === "draft" ? "Submit" : "Save"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
