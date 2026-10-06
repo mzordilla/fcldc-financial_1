@@ -10,6 +10,7 @@ export const STANDARD_BS_ACCOUNTS = [
   { account_code: "2000", account_name: "Accounts Payable", account_type: "liability", category: "current_liabilities" },
   { account_code: "2010", account_name: "Other Payables", account_type: "liability", category: "non_current_liabilities" },
   { account_code: "2100", account_name: "Withholding Tax Payable", account_type: "liability", category: "current_liabilities" },
+  { account_code: "2150", account_name: "Retention Payable", account_type: "liability", category: "current_liabilities" },
   { account_code: "2200", account_name: "Current Portion of Loans", account_type: "liability", category: "current_liabilities" },
   { account_code: "2500", account_name: "Long-Term Loans", account_type: "liability", category: "non_current_liabilities" },
   { account_code: "3000", account_name: "Owned Capital", account_type: "equity", category: "other" },
@@ -24,6 +25,7 @@ export const BS_ACCOUNT_NAMES = {
   payable: "Accounts Payable",
   otherPayable: "Other Payables",
   withholdingTax: "Withholding Tax Payable",
+  retentionPayable: "Retention Payable",
   currentLoans: "Current Portion of Loans",
   longTermLoans: "Long-Term Loans",
 };

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { seedAccounts, STANDARD_BS_ACCOUNTS } from "@/lib/balanceSheetAccounts";
 import { format } from "date-fns";
 import { Plus, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, Pencil, History, ChevronDown, ChevronUp, FileUp, CreditCard, Package, ClipboardList, Printer, Search, GitPullRequest, MoreHorizontal, Briefcase, Users } from "lucide-react";
 import { ExecutiveTabsList, ExecutiveTab } from "@/components/shared/ExecutiveTabs";
@@ -353,7 +354,26 @@ export default function PurchaseOrders() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["purchase_orders"] })
   });
 
+  const postRetentionPayable = async (po) => {
+    const retentions = (po.deductions || []).filter((d) => d.chart_of_account === "Retention Payable" && d.amount > 0);
+    if (retentions.length === 0) return;
+    const accounts = await base44.entities.ChartOfAccount.filter({ account_name: "Retention Payable" });
+    if (accounts.length === 0) await seedAccounts(STANDARD_BS_ACCOUNTS.filter((a) => a.account_name === "Retention Payable"));
+    await base44.entities.Transaction.bulkCreate(retentions.map((d) => ({
+      description: `Retention Payable – ${po.supplier_name}${po.po_number ? ` (${po.po_number})` : ""} @ ${d.percentage}%`,
+      amount: d.amount,
+      type: "income",
+      category: "other",
+      chart_of_account: "Retention Payable",
+      project_code: po.project_code || "",
+      date: new Date().toISOString().slice(0, 10),
+      status: "completed",
+    })));
+    queryClient.invalidateQueries({ queryKey: ["transactions"] });
+  };
+
   const handleDecision = (po, { action, actor, notes }) => {
+    if (action === "approved" && po.approval_status !== "approved") postRetentionPayable(po);
     const newEntry = {
       step: action === "approved" ? "approved" : action === "rejected" ? "rejected" : "reviewed",
       action,
