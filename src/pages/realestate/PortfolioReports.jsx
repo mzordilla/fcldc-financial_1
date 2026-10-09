@@ -87,6 +87,7 @@ export default function PortfolioReports() {
     { label: "Total Units", value: regularUnits.length, icon: Home, color: "text-foreground" },
     { label: "Parking", value: parkingUnits.length, icon: List, color: "text-slate-600" },
     { label: "Remaining Sales Units", value: `${regularUnits.filter(u => u.status === "available_for_sale").length} of ${regularUnits.length}`, icon: Home, color: "text-amber-600" },
+    { label: "Remaining Sales Amount", value: fmt(regularUnits.filter(u => u.status === "available_for_sale").reduce((s, u) => s + (u.selling_price || 0), 0)), icon: TrendingUp, color: "text-amber-600" },
     { label: "Occupancy Rate", value: `${overallOccupancyRate}%`, icon: TrendingUp, color: "text-emerald-600" },
     { label: "Rental Occupancy", value: `${rentalOccupancyRate}%`, icon: TrendingUp, color: "text-blue-600" },
     { label: "Active Tenants", value: activeTenants.length, icon: Users, color: "text-emerald-600" },
