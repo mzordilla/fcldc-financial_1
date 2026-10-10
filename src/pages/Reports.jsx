@@ -9,7 +9,7 @@ import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import WorkingCapitalLoansReport from "../components/reports/WorkingCapitalLoansReport";
 import BankTransactionsReport from "../components/reports/BankTransactionsReport";
-import IncomeTrendChart from "../components/reports/IncomeTrendChart";
+import IncomeStatementTrend from "@/components/reports/IncomeStatementTrend";
 import BalanceSheetReport from "../components/reports/BalanceSheetReport";
 import IncomeStatementReport from "../components/reports/IncomeStatementReport";
 import ComparativeIncomeStatement from "../components/reports/ComparativeIncomeStatement";
@@ -528,7 +528,7 @@ export default function Reports() {
       )}
 
       {activeTab === "trend" && (
-        <IncomeTrendChart transactions={filteredTransactions} dateFrom={dateFrom} dateTo={dateTo} />
+        <IncomeStatementTrend transactions={transactions} dateFrom={dateFrom} dateTo={dateTo} />
       )}
 
       {activeTab === "wc_loans" && (
