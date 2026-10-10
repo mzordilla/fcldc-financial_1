@@ -303,9 +303,9 @@ export default function BankAccounts() {
         open={!!editing}
         onOpenChange={(v) => {if (!v) setEditing(null);}}
         title="Edit Bank Account"
-        fields={fields}
+        fields={fields.filter((f) => f.name !== "current_balance")}
         initialData={editing || {}}
-        onSubmit={(data) => updateMutation.mutateAsync({ id: editing.id, data })} />
+        onSubmit={({ current_balance, ...data }) => updateMutation.mutateAsync({ id: editing.id, data })} />
 
       <BankTransferDialog
         open={showTransfer}
