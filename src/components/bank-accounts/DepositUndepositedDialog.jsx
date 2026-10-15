@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 
-export default function DepositUndepositedDialog({ open, onOpenChange, receivables, bankAccounts, onDone }) {
+export default function DepositUndepositedDialog({ open, onOpenChange, receivables, advances = [], bankAccounts, onDone }) {
   const [bankAccountId, setBankAccountId] = useState("");
   const [selected, setSelected] = useState({});
   const [saving, setSaving] = useState(false);
@@ -31,8 +31,15 @@ export default function DepositUndepositedDialog({ open, onOpenChange, receivabl
         }
       });
     });
+    advances.forEach((a) => {
+      (a.collections || []).forEach((c, idx) => {
+        if (!c.bank_account_id || c.bank_account_id === "undeposited") {
+          list.push({ key: `adv-${a.id}-${idx}`, advanceId: a.id, entryIndex: idx, transactionId: c.transaction_id, client_name: a.client_name, invoice_number: "Customer advance", amount: c.amount || 0, collection_date: c.collection_date, reference: c.reference });
+        }
+      });
+    });
     return list;
-  }, [receivables]);
+  }, [receivables, advances]);
 
   const selectedEntries = entries.filter((e) => selected[e.key]);
   const totalSelected = selectedEntries.reduce((s, e) => s + e.amount, 0);
@@ -53,8 +60,20 @@ export default function DepositUndepositedDialog({ open, onOpenChange, receivabl
     setSaving(true);
 
     // Group selected entries by receivable so we update each receivable once
+    const byAdvance = {};
+    selectedEntries.filter((e) => e.advanceId).forEach((e) => { (byAdvance[e.advanceId] ||= []).push(e); });
+    for (const [advanceId, advEntries] of Object.entries(byAdvance)) {
+      const adv = advances.find((a) => a.id === advanceId);
+      const cols = [...(adv.collections || [])];
+      advEntries.forEach((e) => { cols[e.entryIndex] = { ...cols[e.entryIndex], bank_account_id: bankAccountId }; });
+      await base44.entities.CustomerAdvance.update(advanceId, { collections: cols });
+      for (const e of advEntries) {
+        if (e.transactionId) await base44.entities.Transaction.update(e.transactionId, { bank_account_id: bankAccountId });
+      }
+    }
+
     const byReceivable = {};
-    selectedEntries.forEach((e) => {
+    selectedEntries.filter((e) => !e.advanceId).forEach((e) => {
       if (!byReceivable[e.receivableId]) byReceivable[e.receivableId] = [];
       byReceivable[e.receivableId].push(e);
     });

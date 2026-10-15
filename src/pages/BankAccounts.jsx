@@ -145,8 +145,14 @@ export default function BankAccounts() {
     queryFn: () => base44.entities.Receivable.list("-created_date", 500)
   });
 
+  const { data: advances = [] } = useQuery({
+    queryKey: ["advances_undeposited"],
+    queryFn: () => base44.entities.CustomerAdvance.list("-created_date", 500)
+  });
+  const undepositedAdvances = advances.reduce((t, a) => t + (a.collections || []).filter(c => !c.bank_account_id || c.bank_account_id === "undeposited").reduce((s, c) => s + (c.amount || 0), 0), 0);
+
   // Calculate undeposited collections (payments without bank_account_id)
-  const undepositedCollections = receivables.reduce((total, rec) => {
+  const undepositedCollections = undepositedAdvances + receivables.reduce((total, rec) => {
     const undeposited = (rec.payment_history || []).reduce((sum, payment) => {
       if (!payment.is_advance_payment && (!payment.bank_account_id || payment.bank_account_id === "")) {
         return sum + (payment.amount || 0);
@@ -315,6 +321,7 @@ export default function BankAccounts() {
       />
 
       <DepositUndepositedDialog
+        advances={advances}
         open={showDeposit}
         onOpenChange={setShowDeposit}
         receivables={receivables}
@@ -322,6 +329,7 @@ export default function BankAccounts() {
         onDone={() => {
           setShowDeposit(false);
           queryClient.invalidateQueries({ queryKey: ["receivables_undeposited"] });
+          queryClient.invalidateQueries({ queryKey: ["advances_undeposited"] });
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
         }}
       />
