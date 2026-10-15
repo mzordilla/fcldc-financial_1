@@ -148,7 +148,7 @@ export default function BankAccounts() {
   // Calculate undeposited collections (payments without bank_account_id)
   const undepositedCollections = receivables.reduce((total, rec) => {
     const undeposited = (rec.payment_history || []).reduce((sum, payment) => {
-      if (!payment.bank_account_id || payment.bank_account_id === "") {
+      if (!payment.is_advance_payment && (!payment.bank_account_id || payment.bank_account_id === "")) {
         return sum + (payment.amount || 0);
       }
       return sum;

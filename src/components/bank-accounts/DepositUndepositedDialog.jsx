@@ -16,7 +16,7 @@ export default function DepositUndepositedDialog({ open, onOpenChange, receivabl
     const list = [];
     receivables.forEach((rec) => {
       (rec.payment_history || []).forEach((payment, idx) => {
-        if (!payment.bank_account_id || payment.bank_account_id === "") {
+        if (!payment.is_advance_payment && (!payment.bank_account_id || payment.bank_account_id === "")) {
           list.push({
             key: `${rec.id}-${idx}`,
             receivableId: rec.id,
