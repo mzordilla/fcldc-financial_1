@@ -12,7 +12,7 @@
     },
     "amount": {
       "type": "number",
-      "description": "Total advance received"
+      "description": "Total advance received (initial + all collections)"
     },
     "applied_amount": {
       "type": "number",
@@ -45,6 +45,39 @@
         "fully_applied"
       ],
       "default": "available"
+    },
+    "collections": {
+      "type": "array",
+      "description": "Additional collections received against this advance",
+      "items": {
+        "type": "object",
+        "properties": {
+          "collection_date": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "bank_account_id": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "receipt_url": {
+            "type": "string"
+          },
+          "check_image_url": {
+            "type": "string"
+          },
+          "transaction_id": {
+            "type": "string"
+          }
+        }
+      }
     },
     "application_history": {
       "type": "array",
