@@ -8,7 +8,7 @@ const openFile = async uri => { const url = uri.startsWith("http") ? uri : (awai
 export default function AdvanceCollectionHistory({ advance, bankAccounts }) {
   const collections = advance.collections || [];
   const initial = (advance.amount || 0) - collections.reduce((s, c) => s + (c.amount || 0), 0);
-  const bank = id => { const b = bankAccounts.find(a => a.id === id); return b ? `${b.bank_name} — ${b.account_name}` : "—"; };
+  const bank = id => { if (id === "undeposited") return "Undeposited Collections"; const b = bankAccounts.find(a => a.id === id); return b ? `${b.bank_name} — ${b.account_name}` : "—"; };
   const rows = [{ collection_date: advance.received_date, amount: initial, bank_account_id: advance.bank_account_id, reference: advance.reference, notes: "Initial advance" }, ...collections];
   return <div className="bg-muted/30 px-6 py-3"><p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Collections ({rows.length})</p><table className="w-full text-xs"><thead><tr className="text-left text-muted-foreground">{["Date", "Amount", "Deposited To", "Reference", "Notes", "Attachments"].map(h => <th key={h} className="py-1 pr-3 font-medium">{h}</th>)}</tr></thead><tbody>{rows.map((c, i) => <tr key={i} className="border-t border-border">
     <td className="py-1.5 pr-3">{c.collection_date ? format(new Date(c.collection_date), "MMM d, yyyy") : "—"}</td>
