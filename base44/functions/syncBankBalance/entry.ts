@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 
 Deno.serve(async (req) => {
   try {
@@ -13,11 +13,8 @@ Deno.serve(async (req) => {
     // Helper: adjust a bank account balance
     async function adjustBalance(accountId, delta) {
       if (!accountId) return;
-      const accounts = await base44Service.entities.BankAccount.filter({ id: accountId });
-      if (!accounts || accounts.length === 0) return;
-      const account = accounts[0];
-      const newBalance = (account.current_balance ?? 0) + delta;
-      await base44Service.entities.BankAccount.update(accountId, { current_balance: newBalance });
+      // Atomic increment so simultaneous disbursements never overwrite each other
+      await base44Service.entities.BankAccount.updateMany({ id: accountId }, { $inc: { current_balance: delta } });
     }
 
     if (eventType === "create") {
