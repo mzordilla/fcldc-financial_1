@@ -392,10 +392,16 @@ export default function PaymentApprovals() {
     setSelectedPOIds(new Set());
   };
 
-  const handleDecision = async (pr, { action, actor, notes, bankAccountId, paymentReference, paymentDate }) => {
+  const handleDecision = async (pr, { action: requestedAction, actor, notes, bankAccountId, paymentReference, paymentDate, installmentAmount }) => {
+    const fullNet = (pr.amount || 0) - (pr.withholding_tax_amount || 0) + (pr.vat_amount || 0);
+    const remainingNet = fullNet - (pr.disbursed_amount || 0);
+    const cashThisTime = requestedAction === "paid" ? Math.min(installmentAmount || remainingNet, remainingNet) : 0;
+    const isFinalInstallment = cashThisTime >= remainingNet - 0.01;
+    const action = requestedAction === "paid" && !isFinalInstallment ? "approved" : requestedAction;
+    const ratio = fullNet ? cashThisTime / fullNet : 1;
     const newEntry = {
-      step: action,
-      action,
+      step: requestedAction === "paid" && !isFinalInstallment ? "partial_payment" : action,
+      action: requestedAction === "paid" && !isFinalInstallment ? `partial payment ₱${cashThisTime.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : action,
       actor,
       notes,
       timestamp: new Date().toISOString(),
@@ -410,12 +416,18 @@ export default function PaymentApprovals() {
         approved_by: actor,
         approval_step: action,
         approval_history: history,
-        ...(action === "paid" ? { check_date: disbursedDate, check_number: paymentReference || pr.check_number, bank_account_id: bankAccountId || pr.bank_account_id } : {}),
+        ...(requestedAction === "paid" ? {
+          check_date: disbursedDate,
+          check_number: paymentReference || pr.check_number,
+          bank_account_id: bankAccountId || pr.bank_account_id,
+          disbursed_amount: (pr.disbursed_amount || 0) + cashThisTime,
+          disbursements: [...(pr.disbursements || []), { date: disbursedDate, amount: cashThisTime, bank_account_id: bankAccountId || "", reference: paymentReference || "", actor }],
+        } : {}),
       },
     });
 
-    // When disbursed, create double-entry transactions + auto-mark linked Payable as paid
-    if (action === "paid") {
+    // When disbursed (full or installment), create double-entry transactions + update linked Payable
+    if (requestedAction === "paid") {
       const bankAccounts = await base44.entities.BankAccount.list("-created_date", 10000);
       const bankAccount = bankAccounts.find(a => a.id === bankAccountId);
       const bankAccountLabel = bankAccount ? `${bankAccount.account_name} – ${bankAccount.bank_name}` : "";
@@ -430,14 +442,13 @@ export default function PaymentApprovals() {
         assertPostingAccount(BS_ACCOUNT_NAMES.withholdingTax, "liability");
       }
 
-      const withholdingTax = pr.withholding_tax_amount || 0;
-      const vatAmt = pr.vat_amount || 0;
-      const netCashOut = (pr.amount || 0) - withholdingTax + vatAmt;
+      const withholdingTax = (pr.withholding_tax_amount || 0) * ratio;
+      const netCashOut = cashThisTime;
 
-      // Dr. Accounts Payable (reduce liability — full gross amount)
+      // Dr. Accounts Payable (reduce liability — gross share of this installment)
       await base44.entities.Transaction.create({
         description: `Accounts Payable Settlement – ${pr.payee}${pr.invoice_number ? ` (${pr.invoice_number})` : ""}`,
-        amount: pr.amount,
+        amount: (pr.amount || 0) * ratio,
         type: "expense",
         category: "other",
         chart_of_account: "Accounts Payable",
@@ -636,6 +647,9 @@ export default function PaymentApprovals() {
           </td>
           <td className="px-1 py-0 text-right whitespace-nowrap">
             <span className="text-xs font-bold text-foreground">₱{(pr.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            {pr.approval_status === "approved" && pr.disbursed_amount > 0 && (
+              <span className="text-[10px] text-chart-3 font-medium ml-1">(paid ₱{pr.disbursed_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })})</span>
+            )}
             {(pr.withholding_tax_amount > 0 || pr.vat_amount > 0) && (
               <span className="text-xs text-primary font-medium ml-1">/ ₱{((pr.amount || 0) - (pr.withholding_tax_amount || 0) + (pr.vat_amount || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             )}
@@ -983,6 +997,9 @@ export default function PaymentApprovals() {
                 )}
                 {(reviewPR.withholding_tax_amount > 0 || reviewPR.vat_amount > 0) && (
                   <p className="text-lg font-bold text-primary">Net to Disburse: ₱{((reviewPR.amount || 0) - (reviewPR.withholding_tax_amount || 0) + (reviewPR.vat_amount || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                )}
+                {reviewPR.disbursed_amount > 0 && (
+                  <p className="text-sm text-chart-3">Paid in installments: ₱{reviewPR.disbursed_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} · Remaining: ₱{((reviewPR.amount || 0) - (reviewPR.withholding_tax_amount || 0) + (reviewPR.vat_amount || 0) - reviewPR.disbursed_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                 )}
               </div>
               {reviewPR.due_date && <p className="text-xs text-destructive">Due: {format(new Date(reviewPR.due_date), "MMM d, yyyy")}</p>}

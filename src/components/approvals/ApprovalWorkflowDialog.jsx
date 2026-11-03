@@ -29,7 +29,12 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split("T")[0]);
   const [printedCheck, setPrintedCheck] = useState(null);
   const checkWriter = useCheckWriter();
-  const linkedPrintedCheck = printedCheck || checkWriter.checks.find(check => check.status === "printed" && check.payment_request_ids?.includes(paymentRequest?.id));
+  const fullNet = (paymentRequest?.amount || 0) - (paymentRequest?.withholding_tax_amount || 0) + (paymentRequest?.vat_amount || 0);
+  const remainingNet = Math.round((fullNet - (paymentRequest?.disbursed_amount || 0)) * 100) / 100;
+  const [installmentAmount, setInstallmentAmount] = useState("");
+  const usedRefs = (paymentRequest?.disbursements || []).map(d => d.reference);
+  const linkedPrintedCheck = printedCheck || checkWriter.checks.find(check => check.status === "printed" && check.payment_request_ids?.includes(paymentRequest?.id) && !usedRefs.includes(check.check_number));
+  const payAmount = parseFloat(installmentAmount) || remainingNet;
   const bankAccounts = checkWriter.bankAccounts;
   const isFinal = historyOnly || FINAL_STATUSES.includes(currentStatus);
   const isDisbursement = currentStatus === "approved";
@@ -53,7 +58,7 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
     enabled: open,
   });
 
-  const reset = () => { setStep(0); setActor(""); setNotes(""); setBankAccountId(""); setPaymentReference(""); setPaymentDate(new Date().toISOString().split("T")[0]); setPrintedCheck(null); };
+  const reset = () => { setStep(0); setInstallmentAmount(""); setActor(""); setNotes(""); setBankAccountId(""); setPaymentReference(""); setPaymentDate(new Date().toISOString().split("T")[0]); setPrintedCheck(null); };
 
   const handleClose = (v) => {
     if (!v) reset();
@@ -62,7 +67,8 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
 
   const handlePrintCheck = async () => {
     if (!bankAccountId || !paymentReference.trim()) return toast.error("Select a bank account and enter the check number first.");
-    const amount = (paymentRequest.amount || 0) - (paymentRequest.withholding_tax_amount || 0) + (paymentRequest.vat_amount || 0);
+    if (payAmount <= 0 || payAmount > remainingNet + 0.01) return toast.error(`Installment must be between ₱0.01 and ₱${remainingNet.toLocaleString()}.`);
+    const amount = payAmount;
     const printWindow = window.open("", "_blank", "width=950,height=650");
     if (!printWindow) return toast.error("Please allow pop-ups to print checks.");
     try {
@@ -99,6 +105,7 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
         bankAccountId: linkedPrintedCheck?.bank_account_id || bankAccountId,
         paymentReference: linkedPrintedCheck?.check_number || paymentReference,
         paymentDate: linkedPrintedCheck?.check_date || paymentDate,
+        installmentAmount: action === "paid" ? (linkedPrintedCheck?.amount || payAmount) : undefined,
       });
       handleClose(false);
     } catch (err) {
@@ -190,6 +197,17 @@ export default function ApprovalWorkflowDialog({ open, onOpenChange, title, summ
             {isDisbursement && (
               <div className="space-y-3 border-t border-border pt-3">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Disbursement Details</p>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Amount to Disburse <span className="text-muted-foreground font-normal">(remaining ₱{remainingNet.toLocaleString(undefined, { minimumFractionDigits: 2 })} — enter less for an installment)</span></label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder={remainingNet.toFixed(2)}
+                    value={linkedPrintedCheck ? linkedPrintedCheck.amount : installmentAmount}
+                    onChange={e => setInstallmentAmount(e.target.value)}
+                    disabled={!!linkedPrintedCheck}
+                  />
+                </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium">Payment Date</label>
                   <Input
