@@ -1,4 +1,4 @@
-import { Newspaper, Gauge, LineChart, Wallet, Landmark, CreditCard, Scale, ClipboardList, FolderTree, CalendarDays, CalendarRange, BookOpen, RefreshCw, FileBox, PiggyBank } from "lucide-react";
+import { Newspaper, Gauge, LineChart, Wallet, Landmark, CreditCard, Scale, ClipboardList, FolderTree, CalendarDays, CalendarRange, BookOpen, RefreshCw, FileBox, PiggyBank, Database } from "lucide-react";
 import { ExecutiveSegmentBar } from "@/components/shared/ExecutiveTabs";
 
 const GROUPS = [
@@ -35,6 +35,7 @@ const GROUPS = [
       { key: "chart_of_accounts", label: "Chart of Accounts", icon: BookOpen },
       { key: "wht_sync", label: "WHT Sheets Sync", icon: RefreshCw },
       { key: "corporate_docs", label: "Corporate Documents", icon: FileBox },
+      { key: "full_export", label: "Full Data Backup", icon: Database },
     ],
   },
 ];
