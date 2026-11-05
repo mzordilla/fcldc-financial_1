@@ -32,15 +32,15 @@ export default function PurchaseOrderPrintDocument({ po, compact = false, signat
           <p className="text-sm text-gray-600 leading-tight">Date: {po.requested_date ? format(new Date(po.requested_date), "MMM d, yyyy") : "—"}</p>
         </div>
       </div>
-      <div className={`grid grid-cols-3 ${compact ? "gap-x-4 gap-y-1" : "gap-4"} ${gap} text-sm`}>
-        <div><p className="text-gray-500 font-semibold uppercase text-xs">Supplier</p><p className="font-medium">{po.supplier_name || "—"}</p></div>
-        <div><p className="text-gray-500 font-semibold uppercase text-xs">Project</p><p className="font-medium">{po.project_name || "—"}</p></div>
-        <div><p className="text-gray-500 font-semibold uppercase text-xs">Project Code</p><p className="font-medium">{po.project_code || project?.project_code || "—"}</p></div>
-        <div className="col-span-2"><p className="text-gray-500 font-semibold uppercase text-xs">Address</p><p className="font-medium">{project?.location || "—"}</p></div>
-        <div><p className="text-gray-500 font-semibold uppercase text-xs">Priority</p><p className="font-medium capitalize">{po.priority || "normal"}</p></div>
-        <div><p className="text-gray-500 font-semibold uppercase text-xs">Category</p><p className="font-medium capitalize">{(po.category || "—").replace(/_/g, " ")}</p></div>
-        <div><p className="text-gray-500 font-semibold uppercase text-xs">Required Date</p><p className="font-medium">{po.required_date ? format(new Date(po.required_date), "MMM d, yyyy") : "—"}</p></div>
-        <div><p className="text-gray-500 font-semibold uppercase text-xs">Description</p><p className="font-medium">{po.description || "No description provided"}</p></div>
+      <div className={`grid grid-cols-4 gap-x-3 gap-y-0.5 ${compact ? "mb-2" : "mb-4"} text-xs leading-tight`}>
+        <div><p className="text-gray-500 font-semibold uppercase text-[9px]">Supplier</p><p className="font-medium">{po.supplier_name || "—"}</p></div>
+        <div><p className="text-gray-500 font-semibold uppercase text-[9px]">Project</p><p className="font-medium">{po.project_name || "—"}</p></div>
+        <div><p className="text-gray-500 font-semibold uppercase text-[9px]">Project Code</p><p className="font-medium">{po.project_code || project?.project_code || "—"}</p></div>
+        <div><p className="text-gray-500 font-semibold uppercase text-[9px]">Required Date</p><p className="font-medium">{po.required_date ? format(new Date(po.required_date), "MMM d, yyyy") : "—"}</p></div>
+        <div><p className="text-gray-500 font-semibold uppercase text-[9px]">Priority</p><p className="font-medium capitalize">{po.priority || "normal"}</p></div>
+        <div><p className="text-gray-500 font-semibold uppercase text-[9px]">Category</p><p className="font-medium capitalize">{(po.category || "—").replace(/_/g, " ")}</p></div>
+        <div className="col-span-2"><p className="text-gray-500 font-semibold uppercase text-[9px]">Address</p><p className="text-[7px] leading-tight">{project?.location || "—"}</p></div>
+        <div className="col-span-4"><p className="text-gray-500 font-semibold uppercase text-[9px]">Description</p><p className="font-medium">{po.description || "No description provided"}</p></div>
       </div>
       <table className={`w-full text-sm border-collapse ${gap}`}>
         <thead><tr className="border-b-2 border-black"><th className="text-left py-2">#</th><th className="text-left py-2">Description</th><th className="text-right py-2">Qty</th><th className="text-right py-2">Unit</th><th className="text-right py-2">Unit Price</th><th className="text-right py-2">Total</th></tr></thead>
