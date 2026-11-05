@@ -1,7 +1,18 @@
 import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { calculatePurchaseOrderVat, vatTreatmentLabel } from "@/lib/purchaseOrderVat";
 
 export default function PurchaseOrderPrintDocument({ po, compact = false, signature = null }) {
+  const { data: project } = useQuery({
+    queryKey: ["po-print-project", po.project_code, po.project_name],
+    queryFn: async () => {
+      const q = po.project_code ? { project_code: po.project_code } : { project_name: po.project_name };
+      const list = await base44.entities.Project.filter(q);
+      return list[0] || null;
+    },
+    enabled: !!(po.project_code || po.project_name),
+  });
   const lineItems = po.line_items || [];
   const enteredAmount = lineItems.reduce((sum, item) => sum + (item.total || item.quantity * item.cost_per_item || 0), 0) || po.amount || 0;
   const calculated = calculatePurchaseOrderVat(enteredAmount, po.vat_treatment);
@@ -24,6 +35,8 @@ export default function PurchaseOrderPrintDocument({ po, compact = false, signat
       <div className={`grid grid-cols-3 ${compact ? "gap-x-4 gap-y-1" : "gap-4"} ${gap} text-sm`}>
         <div><p className="text-gray-500 font-semibold uppercase text-xs">Supplier</p><p className="font-medium">{po.supplier_name || "—"}</p></div>
         <div><p className="text-gray-500 font-semibold uppercase text-xs">Project</p><p className="font-medium">{po.project_name || "—"}</p></div>
+        <div><p className="text-gray-500 font-semibold uppercase text-xs">Project Code</p><p className="font-medium">{po.project_code || project?.project_code || "—"}</p></div>
+        <div className="col-span-2"><p className="text-gray-500 font-semibold uppercase text-xs">Address</p><p className="font-medium">{project?.location || "—"}</p></div>
         <div><p className="text-gray-500 font-semibold uppercase text-xs">Priority</p><p className="font-medium capitalize">{po.priority || "normal"}</p></div>
         <div><p className="text-gray-500 font-semibold uppercase text-xs">Category</p><p className="font-medium capitalize">{(po.category || "—").replace(/_/g, " ")}</p></div>
         <div><p className="text-gray-500 font-semibold uppercase text-xs">Required Date</p><p className="font-medium">{po.required_date ? format(new Date(po.required_date), "MMM d, yyyy") : "—"}</p></div>
