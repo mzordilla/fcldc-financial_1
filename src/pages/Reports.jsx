@@ -21,6 +21,7 @@ import WithholdingTaxSync from "../components/reports/WithholdingTaxSync";
 import CorporateDocuments from "../components/reports/CorporateDocuments";
 import WeeklyCollatedReport from "../components/reports/WeeklyCollatedReport";
 import FullDataExport from "@/components/reports/FullDataExport";
+import CorporateDocumentsBackup from "@/components/reports/CorporateDocumentsBackup";
 import { fetchAllTransactions } from "@/lib/fetchAllTransactions";
 import { normalizeLoan } from "@/lib/normalizeLoan";
 import { bankOnly } from "@/lib/bankCashFlow";
@@ -678,7 +679,7 @@ export default function Reports() {
         <WithholdingTaxSync />
       )}
 
-      {activeTab === "full_export" && <FullDataExport />}
+      {activeTab === "full_export" && <div className="space-y-4"><FullDataExport /><CorporateDocumentsBackup /></div>}
       {activeTab === "corporate_docs" && (
         <CorporateDocuments />
       )}
