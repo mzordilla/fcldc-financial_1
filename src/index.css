@@ -89,3 +89,12 @@
     @apply bg-background text-foreground font-inter;
   }
 }
+
+@media print {
+  @page { size: A4 landscape; margin: 8mm; }
+  body * { visibility: hidden; }
+  #board-deck, #board-deck * { visibility: visible; }
+  #board-deck { position: absolute; left: 0; top: 0; width: 100%; }
+  #board-deck > .board-slide { break-after: page; box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  #board-deck > .board-slide + .board-slide { margin-top: 0; }
+}
