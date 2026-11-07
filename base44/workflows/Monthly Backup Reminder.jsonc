@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "monthly_backup_reminder",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_reminders": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendBackupReminders",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Email backup reminder to admins",
+            "description": "Includes days since last backup"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Monthly Backup Reminder",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 9 1 * *",
+      "one_time_date": null,
+      "timezone": "Asia/Singapore",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Emails all administrators on the 1st of every month at 9am to create a system backup"
+}

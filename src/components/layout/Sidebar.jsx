@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ClipboardList, Boxes, Home, GitBranch, Wallet, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ClipboardList, Boxes, Home, GitBranch, Wallet, PanelLeftClose, PanelLeftOpen, ShieldCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { canAccess } from "@/lib/access-control";
@@ -24,7 +24,8 @@ const allNavItems = [
 { label: "Reports", icon: BarChart2, path: "/reports" },
 
 { label: "Audit Trail", icon: ClipboardList, path: "/audit-trail" },
-{ label: "Workflow Diagram", icon: GitBranch, path: "/workflow" }];
+{ label: "Workflow Diagram", icon: GitBranch, path: "/workflow" },
+{ label: "System Backup & Recovery", icon: ShieldCheck, path: "/system-backup", adminOnly: true }];
 
 
 export default function Sidebar() {
@@ -33,7 +34,7 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { config } = useRoleAccess();
   const role = user?.role?.toLowerCase();
-  const navItems = allNavItems.filter((item) => canAccess(role, item.path, config));
+  const navItems = allNavItems.filter((item) => (item.adminOnly ? role === "admin" : canAccess(role, item.path, config)));
 
   if (collapsed) {
     return (

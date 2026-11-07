@@ -37,6 +37,8 @@ import WorkflowDiagram from './pages/WorkflowDiagram';
 import Clients from './pages/Clients';
 import Payroll from './pages/Payroll';
 import PayrollRegister from './pages/PayrollRegister';
+import SystemBackup from './pages/SystemBackup';
+import BackupHistory from './pages/BackupHistory';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -96,6 +98,8 @@ const AuthenticatedApp = () => {
         <Route path="/clients" element={<Clients />} />
         <Route path="/payroll" element={<Payroll />} />
         <Route path="/payroll/periods/:id" element={<PayrollRegister />} />
+        <Route path="/system-backup" element={<SystemBackup />} />
+        <Route path="/system-backup/history" element={<BackupHistory />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

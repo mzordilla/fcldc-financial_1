@@ -1,0 +1,126 @@
+{
+  "name": "BackupRecord",
+  "type": "object",
+  "properties": {
+    "file_name": {
+      "type": "string",
+      "description": "Backup ZIP file name"
+    },
+    "file_uri": {
+      "type": "string",
+      "description": "Private storage URI of the backup ZIP"
+    },
+    "size_bytes": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "in_progress",
+        "completed",
+        "completed_with_warnings",
+        "failed"
+      ],
+      "enumColors": [
+        "blue",
+        "green",
+        "yellow",
+        "red"
+      ],
+      "default": "in_progress"
+    },
+    "backup_type": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "safety"
+      ],
+      "enumColors": [
+        "blue",
+        "purple"
+      ],
+      "default": "manual",
+      "description": "Manual backup or automatic safety backup taken before a restore"
+    },
+    "backup_created_at": {
+      "type": "string",
+      "description": "ISO timestamp of backup creation"
+    },
+    "table_count": {
+      "type": "number",
+      "default": 0
+    },
+    "record_count": {
+      "type": "number",
+      "default": 0
+    },
+    "file_count": {
+      "type": "number",
+      "default": 0
+    },
+    "missing_file_count": {
+      "type": "number",
+      "default": 0
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string"
+    },
+    "restore_log": {
+      "type": "array",
+      "description": "Restores performed from this backup",
+      "items": {
+        "type": "object",
+        "properties": {
+          "restored_at": {
+            "type": "string"
+          },
+          "restored_by": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "file_name",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
