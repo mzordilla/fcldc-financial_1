@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ClipboardList, Boxes, Home, GitBranch, Wallet, PanelLeftClose, PanelLeftOpen, ShieldCheck, Presentation, MessageCircle } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ClipboardList, Boxes, Home, GitBranch, Wallet, PanelLeftClose, PanelLeftOpen, ShieldCheck, Presentation, MessageCircle, Bell } from "lucide-react";
+import usePendingApprovals from "@/hooks/usePendingApprovals";
 import { teamChat, useTeamChat } from "@/lib/teamChatStore";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
@@ -36,6 +37,8 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { config } = useRoleAccess();
   const chat = useTeamChat();
+  const { pendingPOs, pendingPayments, totalPending } = usePendingApprovals();
+  const pendingByPath = { "/purchase-orders": pendingPOs, "/payment-approvals": pendingPayments };
   const unreadLabel = chat.unread > 99 ? "99+" : chat.unread;
   const role = user?.role?.toLowerCase();
   const navItems = allNavItems.filter((item) => (item.adminOnly ? role === "admin" : canAccess(role, item.path, config)));
@@ -50,6 +53,16 @@ export default function Sidebar() {
         >
           <PanelLeftOpen className="w-5 h-5" />
         </button>
+        {totalPending > 0 && (
+          <button
+            onClick={() => setCollapsed(false)}
+            className="relative mt-2 p-2 rounded-lg text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all"
+            title="Pending approvals"
+          >
+            <Bell className="w-5 h-5" />
+            <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">{totalPending}</span>
+          </button>
+        )}
         <button
           onClick={teamChat.toggle}
           className="relative mt-2 p-2 rounded-lg text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all"
@@ -102,6 +115,7 @@ export default function Sidebar() {
                 "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}>
                 <item.icon className="w-4 h-4" />
                 {item.label}
+                {pendingByPath[item.path] > 0 && <span title="Pending approvals" className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">{pendingByPath[item.path]}</span>}
               </Link>
             );
           };
