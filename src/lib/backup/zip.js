@@ -1,4 +1,4 @@
-// Minimal ZIP writer (stored, no compression) and reader (stored + deflate).
+// Minimal ZIP writer (text entries deflated, binary entries stored) and reader (stored + deflate).
 const CRC_TABLE = (() => {
   const t = new Uint32Array(256);
   for (let n = 0; n < 256; n++) {
@@ -23,26 +23,34 @@ function dosDateTime(d) {
 
 const enc = new TextEncoder();
 
-// entries: [{ name, data: Uint8Array | string }]
-export function createZip(entries, when = new Date()) {
+async function deflateRaw(bytes) {
+  const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+// entries: [{ name, data: Uint8Array | string }] — strings are compressed, binary data is stored as-is
+export async function createZip(entries, when = new Date()) {
   const { time, date } = dosDateTime(when);
   const parts = [];
   const central = [];
   let offset = 0;
   for (const entry of entries) {
-    const data = typeof entry.data === "string" ? enc.encode(entry.data) : entry.data;
+    const isText = typeof entry.data === "string";
+    const raw = isText ? enc.encode(entry.data) : entry.data;
     const name = enc.encode(entry.name);
-    const crc = crc32(data);
+    const crc = crc32(raw);
+    const data = isText ? await deflateRaw(raw) : raw;
+    const method = isText ? 8 : 0;
     const local = new DataView(new ArrayBuffer(30));
     local.setUint32(0, 0x04034b50, true);
     local.setUint16(4, 20, true);
     local.setUint16(6, 0x0800, true);
-    local.setUint16(8, 0, true);
+    local.setUint16(8, method, true);
     local.setUint16(10, time, true);
     local.setUint16(12, date, true);
     local.setUint32(14, crc, true);
     local.setUint32(18, data.length, true);
-    local.setUint32(22, data.length, true);
+    local.setUint32(22, raw.length, true);
     local.setUint16(26, name.length, true);
     local.setUint16(28, 0, true);
     parts.push(local.buffer, name, data);
@@ -52,12 +60,12 @@ export function createZip(entries, when = new Date()) {
     cd.setUint16(4, 20, true);
     cd.setUint16(6, 20, true);
     cd.setUint16(8, 0x0800, true);
-    cd.setUint16(10, 0, true);
+    cd.setUint16(10, method, true);
     cd.setUint16(12, time, true);
     cd.setUint16(14, date, true);
     cd.setUint32(16, crc, true);
     cd.setUint32(20, data.length, true);
-    cd.setUint32(24, data.length, true);
+    cd.setUint32(24, raw.length, true);
     cd.setUint16(28, name.length, true);
     cd.setUint32(42, offset, true);
     central.push(cd.buffer, name);

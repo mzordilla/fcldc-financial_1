@@ -38,7 +38,7 @@ export default function CreateBackupCard() {
         <DatabaseBackup className="w-6 h-6 text-primary shrink-0" />
         <div>
           <h3 className="font-semibold">Create New Backup</h3>
-          <p className="text-sm text-muted-foreground">Exports every table and record (JSON + CSV) and all available uploaded files into one ZIP. A copy downloads to your computer and another is kept in secure private storage, separate from the live database. No records are changed or deleted.</p>
+          <p className="text-sm text-muted-foreground">Exports every table and record (JSON + CSV) and all available uploaded files into one ZIP. The full copy downloads to your computer, and a compressed copy of all records (without the uploaded files) is kept in secure private storage, separate from the live database. No records are changed or deleted.</p>
         </div>
       </div>
       <Button onClick={run} disabled={busy} className="gap-2">

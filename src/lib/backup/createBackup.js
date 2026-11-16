@@ -63,7 +63,8 @@ export async function createBackup({ type = "manual", user, onProgress, download
     entries.push({ name: "data/User.json", data: JSON.stringify(users) });
     entries.push({ name: "csv/User.csv", data: toCsv(users) });
 
-    const files = await fetchFiles(urls, onProgress);
+    // Uploaded files only go into the downloaded copy, so safety backups skip them
+    const files = downloadLocal ? await fetchFiles(urls, onProgress) : [];
     const failedFiles = files.filter((f) => f.error);
     files.filter((f) => f.data).forEach((f) => entries.push({ name: f.path, data: f.data }));
     if (failedFiles.length) warnings.push(`${failedFiles.length} uploaded file(s) could not be downloaded`);
@@ -78,15 +79,17 @@ export async function createBackup({ type = "manual", user, onProgress, download
     entries.unshift({ name: "manifest.json", data: JSON.stringify(manifest, null, 2) });
 
     onProgress?.("Building ZIP file");
-    const blob = createZip(entries, now);
     if (downloadLocal) {
+      const full = await createZip(entries, now);
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
+      a.href = URL.createObjectURL(full);
       a.download = fileName;
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     }
 
+    // The stored copy holds the records only (compressed) so it stays small enough to upload reliably
+    const blob = await createZip(entries.filter((e) => e.name === "manifest.json" || e.name.startsWith("data/")), now);
     onProgress?.("Saving backup to secure storage");
     const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file: new File([blob], fileName, { type: "application/zip" }) });
 
