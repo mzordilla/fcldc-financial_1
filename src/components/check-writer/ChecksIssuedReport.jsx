@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO } from "date-fns";
-import { FileSpreadsheet, Printer } from "lucide-react";
+import { FileSpreadsheet, Printer, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,6 +16,7 @@ function range(period, date) {
 }
 
 export default function ChecksIssuedReport({ checks }) {
+  const [open, setOpen] = useState(false);
   const [period, setPeriod] = useState("monthly");
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [from, to] = range(period, date);
@@ -44,7 +45,7 @@ export default function ChecksIssuedReport({ checks }) {
 
   return <section className="bg-card border border-border rounded-xl p-4 space-y-3">
     <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
-      <div><h3 className="font-bold text-lg">Report of Checks Issued (RCI)</h3><p className="text-xs text-muted-foreground">Sorted by check number · {label}</p></div>
+      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="text-left"><h3 className="font-bold text-lg flex items-center gap-2">{open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}Report of Checks Issued (RCI) <span className="text-sm font-normal text-muted-foreground">({rows.length})</span></h3><p className="text-xs text-muted-foreground">Sorted by check number · {label}</p></button>
       <div className="flex flex-wrap gap-2">
         <Select value={period} onValueChange={setPeriod}><SelectTrigger className="w-32"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="daily">Daily</SelectItem><SelectItem value="weekly">Weekly</SelectItem><SelectItem value="monthly">Monthly</SelectItem></SelectContent></Select>
         <Input type="date" value={date} onChange={e => e.target.value && setDate(e.target.value)} className="w-40" />
@@ -52,10 +53,10 @@ export default function ChecksIssuedReport({ checks }) {
         <Button onClick={print} disabled={!rows.length}><Printer /> Print</Button>
       </div>
     </div>
-    <div className="overflow-x-auto"><table className="w-full text-sm">
+    {open && <div className="overflow-x-auto"><table className="w-full text-sm">
       <thead><tr className="text-left text-xs uppercase text-muted-foreground border-b border-border"><th className="py-2">Check No.</th><th>Date</th><th>Payee</th><th>Bank</th><th>PR Ref</th><th>Status</th><th className="text-right">Amount</th></tr></thead>
       <tbody>{rows.length === 0 ? <tr><td colSpan={7} className="py-6 text-center text-muted-foreground">No checks issued in this period.</td></tr> : rows.map(r => <tr key={r.id} className={`border-b border-border ${r.status === "voided" ? "text-muted-foreground line-through" : ""}`}><td className="py-2 font-mono font-semibold">{r.check_number}</td><td>{r.check_date}</td><td>{r.payee}</td><td>{r.bank_name}</td><td className="text-xs">{(r.payment_request_numbers || []).join(", ")}</td><td className="capitalize">{r.status}</td><td className="text-right font-mono">{peso(r.amount)}</td></tr>)}</tbody>
       <tfoot><tr className="font-bold"><td colSpan={6} className="py-2 text-right">Total ({rows.length} checks)</td><td className="text-right font-mono">₱{peso(total)}</td></tr></tfoot>
-    </table></div>
+    </table></div>}
   </section>;
 }
