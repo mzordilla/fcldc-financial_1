@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { BookOpen, AlertTriangle, Printer } from "lucide-react";
+import { useMemo, useState } from "react";
+import { BookOpen, AlertTriangle, Printer, ChevronDown, ChevronRight } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 
@@ -20,6 +20,7 @@ function printRequest(list) {
 }
 
 export default function CheckbookMonitor({ checks }) {
+  const [open, setOpen] = useState(false);
   const books = useMemo(() => {
     const map = {};
     checks.forEach(c => {
@@ -42,9 +43,9 @@ export default function CheckbookMonitor({ checks }) {
   const lowBooks = books.filter(b => b.remaining <= REORDER_AT);
 
   return <section className="bg-card border border-border rounded-xl p-4 space-y-3">
-    <div className="flex justify-between items-end gap-2"><div><h3 className="font-bold text-lg flex items-center gap-2"><BookOpen className="w-5 h-5" /> Checkbook Monitoring</h3><p className="text-xs text-muted-foreground">Series of {BOOK} per checkbook · request a new checkbook when {REORDER_AT} or fewer leaves remain</p></div>
+    <div className="flex justify-between items-end gap-2"><button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="text-left"><h3 className="font-bold text-lg flex items-center gap-2">{open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}<BookOpen className="w-5 h-5" /> Checkbook Monitoring <span className="text-sm font-normal text-muted-foreground">({books.length})</span></h3><p className="text-xs text-muted-foreground">Series of {BOOK} per checkbook · request a new checkbook when {REORDER_AT} or fewer leaves remain</p></button>
       <Button variant="outline" disabled={!lowBooks.length} onClick={() => printRequest(lowBooks)}><Printer /> Checkbook Request Report ({lowBooks.length})</Button></div>
-    {books.length === 0 ? <p className="text-sm text-muted-foreground py-4 text-center">No checks recorded yet.</p> :
+    {!open ? null : books.length === 0 ? <p className="text-sm text-muted-foreground py-4 text-center">No checks recorded yet.</p> :
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{books.map(b => {
       const low = b.remaining <= REORDER_AT;
       return <div key={b.key} className={`border rounded-lg p-3 space-y-2 ${low ? "border-destructive/50 bg-destructive/5" : "border-border"}`}>
