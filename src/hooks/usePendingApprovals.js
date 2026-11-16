@@ -23,7 +23,14 @@ export default function usePendingApprovals() {
     enabled: !isLoading && canViewPayments,
   });
 
+  const canViewBillings = canAccess(role, "/receivables", config);
+  const { data: pendingBillings = 0 } = useQuery({
+    queryKey: ["billing_cycles", "pending_count"],
+    queryFn: () => base44.entities.BillingCycle.count({ approval_status: "pending" }),
+    enabled: !isLoading && canViewBillings,
+  });
+
   const pendingPOs = canViewPOs ? purchaseOrders.filter(po => po.approval_status === "pending").length : 0;
   const pendingPayments = canViewPayments ? paymentRequests.filter(pr => pr.approval_status === "pending").length : 0;
-  return { pendingPOs, pendingPayments, totalPending: pendingPOs + pendingPayments };
+  return { pendingPOs, pendingPayments, pendingBillings, totalPending: pendingPOs + pendingPayments + pendingBillings };
 }

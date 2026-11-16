@@ -37,8 +37,8 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { config } = useRoleAccess();
   const chat = useTeamChat();
-  const { pendingPOs, pendingPayments, totalPending } = usePendingApprovals();
-  const pendingByPath = { "/purchase-orders": pendingPOs, "/payment-approvals": pendingPayments };
+  const { pendingPOs, pendingPayments, pendingBillings, totalPending } = usePendingApprovals();
+  const pendingByPath = { "/purchase-orders": pendingPOs, "/payment-approvals": pendingPayments, "/receivables": pendingBillings };
   const unreadLabel = chat.unread > 99 ? "99+" : chat.unread;
   const role = user?.role?.toLowerCase();
   const navItems = allNavItems.filter((item) => (item.adminOnly ? role === "admin" : canAccess(role, item.path, config)));
@@ -115,7 +115,7 @@ export default function Sidebar() {
                 "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}>
                 <item.icon className="w-4 h-4" />
                 {item.label}
-                {pendingByPath[item.path] > 0 && <span title="Pending approvals" className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">{pendingByPath[item.path]}</span>}
+                {pendingByPath[item.path] > 0 && <span title={item.path === "/receivables" ? "Billing cycles awaiting approval" : "Pending approvals"} className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">{pendingByPath[item.path]}</span>}
               </Link>
             );
           };

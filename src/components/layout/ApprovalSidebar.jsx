@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Clock, ShoppingCart, DollarSign, X } from "lucide-react";
+import { Clock, ShoppingCart, DollarSign, CalendarClock, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import usePendingApprovals from "@/hooks/usePendingApprovals";
 
 export default function ApprovalSidebar() {
   const [open, setOpen] = useState(false);
-  const { pendingPOs, pendingPayments, totalPending } = usePendingApprovals();
+  const { pendingPOs, pendingPayments, pendingBillings, totalPending } = usePendingApprovals();
 
   if (totalPending === 0) return null;
 
@@ -43,6 +43,17 @@ export default function ApprovalSidebar() {
                   <DollarSign className="w-4 h-4 text-blue-500 flex-shrink-0" />
                   <span className="text-sm font-medium text-foreground flex-1">Payment Requests</span>
                   <span className="text-xs font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">{pendingPayments}</span>
+                </Link>
+              )}
+              {pendingBillings > 0 && (
+                <Link
+                  to="/receivables"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-emerald-50 transition-colors"
+                >
+                  <CalendarClock className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span className="text-sm font-medium text-foreground flex-1">Billing Cycles</span>
+                  <span className="text-xs font-bold bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5">{pendingBillings}</span>
                 </Link>
               )}
             </div>
