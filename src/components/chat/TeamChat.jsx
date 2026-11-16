@@ -5,12 +5,12 @@ import { useAuth } from "@/lib/AuthContext";
 import { MessageCircle, X, Send, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { teamChat, useTeamChat } from "@/lib/teamChatStore";
 
 export default function TeamChat() {
-  const [open, setOpen] = useState(false);
+  const { open, unread } = useTeamChat();
+  const setOpen = teamChat.setOpen;
   const [text, setText] = useState("");
-  const [unread, setUnread] = useState(0);
-  const lastSeenCount = useRef(0);
   // Default position: bottom-24 right-6 (above the approval button area)
   const [pos, setPos] = useState({ right: 24, bottom: 96 });
   const dragging = useRef(false);
@@ -22,7 +22,7 @@ export default function TeamChat() {
 
   const { data: messages = [] } = useQuery({
     queryKey: ["chat-messages"],
-    queryFn: () => base44.entities.ChatMessage.list("created_date", 100),
+    queryFn: async () => (await base44.entities.ChatMessage.list("-created_date", 100)).reverse(),
     refetchInterval: open ? 5000 : false,
   });
 
@@ -33,17 +33,17 @@ export default function TeamChat() {
     return unsub;
   }, [queryClient]);
 
-  // Track unread messages when chat is closed
+  // Unread = messages from others newer than the last one this user saw
+  const seenKey = `teamchat-last-seen:${user?.email}`;
   useEffect(() => {
     if (open) {
-      // Mark all as seen when opened
-      lastSeenCount.current = messages.length;
-      setUnread(0);
+      if (messages.length) localStorage.setItem(seenKey, messages[messages.length - 1].created_date);
+      teamChat.setUnread(0);
     } else {
-      const newCount = messages.length - lastSeenCount.current;
-      if (newCount > 0) setUnread(newCount);
+      const seen = localStorage.getItem(seenKey) || "";
+      teamChat.setUnread(messages.filter(m => m.sender_email !== user?.email && m.created_date > seen).length);
     }
-  }, [messages, open]);
+  }, [messages, open, seenKey, user?.email]);
 
   useEffect(() => {
     if (open) setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
@@ -202,9 +202,9 @@ export default function TeamChat() {
         ref={btnRef}
         onMouseDown={onMouseDown}
         onTouchStart={onTouchStart}
-        onClick={() => setOpen(v => !v)}
+        onClick={teamChat.toggle}
         style={{ position: "fixed", right: pos.right, bottom: pos.bottom, zIndex: 52, cursor: "grab" }}
-        className="relative w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity select-none"
+        className="md:hidden relative w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity select-none"
         title="Team Chat (drag to move)"
       >
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}

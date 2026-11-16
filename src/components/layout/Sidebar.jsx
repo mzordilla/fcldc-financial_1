@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ClipboardList, Boxes, Home, GitBranch, Wallet, PanelLeftClose, PanelLeftOpen, ShieldCheck, Presentation } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ClipboardList, Boxes, Home, GitBranch, Wallet, PanelLeftClose, PanelLeftOpen, ShieldCheck, Presentation, MessageCircle } from "lucide-react";
+import { teamChat, useTeamChat } from "@/lib/teamChatStore";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { canAccess } from "@/lib/access-control";
@@ -34,6 +35,8 @@ export default function Sidebar() {
   const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const { config } = useRoleAccess();
+  const chat = useTeamChat();
+  const unreadLabel = chat.unread > 99 ? "99+" : chat.unread;
   const role = user?.role?.toLowerCase();
   const navItems = allNavItems.filter((item) => (item.adminOnly ? role === "admin" : canAccess(role, item.path, config)));
 
@@ -46,6 +49,14 @@ export default function Sidebar() {
           title="Show sidebar"
         >
           <PanelLeftOpen className="w-5 h-5" />
+        </button>
+        <button
+          onClick={teamChat.toggle}
+          className="relative mt-2 p-2 rounded-lg text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all"
+          title="Team Chat"
+        >
+          <MessageCircle className="w-5 h-5" />
+          {chat.unread > 0 && <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">{unreadLabel}</span>}
         </button>
       </aside>
     );
@@ -98,6 +109,17 @@ export default function Sidebar() {
           return (
             <div className="space-y-1">
               {ungrouped.map(renderLink)}
+              <button
+                type="button"
+                onClick={teamChat.toggle}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 w-full ${
+                chat.open ?
+                "bg-sidebar-accent text-sidebar-foreground" :
+                "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}>
+                <MessageCircle className="w-4 h-4" />
+                Team Chat
+                {chat.unread > 0 && <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">{unreadLabel}</span>}
+              </button>
               {groups.map(group => {
                 const groupItems = navItems.filter(i => i.group === group);
                 return (
