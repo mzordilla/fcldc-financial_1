@@ -20,7 +20,7 @@ export default function TeamChat() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: messages = [] } = useQuery({
+  const { data: messages = [], isSuccess } = useQuery({
     queryKey: ["chat-messages"],
     queryFn: async () => (await base44.entities.ChatMessage.list("-created_date", 100)).reverse(),
     refetchInterval: open ? 5000 : false,
@@ -39,11 +39,16 @@ export default function TeamChat() {
     if (open) {
       if (messages.length) localStorage.setItem(seenKey, messages[messages.length - 1].created_date);
       teamChat.setUnread(0);
-    } else {
-      const seen = localStorage.getItem(seenKey) || "";
+    } else if (isSuccess) {
+      let seen = localStorage.getItem(seenKey);
+      if (!seen) {
+        // First visit on this browser: existing history is not "new"
+        seen = messages.length ? messages[messages.length - 1].created_date : new Date().toISOString();
+        localStorage.setItem(seenKey, seen);
+      }
       teamChat.setUnread(messages.filter(m => m.sender_email !== user?.email && m.created_date > seen).length);
     }
-  }, [messages, open, seenKey, user?.email]);
+  }, [messages, open, isSuccess, seenKey, user?.email]);
 
   useEffect(() => {
     if (open) setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
