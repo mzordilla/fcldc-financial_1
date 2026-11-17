@@ -1,8 +1,9 @@
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 
-const PRINT_CSS = `
-  @page { size: A4 portrait; margin: 12mm; }
+const printCss = (landscape) => `
+  @page { size: A4 ${landscape ? "landscape; margin: 8mm" : "portrait; margin: 12mm"}; }
+  .print-wide { font-size: 8px !important; }
   html, body { background: #fff !important; }
   body * { visibility: visible !important; }
   .print-doc { width: 100% !important; padding: 0 !important; border: 0 !important; box-shadow: none !important; }
@@ -10,10 +11,10 @@ const PRINT_CSS = `
 `;
 
 // Opens the element in a clean window with the app's styles and prints it on A4 portrait.
-export function printElement(el, title) {
+export function printElement(el, title, landscape = false) {
   const styles = [...document.querySelectorAll('style, link[rel="stylesheet"]')].map((n) => n.outerHTML).join("");
   const w = window.open("", "_blank");
-  w.document.write(`<!doctype html><html><head><base href="${window.location.origin}/">${styles}<style>${PRINT_CSS}</style></head><body>${el.outerHTML}</body></html>`);
+  w.document.write(`<!doctype html><html><head><base href="${window.location.origin}/">${styles}<style>${printCss(landscape)}</style></head><body>${el.outerHTML}</body></html>`);
   w.document.close();
   w.document.title = title;
   setTimeout(() => { w.focus(); w.print(); }, 600);
