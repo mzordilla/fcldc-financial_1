@@ -40,6 +40,7 @@ import PayrollRegister from './pages/PayrollRegister';
 import SystemBackup from './pages/SystemBackup';
 import BackupHistory from './pages/BackupHistory';
 import BoardReport from './pages/BoardReport';
+import AssociationFinancials from './pages/AssociationFinancials';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -95,6 +96,7 @@ const AuthenticatedApp = () => {
         <Route path="/re/reports" element={<PortfolioReports />} />
         <Route path="/re/portfolio" element={<RealEstatePortfolio />} />
         <Route path="/re/condo-sales" element={<CondoSales />} />
+        <Route path="/re/association-financials" element={<AssociationFinancials />} />
         <Route path="/workflow" element={<WorkflowDiagram />} />
         <Route path="/clients" element={<Clients />} />
         <Route path="/payroll" element={<Payroll />} />

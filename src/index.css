@@ -34,6 +34,8 @@
     --chart-4: 280 65% 60%;
     --chart-5: 0 84% 60%;
     --radius: 0.75rem;
+    --paper: 0 0% 100%;
+    --ink: 222 47% 11%;
     --sidebar-background: 222 47% 11%;
     --sidebar-foreground: 220 14% 96%;
     --sidebar-primary: 160 84% 39%;
@@ -60,6 +62,8 @@
     --accent: 222 40% 16%;
     --accent-foreground: 220 14% 96%;
     --destructive: 0 62.8% 30.6%;
+    --paper: 0 0% 100%;
+    --ink: 222 47% 11%;
     --destructive-foreground: 0 0% 98%;
     --border: 222 40% 18%;
     --input: 222 40% 18%;

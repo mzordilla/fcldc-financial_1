@@ -47,6 +47,8 @@ module.exports = {
   			},
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
+  			paper: 'hsl(var(--paper))',
+  			ink: 'hsl(var(--ink))',
   			ring: 'hsl(var(--ring))',
   			chart: {
   				'1': 'hsl(var(--chart-1))',

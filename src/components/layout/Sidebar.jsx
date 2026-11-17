@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ClipboardList, Boxes, Home, GitBranch, Wallet, PanelLeftClose, PanelLeftOpen, ShieldCheck, Presentation, MessageCircle, Bell } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, FileText, Landmark, LogOut, Building2, CreditCard, ShoppingCart, CircleDollarSign, Briefcase, BarChart2, ClipboardList, Boxes, Home, GitBranch, Wallet, PanelLeftClose, PanelLeftOpen, ShieldCheck, Presentation, MessageCircle, Bell, FileSpreadsheet } from "lucide-react";
 import usePendingApprovals from "@/hooks/usePendingApprovals";
 import { teamChat, useTeamChat } from "@/lib/teamChatStore";
 import { base44 } from "@/api/base44Client";
@@ -13,6 +13,7 @@ import GlobalSearch from "./GlobalSearch";
 const allNavItems = [
 { label: "Dashboard", icon: LayoutDashboard, path: "/" },
 { label: "Real Estate Portfolio", icon: Home, path: "/re/portfolio" },
+{ label: "Association Financials", icon: FileSpreadsheet, path: "/re/association-financials" },
 { label: "Projects", icon: Briefcase, path: "/projects" },
 { label: "Receivables", icon: FileText, path: "/receivables" },
 { label: "Purchase Orders", icon: ShoppingCart, path: "/purchase-orders" },

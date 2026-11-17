@@ -1,0 +1,222 @@
+{
+  "name": "AssociationFinancialStatement",
+  "type": "object",
+  "properties": {
+    "condominium_name": {
+      "type": "string",
+      "description": "Condominium / association name shown on the statement"
+    },
+    "period_type": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "quarterly",
+        "annual"
+      ],
+      "enumColors": [
+        "blue",
+        "purple",
+        "green"
+      ],
+      "default": "monthly"
+    },
+    "year": {
+      "type": "number",
+      "description": "Reporting year"
+    },
+    "period_number": {
+      "type": "number",
+      "description": "Month (1-12) or quarter (1-4); 0 for annual"
+    },
+    "period_label": {
+      "type": "string",
+      "description": "Display label, e.g. November 2026, Q3 2026, FY 2026"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "preparation_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "prepared_by": {
+      "type": "string"
+    },
+    "prepared_by_position": {
+      "type": "string"
+    },
+    "checked_by": {
+      "type": "string"
+    },
+    "checked_by_position": {
+      "type": "string"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "approved_by_position": {
+      "type": "string"
+    },
+    "sections": {
+      "type": "array",
+      "description": "Income and expense categories with their line items",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "income",
+              "expense"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "total_income": {
+      "type": "number",
+      "default": 0
+    },
+    "total_expenses": {
+      "type": "number",
+      "default": 0,
+      "description": "Total operating expenses"
+    },
+    "net_surplus": {
+      "type": "number",
+      "default": 0,
+      "description": "Net operating surplus (positive) or deficit (negative)"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "condominium_name",
+    "period_type",
+    "year"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "accounting"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "disbursement"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "procurement"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "accounting"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "disbursement"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "procurement"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "accounting"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "disbursement"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "procurement"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

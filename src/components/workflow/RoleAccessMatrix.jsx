@@ -28,6 +28,7 @@ const ALL_MODULES = [
   { label: "RE Tenants", path: "/re/tenants" },
   { label: "RE Listings", path: "/re/listings" },
   { label: "RE Reports", path: "/re/reports" },
+  { label: "Association Financials", path: "/re/association-financials" },
 ];
 
 const ROLES = ["disbursement", "accounting", "procurement", "marketing"];
