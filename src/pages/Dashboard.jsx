@@ -89,7 +89,9 @@ export default function Dashboard() {
   const allLoans = useMemo(() => [...debts, ...loans].map(normalizeLoan).filter((l) => l.status === "active"), [debts, loans]);
   const debtOutstanding = allLoans.reduce((s, l) => s + getLoanBalance(l), 0);
   const monthlyDebtService = allLoans.reduce((s, l) => s + (l.monthly_payment || 0), 0);
-  const cashOnHand = bankAccounts.filter((a) => a.status !== "closed").reduce((s, a) => s + (a.current_balance || 0), 0);
+  // Offsetting bank is a clearing account, not real cash
+  const cashAccounts = bankAccounts.filter((a) => a.status !== "closed" && !/offset/i.test(`${a.bank_name || ""} ${a.account_name || ""}`));
+  const cashOnHand = cashAccounts.reduce((s, a) => s + (a.current_balance || 0), 0);
 
   const alerts = useMemo(() => {
     const list = [];
@@ -135,7 +137,7 @@ export default function Dashboard() {
         <ExecutiveKpiCard label="Revenue" value={compact(metrics.current.income)} sub="vs prior period" change={changePercent(metrics.current.income, metrics.prior.income)} />
         <ExecutiveKpiCard label="Operating Cost" value={compact(metrics.current.expenses)} sub="vs prior period" change={changePercent(metrics.current.expenses, metrics.prior.expenses)} invertChange />
         <ExecutiveKpiCard label="Net Result" value={compact(metrics.current.net)} accent={metrics.current.net < 0 ? "text-rose-600" : "text-teal-700"} sub={`${Math.round(metrics.current.margin)}% margin`} change={changePercent(metrics.current.net, metrics.prior.net)} />
-        <ExecutiveKpiCard label="Cash Position" value={compact(cashOnHand)} sub={`${bankAccounts.length} accounts`} />
+        <ExecutiveKpiCard label="Cash Position" value={compact(cashOnHand)} sub={`${cashAccounts.length} accounts`} />
         <ExecutiveKpiCard label="Current Receivables" value={compact(arSplit.current)} accent="text-sky-700" sub={`${ar.overdueCount} overdue`} />
         <ExecutiveKpiCard label="Non-Current Receivables" value={compact(arSplit.nonCurrent)} accent="text-indigo-700" sub="Funding & loans" />
         <ExecutiveKpiCard label="Debt Outstanding" value={compact(debtOutstanding)} accent="text-amber-600" sub={`${compact(monthlyDebtService)}/mo service`} />
