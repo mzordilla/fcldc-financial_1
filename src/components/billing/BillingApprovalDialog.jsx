@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, User, FileText, ChevronRight } from "lucide-react";
+import { billingRevenue } from "@/lib/billingRevenue";
 
 export default function BillingApprovalDialog({ open, onOpenChange, billingCycle, onDecision }) {
   const [step, setStep] = useState(0);
@@ -36,8 +37,8 @@ export default function BillingApprovalDialog({ open, onOpenChange, billingCycle
 
   if (!billingCycle) return null;
 
-  const gross = billingCycle.billing_amount || 0;
-  const net = billingCycle.net_billing_amount || gross;
+  const gross = billingRevenue(billingCycle);
+  const net = billingCycle.net_billing_amount || billingCycle.billing_amount || 0;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -94,7 +95,7 @@ export default function BillingApprovalDialog({ open, onOpenChange, billingCycle
             )}
 
             <div className="pt-2 bg-primary/5 border border-primary/20 rounded-lg p-3 text-xs text-primary space-y-1">
-              <p>✓ On approval, <strong>₱{gross.toLocaleString()}</strong> gross billing will be recognized as <strong>income in the P&L</strong> immediately.</p>
+              <p>✓ On approval, <strong>₱{gross.toLocaleString()}</strong> billing including change orders will be recognized as <strong>income in the P&L</strong> immediately.</p>
               <p className="text-primary/70">A corresponding Accounts Receivable record will be created, with any project advance shown as an applied credit. Collections will reduce the AR balance without affecting recognized income.</p>
             </div>
           </div>
@@ -127,7 +128,7 @@ export default function BillingApprovalDialog({ open, onOpenChange, billingCycle
               />
             </div>
             <div className="bg-muted/30 rounded-lg p-3 text-xs text-muted-foreground">
-              Approving will recognize ₱{gross.toLocaleString()} gross billing as income in the P&L and create a corresponding Accounts Receivable for ₱{net.toLocaleString()}. Collections against this AR will not affect the recognized income.
+              Approving will recognize ₱{gross.toLocaleString()} billing including change orders as income in the P&L and create a corresponding Accounts Receivable for ₱{net.toLocaleString()}. Collections against this AR will not affect the recognized income.
             </div>
           </div>
         )}

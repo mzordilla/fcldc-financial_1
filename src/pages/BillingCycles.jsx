@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import BillingCycleFormDialog from "../components/billing/BillingCycleFormDialog";
 import BillingApprovalDialog from "../components/billing/BillingApprovalDialog";
+import { billingRevenue } from "@/lib/billingRevenue";
 
 const statusStyles = {
   pending: "bg-chart-3/10 text-chart-3 border-chart-3/20",
@@ -71,7 +72,7 @@ export default function BillingCycles() {
     // If approved: create Receivable AND immediately recognize income in P&L (accrual basis)
     if (action === "approved") {
       // Retention held is still earned income (just collected later) — recognize the FULL gross billing as income
-      const grossBillingAmount = bc.billing_amount || 0;
+      const grossBillingAmount = billingRevenue(bc);
       // The receivable shows the advance payment separately as an applied credit.
       const netBillingAmount = bc.net_billing_amount || bc.billing_amount || 0;
       const advanceApplied = bc.down_payment_deduction || 0;
